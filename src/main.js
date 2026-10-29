@@ -613,13 +613,10 @@ if(window.GLTFLoader){
   // Normalize imported model dimensions, then orient its longest axis down the view direction.
   model.scale.setScalar(.96/longest);
   model.position.sub(center.multiplyScalar(.96/longest));
-  model.rotation.set(0,0,0);
-  model.updateMatrixWorld(true);
-  const normalized=new THREE.Box3().setFromObject(model),ns=normalized.getSize(new THREE.Vector3());
-  if(ns.x>ns.z*1.35)model.rotation.y=Math.PI/2;
-  else if(ns.y>ns.z*1.35)model.rotation.x=Math.PI/2;
-  model.rotation.y+=Math.PI;
-  model.position.x+=.015;model.position.y-=.015;model.position.z-=.10;
+  // This asset's muzzle axis is local X. Rotate it onto camera-forward (-Z),
+  // rather than leaving the rifle broadside across the screen.
+  model.rotation.set(0,-Math.PI/2,0);
+  model.position.set(.02,-.10,-.14);
   model.traverse(part=>{if(part.isMesh){part.castShadow=false;part.receiveShadow=false;part.renderOrder=1000;if(part.material){part.material.depthTest=false;part.material.depthWrite=false;part.material.needsUpdate=true}}});
   weaponRig.add(model);
   fallbackWeaponMeshes.forEach(mesh=>mesh.visible=false);
