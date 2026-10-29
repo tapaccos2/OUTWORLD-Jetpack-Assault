@@ -28,7 +28,7 @@ The `anub01.dpc`, `anub01.gpc`, and `anub01.rpc` examples share the next eight b
 
 The four-byte field at offset 12 differs by type: the sampled DPC begins `40 9C 01 80`, while the sampled GPC and RPC have `05 00 00 00`. These are raw observations only; the fields have not been assigned semantic meanings. The sampled `anub02.gpc` has a different value at offset 8, so that field is not a universal constant.
 
-The GPC and RPC samples have readable, structured-looking little-endian values after their headers, but this alone does not establish their record layout. The larger DPC/TPC payloads have not been decoded into geometry or textures.
+The GPC/RPC record layouts are now decoded far enough to reconstruct candidate terrain surfaces; see [TERRAIN-FIELD-HYPOTHESES.md](TERRAIN-FIELD-HYPOTHESES.md). The larger DPC/TPC payloads have not yet been decoded into models or textures.
 
 ## FF archive directory table — new confirmed finding
 
@@ -67,7 +67,7 @@ Next:
 3. Compare multiple `.DPC/.GPC/.RPC/.TPC` files by type and campaign to identify header fields and internal record layouts.
 4. Continue linking these assets to `.MIS` placements and identify the separate terrain asset format; `.GRY` files are sound-effect audio.
 
-No model, texture, animation, terrain, or mission-logic decoder is claimed yet. The `.GRY` files are sound-effect audio containers, not terrain geometry. These notes distinguish confirmed byte layout from fields whose meanings remain unknown.
+A candidate GPC/RPC terrain-surface decoder, OBJ exporter, and interactive preview now exist, though the mesh still needs visual validation against an original in-game map. DPC/TPC model and texture payloads, animation, and mission logic remain undecoded. The `.GRY` files are sound-effect audio containers, not terrain geometry. These notes distinguish confirmed byte layout from fields whose meanings remain unknown.
 
 ## Executable format-signature lead
 
@@ -86,4 +86,4 @@ Validated locally with `tools/inspect-ff-archives.mjs` on 2026-10-29. The report
 
 The index contains paired model/texture resources, including `laborer.dpc/.tpc`, `defenderWmortar.dpc/.tpc`, `flyingAssassin.dpc/.tpc`, `dropship.dpc/.tpc`, `strikecraft.dpc/.tpc`, `turret1.dpc/.tpc`, and `walkingBabyAssassin.dpc/.tpc`. These names directly explain several resources that were absent from the loose `structs/` directory: they are packaged inside `units.ff`. The archive also contains other vehicle/unit pairs and two text resources, `Brad.txt` and `Kirk.txt`.
 
-This validates the archive directory/index, not the internal DPC/TPC decoding. Next, extract the 120 payloads with `tools/extract-ff-resources.mjs`, then compare extracted files against loose `structs/` and mission references before inspecting resource headers and payload layouts.
+This validates the archive directory/index, not the internal DPC/TPC decoding. Next, extract the 120 payloads with `tools/extract-ff-resources.mjs`, then compare extracted files against loose `structs/` and mission references before inspecting model/texture payload layouts.
