@@ -34,33 +34,40 @@
    boulders:'https://cdn.3dassets.dev/assets/18142/v1/model.glb',
    crashSite:'https://cdn.3dassets.dev/assets/17375/v1/model.glb',
    crate:'https://cdn.3dassets.dev/assets/27447/v1/model.glb',
-   building:'https://cdn.3dassets.dev/assets/36525/v1/model.glb'
+   building:'https://cdn.3dassets.dev/assets/36525/v1/model.glb',
+   road:'https://cdn.3dassets.dev/assets/38215/v1/model.glb'
   };
   const specs=[
-   // Mission 01: devastated human outpost on a barren moon, not a forest planet.
-   {asset:'building',x:-8.5,z:-10.5,height:5.6,rotation:.22,kind:'building'},
-   {asset:'building',x:5.8,z:-15.5,height:4.7,rotation:1.62,kind:'building'},
-   {asset:'building',x:-2,z:-21,height:6.2,rotation:2.82,kind:'building'},
-   {asset:'crashSite',x:8.8,z:-24,height:5.2,rotation:2.15,kind:'wreck'},
-   {asset:'building',x:-11.5,z:-29.5,height:4.3,rotation:1.02,kind:'building'},
-   {asset:'building',x:4.2,z:-34.5,height:5.1,rotation:3.32,kind:'building'},
-   {asset:'crashSite',x:-5.5,z:-39.5,height:4.8,rotation:.55,kind:'wreck'},
-   {asset:'building',x:10.5,z:-44,height:3.8,rotation:2.55,kind:'building'},
-   {asset:'crate',x:-13,z:-16,scale:.62,rotation:1.2,kind:'prop',collision:1},
-   {asset:'crate',x:11,z:-25,scale:.62,rotation:2,kind:'prop',collision:1},
-   {asset:'crate',x:-12,z:-43,scale:.62,rotation:.6,kind:'prop',collision:1},
-   {asset:'crate',x:12,z:-48,scale:.62,rotation:2.8,kind:'prop',collision:1},
-   {asset:'boulders',x:-19,z:-17,scale:1,rotation:.4,kind:'rock',collision:1.8},
-   {asset:'boulders',x:19,z:-21,scale:1,rotation:2.1,kind:'rock',collision:1.8},
-   {asset:'boulders',x:-20,z:-34,scale:.9,rotation:1.4,kind:'rock',collision:1.7},
-   {asset:'boulders',x:20,z:-39,scale:.9,rotation:2.8,kind:'rock',collision:1.7},
+   // Continuous imported modular carriageway: each CC0 road tile is 8 x 8 m,
+   // with dark asphalt, gravel shoulders and kerbs. Keep the road close to spawn.
+   ...[-4,-12,-20,-28,-36,-44,-52].map(z=>({asset:'road',x:0,z,targetSize:8,rotation:0,kind:'road'})),
+   // Tight street walls: imported building façades are close enough to frame the
+   // road instead of leaving the player in an empty field.
+   {asset:'building',x:-7.0,z:-4.5,height:5.8,rotation:Math.PI/2,kind:'building'},
+   {asset:'building',x:7.0,z:-8.5,height:5.6,rotation:-Math.PI/2,kind:'building'},
+   {asset:'building',x:-7.1,z:-14.0,height:5.2,rotation:Math.PI/2,kind:'building'},
+   {asset:'building',x:7.1,z:-18.0,height:5.8,rotation:-Math.PI/2,kind:'building'},
+   {asset:'building',x:-7.0,z:-24.0,height:5.4,rotation:Math.PI/2,kind:'building'},
+   {asset:'building',x:7.0,z:-28.0,height:5.6,rotation:-Math.PI/2,kind:'building'},
+   {asset:'building',x:-7.2,z:-34.0,height:5.8,rotation:Math.PI/2,kind:'building'},
+   {asset:'building',x:7.2,z:-38.0,height:5.2,rotation:-Math.PI/2,kind:'building'},
+   {asset:'building',x:-7.0,z:-44.0,height:5.4,rotation:Math.PI/2,kind:'building'},
+   {asset:'building',x:7.0,z:-48.0,height:5.8,rotation:-Math.PI/2,kind:'building'},
+   // Damaged outpost structures and wreckage remain visible beyond the street.
+   {asset:'crashSite',x:9.8,z:-24,height:5.2,rotation:2.15,kind:'wreck'},
+   {asset:'crashSite',x:-9.8,z:-39.5,height:4.8,rotation:.55,kind:'wreck'},
+   {asset:'crate',x:-5.2,z:-12,scale:.62,rotation:1.2,kind:'prop',collision:1},
+   {asset:'crate',x:5.2,z:-25,scale:.62,rotation:2,kind:'prop',collision:1},
+   {asset:'crate',x:-5.2,z:-43,scale:.62,rotation:.6,kind:'prop',collision:1},
+   {asset:'crate',x:5.2,z:-49,scale:.62,rotation:2.8,kind:'prop',collision:1},
+   {asset:'boulders',x:-15,z:-17,scale:1,rotation:.4,kind:'rock',collision:1.8},
+   {asset:'boulders',x:15,z:-21,scale:1,rotation:2.1,kind:'rock',collision:1.8},
+   {asset:'boulders',x:-16,z:-34,scale:.9,rotation:1.4,kind:'rock',collision:1.7},
+   {asset:'boulders',x:16,z:-39,scale:.9,rotation:2.8,kind:'rock',collision:1.7},
    {asset:'boulders',x:-15,z:-51,scale:.7,rotation:1.1,kind:'rock',collision:1.5},
    {asset:'boulders',x:15,z:-54,scale:.7,rotation:2.4,kind:'rock',collision:1.5},
-   {asset:'crate',x:-4.5,z:-12,scale:.54,rotation:.2,kind:'prop',collision:.8},
-   {asset:'crate',x:3.5,z:-31,scale:.56,rotation:1.4,kind:'prop',collision:.8},
-   {asset:'crate',x:-6,z:-46,scale:.58,rotation:.9,kind:'prop',collision:.8},
-   {asset:'boulders',x:-21,z:6,scale:.8,rotation:2.4,kind:'rock',collision:1.3},
-   {asset:'boulders',x:21,z:7,scale:.8,rotation:.9,kind:'rock',collision:1.3}
+   {asset:'crate',x:-4.5,z:-31,scale:.56,rotation:1.4,kind:'prop',collision:.8},
+   {asset:'crate',x:4.5,z:-46,scale:.58,rotation:.9,kind:'prop',collision:.8}
   ];
   // Mission one is barren moon terrain: industrial wreckage and rock cover, no forest props.
   const chosen=lowPowerDevice?specs.filter((item,index)=>item.kind!=='rock'||index%3===0):specs;
@@ -78,7 +85,7 @@
     const before=new THREE.Box3().setFromObject(model),beforeSize=before.getSize(new THREE.Vector3());
     const maxDim=Math.max(beforeSize.x,beforeSize.y,beforeSize.z,.001);
     // Normalise GLB authoring units so an asset's source scale cannot turn a crate into a shipping container.
-    const targetSize=item.height?item.height:(item.kind==='rock'?3.0*(item.scale||1):1.45*(item.scale||.58)/.58);
+    const targetSize=item.targetSize||(item.height?item.height:(item.kind==='rock'?3.0*(item.scale||1):1.45*(item.scale||.58)/.58));
     const scale=targetSize/(item.height?Math.max(.001,beforeSize.y):maxDim);
     model.scale.setScalar(scale);
     model.updateMatrixWorld(true);
@@ -111,7 +118,7 @@
    }
   }));
   const successful=loaded.filter(Boolean);
-  console.info('OUTWORLD: loaded textured CC0 environment GLBs',successful.length,'of',chosen.length);
+  console.info('OUTWORLD: loaded textured CC0 environment GLBs',successful.length,'of',chosen.length,'including modular street and close façades');
   return {loaded:successful,count:successful.length};
  };
 })();
