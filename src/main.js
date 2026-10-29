@@ -730,8 +730,7 @@ if(assetLoader){
   importedFP.updateMatrixWorld(true);
   importedFP.traverse(o=>{if(o.isMesh){o.renderOrder=1000;o.frustumCulled=false;if(o.material){o.material.depthTest=true;o.material.depthWrite=true;o.material.needsUpdate=true}}});
   fpAssetRig.add(importedFP);
-  // Hide every procedural weapon mesh; the imported arms asset includes its own weapon.
-  weaponRig.traverse(o=>{if(o.isMesh&&o!==fpFlashOuter&&o!==fpFlashCore)o.visible=false});
+  // Keep the built-in rifle visible as a fallback; the external GLB has not rendered reliably in production.
   if(gltf.animations&&gltf.animations.length){
    const mixer=new THREE.AnimationMixer(importedFP);externalMixers.push(mixer);
    const idle=gltf.animations.find(a=>/idle/i.test(a.name))||gltf.animations[0];mixer.clipAction(idle).play();
