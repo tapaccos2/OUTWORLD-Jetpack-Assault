@@ -14,6 +14,18 @@ const referenceCanvas = document.querySelector('#referenceCanvas');
 const referenceTitle = document.querySelector('#referenceTitle');
 const referenceNote = document.querySelector('#referenceNote');
 const referenceToggle = document.querySelector('#referenceToggle');
+const overlayCanvas = document.querySelector('#overlayCanvas');
+const overlayEnabledCheck = document.querySelector('#overlayEnabled');
+const overlayScaleInput = document.querySelector('#overlayScale');
+const overlayRotationInput = document.querySelector('#overlayRotation');
+const overlayOffsetXInput = document.querySelector('#overlayOffsetX');
+const overlayOffsetYInput = document.querySelector('#overlayOffsetY');
+const overlayOpacityInput = document.querySelector('#overlayOpacity');
+const overlayScaleValue = document.querySelector('#overlayScaleValue');
+const overlayRotationValue = document.querySelector('#overlayRotationValue');
+const overlayOffsetXValue = document.querySelector('#overlayOffsetXValue');
+const overlayOffsetYValue = document.querySelector('#overlayOffsetYValue');
+const overlayOpacityValue = document.querySelector('#overlayOpacityValue');
 
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -54,6 +66,7 @@ let currentData = null;
 let currentBounds = null;
 let currentScale = 1;
 let referenceRequestId = 0;
+let referenceAvailable = false;
 
 // Mission-map images available in original-data/misn. The mapping is explicit
 // because original filenames/capitalisation do not follow one uniform pattern.
@@ -125,12 +138,15 @@ function decodeIndexedPcx(buffer) {
 async function loadMapReference(mapName) {
   const requestId = ++referenceRequestId;
   const filename = mapReferences[mapName];
+  referenceAvailable = false;
   referenceCanvas.hidden = true;
+  renderOverlay();
   if (!filename) {
     referenceTitle.textContent = `${mapName.toUpperCase()} / NO MAPPED REFERENCE`;
     referenceNote.textContent = 'No matching original mission-map filename is mapped for this resource. The mesh can still be inspected in top-down view.';
     referenceCanvas.width = 1;
     referenceCanvas.height = 1;
+    renderOverlay();
     return;
   }
   referenceTitle.textContent = `${mapName.toUpperCase()} / ${filename}`;
@@ -142,11 +158,17 @@ async function loadMapReference(mapName) {
     if (requestId !== referenceRequestId) return;
     const size = decodeIndexedPcx(buffer);
     referenceCanvas.hidden = false;
-    referenceNote.textContent = `Original mission/briefing image, ${size.width} × ${size.height}. Use Top-down view to compare broad layout. Image is not a texture and has not been coordinate-registered to the mesh.`;
+    referenceAvailable = true;
+    renderOverlay();
+    referenceNote.textContent = `Original mission/briefing image, ${size.width} × ${size.height}. The candidate RPC surfaces are overlaid for manual alignment; use the sliders to test scale, rotation and offsets. This is a visual calibration aid, not proof of original world coordinates.`;
   } catch (error) {
     if (requestId !== referenceRequestId) return;
     referenceTitle.textContent = `${mapName.toUpperCase()} / REFERENCE UNAVAILABLE`;
     referenceNote.textContent = `Could not load ${filename}: ${error.message}. The 3D mesh remains available for inspection.`;
+    referenceAvailable = false;
+    referenceCanvas.width = 1;
+    referenceCanvas.height = 1;
+    renderOverlay();
     console.warn('Mission reference image could not be loaded', filename, error);
   }
 }
@@ -248,6 +270,75 @@ function surfaceCorners(surface, anchor) {
     y: surface.y - u * surface.sin + v * surface.cos,
     z: surface.heights[i],
   }));
+}
+
+function renderOverlay() {
+  const width = referenceCanvas.width;
+  const height = referenceCanvas.height;
+  if (overlayCanvas.width !== width) overlayCanvas.width = width;
+  if (overlayCanvas.height !== height) overlayCanvas.height = height;
+  const context = overlayCanvas.getContext('2d');
+  context.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+  overlayCanvas.dataset.surfaceCount = '0';
+  overlayCanvas.dataset.rotation = String(Number(overlayRotationInput.value) || 0);
+  overlayCanvas.dataset.scale = String(Number(overlayScaleInput.value) || 100);
+  if (!referenceAvailable || !currentData || width < 2 || height < 2 || !overlayEnabledCheck.checked) return;
+
+  const cornersBySurface = currentData.surfaces.map(surface => surfaceCorners(surface, anchorSelect.value));
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const corners of cornersBySurface) {
+    for (const p of corners) {
+      minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x);
+      minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y);
+    }
+  }
+  const spanX = Math.max(1, maxX - minX);
+  const spanY = Math.max(1, maxY - minY);
+  const centerX = (minX + maxX) / 2;
+  const centerY = (minY + maxY) / 2;
+  const baseScale = Math.min(width / spanX, height / spanY) * 0.82 * (Number(overlayScaleInput.value) / 100);
+  const angle = Number(overlayRotationInput.value) * Math.PI / 180;
+  const cos = Math.cos(angle), sin = Math.sin(angle);
+  const offsetX = Number(overlayOffsetXInput.value) / 100 * width;
+  const offsetY = Number(overlayOffsetYInput.value) / 100 * height;
+  context.globalAlpha = Number(overlayOpacityInput.value) / 100;
+  context.lineWidth = Math.max(1, Math.min(3, width / 900));
+  context.lineJoin = 'round';
+  context.lineCap = 'round';
+
+  for (let i = 0; i < currentData.surfaces.length; i++) {
+    const surface = currentData.surfaces[i];
+    const hue = ((surface.group * 0.618033988749895) % 1) * 360;
+    const projected = cornersBySurface[i].map(p => {
+      const x = p.x - centerX, y = p.y - centerY;
+      const rotatedX = x * cos - y * sin;
+      const rotatedY = x * sin + y * cos;
+      return {
+        x: width / 2 + rotatedX * baseScale + offsetX,
+        y: height / 2 - rotatedY * baseScale + offsetY,
+      };
+    });
+    context.beginPath();
+    context.moveTo(projected[0].x, projected[0].y);
+    for (let j = 1; j < projected.length; j++) context.lineTo(projected[j].x, projected[j].y);
+    context.closePath();
+    context.fillStyle = `hsla(${hue}, 78%, 57%, 0.12)`;
+    context.strokeStyle = `hsla(${hue}, 88%, 70%, 0.92)`;
+    context.fill();
+    context.stroke();
+  }
+  context.globalAlpha = 1;
+  overlayCanvas.dataset.surfaceCount = String(currentData.surfaces.length);
+  overlayCanvas.dataset.rotation = String(Number(overlayRotationInput.value) || 0);
+  overlayCanvas.dataset.scale = String(Number(overlayScaleInput.value) || 100);
+}
+
+function updateOverlayOutputs() {
+  overlayScaleValue.textContent = `${overlayScaleInput.value}%`;
+  overlayRotationValue.textContent = `${overlayRotationInput.value}°`;
+  overlayOffsetXValue.textContent = `${overlayOffsetXInput.value}%`;
+  overlayOffsetYValue.textContent = `${overlayOffsetYInput.value}%`;
+  overlayOpacityValue.textContent = `${overlayOpacityInput.value}%`;
 }
 
 function getSharedEdgeStats(data, anchor) {
@@ -398,8 +489,9 @@ function makeMesh() {
     `Anchor: ${anchor} | Diagonal: ${diagonal} | Mesh: ${currentData.surfaces.length * 4} vertices / ${currentData.surfaces.length * 2} triangles\n` +
     `Bounds: ${Math.round(spanX)} × ${Math.round(spanY)} × ${Math.round(spanZ)} raw units | display scale ${currentScale.toFixed(5)}\n` +
     `Shared edges (corner): ${cornerStats.shared}, exact height matches: ${cornerStats.exact} | (centre): ${centerStats.shared}, exact: ${centerStats.exact}\n` +
-    `Field checks: dimensions + direction + normal + corner heights agree across the resource inventory; visual match to original terrain still pending.`
+`Field checks: dimensions + direction + normal + corner heights agree across the resource inventory; visual match to original terrain still pending.`
   );
+  renderOverlay();
 }
 
 async function loadMap() {
@@ -429,6 +521,23 @@ referenceToggle.addEventListener('click', () => {
   referencePanel.hidden = !referencePanel.hidden;
   referenceToggle.textContent = referencePanel.hidden ? 'Show map reference' : 'Hide map reference';
 });
+for (const control of [overlayEnabledCheck, overlayScaleInput, overlayRotationInput, overlayOffsetXInput, overlayOffsetYInput, overlayOpacityInput]) {
+  control.addEventListener('input', () => {
+    updateOverlayOutputs();
+    renderOverlay();
+  });
+}
+document.querySelector('#overlayReset').addEventListener('click', () => {
+  overlayEnabledCheck.checked = true;
+  overlayScaleInput.value = '100';
+  overlayRotationInput.value = '0';
+  overlayOffsetXInput.value = '0';
+  overlayOffsetYInput.value = '0';
+  overlayOpacityInput.value = '75';
+  updateOverlayOutputs();
+  renderOverlay();
+});
+updateOverlayOutputs();
 document.querySelector('#reset').addEventListener('click', () => { if (currentData) makeMesh(); });
 for (const control of [anchorSelect, diagonalSelect, groupColorsCheck, normalsCheck]) control.addEventListener('change', () => { if (currentData) makeMesh(); });
 wireframeCheck.addEventListener('change', () => { if (terrainMesh) terrainMesh.material.wireframe = wireframeCheck.checked; });
