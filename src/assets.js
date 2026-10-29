@@ -36,7 +36,7 @@
    crate:'https://cdn.3dassets.dev/assets/17350/v1/model.glb'
   };
   const specs=[
-   {asset:'crashSite',x:0,z:-54,scale:.62,rotation:0,kind:'scene'},
+   // Omit the bundled crash-site scene: its large pale base slab reads as a floating platform.
    {asset:'canopy',x:-17,z:-19,height:8.5,rotation:.45,kind:'tree',collision:1.6},
    {asset:'buttress',x:18,z:-22,height:7.4,rotation:2.3,kind:'tree',collision:1.7},
    {asset:'canopy',x:-19,z:-37,height:8.0,rotation:2.6,kind:'tree',collision:1.6},
