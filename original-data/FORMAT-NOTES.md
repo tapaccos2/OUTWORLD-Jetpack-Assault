@@ -50,122 +50,65 @@ node tools/inspect-original-data.mjs original-data > original-data-inventory.jso
 The script inventories readable strings and raw headers. It is deliberately described as an inventory tool, not a complete decoder.
 
 
-## Follow-up: terrain byte-pattern comparison
+## Follow-up: terrain signature and tagged-record analysis
 
-A full base64 fetch and byte scan of the ten `.GRY` files whose bodies are accessible found the byte sequence `00 A0 B9 B7` in **all ten**. The first occurrence and total occurrence count differ by file:
+A broader scan corrected the earlier interpretation of `00 A0 B9 B7` as a fixed four-byte marker. The invariant is the **three-byte suffix `A0 B9 B7`**, preceded by a variable byte. Treating the preceding byte as part of the signature gives a record-start pattern `?? A0 B9 B7`.
 
-| File | First occurrence | Total occurrences |
-|---|---:|---:|
-| `Q.gry` | 92 | 2 |
-| `a2.gry` | 52 | 1 |
-| `d4.gry` | 280 | 6 |
-| `j1.gry` | 32 | 1 |
-| `o2.gry` | 92 | 2 |
-| `o5.gry` | 32 | 1 |
-| `o7.gry` | 86 | 1 |
-| `r1.gry` | 32 | 1 |
-| `r2.gry` | 72 | 1 |
-| `r6.gry` | 52 | 1 |
+### Record-start and `fact` correlation
 
-This corrects the earlier note that no match was found in `o7.gry`: that earlier scan missed the occurrence at offset 86. The large `oc.gry` file remains unavailable through the current binary-fetch path, so no conclusion is drawn about it.
+Across the ten readable terrain files, the scanner found 35 starts of the `?? A0 B9 B7` pattern. Thirty-four of those are followed exactly 59 bytes later by ASCII `fact`, then the four-byte little-endian length `04 00 00 00`, then a four-byte payload. The single exception is `o5.gry`: its pattern at offset 32 has no matching `fact` tag.
 
-### What the bytes establish—and what they do not
+| File | Signature-start offsets | Signature count | `fact`/length-4 count | Paired records |
+|---|---|---:|---:|---:|
+| `Q.gry` | 92, 26108, 42154, 60528 | 4 | 4 | 4 |
+| `a2.gry` | 52, 16484 | 2 | 2 | 2 |
+| `d4.gry` | 280, 26032, 54088, 74537, 84101, 113985, 136517, 166997, 170977, 176203, 193175, 267511, 403297 | 13 | 13 | 13 |
+| `j1.gry` | 32 | 1 | 1 | 1 |
+| `o2.gry` | 92, 24362, 31475, 59201 | 4 | 4 | 4 |
+| `o5.gry` | 32 | 1 | 0 | 0 |
+| `o7.gry` | 86, 11502, 22232, 84932 | 4 | 4 | 4 |
+| `r1.gry` | 32 | 1 | 1 | 1 |
+| `r2.gry` | 72, 5298, 24900 | 3 | 3 | 3 |
+| `r6.gry` | 52, 11477 | 2 | 2 | 2 |
 
-The bytes beginning at the first occurrence share a substantial identical prefix across the files, including the sequence `00 A0 B9 B7 00 00 00 02 00 02 00 01 00 22 56 00 00 AB 2B 00`. That repeatability is a stronger clue than the marker alone. However, the sequence also appears again later in `Q.gry`, `o2.gry`, and multiple times in `d4.gry`. Therefore, **it must not be treated as a proven one-time section boundary**. It may be a recurring structure or a pattern that occurs inside a data stream; its role is still unknown.
+All 34 `fact` candidates are paired with the variable-leading-byte signature at `factOffset - 59`. This is much stronger than the earlier exact-byte scan, which missed entries whose leading byte was not `00`.
 
-The bytes before the first occurrence vary in length. Some files contain repeated 20-byte candidate blocks in that region, but the `d4.gry` layout does not fit a simple fixed-count interpretation. Their fields remain uninterpreted.
+### The indexed record fields
 
-The tool `tools/inspect-gry-structure.mjs` now reports every occurrence, the common header, candidate pre-marker blocks, and how many bytes match from the first occurrence across the supplied files. Run it with:
+At each paired record start, the bytes after the variable-leading-byte signature include a two-byte sequence that increments from 0, followed by the constant bytes `00 02`. For example, the first four records in `Q.gry` show `00 00 00 02`, `00 01 00 02`, `00 02 00 02`, and `00 03 00 02` at relative offsets `+4..+7`. `d4.gry` increments through index 12. This suggests these are indexed records, although the index's exact byte order and the meaning of the constant `2` have not been proven.
+
+Relative to each record start:
+
+| Relative offset | Observed content | Interpretation status |
+|---:|---|---|
+| `+0` | Variable byte | Unknown field; do not treat as a fixed magic byte |
+| `+1..+3` | `A0 B9 B7` | Stable three-byte signature suffix |
+| `+4..+5` | Two bytes encoding a sequential-looking index | Likely record index; byte order unconfirmed |
+| `+6..+7` | `00 02` | Constant in the paired records; meaning unknown |
+| `+8..+58` | Repeated binary structure | Field boundaries and meanings unknown |
+| `+59..+62` | ASCII `fact` | Repeated tag |
+| `+63..+66` | `04 00 00 00` | Little-endian length value 4 |
+| `+67..+70` | Four variable bytes | Payload meaning unknown |
+
+The `fact` count matches the third header value in eight files, is one lower in `d4.gry`, and is zero in `o5.gry` despite that file's third header value being one. This is a useful correlation, not yet a complete rule; `d4.gry` and `o5.gry` appear to be variants or exceptions.
+
+### Header region before the first signature
+
+The first signature begins after a 12-byte header and a region whose byte count matches this formula in all ten readable files:
+
+`bytes before signature after the 12-byte header = (header value 2 × 20) + ((header value 3 − header value 2) × 14)`
+
+Seven files have equal second and third header values, so the 14-byte contribution is zero. `o7.gry` has values 3 and 4, giving `3 × 20 + 1 × 14 = 74` bytes. `d4.gry` has values 12 and 14, giving `12 × 20 + 2 × 14 = 268` bytes. The inspector now emits the candidate 20-byte and 14-byte blocks separately, both as raw bytes and as little-endian 16-bit/32-bit values. Their semantic fields remain unknown.
+
+### Tools and limits
+
+Run both scanners from the repository root:
 
 ```sh
 node tools/inspect-gry-structure.mjs original-data/gry/*.gry
-```
-
-This remains byte-level format investigation—not a terrain decoder. The next useful step is to identify the shared preamble and then validate any proposed fields against file lengths and the terrain/mission resources. No terrain geometry has yet been reconstructed.
-
-### Cross-file signature result
-
-Comparing bytes relative to each file's first `00 A0 B9 B7` occurrence shows that nine files (`Q.gry`, `a2.gry`, `d4.gry`, `j1.gry`, `o2.gry`, `o7.gry`, `r1.gry`, `r2.gry`, and `r6.gry`) have the same following 64-byte sequence. `o5.gry` shares the initial four-byte pattern but diverges at relative byte 7. In the nine-file sequence, the ASCII bytes `66 61 63 74` (`fact`) begin at relative offset 59. They are followed by `04 00 00 00`, which has the shape of a little-endian length value of 4, then a four-byte payload. This is consistent with a tagged field/chunk, but one example is not enough to claim the whole file uses a standard RIFF container.
-
-This makes the first occurrence look more like a shared structured preamble/signature than a random isolated match, but it still does not identify the fields or prove that the marker begins a complete section. The updated inspector now groups files by their 64-byte signature at the first occurrence so the comparison can be repeated locally.
-
-
-The `fact` tag observation narrows the next test: scan for other printable four-byte tags followed by plausible lengths and check whether their boundaries account for the remaining bytes. The `fact` tag's apparent length is grounded in its actual byte sequence; the overall chunk scheme remains unproven.
-
-### Candidate four-byte tags
-
-A second scan searched for four alphabetic ASCII bytes followed by a little-endian 32-bit value that would fit as a payload length. It found only the candidate tag `fact` in the accessible terrain files:
-
-| File | `fact` candidates |
-|---|---:|
-| `Q.gry` | 4 |
-| `a2.gry` | 2 |
-| `d4.gry` | 13 |
-| `j1.gry` | 1 |
-| `o2.gry` | 4 |
-| `o5.gry` | 0 |
-| `o7.gry` | 4 |
-| `r1.gry` | 1 |
-| `r2.gry` | 3 |
-| `r6.gry` | 2 |
-
-Every candidate has a length value of 4 and a four-byte payload that fits inside its file. The repeated tag and repeated length make a deliberate field/chunk interpretation plausible, but the scan only filters for candidate shapes; it does not prove the fields are chunks or explain why `o5.gry` differs. The scanner is available at `tools/scan-gry-tags.mjs`:
-
-```sh
 node tools/scan-gry-tags.mjs original-data/gry/*.gry
 ```
 
-At this point the useful lead is not simply the `00 A0 B9 B7` sequence: it is the combination of a shared terrain preamble, repeated `fact`/length-4 candidates, and different patterns in `o5.gry`. The next validation should determine whether these candidate offsets form a consistent record sequence and whether the four-byte payload values correlate with the terrain header values or file lengths.
+The per-file measurements are summarized in `original-data/GRY-STRUCTURE-INDEX.md`. The 2,603,540-byte `oc.gry` is present in the repository, but its binary body could not be retrieved through the current GitHub file-fetch path; no claims are made about its internal structure.
 
-### Correlation between the marker and `fact`
-
-A cross-offset check produced a stronger relationship: **every one of the 16 `00 A0 B9 B7` occurrences in nine terrain files is exactly 59 bytes before a `fact` tag whose following length value is 4**. The pairings are present in `Q.gry` (2), `a2.gry` (1), `d4.gry` (6), `j1.gry` (1), `o2.gry` (2), `o7.gry` (1), `r1.gry` (1), `r2.gry` (1), and `r6.gry` (1). `o5.gry` has one marker occurrence but no candidate `fact` tag and its 64-byte signature differs from the other files.
-
-This is now a repeatable structural relationship, not just a shared byte sequence. It suggests the marker begins a 59-byte structure that ends at a `fact`/length-4 field. The exact meanings of those 59 bytes and the four-byte payload are still unknown, so the parser does not assign semantics yet. The tag scanner now reports marker offsets and matching marker-to-tag pairs explicitly.
-
-### Provisional byte layout around the paired marker/tag
-
-For the nine files with the common signature, the repeated region can be described by offsets relative to the `00 A0 B9 B7` marker:
-
-| Relative offset | Observed bytes / value | Status |
-|---:|---|---|
-| `+0..+3` | `00 A0 B9 B7` | Repeated marker; meaning unknown |
-| `+4..+7` | `00 00 00 02` | Constant in the nine-file variant; changes to `00 00 00 01` in `o5.gry` |
-| `+8..+11` | `00 02 00 01` | Constant in the nine-file variant; differs in `o5.gry` |
-| `+12..+58` | Shared binary values | Field boundaries and meanings unknown |
-| `+59..+62` | ASCII `fact` | Repeated tag at the same relative position |
-| `+63..+66` | `04 00 00 00` | Little-endian integer 4, consistent with a four-byte payload length |
-| `+67..+70` | Four variable bytes | Payload meaning unknown |
-
-This is an offset map, not a semantic schema. In particular, the four-byte payload is not yet established as a size, checksum, coordinate, or float. The next stage must explain how the post-payload bytes are organized and validate any candidate interpretation against multiple terrain files.
-
-### Header count versus pre-marker records
-
-In seven files, the second little-endian 16-bit header value multiplied by 20 exactly equals the number of bytes between the 12-byte header and the first marker. That is consistent with—but does not prove—a count of 20-byte records. Two files are exceptions: `o7.gry` has 14 additional bytes beyond that calculation, and `d4.gry` has 28 additional bytes. The relationship is:
-
-| File | Second header value | Bytes before first marker (after byte 12) | Value × 20 | Difference |
-|---|---:|---:|---:|---:|
-| `Q.gry` | 4 | 80 | 80 | 0 |
-| `a2.gry` | 2 | 40 | 40 | 0 |
-| `d4.gry` | 12 | 268 | 240 | 28 |
-| `j1.gry` | 1 | 20 | 20 | 0 |
-| `o2.gry` | 4 | 80 | 80 | 0 |
-| `o5.gry` | 1 | 20 | 20 | 0 |
-| `o7.gry` | 3 | 74 | 60 | 14 |
-| `r1.gry` | 1 | 20 | 20 | 0 |
-| `r2.gry` | 3 | 60 | 60 | 0 |
-| `r6.gry` | 2 | 40 | 40 | 0 |
-
-The terrain inspector now prints this comparison alongside the raw candidate blocks. The mismatches in `d4.gry` and `o7.gry` are why the code deliberately avoids treating the header value as a confirmed record count.
-
-### A better fit for the pre-marker region
-
-The two exceptions above are not arbitrary: **all ten readable files fit the same byte-count formula exactly**:
-
-`bytes before marker after the 12-byte header = (header value 2 × 20) + ((header value 3 − header value 2) × 14)`
-
-For nine files, the two header values are equal, so the 14-byte contribution is zero. In `o7.gry`, the values are 3 and 4, giving `3 × 20 + 1 × 14 = 74` bytes. In `d4.gry`, they are 12 and 14, giving `12 × 20 + 2 × 14 = 268` bytes. These exactly match the measured distances to the first marker in both files.
-
-This strongly supports a pre-marker region composed of a count of 20-byte units plus a difference-count of 14-byte units. It does **not** yet establish the meaning of either record type or prove that the units are records rather than other fixed-width fields. The inspector now checks this formula for every input file and reports whether it matches.
-
-The inspector also now dumps the candidate 14-byte blocks as seven little-endian 16-bit values. In `o7.gry`, the single block is at offset 72; in `d4.gry`, the two blocks are at offsets 252 and 266. Their values are visible for comparison, but field meanings are still unassigned.
+This is still format analysis, not a terrain decoder. No vertices, heights, triangles, materials, or coordinates have been reconstructed. The next step is to determine the meaning of the indexed record fields and validate the post-`fact` payloads against the remaining data.
