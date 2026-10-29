@@ -718,10 +718,16 @@ if(assetLoader){
  },undefined,e=>console.error('OUTWORLD soldier asset failed to load; procedural player remains hidden.',e));
  assetLoader.load(firstPersonAssetURL,gltf=>{
   importedFP=gltf.scene;
-  // This is an authored FPS weapon rig (rifle + both gloved arms), not a standing arms mesh.
-  // Its source coordinates use +Y up and muzzle -Z forward; preserve that authored pose and scale.
-  importedFP.scale.setScalar(2.0);
-  importedFP.position.set(0,0,0);
+  // Frame the imported FPS rig from its actual bounds instead of assuming its authoring scale.
+  // Keep the complete rifle and both arms in the camera frustum even if the source GLB scale changes.
+  importedFP.updateMatrixWorld(true);
+  const fpBounds=new THREE.Box3().setFromObject(importedFP);
+  const fpSize=fpBounds.getSize(new THREE.Vector3());
+  const fpCenter=fpBounds.getCenter(new THREE.Vector3());
+  const fpScale=Math.min(.95/Math.max(fpSize.x,.001),.62/Math.max(fpSize.y,.001),1.25/Math.max(fpSize.z,.001));
+  importedFP.scale.setScalar(fpScale);
+  importedFP.position.set(-fpCenter.x*fpScale,-fpCenter.y*fpScale,-fpCenter.z*fpScale);
+  importedFP.updateMatrixWorld(true);
   importedFP.traverse(o=>{if(o.isMesh){o.renderOrder=1000;o.frustumCulled=false;if(o.material){o.material.depthTest=true;o.material.depthWrite=true;o.material.needsUpdate=true}}});
   fpAssetRig.add(importedFP);
   // Hide every procedural weapon mesh; the imported arms asset includes its own weapon.
