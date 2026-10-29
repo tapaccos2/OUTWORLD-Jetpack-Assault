@@ -53,7 +53,7 @@ const records = files.map(file => {
   const header = [u16(b, 4), u16(b, 6), u16(b, 8), u16(b, 10)];
   const candidateRecords = [];
   if (firstMarker !== null && firstMarker >= 12) {
-    const fullRecords = Math.floor((firstMarker - 12) / 20);
+    const fullRecords = Math.min(Math.floor((firstMarker - 12) / 20), header[1]);
     for (let n = 0; n < Math.min(fullRecords, 64); n++) {
       const o = 12 + n * 20;
       candidateRecords.push({
