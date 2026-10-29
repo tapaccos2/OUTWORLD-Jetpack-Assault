@@ -84,7 +84,7 @@ const records = files.map(file => {
     bytesBeforeFirstMarker: firstMarker === null ? null : firstMarker - 12,
     candidate20ByteRecordsBeforeMarker: candidateRecords,
     candidate14ByteBlocksAfter20ByteRegion: candidate14ByteBlocks,
-    complete20ByteBlocksBeforeMarker: firstMarker === null ? null : Math.floor((firstMarker - 12) / 20),
+    candidate20ByteRecordCount: candidateRecords.length,
     headerSecondU16Times20: firstMarker === null ? null : header[1] * 20,
     bytesBeyondHeaderSecondU16Times20: firstMarker === null ? null : (firstMarker - 12) - (header[1] * 20),
     headerThirdMinusSecondTimes14: firstMarker === null ? null : (header[2] - header[1]) * 14,
