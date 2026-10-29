@@ -844,6 +844,7 @@ function update(dt){
  if(jumpQueued&&onGround){vy=7.3;onGround=false}jumpQueued=false;vy-=18*dt;player.position.y+=vy*dt;if(player.position.y<=0){player.position.y=0;vy=0;onGround=true}
  player.rotation.y=yaw+Math.PI;player.position.y=Math.max(0,player.position.y);
  const lookDir=new THREE.Vector3(-Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),-Math.cos(yaw)*Math.cos(pitch));if(thirdPerson){const behind=4.9,high=2.45,shoulder=1.45;const desiredCam=new THREE.Vector3(player.position.x+Math.sin(yaw)*behind+Math.cos(yaw)*shoulder,player.position.y+high,player.position.z+Math.cos(yaw)*behind-Math.sin(yaw)*shoulder);camera.position.lerp(desiredCam,1-Math.exp(-dt*8));const aim=player.position.clone().add(new THREE.Vector3(0,1.4,0)).add(lookDir.clone().multiplyScalar(6.2)).add(new THREE.Vector3(Math.cos(yaw)*.85,0,-Math.sin(yaw)*.85));camera.lookAt(aim)}else{camera.position.set(player.position.x,player.position.y+2.15,player.position.z);camera.lookAt(camera.position.clone().add(lookDir.multiplyScalar(25)))}
+ const moving=Math.abs(fwd)+Math.abs(side)>.1;
  weaponRig.visible=!thirdPerson;armRig.visible=false;fpAssetRig.visible=!thirdPerson;marineRifle.visible=false;
  // The imported first-person arms and rifle follow look pitch and locomotion as one authored viewmodel.
  const viewGait=performance.now()*.010;
@@ -851,7 +852,6 @@ function update(dt){
  fpAssetRig.position.set(moving?Math.sin(viewGait*.5)*.012:0,-.34+(moving?Math.abs(Math.sin(viewGait))*.014:0),-.58+(fireRecoil*.045));
  // Prevent the marine's own helmet/visor and armour from clipping across the first-person view.
  player.visible=thirdPerson;
- const moving=Math.abs(fwd)+Math.abs(side)>.1;
  // Drive the imported character's authored locomotion clips; do not fake walking by bobbing the blockout.
  if(importedSoldier?.userData.locomotion){
   const rig=importedSoldier.userData.locomotion;
