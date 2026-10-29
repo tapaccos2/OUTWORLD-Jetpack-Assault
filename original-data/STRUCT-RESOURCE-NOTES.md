@@ -69,6 +69,12 @@ Next:
 
 No model, texture, animation, terrain, or mission-logic decoder is claimed yet. The `.GRY` files are sound-effect audio containers, not terrain geometry. These notes distinguish confirmed byte layout from fields whose meanings remain unknown.
 
+## Executable format-signature lead
+
+Static inspection of `outwars.exe` found checks for `DCPM` followed by `C` in the database parser, and `CPMG` / `CPMR` followed by `C` in separate group and ramp parsers. The corresponding loose files begin with `DCPMC`, `CPMGC`, and `CPMRC`. The map-named `.DPC` files are therefore the next assets to inspect for scene data. Their headers contain pointer-like values that map into each file using the candidate base `0x80019c04`; `tools/inspect-dpc-headers.mjs` reports the raw values and candidate offsets without assigning semantic fields.
+
+This is a file-format lead, not a terrain decoder. The actual terrain role of the map-named `.DPC` files still needs validation, and the `.GRY` files are sound-effect audio.
+
 ## Validation update: `units.ff`
 
 Validated locally with `tools/inspect-ff-archives.mjs` on 2026-10-29. The reported archive is 9,468,892 bytes and passes every current directory-table check:
