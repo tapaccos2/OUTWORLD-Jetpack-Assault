@@ -54,7 +54,15 @@ node tools/inspect-gry-blocks.mjs original-data/gry/*.gry
 
 Legacy command retained for compatibility; it now delegates to the audio-aware inspector. The previous generic-compression and terrain-block interpretation was incorrect. Use `inspect-gry-audio.mjs` directly for new work.
 
-## 7. Validate and extract FF archive resources
+## 7. Inspect map-named DPC database headers
+
+```sh
+node tools/inspect-dpc-headers.mjs original-data/structs/*.dpc
+```
+
+Checks the `DCPMC` signature and reports pointer-like header fields resolved against the observed base `0x80019c04`. This is a pointer-offset probe only: it does not assign meanings to sections or decode terrain geometry.
+
+## 8. Validate and extract FF archive resources
 
 First validate the archive directory and list resource offsets:
 
@@ -71,7 +79,7 @@ node tools/extract-ff-resources.mjs original-data/motion.ff original-data/shelld
 Try `units.ff` separately as well. The extractor refuses to extract an archive if its count, table boundaries, monotonic offsets, or empty-name EOF sentinel do not match the observed format. A failed validation means this layout has not been established for that archive; it does not mean the archive is corrupt. Extracted files are raw resource payloads and may need further format-specific decoding.
 
 
-## 8. Cross-reference resource names (with binary-texture false-positive control)
+## 9. Cross-reference resource names (with binary-texture false-positive control)
 
 Run the scanner:
 
