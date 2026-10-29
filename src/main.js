@@ -629,26 +629,30 @@ if(window.GLTFLoader){
 
 
 const player=soldier(false);
-// Reuse the marine's actual arm meshes, scaled down to a true first-person weapon pose.
-if(player.userData.arms&&player.userData.arms.length===2){
- const cloneArmMeshes=source=>{const arm=new THREE.Group();source.children.forEach(child=>arm.add(child.clone(true)));return arm};
- const leftArm=cloneArmMeshes(player.userData.arms[0]);
- const rightArm=cloneArmMeshes(player.userData.arms[1]);
- for(const arm of [leftArm,rightArm]){
-  // Full-body limb dimensions are far too large at camera scale; keep a compact forearm/hand silhouette.
-  arm.rotation.set(0,Math.PI,0);arm.scale.setScalar(.20);
-  arm.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;o.renderOrder=1000;if(o.material){o.material=o.material.clone();o.material.depthTest=false;o.material.depthWrite=false}}});
-  armRig.add(arm);
- }
- // Hands: left supports the forward handguard; right meets the trigger grip.
- leftArm.position.set(.23,-.10,-1.02);
- rightArm.position.set(.34,-.15,-.80);
- leftArm.rotation.z=.06;
- rightArm.rotation.z=-.04;
- const leftElbow=leftArm.children.find(o=>o.isGroup),rightElbow=rightArm.children.find(o=>o.isGroup);
- if(leftElbow){leftElbow.rotation.x=-.04;leftElbow.rotation.z=-.02}
- if(rightElbow){rightElbow.rotation.x=-.04;rightElbow.rotation.z=.02}
+// Purpose-built first-person forearms and gloves. Do not clone full-body arm pivots:
+// their character-space dimensions and pivot origins are unsuitable for a camera viewmodel.
+const fpArmor=new THREE.MeshStandardMaterial({color:0x34413f,metalness:.58,roughness:.48});
+const fpEdge=new THREE.MeshStandardMaterial({color:0x788982,metalness:.62,roughness:.38});
+const fpGlove=new THREE.MeshStandardMaterial({color:0x151b1a,metalness:.12,roughness:.88});
+const fpLight=new THREE.MeshStandardMaterial({color:0x55d9d1,emissive:0x0d514c,emissiveIntensity:.8,metalness:.25,roughness:.35});
+function fpPart(parent,geo,mat,pos,rot){const m=new THREE.Mesh(geo,mat);m.position.set(...pos);if(rot)m.rotation.set(...rot);m.renderOrder=1001;m.frustumCulled=false;m.castShadow=false;m.receiveShadow=false;mat.depthTest=false;mat.depthWrite=false;parent.add(m);return m}
+function makeFPArm(side){
+ const arm=new THREE.Group();armRig.add(arm);
+ // Compact diagonal forearm enters from the lower edge, with layered armour and a visible glove.
+ const x=side<0?-.24:.28;
+ const sleeve=fpPart(arm,new THREE.CapsuleGeometry(.075,.31,4,8),fpArmor,[x,-.30,-.57],[0,0,side<0?-.34:.27]);
+ const plate=fpPart(arm,new THREE.BoxGeometry(.17,.20,.065),fpEdge,[x,-.24,-.57],[0,0,side<0?-.34:.27]);
+ fpPart(arm,new THREE.BoxGeometry(.12,.14,.035),fpArmor,[x,-.19,-.60],[0,0,side<0?-.34:.27]);
+ fpPart(arm,new THREE.BoxGeometry(.105,.13,.14),fpGlove,[x+(side<0?.07:-.045),-.17,-.76],[.18,0,side<0?-.18:.12]);
+ // Knuckle plates and cyan suit status marker make the gloves read clearly against the rifle.
+ for(let i=0;i<3;i++)fpPart(arm,new THREE.BoxGeometry(.025,.045,.045),fpEdge,[x+(side<0?.045:-.015)+i*.025,-.145,-.805],[0,0,.08]);
+ fpPart(arm,new THREE.BoxGeometry(.045,.018,.07),fpLight,[x,-.15,-.60],[0,0,side<0?-.34:.27]);
+ return arm;
 }
+const leftArm=makeFPArm(-1),rightArm=makeFPArm(1);
+// Support hand approaches the front handguard; trigger hand sits under the receiver/grip.
+leftArm.position.set(.02,.015,-.04);
+rightArm.position.set(.01,-.015,.02);
 
 // Third-person rifle mounted to the marine's forward hand; visible only in chase view.
 const marineRifle=new THREE.Group();
