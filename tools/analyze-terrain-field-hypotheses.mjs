@@ -99,6 +99,14 @@ function inspectPair(gpcPath, rpcPath) {
     orientationNorms.push(norm);
     if (Math.abs(norm - 4095) <= 2) orientationNormsWithinTwoOf4095++;
   }
+  const normalNorms = [];
+  let normalNormsWithinTwoOf4095 = 0;
+  for (let i = 0; i < rc; i++) {
+    const ro = 20 + i * 40;
+    const norm = Math.hypot(R.getInt16(ro + 10, true), R.getInt16(ro + 12, true), R.getInt16(ro + 14, true));
+    normalNorms.push(norm);
+    if (Math.abs(norm - 4095) <= 2) normalNormsWithinTwoOf4095++;
+  }
   const duplicatePositionGroups = [...positionSignatures.values()].filter(values => values.length > 1);
   const duplicatePositionGroupsSameCorners = duplicatePositionGroups.filter(values => new Set(values).size === 1).length;
   const duplicatePositionGroupsDifferentCorners = duplicatePositionGroups.filter(values => new Set(values).size > 1).length;
@@ -115,6 +123,13 @@ function inspectPair(gpcPath, rpcPath) {
       minimumMagnitude: Math.min(...orientationNorms),
       maximumMagnitude: Math.max(...orientationNorms),
       interpretation: 'Consistent with fixed-point sine/cosine components; confirmed by executable setter calls to the sine/cosine lookup routines.',
+    },
+    normalVectorAtRpcOffsets10To14: {
+      recordsWithinTwoOfMagnitude4095: normalNormsWithinTwoOf4095,
+      totalRecords: rc,
+      minimumMagnitude: Math.min(...normalNorms),
+      maximumMagnitude: Math.max(...normalNorms),
+      interpretation: 'Consistent with a fixed-point 3D unit normal; flat surfaces often use (0, 0, 4095).',
     },
     duplicatePositionAnalysis: {
       uniquePositions: positionSignatures.size,
