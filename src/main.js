@@ -637,7 +637,7 @@ weaponRig.traverse(o=>{if(o.isMesh&&o!==fpFlashOuter&&o!==fpFlashCore)o.visible=
 // Imported character and first-person weapon assets only. No procedural soldier or viewmodel geometry.
 armRig.visible=false;
 const fpAssetRig=new THREE.Group();camera.add(fpAssetRig);
-fpAssetRig.position.set(0,-.42,-.72);
+fpAssetRig.position.set(0,-.34,-.58);
 fpAssetRig.scale.setScalar(1);
 const assetLoader=window.GLTFLoader?new window.GLTFLoader():null;
 const externalMixers=[];
@@ -672,8 +672,8 @@ if(assetLoader){
  },undefined,e=>console.error('OUTWORLD soldier asset failed to load; procedural player remains hidden.',e));
  assetLoader.load(firstPersonAssetURL,gltf=>{
   importedFP=gltf.scene;
-  normalizeGLB(importedFP,.95);
-  importedFP.traverse(o=>{if(o.isMesh){o.renderOrder=1000;o.frustumCulled=false;if(o.material){o.material.depthTest=false;o.material.depthWrite=false}}});
+  normalizeGLB(importedFP,.42);
+  importedFP.traverse(o=>{if(o.isMesh){o.renderOrder=1000;o.frustumCulled=false;if(o.material){o.material.depthTest=true;o.material.depthWrite=true;o.material.needsUpdate=true}}});
   fpAssetRig.add(importedFP);
   // Hide every procedural weapon mesh; the imported arms asset includes its own weapon.
   weaponRig.traverse(o=>{if(o.isMesh&&o!==fpFlashOuter&&o!==fpFlashCore)o.visible=false});
