@@ -4,7 +4,7 @@
 
 The repository now contains 828 files under `original-data/`, including:
 
-- 11 terrain `.GRY` files
+- 11 sound-effect audio `.GRY` containers
 - 38 mission `.MIS` files across `misn/` and `netmisn/`
 - 320 `.PCX` images
 - 266 `.TXT` files
