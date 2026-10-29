@@ -3,11 +3,11 @@
  window.loadCombatModels=async function(THREE,enemies){
   if(!window.GLTFLoader)return [];
   const loader=new window.GLTFLoader(), names=['minion/minion-a01.glb','minion/minion-a02.glb','minion/minion-b01.glb','minion/minion-b02.glb','minion/minion-c01.glb','minion/minion-d01.glb'];
-  const cache=await Promise.all(names.map(async url=>{try{return (await loader.loadAsync(ROOT+url)).scene}catch(e){console.warn('Could not load character model',url,e);return null}}));
+  const cache=await Promise.all(names.map(async url=>{try{return await loader.loadAsync(ROOT+url)}catch(e){console.warn('Could not load character model',url,e);return null}}));
   const mixers=[];
   enemies.forEach((enemy,index)=>{
    const source=cache[index%cache.length];if(!source)return;
-   const model=source.clone(true);model.updateMatrixWorld(true);
+   const model=source.scene.clone(true);model.updateMatrixWorld(true);
    const bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3());
    const height=Math.max(size.y,.01);model.scale.setScalar(2.05/height);model.updateMatrixWorld(true);
    const scaledBounds=new THREE.Box3().setFromObject(model);model.position.y-=scaledBounds.min.y;
