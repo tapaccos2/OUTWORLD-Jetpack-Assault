@@ -1,0 +1,6 @@
+There's a name for someone with your shooting average on the battlefield.  He's called "a corpse." 
+
+· You need to make sure that you kill all 8 targets, the flying drone, and both towers.  
+· You kill the three flare targets by hitting the lit moving portion, not the main body.  The other five targets (including the moving tracked target) are killed more easily.  
+· The flying drone is summoned by landing on the final platform. It takes quite a few hits to kill it. You should use your autorifle and grenade launcher for this purpose.
+· Place your timed charges on top of the two towers to guarantee success. Make sure you are clear of the area before they go off - while these are only simulated weapons, we'll simulate your death if you get caught in the blast radius!

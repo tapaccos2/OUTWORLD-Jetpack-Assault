@@ -1,0 +1,9 @@
+MISSION OBJECTIVES
+
+1. Destroy enemy flyers.
+
+2. Destroy gun turrets.
+
+3. Destroy missile-launching defenders.
+
+4. Wait for strike ship to destroy barrier.

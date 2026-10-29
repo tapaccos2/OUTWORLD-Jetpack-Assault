@@ -1,0 +1,3 @@
+MISSION OBJECTIVE
+
+1. Use the rocket pack to jump from pillar to pillar along the marked course, reaching the last pillar before the allotted time elapses. The remaining pillars will appear on your tracker screen and HUD as blue diamonds. There are fourteen pillars altogether.

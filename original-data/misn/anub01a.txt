@@ -1,0 +1,3 @@
+MISSION OBJECTIVE
+
+1. Conduct a search for surviving colonists, checking all locator beacon positions designated as nav points on your HUD and tracker.
