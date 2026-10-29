@@ -35,8 +35,8 @@
 const canvas=document.querySelector('#game'), message=document.querySelector('#message');
 if(!window.THREE){message.innerHTML='3D ENGINE NOT LOADED<small>Connect to the internet and reload this HTML file.</small>';return}
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});
-renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.75));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;renderer.setClearColor(0x91b3c2,1);
-const scene=new THREE.Scene();scene.background=new THREE.Color(0x91b3c2);scene.fog=new THREE.FogExp2(0x91b3c2,0.0065);
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.75));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;renderer.setClearColor(0x91b3c2,1);renderer.info.autoReset=true;
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x91b3c2);scene.fog=new THREE.FogExp2(0x9aaeb0,0.0054);
 const camera=new THREE.PerspectiveCamera(72,innerWidth/innerHeight,.1,250);
 const hemi=new THREE.HemisphereLight(0xbfe9ff,0x554b3b,2.0);scene.add(hemi);
 const sun=new THREE.DirectionalLight(0xffd5a1,3.2);sun.position.set(-25,45,18);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-55;sun.shadow.camera.right=55;sun.shadow.camera.top=55;sun.shadow.camera.bottom=-55;sun.shadow.bias=-0.00018;sun.shadow.normalBias=0.018;scene.add(sun);const fillLight=new THREE.DirectionalLight(0x75cfff,.9);fillLight.position.set(18,12,28);scene.add(fillLight);
@@ -87,7 +87,29 @@ armor.map=armorTexture;armor.bumpMap=armorTexture;armor.bumpScale=.045;armor.rou
 enemyMat.map=insectTexture;enemyMat.bumpMap=insectTexture;enemyMat.bumpScale=.075;enemyMat.roughness=.58;enemyMat.needsUpdate=true;enemyLite.map=insectTexture;enemyLite.bumpMap=insectTexture;enemyLite.bumpScale=.055;enemyLite.roughness=.48;enemyLite.needsUpdate=true;
 groundMat.map=groundDetailTexture;groundMat.bumpMap=groundDetailTexture;groundMat.bumpScale=.18;groundMat.roughness=.98;groundMat.needsUpdate=true;
 
-const ground=new THREE.Mesh(new THREE.PlaneGeometry(260,260),groundMat);ground.rotation.x=-Math.PI/2;ground.position.y=-.12;ground.receiveShadow=true;scene.add(ground);
+// GRAPHICS UPGRADE — rolling, eroded terrain instead of a perfectly flat arena.
+const terrainGeo=new THREE.PlaneGeometry(260,260,150,150);
+const terrainPos=terrainGeo.attributes.position;
+for(let i=0;i<terrainPos.count;i++){
+ const lx=terrainPos.getX(i), lz=-terrainPos.getY(i);
+ const edge=Math.min(1,Math.max(0,(Math.abs(lx)-4)/13));
+ const distance=Math.max(0,(-lz-28)/30);
+ const ridge=(Math.sin(lx*.115+lz*.045)*.38+Math.sin(lx*.24-lz*.13)*.19+Math.sin(lx*.052+lz*.19)*.27);
+ const erosion=(Math.sin(lx*.71+lz*.63)*Math.sin(lz*.47-lx*.29))*.045;
+ terrainPos.setZ(i,(ridge+erosion)*edge*Math.min(1,distance));
+}
+terrainGeo.computeVertexNormals();
+const ground=new THREE.Mesh(terrainGeo,groundMat);ground.rotation.x=-Math.PI/2;ground.position.y=-.12;ground.receiveShadow=true;scene.add(ground);
+// Layered alien sky with generated cloud bands; no extra downloads required.
+const skyCanvas=document.createElement('canvas');skyCanvas.width=1024;skyCanvas.height=512;
+const skyCtx=skyCanvas.getContext('2d');
+const skyGrad=skyCtx.createLinearGradient(0,0,0,512);skyGrad.addColorStop(0,'#263f55');skyGrad.addColorStop(.36,'#648797');skyGrad.addColorStop(.72,'#b2b9ad');skyGrad.addColorStop(1,'#e0bd91');skyCtx.fillStyle=skyGrad;skyCtx.fillRect(0,0,1024,512);
+for(let i=0;i<170;i++){
+ const x=Math.random()*1024,y=90+Math.random()*260,w=35+Math.random()*150,h=3+Math.random()*17;
+ const cg=skyCtx.createRadialGradient(x,y,1,x,y,w);cg.addColorStop(0,`rgba(225,235,226,${.025+Math.random()*.055})`);cg.addColorStop(1,'rgba(225,235,226,0)');skyCtx.fillStyle=cg;skyCtx.save();skyCtx.translate(x,y);skyCtx.scale(1,h/Math.max(1,w));skyCtx.beginPath();skyCtx.arc(0,0,w,0,Math.PI*2);skyCtx.fill();skyCtx.restore();
+}
+const skyTex=new THREE.CanvasTexture(skyCanvas);skyTex.colorSpace=THREE.SRGBColorSpace;
+const skyDome=new THREE.Mesh(new THREE.SphereGeometry(190,40,24),new THREE.MeshBasicMaterial({map:skyTex,side:THREE.BackSide,depthWrite:false}));skyDome.renderOrder=-10;scene.add(skyDome);
 // Removed the visible development grid for a natural, continuous alien terrain.
 // Distant rugged ridge silhouettes made from real 3D geometry.
 for(let i=0;i<32;i++){let h=7+Math.random()*18, geo=new THREE.ConeGeometry(5+Math.random()*9,h,5+Math.floor(Math.random()*3));let m=new THREE.Mesh(geo,mat(i%3?0x455b5d:0x34494e));m.position.set((i-16)*10,h*.42,-85-Math.random()*25);m.rotation.y=Math.random()*2;m.castShadow=true;scene.add(m)}
