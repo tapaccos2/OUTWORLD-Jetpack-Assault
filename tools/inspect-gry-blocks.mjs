@@ -71,6 +71,34 @@ const output = files.map(file => {
       compressedPayloadPrefixHex: compressedHeaderPresent ? hex(b, payloadOffset, Math.min(payloadOffset + 16, payloadEnd)) : null,
     };
   });
+  // Some terrain files (currently o5.gry) use a shorter record layout without
+  // the +59 `fact` tag. Check unmatched signatures for the observed +25 header.
+  const alternateBlocks = signatures
+    .filter(recordStart => !factTags.some(r => r.recordStart === recordStart))
+    .map(recordStart => {
+      const compressedHeaderOffset = recordStart + 25;
+      const compressedHeaderPresent = compressedHeaderOffset + 7 <= b.length &&
+        b[compressedHeaderOffset] === 0x2e && b[compressedHeaderOffset + 1] === 0x3e &&
+        b[compressedHeaderOffset + 2] === 0x9d && b[compressedHeaderOffset + 3] === 0x00;
+      const compressedLength = compressedHeaderPresent ? u24le(b, compressedHeaderOffset + 4) : null;
+      const payloadOffset = compressedHeaderOffset + 7;
+      const payloadEnd = compressedLength === null ? null : payloadOffset + compressedLength;
+      const trailerPattern = b.length >= 5 && b[b.length - 4] === 0x22 &&
+        b[b.length - 3] === 0x75 && b[b.length - 2] === 0x28 && b[b.length - 1] === 0x03;
+      const expectedEnd = b.length - (trailerPattern ? 5 : 0);
+      return {
+        recordStart,
+        layout: 'alternate-no-fact-header-at-plus-25',
+        compressedHeaderOffset,
+        compressedHeaderPresent,
+        compressedLengthU24LE: compressedLength,
+        compressedPayloadOffset: payloadOffset,
+        compressedPayloadEnd: payloadEnd,
+        expectedPayloadEnd: expectedEnd,
+        finalTrailerHex: b.length >= 5 ? hex(b, b.length - 5, b.length) : null,
+        boundaryMatches: compressedHeaderPresent && payloadEnd === expectedEnd,
+      };
+    });
   return {
     file: path.basename(file),
     bytes: b.length,
@@ -81,6 +109,7 @@ const output = files.map(file => {
     pairedFactBlockCount: blocks.length,
     unmatchedSignatureStarts: signatures.filter(s => !factTags.some(r => r.recordStart === s)),
     blocks,
+    alternateBlocks,
   };
 });
 
