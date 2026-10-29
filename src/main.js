@@ -602,18 +602,20 @@ for(const side of [-1,1]){
 scene.add(player);player.position.set(0,0,5);
 const enemies=[];
 const hydranPalettes=[0x78934a,0x9b5b3c,0x526b45,0x77705b,0x465b59];
-const enemySpawns=[
- {x:-5,z:-13,trigger:-7,wave:1},{x:5,z:-15,trigger:-7,wave:1},
- {x:7,z:-25,trigger:-18,wave:2},{x:-6,z:-28,trigger:-18,wave:2},
- {x:-4,z:-39,trigger:-30,wave:3},{x:6,z:-42,trigger:-30,wave:3},
- {x:0,z:-50,trigger:-42,wave:4},
- {x:-8,z:-26,trigger:-18,wave:2},{x:8,z:-40,trigger:-30,wave:3},{x:-2,z:-53,trigger:-42,wave:4}
+// Hydrans are stationed in the world from the start, tucked behind cover.
+ // They do not materialise at trigger lines: they wait until the player closes in.
+ const enemySpawns=[
+ {x:-12,z:-29,wave:1},{x:12,z:-38,wave:1},
+ {x:-12,z:-43,wave:2},{x:12,z:-25,wave:2},
+ {x:-18,z:-37,wave:2},{x:18,z:-41,wave:2},
+ {x:-18,z:-47,wave:3},{x:18,z:-50,wave:3},
+ {x:-11,z:-51,wave:3},{x:11,z:-48,wave:3}
 ];
 for(let i=0;i<enemySpawns.length;i++){
  const spawn=enemySpawns[i],obj=soldier(true),size=.78+Math.random()*.22;
- obj.scale.set(size,.82+Math.random()*.18,size);obj.position.set(spawn.x,0,spawn.z);obj.visible=false;
+ obj.scale.set(size,.82+Math.random()*.18,size);obj.position.set(spawn.x,0,spawn.z);obj.visible=true;
  obj.rotation.y=Math.PI+(Math.random()-.5)*.5;
- obj.userData.spawned=false;obj.userData.triggerZ=spawn.trigger;obj.userData.wave=spawn.wave;
+ obj.userData.spawned=true;obj.userData.engaged=false;obj.userData.wave=spawn.wave;
  obj.userData.hp=100+Math.round(Math.random()*35);obj.userData.moveSpeed=3.7+Math.random()*1.2;
  obj.userData.cooldown=1.4+i*.35;obj.userData.fireCooldown=.9+i*.35;obj.userData.hit=0;
  obj.userData.walk=Math.random()*6;obj.userData.wanderPhase=Math.random()*Math.PI*2;obj.userData.wanderStrength=.2+Math.random()*.6;obj.userData.collisionRadius=.68;
@@ -834,13 +836,15 @@ function update(dt){
  player.userData.flames.forEach((flame,i)=>{flame.visible=boost;if(boost){flame.scale.y=.75+Math.random()*.65;flame.material.color.setHex(Math.random()>.25?0xffa13b:0x63edff);flame.material.opacity=.72+Math.random()*.25}})
  let remaining=0;
  for(const e of enemies){
-  if(!e.userData.spawned&&player.position.z<=e.userData.triggerZ){
-   e.userData.spawned=true;e.visible=true;
-   document.querySelector('#missionText').textContent='Hydran ambush detected — eliminate the defenders';
-  }
   if(!e.visible)continue;
  remaining++;
  const dx=player.position.x-e.position.x,dz=player.position.z-e.position.z,d=Math.hypot(dx,dz);
+ // Stay concealed/idle until close enough to detect the player, then commit to the attack.
+ if(!e.userData.engaged&&d<17){
+   e.userData.engaged=true;
+   document.querySelector('#missionText').textContent='Hydran ambush! Hostiles have spotted you — return fire';
+  }
+ if(!e.userData.engaged)continue;
  e.userData.walk+=dt*7;
  // Hydran enemies use articulated six-limb insect rigs, not marine legs/arms.
  if(e.userData.insect&&Array.isArray(e.userData.limbs)){
@@ -883,7 +887,7 @@ function update(dt){
  const atLanding=Math.hypot(player.position.x,player.position.z+56.5)<3.6;
  if(remaining>0)document.querySelector('#missionText').textContent='Eliminate hostiles: '+remaining+' · Relays: '+relaysOnline+'/'+relayObjectives.length;
  else if(relaysOnline<relayObjectives.length)document.querySelector('#missionText').textContent='Activate remaining relay uplinks: '+relaysOnline+'/'+relayObjectives.length;
- else if(!allSpawned)document.querySelector('#missionText').textContent='Advance to draw out remaining Hydran patrols';
+ else if(!allSpawned)document.querySelector('#missionText').textContent='Advance carefully — Hydran patrols are concealed in cover';
  else if(!atLanding)document.querySelector('#missionText').textContent='All relays online — reach extraction';
  else document.querySelector('#missionText').textContent='Extraction zone reached';
  if(hp<=0)endGame(false);else if(allSpawned&&remaining===0&&relaysOnline===relayObjectives.length&&atLanding)endGame(true);
