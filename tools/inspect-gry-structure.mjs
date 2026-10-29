@@ -81,12 +81,20 @@ const valid = records.filter(r => r.buffer && r.firstMarker !== null);
 const commonAfterMarker = valid.length
   ? commonPrefix(valid.map(r => r.buffer.subarray(r.firstMarker, r.firstMarker + 128)))
   : 0;
+const markerSignatures = new Map();
+for (const r of valid) {
+  const signature = hex(r.buffer, r.firstMarker, Math.min(r.firstMarker + 64, r.buffer.length));
+  const group = markerSignatures.get(signature) ?? [];
+  group.push(r.file);
+  markerSignatures.set(signature, group);
+}
 const output = {
   summary: {
     filesInspected: records.length,
     commonPrefixAtFileStart: commonPrefix(records.filter(r => r.buffer).map(r => r.buffer)),
     filesWithMarker: valid.length,
     commonBytesStartingAtFirstMarker: commonAfterMarker,
+    identical64ByteSignaturesAtFirstMarker: [...markerSignatures.entries()].map(([signatureHex, files]) => ({ files, signatureHex })),
     note: 'A repeated sequence or shared byte prefix is evidence of structure, not proof of field meanings or a section boundary.',
   },
   files: records.map(({ buffer, firstMarker, ...record }) => record),
