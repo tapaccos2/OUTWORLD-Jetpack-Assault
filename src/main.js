@@ -128,6 +128,9 @@ for(const side of [-1,1]){
  kerb.position.set(side*3.73,.015,-22);kerb.castShadow=true;kerb.receiveShadow=true;scene.add(kerb);
 }
 for(let z=8;z>-64;z-=5.5)makeRoadStrip(.12,2.25,lineMat,0,-.025,z);
+// Side-street junctions break up the long straight corridor and give the assault flanking angles.
+makeRoadStrip(5.8,4.6,asphaltMat,-5.9,-.04,-17.5);
+makeRoadStrip(5.8,4.6,asphaltMat,5.9,-.04,-34.5);
 // Mission destination: illuminated landing beacon at the end of the ravine.
 const landingZone=new THREE.Group();
 const landingBase=new THREE.Mesh(new THREE.CylinderGeometry(2.35,2.8,.22,32),new THREE.MeshStandardMaterial({color:0x303b3c,metalness:.68,roughness:.42}));
@@ -635,23 +638,33 @@ for(const side of [-1,1]){
 scene.add(player);player.position.set(0,0,5);
 const enemies=[];
 const hydranPalettes=[0x78934a,0x9b5b3c,0x526b45,0x77705b,0x465b59];
-// Hydrans are stationed in the world from the start, tucked behind cover.
- // They do not materialise at trigger lines: they wait until the player closes in.
- const enemySpawns=[
- {x:-12,z:-29,wave:1},{x:12,z:-38,wave:1},
- {x:-12,z:-43,wave:2},{x:12,z:-25,wave:2},
- {x:-18,z:-37,wave:2},{x:18,z:-41,wave:2},
- {x:-18,z:-47,wave:3},{x:18,z:-50,wave:3},
- {x:-11,z:-51,wave:3},{x:11,z:-48,wave:3}
+// Three escalating assault waves advance down the street. Enemies spawn in the open
+// carriageway, not inside building footprints, and attack immediately when each wave begins.
+const enemySpawns=[
+ {x:-2.6,z:-24,wave:1},{x:2.6,z:-27,wave:1},{x:-1.7,z:-31,wave:1},{x:1.7,z:-34,wave:1},{x:0,z:-37,wave:1},
+ {x:-2.7,z:-39,wave:2},{x:2.7,z:-40,wave:2},{x:-1.5,z:-43,wave:2},{x:1.5,z:-45,wave:2},{x:-2.2,z:-47,wave:2},{x:2.2,z:-48,wave:2},
+ {x:-2.7,z:-46,wave:3},{x:2.7,z:-47,wave:3},{x:-1.1,z:-49,wave:3},{x:1.1,z:-50,wave:3},{x:-2.1,z:-52,wave:3},{x:2.1,z:-52,wave:3},{x:0,z:-54,wave:3}
 ];
+let currentWave=0,waveIntermission=0,waveTransitionPending=false,allWavesComplete=false;
+function activateWave(wave){
+ currentWave=wave;
+ const incoming=enemies.filter(e=>e.userData.wave===wave&&!e.userData.spawned);
+ for(const e of incoming){
+  e.position.set(e.userData.spawnX,0,e.userData.spawnZ);
+  e.visible=true;e.userData.spawned=true;e.userData.engaged=true;
+  e.userData.fireCooldown=.35+Math.random()*.75;
+ }
+ document.querySelector('#missionText').textContent='WAVE '+wave+'/3 — HYDRAN ASSAULT INCOMING';
+}
 for(let i=0;i<enemySpawns.length;i++){
- const spawn=enemySpawns[i],obj=soldier(true),size=.78+Math.random()*.22;
- obj.scale.set(size,.82+Math.random()*.18,size);obj.position.set(spawn.x,0,spawn.z);obj.visible=true;
+ const spawn=enemySpawns[i],obj=soldier(true),size=.84+Math.random()*.16;
+ obj.scale.set(size,.88+Math.random()*.12,size);obj.position.set(spawn.x,0,spawn.z);obj.visible=false;
  obj.rotation.y=Math.PI+(Math.random()-.5)*.5;
- obj.userData.spawned=true;obj.userData.engaged=false;obj.userData.wave=spawn.wave;
- obj.userData.hp=100+Math.round(Math.random()*35);obj.userData.moveSpeed=3.7+Math.random()*1.2;
- obj.userData.cooldown=1.4+i*.35;obj.userData.fireCooldown=.9+i*.35;obj.userData.hit=0;
- obj.userData.walk=Math.random()*6;obj.userData.wanderPhase=Math.random()*Math.PI*2;obj.userData.wanderStrength=.2+Math.random()*.6;obj.userData.collisionRadius=.68;
+ obj.userData.spawned=false;obj.userData.engaged=false;obj.userData.wave=spawn.wave;
+ obj.userData.spawnX=spawn.x;obj.userData.spawnZ=spawn.z;
+ obj.userData.hp=105+Math.round(Math.random()*25);obj.userData.moveSpeed=4.4+Math.random()*1.0;
+ obj.userData.cooldown=1.0+Math.random()*.6;obj.userData.fireCooldown=.7+Math.random()*.5;obj.userData.hit=0;
+ obj.userData.walk=Math.random()*6;obj.userData.wanderPhase=Math.random()*Math.PI*2;obj.userData.wanderStrength=.12+Math.random()*.28;obj.userData.collisionRadius=.62;
  const palette=new THREE.Color(hydranPalettes[i%hydranPalettes.length]);
  obj.traverse(part=>{if(part.isMesh&&part.material&&part.material.map===insectTexture){part.material=part.material.clone();part.material.color.copy(palette);part.material.needsUpdate=true}});
  scene.add(obj);enemies.push(obj);
@@ -663,6 +676,7 @@ const bullets=[],sparks=[],clock=new THREE.Clock();let hp=100,fuel=100,yaw=0,pit
 function startGame(){
  started=true;
  if(message) message.style.display='none';
+ if(currentWave===0)activateWave(1);
 }
 // Start the simulation once the scene has been constructed; the start prompt is only UI.
 message.addEventListener('pointerdown',e=>{e.preventDefault();startGame()});
@@ -899,13 +913,15 @@ function update(dt){
  else if(e.children[0].material.emissive)e.children[0].material.emissive.setHex(0x000000);
  e.rotation.y=Math.atan2(dx,dz);
  if(d>7.5){let moveX=dx/(d||1),moveZ=dz/(d||1);const wander=Math.sin(performance.now()*.0014+(e.userData.wanderPhase||0))*(e.userData.wanderStrength||.3);moveX+=-moveZ*wander;moveZ+=moveX*wander*.35;const avoidX=e.position.x,avoidZ=e.position.z;let steerX=0,steerZ=0;for(const ob of scene.children){if(!ob.userData||!ob.userData.blocksEnemy)continue;const ox=avoidX-ob.position.x,oz=avoidZ-ob.position.z,dist=Math.hypot(ox,oz),radius=ob.userData.blockRadius||2.5;if(dist<radius+2.1&&dist>.01){const weight=(radius+2.1-dist)/(radius+2.1);steerX+=(ox/dist)*weight*2.6;steerZ+=(oz/dist)*weight*2.6}}moveX+=steerX;moveZ+=steerZ;const ml=Math.hypot(moveX,moveZ)||1;moveX/=ml;moveZ/=ml;const enemySpeed=e.userData.moveSpeed||4.2;e.userData.collisionRadius=.62;moveEntityWithCollision(e,moveX*enemySpeed*dt,moveZ*enemySpeed*dt,.62,true)}
- else if(d<30){e.userData.fireCooldown-=dt;if(e.userData.fireCooldown<=0){enemyShoot(e,d);e.userData.fireCooldown=1.55+Math.random()*.7}}
+ if(d<30){e.userData.fireCooldown-=dt;if(e.userData.fireCooldown<=0){enemyShoot(e,d);e.userData.fireCooldown=1.05+Math.random()*.65}}
  }
  if(fireHeld&&shotCooldown<=0)shoot();
  bullets.forEach(b=>{b.life-=dt;if(b.tracer){const progress=THREE.MathUtils.clamp(1-b.life/b.duration,0,1);const head=b.start.clone().lerp(b.end,progress);if(b.beam){const travel=b.end.clone().sub(b.start);const direction=travel.clone().normalize();b.obj.position.copy(head).addScaledVector(direction,-1.2);b.obj.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),direction);b.obj.material.opacity=Math.min(1,b.life/.10)}else{const tail=THREE.MathUtils.clamp(progress-.22,0,1);const a=b.start.clone().lerp(b.end,tail);b.obj.geometry.setFromPoints([a,head]);b.obj.material.opacity=Math.min(1,b.life/.045)}}if(b.life<=0){scene.remove(b.obj);b.obj.geometry.dispose();b.obj.material.dispose()}});for(let i=bullets.length-1;i>=0;i--)if(bullets[i].life<=0)bullets.splice(i,1);if(muzzleLife<=dt)fpFlash.visible=false;
  sparks.forEach(s=>{s.life-=dt;s.obj.position.addScaledVector(s.vel,dt);s.vel.y-=9*dt;s.obj.scale.setScalar(Math.max(.01,s.life*3))});for(let i=sparks.length-1;i>=0;i--)if(sparks[i].life<=0){const deadSpark=sparks[i].obj;scene.remove(deadSpark);deadSpark.geometry.dispose();deadSpark.material.dispose();sparks.splice(i,1)}
+ if(started&&currentWave>0&&remaining===0&&!waveTransitionPending&&!allWavesComplete){if(currentWave<3){waveTransitionPending=true;waveIntermission=2.6;}else allWavesComplete=true;}
+ if(waveTransitionPending){waveIntermission-=dt;if(waveIntermission<=0){waveTransitionPending=false;activateWave(currentWave+1);}}
  document.querySelector('#hpText').textContent=Math.round(hp)+'%';document.querySelector('#hpBar').style.width=hp+'%';document.querySelector('#fuelText').textContent=Math.round(fuel)+'%';document.querySelector('#fuelBar').style.width=fuel+'%';document.querySelector('#enemyText').textContent=remaining;
- const allSpawned=enemies.every(e=>e.userData.spawned);
+ const allSpawned=allWavesComplete;
  for(const relay of relayObjectives){
   relay.userData.ring.rotation.z+=dt*.9;
   relay.userData.core.rotation.y+=dt*1.8;
@@ -918,9 +934,10 @@ function update(dt){
  }
  const relaysOnline=relayObjectives.filter(r=>r.userData.activated).length;
  const atLanding=Math.hypot(player.position.x,player.position.z+56.5)<3.6;
- if(remaining>0)document.querySelector('#missionText').textContent='Eliminate hostiles: '+remaining+' · Relays: '+relaysOnline+'/'+relayObjectives.length;
+ if(remaining>0)document.querySelector('#missionText').textContent='WAVE '+currentWave+'/3 — ELIMINATE HOSTILES: '+remaining+' · RELAYS: '+relaysOnline+'/'+relayObjectives.length;
+ else if(waveTransitionPending)document.querySelector('#missionText').textContent='WAVE '+currentWave+' CLEARED — REINFORCEMENTS IN '+Math.ceil(waveIntermission)+'s';
+ else if(!allWavesComplete)document.querySelector('#missionText').textContent='WAVE '+currentWave+' CLEARED — PREPARING NEXT ASSAULT';
  else if(relaysOnline<relayObjectives.length)document.querySelector('#missionText').textContent='Activate remaining relay uplinks: '+relaysOnline+'/'+relayObjectives.length;
- else if(!allSpawned)document.querySelector('#missionText').textContent='Advance carefully — Hydran patrols are concealed in cover';
  else if(!atLanding)document.querySelector('#missionText').textContent='All relays online — reach extraction';
  else document.querySelector('#missionText').textContent='Extraction zone reached';
  if(hp<=0)endGame(false);else if(allSpawned&&remaining===0&&relaysOnline===relayObjectives.length&&atLanding)endGame(true);
