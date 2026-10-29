@@ -659,22 +659,34 @@ if(assetLoader){
   importedSoldier=gltf.scene;
   normalizeGLB(importedSoldier,2.35);
   importedSoldier.rotation.y=0; // inherit player yaw; the parent already applies the forward-facing correction
-  const soldierBones={head:null,neck:null,leftArm:null,rightArm:null,leftLeg:null,rightLeg:null};
-  const boneRest=new Map();
+  const soldierBones={head:null,neck:null,spine:null,leftArm:null,rightArm:null,leftForearm:null,rightForearm:null,leftHand:null,rightHand:null,leftLeg:null,rightLeg:null,leftShin:null,rightShin:null};
+  const boneRest=new Map(),allBones=[];
   importedSoldier.traverse(o=>{
    if(o.isMesh){o.castShadow=true;o.receiveShadow=true}
    if(o.isBone){
+    allBones.push(o);
     const n=o.name.toLowerCase().replace(/[^a-z0-9]/g,'');
     if(!soldierBones.head&&/(head|mixamorighead)$/.test(n))soldierBones.head=o;
     if(!soldierBones.neck&&n.includes('neck'))soldierBones.neck=o;
-    if(!soldierBones.leftArm&&/(leftarm|leftupperarm|mixamorigleftarm|upperarml)/.test(n))soldierBones.leftArm=o;
-    if(!soldierBones.rightArm&&/(rightarm|rightupperarm|mixamorigrightarm|upperarmr)/.test(n))soldierBones.rightArm=o;
-    if(!soldierBones.leftLeg&&/(leftupleg|leftthigh|mixamorigleftupleg|thighl)/.test(n))soldierBones.leftLeg=o;
-    if(!soldierBones.rightLeg&&/(rightupleg|rightthigh|mixamorigrightupleg|thighr)/.test(n))soldierBones.rightLeg=o;
+    if(!soldierBones.spine&&/(spine2|spine3|chest|upperchest|mixamorigspine2)/.test(n))soldierBones.spine=o;
+    if(!soldierBones.leftArm&&/(leftarm|leftupperarm|mixamorigleftarm|upperarml|leftshoulder)/.test(n))soldierBones.leftArm=o;
+    if(!soldierBones.rightArm&&/(rightarm|rightupperarm|mixamorigrightarm|upperarmr|rightshoulder)/.test(n))soldierBones.rightArm=o;
+    if(!soldierBones.leftForearm&&/(leftforearm|leftlowerarm|mixamorigleftforearm|lowerarml)/.test(n))soldierBones.leftForearm=o;
+    if(!soldierBones.rightForearm&&/(rightforearm|rightlowerarm|mixamorigrightforearm|lowerarmr)/.test(n))soldierBones.rightForearm=o;
+    if(!soldierBones.leftHand&&/(lefthand|mixamoriglefthand|handl)/.test(n))soldierBones.leftHand=o;
+    if(!soldierBones.rightHand&&/(righthand|mixamorigrighthand|handr)/.test(n))soldierBones.rightHand=o;
+    if(!soldierBones.leftLeg&&/(leftupleg|leftthigh|mixamorigleftupleg|thighl|leftupperleg)/.test(n))soldierBones.leftLeg=o;
+    if(!soldierBones.rightLeg&&/(rightupleg|rightthigh|mixamorigrightupleg|thighr|rightupperleg)/.test(n))soldierBones.rightLeg=o;
+    if(!soldierBones.leftShin&&/(leftleg|leftcalf|leftlowerleg|mixamorigleftleg|calfl)/.test(n)&&!n.includes('upleg'))soldierBones.leftShin=o;
+    if(!soldierBones.rightShin&&/(rightleg|rightcalf|rightlowerleg|mixamorigrightleg|calfr)/.test(n)&&!n.includes('upleg'))soldierBones.rightShin=o;
     boneRest.set(o,o.quaternion.clone());
    }
   });
-  importedSoldier.userData.boneRig={soldierBones,boneRest};
+  importedSoldier.userData.boneRig={soldierBones,boneRest,allBones};
+  // Keep a reference to any authored rifle/weapon meshes inside the character asset.
+  const attachedWeapons=[];
+  importedSoldier.traverse(o=>{if(o.isMesh&&/(rifle|weapon|gun|smg|carbine)/i.test(o.name)){attachedWeapons.push(o);o.castShadow=true}});
+  importedSoldier.userData.attachedWeapons=attachedWeapons;
   player.add(importedSoldier);
   // Re-align the actual asset's feet to the player ground plane after attaching it to the player.
   importedSoldier.updateMatrixWorld(true);
@@ -851,20 +863,33 @@ function update(dt){
   if(rig.moveAction)rig.moveAction.setEffectiveWeight(wantsMove?1:0);
   if(rig.idleAction)rig.idleAction.setEffectiveWeight(wantsMove?0:1);
  }
- // Aim the imported soldier's real head and arms with the camera pitch; use authored bones only.
+ // Animate the imported character's actual skeleton: gait, knees, elbows, hands and camera-driven aim.
  if(importedSoldier?.userData.boneRig){
   const {soldierBones,boneRest}=importedSoldier.userData.boneRig;
   const aimPitch=THREE.MathUtils.clamp(pitch,-.85,.85);
-  for(const key of ['head','neck']){const b=soldierBones[key];if(b){b.quaternion.copy(boneRest.get(b));b.rotateX(-aimPitch*(key==='head'?.72:.38));}}
-  for(const key of ['leftArm','rightArm']){const b=soldierBones[key];if(b){b.quaternion.copy(boneRest.get(b));b.rotateX(-aimPitch*.24);}}
-  // If the asset has no authored locomotion clip, animate its actual leg/arm bones as a fallback.
-  if(moving&&onGround&&!importedSoldier.userData.locomotion?.moveAction){
-   const phase=performance.now()*.009;
-   for(const [key,sign] of [['leftLeg',1],['rightLeg',-1],['leftArm',-1],['rightArm',1]]){
-    const b=soldierBones[key];if(b){b.quaternion.copy(boneRest.get(b));b.rotateX(Math.sin(phase)*.48*sign);}
-   }
-  }else if(!moving){
-   for(const key of ['leftLeg','rightLeg']){const b=soldierBones[key];if(b)b.quaternion.copy(boneRest.get(b));}
+  const phase=performance.now()*.009*(boost?1.45:1);
+  const gaitActive=moving&&onGround&&!boost&&!importedSoldier.userData.locomotion?.moveAction;
+  for(const key of ['head','neck','spine','leftArm','rightArm','leftForearm','rightForearm','leftHand','rightHand','leftLeg','rightLeg','leftShin','rightShin']){
+   const b=soldierBones[key];if(!b)continue;
+   b.quaternion.copy(boneRest.get(b));
+   if(key==='head')b.rotateX(-aimPitch*.72);
+   else if(key==='neck')b.rotateX(-aimPitch*.28);
+   else if(key==='spine')b.rotateX(-aimPitch*.10);
+   else if(key==='leftArm'){b.rotateX(gaitActive?Math.sin(phase)*.40:0);b.rotateZ(-aimPitch*.16-.06);}
+   else if(key==='rightArm'){b.rotateX(gaitActive?Math.sin(phase+Math.PI)*.40:0);b.rotateZ(-aimPitch*.16+.06);}
+   else if(key==='leftForearm'){b.rotateX(gaitActive?Math.max(0,Math.sin(phase+Math.PI*.5))*.32:0);}
+   else if(key==='rightForearm'){b.rotateX(gaitActive?Math.max(0,Math.sin(phase+Math.PI*1.5))*.32:0);}
+   else if(key==='leftHand'||key==='rightHand'){b.rotateX(-aimPitch*.10);}
+   else if(key==='leftLeg'){b.rotateX(gaitActive?Math.sin(phase)*.58:0);}
+   else if(key==='rightLeg'){b.rotateX(gaitActive?Math.sin(phase+Math.PI)*.58:0);}
+   else if(key==='leftShin'){b.rotateX(gaitActive?Math.max(0,-Math.sin(phase))*.72:0);}
+   else if(key==='rightShin'){b.rotateX(gaitActive?Math.max(0,Math.sin(phase))*.72:0);}
+  }
+  // Move any rifle/weapon meshes that belong to the imported character with firing recoil.
+  for(const weapon of importedSoldier.userData.attachedWeapons||[]){
+   if(!weapon.userData.restPosition)weapon.userData.restPosition=weapon.position.clone();
+   weapon.position.copy(weapon.userData.restPosition);
+   weapon.position.z+=fireRecoil*.035;
   }
  }
  fireRecoil=Math.max(0,fireRecoil-dt*5.5);
