@@ -40,6 +40,7 @@ function inspectPair(gpcPath, rpcPath) {
   let nextExpected = 0;
   let boundsFit = 0;
   let referenceValueFound = 0;
+  let everyCornerEqualsReference = 0;
   let allFourEqual = 0;
   const examples = [];
   for (let i = 0; i < gc; i++) {
@@ -55,10 +56,15 @@ function inspectPair(gpcPath, rpcPath) {
     nextExpected = end + 1;
     const points = [];
     const cornerValues = [];
+    let allIndexedCornersEqualReference = true;
     for (let j = start; j <= end && j < rc; j++) {
       const ro = 20 + j * 40;
       points.push([R.getInt32(ro + 32, true), R.getInt32(ro + 36, true)]);
-      for (const p of [16, 20, 24, 28]) cornerValues.push(R.getInt32(ro + p, true));
+      for (const p of [16, 20, 24, 28]) {
+        const value = R.getInt32(ro + p, true);
+        cornerValues.push(value);
+        if (value !== referenceValue) allIndexedCornersEqualReference = false;
+      }
       const corners = [16, 20, 24, 28].map(p => R.getInt32(ro + p, true));
       if (corners.every(v => v === corners[0])) allFourEqual++;
     }
@@ -70,11 +76,13 @@ function inspectPair(gpcPath, rpcPath) {
     const fits = minX >= x && maxX <= x + spanX && minY >= y && maxY <= y + spanY;
     if (fits) boundsFit++;
     if (cornerValues.includes(referenceValue)) referenceValueFound++;
+    if (allIndexedCornersEqualReference) everyCornerEqualsReference++;
     if (examples.length < 5) examples.push({
       group: i, rpcRange: [start, end], origin: [x, y],
       referenceValue, spans: [spanX, spanY],
       rpcBounds: { minX, maxX, minY, maxY }, boundsFit: fits,
       referenceValueAppearsInCornerValues: cornerValues.includes(referenceValue),
+      allIndexedCornerValuesEqualReference: allIndexedCornersEqualReference,
     });
   }
   return {
@@ -82,6 +90,7 @@ function inspectPair(gpcPath, rpcPath) {
     contiguousRpcRanges: rangesValid && nextExpected === rc,
     inferredBoundsContainAllRpcPositions: { groupsFit: boundsFit, totalGroups: gc },
     inferredGpcReferenceValueAppearsAmongIndexedRpcCornerValues: { groups: referenceValueFound, totalGroups: gc },
+    allIndexedRpcCornerValuesEqualGpcReferenceValue: { groups: everyCornerEqualsReference, totalGroups: gc },
     rpcRecordsWithAllFourCornerLikeValuesEqual: allFourEqual,
     examples,
     limitation: 'Internal consistency only; no mesh, corner ordering, units, or terrain semantics are confirmed.',
