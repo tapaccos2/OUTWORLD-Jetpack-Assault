@@ -42,5 +42,5 @@ for (const file of files) {
     errors++;
   }
 }
-process.stdout.write(JSON.stringify({ files: results, note: 'Type/class labels are numeric and intentionally semantic-neutral.' }, null, 2) + '\\n');
+process.stdout.write(JSON.stringify({ files: results, note: 'Type/class labels are numeric and intentionally semantic-neutral.' }, null, 2) + '\n');
 if (errors) process.exitCode = 1;
