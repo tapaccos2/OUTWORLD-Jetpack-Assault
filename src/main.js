@@ -662,7 +662,14 @@ if(assetLoader){
   const soldierBones={head:null,neck:null,spine:null,leftArm:null,rightArm:null,leftForearm:null,rightForearm:null,leftHand:null,rightHand:null,leftLeg:null,rightLeg:null,leftShin:null,rightShin:null};
   const boneRest=new Map(),allBones=[];
   importedSoldier.traverse(o=>{
-   if(o.isMesh){o.castShadow=true;o.receiveShadow=true}
+   if(o.isMesh){
+    o.castShadow=true;o.receiveShadow=true;
+    // Strip detached headset/earpiece props from this character asset; these were rendering above the helmet.
+    if(/headphones?|headset|earpiece|earphones?|head.?mounted.?display|comms.?headband/i.test(o.name)){
+     o.visible=false;
+     console.info('OUTWORLD: hid detached head accessory mesh',o.name);
+    }
+   }
    if(o.isBone){
     allBones.push(o);
     const n=o.name.toLowerCase().replace(/[^a-z0-9]/g,'');
@@ -687,6 +694,9 @@ if(assetLoader){
   const attachedWeapons=[];
   importedSoldier.traverse(o=>{if(o.isMesh&&/(rifle|weapon|gun|smg|carbine)/i.test(o.name)){attachedWeapons.push(o);o.castShadow=true}});
   importedSoldier.userData.attachedWeapons=attachedWeapons;
+  // Log the imported rig so missing bone mappings are visible during browser testing.
+  console.info('OUTWORLD soldier rig:',allBones.map(b=>b.name).join(', '));
+  console.info('OUTWORLD mapped bones:',Object.fromEntries(Object.entries(soldierBones).map(([k,b])=>[k,b?.name||null])));
   player.add(importedSoldier);
   // Re-align the actual asset's feet to the player ground plane after attaching it to the player.
   importedSoldier.updateMatrixWorld(true);
@@ -709,7 +719,11 @@ if(assetLoader){
  assetLoader.load(firstPersonAssetURL,gltf=>{
   importedFP=gltf.scene;
   normalizeGLB(importedFP,.42);
-  importedFP.traverse(o=>{if(o.isMesh){o.renderOrder=1000;o.frustumCulled=false;if(o.material){o.material.depthTest=true;o.material.depthWrite=true;o.material.needsUpdate=true}}});
+  importedFP.traverse(o=>{if(o.isMesh){
+   o.renderOrder=1000;o.frustumCulled=false;
+   if(/headphones?|headset|earpiece|earphones?|head.?mounted.?display|comms.?headband/i.test(o.name))o.visible=false;
+   if(o.material){o.material.depthTest=true;o.material.depthWrite=true;o.material.needsUpdate=true}
+  }});
   fpAssetRig.add(importedFP);
   // Hide every procedural weapon mesh; the imported arms asset includes its own weapon.
   weaponRig.traverse(o=>{if(o.isMesh&&o!==fpFlashOuter&&o!==fpFlashCore)o.visible=false});
@@ -840,7 +854,12 @@ function update(dt){
  shotCooldown=Math.max(0,shotCooldown-dt);damageFlash=Math.max(0,damageFlash-dt);document.querySelector('#damageOverlay').style.opacity=damageFlash>0?String(Math.min(.82,damageFlash*2.3)):'0';hitConfirmTimer=Math.max(0,hitConfirmTimer-dt);if(hitConfirmTimer===0)document.querySelector('.reticle').classList.remove('confirmed');muzzleLife=Math.max(0,muzzleLife-dt);if(muzzleLife===0){if(player.userData.muzzle)player.userData.muzzle.visible=false;if(player.userData.muzzleCore)player.userData.muzzleCore.visible=false;}
  const fwd=(keys.KeyW?1:0)-(keys.KeyS?1:0)-stick.y,side=(keys.KeyD?1:0)-(keys.KeyA?1:0)+stick.x;
  const boost=(keys.ShiftLeft||keys.ShiftRight||boostHeld)&&fuel>0;const speed=boost?13:7.2;if(boost){fuel=Math.max(0,fuel-26*dt);vy=Math.max(vy,2.6)}else fuel=Math.min(100,fuel+10*dt);
- const forward=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw)),right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));const moveX=(forward.x*fwd+right.x*side)*speed*dt,moveZ=(forward.z*fwd+right.z*side)*speed*dt;moveEntityWithCollision(player,moveX,moveZ,.62,true);
+ const forward=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw)),right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));
+ // Use camera-relative strafing, but normalize diagonals so A/D+W/S does not change lateral speed.
+ const wish=new THREE.Vector3(forward.x*fwd+right.x*side,0,forward.z*fwd+right.z*side);
+ if(wish.lengthSq()>1)wish.normalize();
+ const moveX=wish.x*speed*dt,moveZ=wish.z*speed*dt;
+ moveEntityWithCollision(player,moveX,moveZ,.62,true);
  if(jumpQueued&&onGround){vy=7.3;onGround=false}jumpQueued=false;vy-=18*dt;player.position.y+=vy*dt;if(player.position.y<=0){player.position.y=0;vy=0;onGround=true}
  player.rotation.y=yaw+Math.PI;player.position.y=Math.max(0,player.position.y);
  const lookDir=new THREE.Vector3(-Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),-Math.cos(yaw)*Math.cos(pitch));if(thirdPerson){const behind=4.9,high=2.45,shoulder=1.45;const desiredCam=new THREE.Vector3(player.position.x+Math.sin(yaw)*behind+Math.cos(yaw)*shoulder,player.position.y+high,player.position.z+Math.cos(yaw)*behind-Math.sin(yaw)*shoulder);camera.position.lerp(desiredCam,1-Math.exp(-dt*8));const aim=player.position.clone().add(new THREE.Vector3(0,1.4,0)).add(lookDir.clone().multiplyScalar(6.2)).add(new THREE.Vector3(Math.cos(yaw)*.85,0,-Math.sin(yaw)*.85));camera.lookAt(aim)}else{camera.position.set(player.position.x,player.position.y+2.15,player.position.z);camera.lookAt(camera.position.clone().add(lookDir.multiplyScalar(25)))}
