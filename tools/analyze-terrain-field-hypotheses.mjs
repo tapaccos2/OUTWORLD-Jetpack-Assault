@@ -173,7 +173,7 @@ function inspectPair(gpcPath, rpcPath) {
       duplicatePositionsWithDifferentCornerSignatures: duplicatePositionGroupsDifferentCorners,
     },
     examples,
-    limitation: 'Internal consistency only; no mesh, corner ordering, units, or terrain semantics are confirmed.',
+    limitation: 'Field relationships and normal formula are cross-validated, but the XY anchor convention, original triangle diagonal, units/scale, and visual match to an in-game map are not yet confirmed.',
   };
 }
 
