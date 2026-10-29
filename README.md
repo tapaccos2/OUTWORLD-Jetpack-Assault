@@ -32,3 +32,15 @@ Mobile touch controls are available in the game UI.
 ## Current limitations
 
 The imported glTF props are environment assets only. The player marine and Hydran enemy are still project-generated geometry; dedicated high-quality character and weapon models have not yet been integrated. The environment asset URLs are currently remote rather than bundled locally, so the current build is not fully self-contained/offline.
+
+## Original Outwars data investigation
+
+The original mission and terrain files are being analyzed separately from the browser prototype. Current byte-level findings and limitations are tracked in:
+
+- [Terrain structure index](original-data/GRY-STRUCTURE-INDEX.md)
+- [Binary format notes](original-data/FORMAT-NOTES.md)
+- [Mission catalog](original-data/MISSION-CATALOG.md)
+- [Missing asset requirements](original-data/ASSET-REQUIREMENTS.md)
+- [Inspection tools](tools/README.md)
+
+The terrain files are **not yet decoded into actual vertices/heights**. The prototype should not be described as a faithful original-level rebuild until the terrain and mission placement formats have been decoded and validated.
