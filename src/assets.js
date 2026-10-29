@@ -43,10 +43,10 @@
    {asset:'buttress',x:19,z:-41,height:7.0,rotation:.9,kind:'tree',collision:1.7},
    {asset:'canopy',x:-15,z:-54,height:7.7,rotation:1.7,kind:'tree',collision:1.6},
    {asset:'buttress',x:15,z:-56,height:7.2,rotation:3.1,kind:'tree',collision:1.7},
-   {asset:'boulders',x:-20,z:-28,scale:1.0,rotation:.4,kind:'rock'},
-   {asset:'boulders',x:20,z:-32,scale:1.0,rotation:2.1,kind:'rock'},
-   {asset:'boulders',x:-20,z:-47,scale:.9,rotation:1.4,kind:'rock'},
-   {asset:'boulders',x:20,z:-50,scale:.9,rotation:2.8,kind:'rock'},
+   {asset:'boulders',x:-20,z:-28,scale:1.0,rotation:.4,kind:'rock',collision:1.8},
+   {asset:'boulders',x:20,z:-32,scale:1.0,rotation:2.1,kind:'rock',collision:1.8},
+   {asset:'boulders',x:-20,z:-47,scale:.9,rotation:1.4,kind:'rock',collision:1.7},
+   {asset:'boulders',x:20,z:-50,scale:.9,rotation:2.8,kind:'rock',collision:1.7},
    {asset:'crate',x:-13,z:-29,scale:.58,rotation:.4,kind:'prop',collision:1.0},
    {asset:'crate',x:13,z:-38,scale:.58,rotation:2.4,kind:'prop',collision:1.0}
   ];
