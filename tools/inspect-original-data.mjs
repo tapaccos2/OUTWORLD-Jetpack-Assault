@@ -74,6 +74,6 @@ const result = {
   root,
   counts: { missions: missions.length, gryAudioFiles: gryAudio.length },
   missions,
-  terrain,
+  gryAudio,
 };
 process.stdout.write(JSON.stringify(result, null, 2) + '\n');
