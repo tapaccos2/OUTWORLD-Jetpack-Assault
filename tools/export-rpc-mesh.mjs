@@ -14,14 +14,14 @@
  *   +16/+20/+24/+28 i32 row-major corner heights
  *   +32/+36 i32 planar position pair
  *
- * Position-anchor semantics are not yet confirmed. The default assumes the
- * XY pair is the local (0,0) corner; --anchor=center exports the alternative
- * where it is the quad centre. The 1-2 diagonal is the default because the
+ * Cross-surface edge continuity strongly favours the XY pair as the local
+ * (0,0) corner; --anchor=center exports the alternative where it is the
+ * quad centre. Visual confirmation against an original map is still pending. The 1-2 diagonal is the default because the
  * stored normal agrees with corners 0,1,2. --diagonal=0-3 selects the other.
  *
  * Usage:
  *   node tools/export-rpc-mesh.mjs map.gpc map.rpc output.obj
- *   node tools/export-rpc-mesh.mjs map.gpc map.rpc output.obj --anchor=corner
+ *   node tools/export-rpc-mesh.mjs map.gpc map.rpc output.obj --anchor=center
  *   node tools/export-rpc-mesh.mjs map.gpc map.rpc output.obj --diagonal=0-3
  */
 import fs from 'node:fs';
