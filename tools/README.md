@@ -170,13 +170,14 @@ Open `terrain-preview.html` on GitHub Pages or through a local HTTP server. The 
 The reference panel is an inspection aid only: these PCX files are briefing/map graphics, not ground textures, and they have not been coordinate-registered to the exported mesh. Use the side-by-side comparison to check broad shape and orientation; do not treat visual resemblance alone as proof of world scale or placement. Unsupported map variants state that no reference is mapped rather than loading a guessed filename.
 
 
-## 16. Inventory nested map-scene DPC references
 
-The DPC graph inspector follows the observed top-level kind-1 pointer arrays and a tentative kind-4 pointer-array layout. It prints numeric type/class IDs, byte offsets, graph edges, and validation errors; it does not label unknown record classes as ground, object placement, or terrain. Compare campaigns before attempting semantic decoding:
+## 17. Investigate nested DPC scene records
+
+The DPC graph tools list nested pointers and numeric record classes across campaign resources. They are diagnostic only: numeric type/class IDs are kept intact rather than labelled “terrain”, “ground” or “placement” without executable evidence.
 
 ```sh
 node tools/inspect-dpc-graph.mjs original-data/structs/rag01.dpc > rag01-dpc-graph.json
 node tools/inspect-dpc-graph-compare.mjs original-data/structs/rag01.dpc original-data/structs/rag02.dpc original-data/structs/rag04.dpc original-data/structs/anub01.dpc original-data/structs/dead01.dpc original-data/structs/oasis01.dpc > dpc-graph-comparison.json
 ```
 
-Important caveat: nested kind-4 traversal is a hypothesis based on observed bytes. Treat its edges as candidates until validated against the executable. The top-level pointer bounds remain the stronger verified structure.
+The kind-1 pointer array is based on the existing observed inspector layout. Following kind-4 pointers is tentative; compare results against executable read sites before relying on those nested edges.
