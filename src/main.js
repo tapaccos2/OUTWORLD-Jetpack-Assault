@@ -611,18 +611,20 @@ if(assetLoader){
    }
    if(o.isMesh){
     o.castShadow=true;o.receiveShadow=true;
-    // Fallback for ear cups merged as separately named meshes: small geometry at either side of the helmet.
-    o.geometry.computeBoundingBox?.();
-    const accessoryBounds=new THREE.Box3().setFromObject(o);
-    const accessorySize=accessoryBounds.getSize(new THREE.Vector3());
-    const accessoryCenter=accessoryBounds.getCenter(new THREE.Vector3());
-    const maxDim=Math.max(accessorySize.x,accessorySize.y,accessorySize.z);
-    if(maxDim<.42&&accessoryCenter.y>1.78&&accessoryCenter.y<2.25&&Math.abs(accessoryCenter.x)>.13&&Math.abs(accessoryCenter.x)<.43){
-     o.visible=false;
-     console.info('OUTWORLD: removed likely integrated headset ear cup',o.name);
+    // Remove separately-meshed ear cups even when the source GLB uses generic mesh names.
+     // The head itself is centered on X, so side-position filtering avoids hiding the face.
+     o.geometry.computeBoundingBox?.();
+     const accessoryBounds=new THREE.Box3().setFromObject(o);
+     const accessorySize=accessoryBounds.getSize(new THREE.Vector3());
+     const accessoryCenter=accessoryBounds.getCenter(new THREE.Vector3());
+     const maxDim=Math.max(accessorySize.x,accessorySize.y,accessorySize.z);
+     const atSideOfHead=accessoryCenter.y>1.62&&accessoryCenter.y<2.36&&Math.abs(accessoryCenter.x)>.105&&Math.abs(accessoryCenter.x)<.62;
+     if(maxDim<.72&&atSideOfHead){
+      o.visible=false;
+      console.info('OUTWORLD: removed side-head accessory mesh',o.name,{x:accessoryCenter.x,y:accessoryCenter.y,z:accessoryCenter.z,size:maxDim});
+     }
     }
-   }
-   if(o.isBone){
+    if(o.isBone){
     allBones.push(o);
     const n=o.name.toLowerCase().replace(/[^a-z0-9]/g,'');
     if(!soldierBones.head&&/(head|mixamorighead)$/.test(n))soldierBones.head=o;
@@ -658,18 +660,20 @@ if(assetLoader){
    const rifleCenter=rifleBounds.getCenter(new THREE.Vector3());
    const rifleLength=Math.max(rifleSize.x,rifleSize.y,rifleSize.z)||1;
    rifle.scale.setScalar(.92/rifleLength);
-   rifle.position.set(-rifleCenter.x*rifle.scale.x,-rifleCenter.y*rifle.scale.y,-rifleCenter.z*rifle.scale.z);
+   // Preserve the geometry-centering correction; overwriting position here previously discarded it.
+   const centerOffset=new THREE.Vector3(-rifleCenter.x,-rifleCenter.y,-rifleCenter.z).multiplyScalar(rifle.scale.x);
+   rifle.position.copy(centerOffset);
    rifle.rotation.set(0,Math.PI,0);
    rifle.updateMatrixWorld(true);
    rifle.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;o.frustumCulled=false;if(o.material){o.material.depthWrite=true;o.material.needsUpdate=true}}});
-   // Parent the real rifle to the animated right hand so it follows the grip instead of floating beside the marine.
+   // Parent the real rifle to the animated right hand and add grip offset to the centering correction.
    const gripBone=importedSoldier.userData.boneRig?.soldierBones?.rightHand||importedSoldier.userData.boneRig?.soldierBones?.rightForearm;
    if(gripBone){
     gripBone.add(rifle);
-    rifle.position.set(0,-.015,-.23);
+    rifle.position.add(new THREE.Vector3(0,-.015,-.23));
    }else{
     importedSoldier.add(rifle);
-    rifle.position.set(.18,1.34,-.24);
+    rifle.position.add(new THREE.Vector3(.18,1.34,-.24));
    }
    importedSoldier.userData.thirdPersonWeapon=rifle;
    console.info('OUTWORLD: imported third-person M4A1 rifle loaded');
