@@ -45,12 +45,21 @@ function inspect(file) {
     for (let i = 0; i < count; i++) {
       const offset = 20 + i * recordSize;
       const words = [];
+      const u16le = [];
+      const i16le = [];
       for (let p = 0; p < recordSize; p += 4) words.push(b.readUInt32LE(offset + p));
+      for (let p = 0; p < recordSize; p += 2) {
+        const value = b.readUInt16LE(offset + p);
+        u16le.push(value);
+        i16le.push(value >= 0x8000 ? value - 0x10000 : value);
+      }
       records.push({
         index: i,
         offset,
         hex: b.subarray(offset, offset + recordSize).toString('hex').match(/.{1,8}/g).join(' '),
         u32le: words,
+        u16le,
+        i16le,
       });
     }
   }
