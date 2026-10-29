@@ -629,6 +629,8 @@ if(false && window.GLTFLoader){
 
 
 const player=soldier(false);
+// Compatibility handle for the third-person toggle only; contains no procedural weapon geometry.
+const marineRifle=new THREE.Group();marineRifle.visible=false;player.add(marineRifle);
 // Never display the blockout soldier, even while network assets are loading.
 player.children.forEach(o=>{o.visible=false});
 weaponRig.traverse(o=>{if(o.isMesh&&o!==fpFlashOuter&&o!==fpFlashCore)o.visible=false});
