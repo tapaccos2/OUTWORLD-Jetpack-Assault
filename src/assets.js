@@ -37,14 +37,16 @@
    building:'https://cdn.3dassets.dev/assets/36525/v1/model.glb'
   };
   const specs=[
-   // Scattered ruined outpost structures, with open lanes and jetpack routes between them.
-   {asset:'building',x:-14,z:-5,height:6.2,rotation:.18,kind:'building'},
-   {asset:'building',x:15,z:-16,height:5.8,rotation:2.5,kind:'building'},
-   {asset:'building',x:-18,z:-29,height:6.8,rotation:1.15,kind:'building'},
-   {asset:'building',x:12,z:-37,height:5.6,rotation:3.8,kind:'building'},
-   {asset:'building',x:-11,z:-49,height:6.0,rotation:2.1,kind:'building'},
-   {asset:'building',x:18,z:-55,height:5.4,rotation:.72,kind:'building'},
-   // Omit the bundled crash-site scene: its large pale base slab reads as a floating platform.
+   // MISSION 01 — OUTPOST ZERO: compact, asymmetric human frontier outpost.
+   // The perimeter is breached and the command area damaged; retain broad jetpack approaches,
+   // broken sightlines and flank routes rather than a straight corridor of repeated buildings.
+   {asset:'building',x:-8.5,z:-10.5,height:5.6,rotation:.22,kind:'building'},
+   {asset:'building',x:5.8,z:-15.5,height:4.7,rotation:1.62,kind:'building'},
+   {asset:'building',x:-2.0,z:-21.0,height:6.2,rotation:2.82,kind:'building'},
+   {asset:'crashSite',x:8.8,z:-24.0,height:5.2,rotation:2.15,kind:'building'},
+   {asset:'building',x:-11.5,z:-29.5,height:4.3,rotation:1.02,kind:'building'},
+   {asset:'building',x:4.2,z:-34.5,height:5.1,rotation:3.32,kind:'building'},
+   // Crash-site GLB now anchors the wrecked outpost's central command area.
    {asset:'canopy',x:-17,z:-19,height:8.5,rotation:.45,kind:'tree',collision:1.6},
    {asset:'buttress',x:18,z:-22,height:7.4,rotation:2.3,kind:'tree',collision:1.7},
    {asset:'canopy',x:-19,z:-37,height:8.0,rotation:2.6,kind:'tree',collision:1.6},
