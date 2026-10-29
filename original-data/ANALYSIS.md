@@ -36,6 +36,15 @@ This note records observations from the original files currently present in this
 
 Static inspection of `outwars.exe` found a parser that checks for the four-byte `DCPM` identifier followed by `C`; the executable also contains separate group/ramp parsers for the `CPMG` and `CPMR` signatures. The loose `anub01.dpc` and `flag_blu.dpc` files begin with `DCPMC`, matching the database parser check. The DPC header stores a relocation base at offset 12 (for example, `0x80019c40`). The executable subtracts that value from each stored pointer to resolve a file offset: `0x8008ae00` in `anub01.dpc` resolves to offset 463,296, where a typed record begins. The record count at offset 32 and pointer table at offset 36 correctly yield 5 records in `anub01.dpc`, 6 in `rag01.dpc`, and 1 in `flag_blu.dpc`; their record bounds are in file range. `tools/inspect-dpc-headers.mjs` reports header pointers, and `tools/inspect-dpc-records.mjs` reports record boundaries and raw kind/flag/class fields. This is now a validated structural decode, but the record semantics and terrain geometry remain undecoded.
 
+## Terrain-format lead from the executable
+
+Static disassembly identifies two terrain-specific resource formats that are absent from the current repository inventory:
+
+- `TERRAIN\\RED.GRP`: the executable checks the `CPMG` signature and a 32-bit version field equal to `0x43`, limits the entry count to 200, then copies a `0x1900`-byte payload after a 20-byte header.
+- `TERRAIN\\RAG01.RMP`: the executable checks the `CPMR` signature and the same version value, limits the entry count to 1000, then copies a `0x9c40`-byte payload after a 20-byte header.
+
+These are confirmed parser expectations from the executable, not a complete specification of the files' geometry semantics. Neither `.GRP` nor `.RMP` appears in the current local file inventory, so their payloads cannot yet be inspected or validated. The map-named `.DPC` record table is now structurally decoded, but no terrain mesh has been reconstructed from it.
+
 ## Next technical work
 
 - Enumerate all files under `original-data/misn/` and `original-data/gry/`.
