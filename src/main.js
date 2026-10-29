@@ -599,29 +599,8 @@ gunPart(new THREE.BoxGeometry(.075,.035,.18),gunDark,[0,.09,-.20]);
 gunPart(new THREE.BoxGeometry(.036,.012,.12),gunEnergy,[0,.112,-.20]);
 weaponRig.traverse(o=>{if(o.isMesh){o.renderOrder=1000;if(o.material){o.material.depthTest=false;o.material.depthWrite=false}}});
 
-// First-person arms are kept back in camera space and slim enough to read as forearms, not oversized floating tubes.
+// The first-person viewmodel uses the marine's actual armour, elbow joints, forearm plates and gloves.
 const armRig=new THREE.Group();camera.add(armRig);
-const sleeveMat=new THREE.MeshStandardMaterial({color:0x303a32,roughness:.92,metalness:.02});
-const sleeveEdgeMat=new THREE.MeshStandardMaterial({color:0x596451,roughness:.88,metalness:.02});
-const gloveMat=new THREE.MeshStandardMaterial({color:0x171b18,roughness:.96,metalness:.02});
-const cuffMat=new THREE.MeshStandardMaterial({color:0x202824,roughness:.9});
-function armSegment(a,b,r1,r2,mat,parent=armRig){const A=new THREE.Vector3(...a),B=new THREE.Vector3(...b),delta=B.clone().sub(A),mesh=new THREE.Mesh(new THREE.CylinderGeometry(r2,r1,delta.length(),9),mat);mesh.position.copy(A).add(B).multiplyScalar(.5);mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),delta.normalize());mesh.castShadow=false;mesh.receiveShadow=false;parent.add(mesh);return mesh}
-function armJoint(pos,r,mat){const m=new THREE.Mesh(new THREE.SphereGeometry(r,10,8),mat);m.position.set(...pos);armRig.add(m);return m}
-// Left support arm reaches to the forward handguard; right hand sits at the pistol grip.
-armSegment([-.53,-.76,-1.08],[-.28,-.53,-1.17],.064,.052,sleeveMat);
-armSegment([-.28,-.53,-1.17],[.17,-.39,-1.19],.052,.043,sleeveMat);
-armJoint([-.28,-.53,-1.17],.049,sleeveEdgeMat);
-armSegment([.17,-.39,-1.19],[.245,-.345,-1.12],.043,.036,gloveMat);
-armJoint([.245,-.345,-1.12],.041,gloveMat);
-// Right forearm approaches the grip from below and behind the receiver.
-armSegment([.57,-.78,-1.02],[.46,-.58,-1.08],.067,.053,sleeveMat);
-armSegment([.46,-.58,-1.08],[.36,-.45,-1.04],.053,.041,sleeveMat);
-armJoint([.46,-.58,-1.08],.049,sleeveEdgeMat);
-armSegment([.36,-.45,-1.04],[.31,-.36,-.94],.041,.034,gloveMat);
-armJoint([.31,-.36,-.94],.039,gloveMat);
-// Small cuff seams stay close to the sleeves.
-armSegment([-.52,-.75,-1.09],[-.49,-.72,-1.11],.058,.058,cuffMat);
-armSegment([.56,-.76,-1.03],[.53,-.72,-1.05],.06,.06,cuffMat);
 const fpFlash=new THREE.Group();const fpFlashOuter=new THREE.Mesh(new THREE.ConeGeometry(.038,.18,6),new THREE.MeshBasicMaterial({color:0xffb84d,transparent:true,opacity:.78,depthWrite:false,toneMapped:false}));fpFlashOuter.rotation.x=-Math.PI/2;fpFlashOuter.position.set(0,.015,-.67);fpFlash.add(fpFlashOuter);const fpFlashCore=new THREE.Mesh(new THREE.SphereGeometry(.025,6,4),new THREE.MeshBasicMaterial({color:0xfff2cf,transparent:true,opacity:.9,depthWrite:false,toneMapped:false}));fpFlashCore.position.set(0,.015,-.59);fpFlash.add(fpFlashCore);fpFlash.visible=false;weaponRig.add(fpFlash);
 // Load a CC0 stylized assault-rifle GLB. The procedural rifle remains as a fallback if the asset host is unavailable.
 const fallbackWeaponMeshes=[];
@@ -650,6 +629,23 @@ if(window.GLTFLoader){
 
 
 const player=soldier(false);
+// Reuse the player character's own arm meshes in first person instead of separate floating tube geometry.
+if(player.userData.arms&&player.userData.arms.length===2){
+ const leftArm=player.userData.arms[0].clone(true);
+ const rightArm=player.userData.arms[1].clone(true);
+ // Remove world-body shoulder offsets and place the articulated, armoured limbs around the weapon.
+ for(const arm of [leftArm,rightArm]){
+  arm.position.set(0,0,0);arm.rotation.set(0,Math.PI,0);arm.scale.setScalar(.72);
+  arm.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;o.renderOrder=1000;if(o.material){o.material.depthTest=false;o.material.depthWrite=false}}});
+  armRig.add(arm);
+ }
+ leftArm.position.set(-.43,-.22,-.56);leftArm.rotation.z=.52;
+ rightArm.position.set(.47,-.23,-.47);rightArm.rotation.z=-.28;
+ // Hands angle inward towards the rifle's support point and pistol grip.
+ leftArm.userData.elbow.rotation.x=-.20;leftArm.userData.elbow.rotation.z=-.10;
+ rightArm.userData.elbow.rotation.x=-.14;rightArm.userData.elbow.rotation.z=.08;
+}
+
 // Third-person rifle mounted to the marine's forward hand; visible only in chase view.
 const marineRifle=new THREE.Group();
 const mrMetal=new THREE.MeshStandardMaterial({color:0x26343a,metalness:.78,roughness:.31});
