@@ -63,6 +63,26 @@ function inspect(file) {
       });
     }
   }
+  const fieldStats = [];
+  if (!errors.length) {
+    for (let p = 0; p < recordSize; p += 2) {
+      const values = [];
+      for (let i = 0; i < count; i++) values.push(b.readUInt16LE(20 + i * recordSize + p));
+      const signed = values.map(v => v >= 0x8000 ? v - 0x10000 : v);
+      const frequencies = new Map();
+      for (const v of values) frequencies.set(v, (frequencies.get(v) ?? 0) + 1);
+      fieldStats.push({
+        byteOffset: p,
+        uniqueU16Values: frequencies.size,
+        zeroCount: frequencies.get(0) ?? 0,
+        minU16: Math.min(...values),
+        maxU16: Math.max(...values),
+        minI16: Math.min(...signed),
+        maxI16: Math.max(...signed),
+        mostCommonU16: [...frequencies.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([value, occurrences]) => ({ value, occurrences })),
+      });
+    }
+  }
   return {
     file,
     bytes: b.length,
@@ -75,8 +95,9 @@ function inspect(file) {
     maxCount,
     structurallyValid: errors.length === 0,
     errors,
+    fieldStats,
     records,
-    limitation: 'Record boundaries are validated; field meanings, coordinates, and terrain mesh topology remain undecoded.',
+    limitation: 'Record boundaries and field-value distributions are reported; field meanings, coordinates, and terrain mesh topology remain undecoded.',
   };
 }
 
