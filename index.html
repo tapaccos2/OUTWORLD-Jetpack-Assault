@@ -11,7 +11,7 @@
 <body>
 <canvas id="game"></canvas>
 <div id="cinemaGrade" aria-hidden="true"></div><div id="damageOverlay" aria-hidden="true"></div><div id="hud">
- <div class="panel brand">OUTWORLD <small>JETPACK ASSAULT · BUILD 2.9.35 · 29 OCT 2026</small></div>
+ <div class="panel brand">OUTWORLD <small>JETPACK ASSAULT · BUILD 2.9.36 · 29 OCT 2026</small></div>
  <div class="panel help"><b>PC CONTROLS</b><br>W A S D — Move<br>Right mouse drag — Aim · Click — Fire<br>Space — Jump · Shift — Jetpack<br>V — Camera · Esc — Release mouse</div>
  <div class="panel stats"><div class="statrow"><span>ARMOUR</span><b id="hpText">100%</b></div><div class="bar"><div id="hpBar" class="fill armour"></div></div><div class="statrow"><span>JETPACK FUEL</span><b id="fuelText">100%</b></div><div class="bar"><div id="fuelBar" class="fill fuel"></div></div><div class="statrow"><span>HOSTILES</span><b id="enemyText">7</b></div></div>
  <div class="panel objective"><strong>MISSION: BREAK THROUGH THE HYDRAN NEST</strong><span id="missionText">Cross the ravine and destroy the Hydran defenders</span></div>
@@ -31,7 +31,7 @@ window.GLTFLoader = GLTFLoader;
 window.MeshoptDecoder = MeshoptDecoder;
 window.THREE = THREE;
 try {
-  await import("./src/main.js?v=2935");
+  await import("./src/main.js?v=2936");
 } catch (error) {
   console.error("OUTWORLD startup failed:", error);
   const msg = document.getElementById("message");
