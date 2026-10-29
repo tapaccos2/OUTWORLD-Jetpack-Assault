@@ -148,15 +148,15 @@ The checker now also validates each stored normal against the normal predicted f
 ```sh
 node tools/export-rpc-mesh.mjs \
   original-data/structs/rag01.gpc original-data/structs/rag01.rpc \
-  /tmp/rag01-center.obj
+  /tmp/rag01-corner.obj
 
 node tools/export-rpc-mesh.mjs \
   original-data/structs/rag01.gpc original-data/structs/rag01.rpc \
-  /tmp/rag01-corner.obj --anchor=corner
+  /tmp/rag01-center.obj --anchor=center
 
 node tools/export-rpc-mesh.mjs \
   original-data/structs/rag01.gpc original-data/structs/rag01.rpc \
   /tmp/rag01-alt-diagonal.obj --diagonal=0-3
 ```
 
-The exporter emits four vertices and two triangles per RPC surface, grouped by the GPC ranges. The default uses the record XY pair as the surface centre and splits the quad along corner 1–2, because the stored normal agrees with the first three row-major heights. Both assumptions are still configurable: compare centre vs corner anchoring and diagonal 1–2 vs 0–3 against an original terrain screenshot before choosing the final runtime implementation. Raw game units are preserved; no arbitrary scale is applied.
+The exporter emits four vertices and two triangles per RPC surface, grouped by the GPC ranges. The default treats the record XY pair as the local (0,0) corner and splits the quad along corner 1–2, because this interpretation produces far more shared edges with matching endpoint heights across the campaign files, and the stored normal agrees with the first three row-major heights. The centre-anchor alternative and diagonal 0–3 remain configurable for comparison against an original terrain screenshot before choosing the final runtime implementation. Raw game units are preserved; no arbitrary scale is applied.
