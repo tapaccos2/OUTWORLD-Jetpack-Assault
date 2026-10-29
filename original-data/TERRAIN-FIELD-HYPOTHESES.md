@@ -1,12 +1,12 @@
 # Terrain record field hypotheses
 
-This document records a new, testable interpretation of the GPC/RPC record fields. It is a hypothesis from byte-level cross-file comparison, not a complete terrain decoder.
+This document tracks the evolving GPC/RPC terrain decode. Early observations are preserved for auditability, but later sections contain the stronger results: dimensions, orientation, normals, corner heights, corner order, and the XY corner anchor have been cross-validated across the full resource inventory. A candidate mesh exporter and interactive preview now exist; visual validation against an original in-game map remains outstanding.
 
 ## New lead: RPC corner-value quartet and XY pair
 
 In the 40-byte RPC record, the four 32-bit little-endian fields at record-relative offsets 16, 20, 24 and 28 each contain a signed integer whose observed magnitude fits a plausible terrain scalar. In the same record, the 32-bit signed integers at offsets 32 and 36 form a pair of spatial-looking coordinates. The quartet varies independently in many records and often repeats one value in all four positions.
 
-That pattern is consistent with a four-corner surface/ramp record: four corner elevations (or another per-corner scalar) plus an XY position. The meaning and units are not yet proven. In particular, these must not yet be described in application code as confirmed vertex heights.
+At this early stage, the pattern only suggested four per-corner values. Later normal-gradient and topology checks in this document confirm that these are ordered corner heights in the same game-unit scale as the two surface dimensions.
 
 Selected observed ranges from current RPC files:
 
@@ -27,17 +27,17 @@ The coordinate pair at offsets 32 and 36 varies over a wider signed range and fr
 - In five paired campaigns, the two 16-bit fields at GPC record offsets 24 and 26 partition the paired RPC table into contiguous, non-overlapping inclusive ranges covering every RPC record.
 - This gives a reliable parent-group-to-ramp-record link, but it does not by itself prove the semantic meaning of the fields.
 
-## Next tests needed before implementing a mesh
+## Remaining tests before integrating into the playable game
 
-1. Determine whether the four RPC corner values correspond to four ordered corners, and establish their order and vertical scale.
-2. Determine whether offsets 32 and 36 are XY coordinates, an anchor point, or another spatial pair; test against GPC fields without assuming group centers.
-3. Check whether the leading RPC fields encode ramp type, dimensions, material, flags, or topology.
-4. Render a diagnostic plot of the inferred surfaces for at least two maps and compare the outline and elevations against available in-game screenshots/map references.
-5. Only after those tests pass, implement a mesh exporter and document any remaining assumptions.
+1. Use the interactive preview to compare the candidate geometry with original in-game screenshots or map references.
+2. Visually validate the default corner-1–2 triangulation against the alternate diagonal.
+3. Establish absolute game scale and the relationship between mission spawn/object coordinates and terrain coordinates.
+4. Identify the correct terrain textures and any additional collision, underside, or overlapping surface layers.
+5. Integrate the reconstructed mesh into the playable scene only after the coordinate mapping and visual shape are confirmed.
 
 ## Important limitation
 
-No original terrain mesh has yet been reconstructed or visually validated. These field interpretations are deliberately marked as hypotheses so a provisional pattern is not mistaken for a confirmed format specification.
+A candidate mesh exporter and interactive preview are now available. The candidate mesh has not yet been visually validated against an original in-game terrain reference, so it must not yet be treated as a finished faithful level reconstruction.
 
 ## Stronger cross-file validation: group bounds contain ramp coordinates
 
@@ -69,7 +69,7 @@ A useful test case is `oasis01.rpc`, where multiple records share the exact same
 - `[800, 800, 480, 480]` — one pair of corners high and the other pair low;
 - `[800, 480, 800, 480]` — the alternating pair pattern for the other axis.
 
-The same pattern occurs at `(1024, 32768)`. These examples are consistent with four ordered grid corners stored in row-major order, with the two pairs representing opposite sides of a surface. This is stronger evidence for a per-corner elevation interpretation than value ranges alone. The axis direction and exact corner order are still provisional, because the record's leading 16 bytes likely carry surface/type/texture or orientation information that has not yet been decoded.
+The same pattern occurs at `(1024, 32768)`. These examples are consistent with four ordered grid corners stored in row-major order, with the two pairs representing opposite sides of a surface. This was stronger evidence for a per-corner elevation interpretation than value ranges alone. Subsequent sections decode the dimensions, direction, normal, row-major corner order, and corner anchor; only the remaining type/flags fields and original visual match remain unresolved.
 
 Duplicate-position statistics also show that repeated XY positions often have different corner values, especially in `oasis01` (79 of 80 duplicate positions) and `mik01` (140 of 153). This suggests the records at a position can describe distinct surface pieces or orientations rather than one unique point record. It is another reason not to build a mesh by blindly treating each RPC record as a unique vertex.
 
@@ -91,7 +91,7 @@ The stores are visible in the disassembly at `0x0047706d`–`0x00477095`. This c
 
 The native file loader around `0x004EC990` validates the CPMG/CPMR magic, version `0x43`, and the 200/1000 record limits, then copies the fixed payload sizes (`0x1900` bytes for 200 × 32-byte GPC records and `0x9c40` bytes for 1000 × 40-byte RPC records). It does not interpret individual records in that routine. This separates the already-confirmed file-container parser from the record-field semantics inferred from other code paths.
 
-The setter's pairwise stores plus the real data patterns also make a row-major corner order the leading candidate: `[corner00, corner01, corner10, corner11]`. Under that order, both observed patterns `[a,a,b,b]` and `[a,b,a,b]` represent the two straightforward axis-aligned slope directions. In `oasis01.rpc`, 104 records have the first pattern (excluding fully flat records), and 74 have the second; 103 are fully flat. This is a plausible corner order, not yet a confirmed rendering convention, because the native routine shown above writes only paired heights and does not reveal how the renderer maps them to world axes.
+The setter's pairwise stores and the real data patterns led to the row-major order `[corner00, corner01, corner10, corner11]`. Under that order, both `[a,a,b,b]` and `[a,b,a,b]` represent the two axis-aligned slope directions. In `oasis01.rpc`, 104 records have the first pattern (excluding fully flat records), 74 have the second, and 103 are fully flat. The later normal-gradient test validates this order: the stored normal agrees with the first three corners and the dimension/orientation fields.
 
 ## Orientation vector confirmed by executable trigonometry
 
@@ -107,7 +107,7 @@ The angle itself, the meaning of fields at offsets `+0`, `+2`, and `+4`, and how
 
 The signed 16-bit triplet at RPC offsets `+10`, `+12`, and `+14` also has a near-constant magnitude. Across all 34 RPC files and **8,005 records**, `sqrt(nx² + ny² + nz²)` is within 2 units of 4095 for every record; the observed range is 4094.27–4095.75. Flat records commonly store `(0, 0, 4095)`, while sloped records use non-zero first/second components and a reduced third component. This is strong evidence that the triplet is a fixed-point surface-normal vector.
 
-The first 16 bytes of each RPC record therefore appear to contain at least: a 2D orientation/direction pair at `+6/+8` and a 3D normal at `+10/+12/+14`, alongside still-unknown fields at `+0/+2/+4`. The native setter directly writes the direction pair and the height/position fields; the normal-vector identification is currently supported by the across-file invariant and flat-versus-slope pattern, but still needs a direct executable use-site to be considered fully confirmed.
+The first 16 bytes of each RPC record therefore contain at least: a type/flag word at `+0`, two dimension values at `+2/+4`, a 2D orientation/direction pair at `+6/+8`, and a 3D normal at `+10/+12/+14`. The native setter directly writes the direction pair and the height/position fields; the normal vector is strongly confirmed by its fixed magnitude and its agreement with the height-derived plane normal, although a direct native consumer of the normal triplet has not yet been located.
 
 ## Geometry formula validated against stored normals
 
