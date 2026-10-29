@@ -80,7 +80,17 @@ node tools/extract-ff-resources.mjs original-data/motion.ff original-data/shelld
 Try `units.ff` separately as well. The extractor refuses to extract an archive if its count, table boundaries, monotonic offsets, or empty-name EOF sentinel do not match the observed format. A failed validation means this layout has not been established for that archive; it does not mean the archive is corrupt. Extracted files are raw resource payloads and may need further format-specific decoding.
 
 
-## 9. Cross-reference resource names (with binary-texture false-positive control)
+## 9. Find terrain resources in loose files and FF archives
+
+Searches the asset tree for `.GRP`/`.RMP` filenames and for the executable's expected `CPMG`/`CPMR` signatures inside loose files and FF archive payloads:
+
+```sh
+node tools/find-terrain-resources.mjs original-data > terrain-resource-search.json
+```
+
+The scanner only parses FF archives whose directory layout passes the same structural checks as the existing extractor. Any unrecognized archive layout is reported rather than guessed. Signature matches are candidates for inspection, not proof that terrain geometry is decoded.
+
+## 10. Cross-reference resource names (with binary-texture false-positive control)
 
 Run the scanner:
 
