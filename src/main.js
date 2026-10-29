@@ -556,9 +556,9 @@ const muzzleCore=new THREE.Mesh(new THREE.SphereGeometry(.06,8,8),new THREE.Mesh
 const weaponRig=new THREE.Group();camera.add(weaponRig);
 weaponRig.position.set(.24,-.24,-.90);weaponRig.scale.set(.56,.56,.56);
 const fpFlash=new THREE.Group();
-const fpFlashOuter=new THREE.Mesh(new THREE.ConeGeometry(.038,.18,6),new THREE.MeshBasicMaterial({color:0xffb84d,transparent:true,opacity:.78,depthWrite:false,toneMapped:false}));
-fpFlashOuter.rotation.x=-Math.PI/2;fpFlashOuter.position.set(0,0,0);fpFlash.add(fpFlashOuter);
-const fpFlashCore=new THREE.Mesh(new THREE.SphereGeometry(.025,6,4),new THREE.MeshBasicMaterial({color:0xfff2cf,transparent:true,opacity:.9,depthWrite:false,toneMapped:false}));
+const fpFlashOuter=new THREE.Mesh(new THREE.ConeGeometry(.038,.18,6),new THREE.MeshBasicMaterial({color:0xff9c2e,transparent:true,opacity:.95,depthWrite:false,depthTest:false,toneMapped:false}));
+fpFlashOuter.rotation.x=-Math.PI/2;fpFlashOuter.scale.set(1.8,1.8,1.8);fpFlashOuter.position.set(0,0,0);fpFlash.add(fpFlashOuter);
+const fpFlashCore=new THREE.Mesh(new THREE.SphereGeometry(.025,6,4),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:1,depthWrite:false,depthTest:false,toneMapped:false}));
 fpFlashCore.position.set(0,0,0);fpFlash.add(fpFlashCore);fpFlash.visible=false;weaponRig.add(fpFlash);
 const armRig=new THREE.Group();camera.add(armRig);
 // The dedicated imported first-person GLB below is the only visible weapon asset.
@@ -578,6 +578,7 @@ if(assetLoader&&window.MeshoptDecoder)assetLoader.setMeshoptDecoder(window.Mesho
 const externalMixers=[];
 const soldierAssetURL='https://raw.githubusercontent.com/cktang88/3d-fps/main/public/assets/models/characters/soldier_tac.glb';
 const firstPersonAssetURL='https://raw.githubusercontent.com/cktang88/3d-fps/main/public/assets/models/fp/m4a1.glb';
+const thirdPersonWeaponURL='https://raw.githubusercontent.com/cktang88/3d-fps/main/public/assets/models/weapons/m4a1.glb';
 let importedSoldier=null,importedFP=null;
 function normalizeGLB(model,targetHeight){
  model.updateMatrixWorld(true);
@@ -632,6 +633,25 @@ if(assetLoader){
   // Log the imported rig so missing bone mappings are visible during browser testing.
   console.info('OUTWORLD soldier rig:',allBones.map(b=>b.name).join(', '));
   console.info('OUTWORLD mapped bones:',Object.fromEntries(Object.entries(soldierBones).map(([k,b])=>[k,b?.name||null])));
+  // Load a separate genuine 3D rifle mesh for the third-person marine (never procedural geometry).
+  assetLoader.load(thirdPersonWeaponURL,weaponGLTF=>{
+   const rifle=weaponGLTF.scene;
+   rifle.updateMatrixWorld(true);
+   const rifleBounds=new THREE.Box3().setFromObject(rifle);
+   const rifleSize=rifleBounds.getSize(new THREE.Vector3());
+   const rifleCenter=rifleBounds.getCenter(new THREE.Vector3());
+   const rifleLength=Math.max(rifleSize.x,rifleSize.y,rifleSize.z)||1;
+   rifle.scale.setScalar(.92/rifleLength);
+   rifle.position.set(-rifleCenter.x*rifle.scale.x,-rifleCenter.y*rifle.scale.y,-rifleCenter.z*rifle.scale.z);
+   rifle.rotation.set(0,0,0);
+   rifle.updateMatrixWorld(true);
+   rifle.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;o.frustumCulled=false;if(o.material){o.material.depthWrite=true;o.material.needsUpdate=true}}});
+   // Place the imported rifle at the marine's right shoulder/hand line, aimed forward.
+   rifle.position.add(new THREE.Vector3(.22,1.28,-.30));
+   importedSoldier.add(rifle);
+   importedSoldier.userData.thirdPersonWeapon=rifle;
+   console.info('OUTWORLD: imported third-person M4A1 rifle loaded');
+  },undefined,e=>console.error('OUTWORLD third-person rifle asset failed to load.',e));
   player.add(importedSoldier);
   // Re-align the actual asset's feet to the player ground plane after attaching it to the player.
   importedSoldier.updateMatrixWorld(true);
@@ -779,7 +799,7 @@ function shoot(){if(dead||won||!started||shotCooldown>0)return;shotCooldown=.075
   if(along>=0&&along<bestAlong&&along<65){const t=THREE.MathUtils.clamp((axisTo+along*rayAxis)/Math.max(axisLen,1e-6),0,1),rayPoint=origin.clone().addScaledVector(dir,along),bodyPoint=foot.clone().addScaledVector(axis,t),radius=(e.userData.insect?.56:.48)*Math.max(e.scale.x,e.scale.z);if(rayPoint.distanceTo(bodyPoint)<radius){bestAlong=along;target=e;targetPoint=bodyPoint;targetDamage=t<.22?40:(t>.82?70:50)}}
  }
  if(target){target.userData.hp-=targetDamage;target.userData.hit=.2;document.querySelector('.reticle').classList.add('confirmed');hitConfirmTimer=.22;for(let i=0;i<10;i++)spawnSpark(targetPoint.clone().add(new THREE.Vector3((Math.random()-.5)*.42,(Math.random()-.5)*.48,(Math.random()-.5)*.35)),0xffad63);if(target.userData.hp<=0){target.visible=false;target.userData.hp=0;for(let i=0;i<24;i++)spawnSpark(target.position.clone().add(new THREE.Vector3((Math.random()-.5)*.9,1+Math.random()*1.5,(Math.random()-.5)*.9)),i%3===0?0x8caca4:0xff8d4d)}}
- scene.updateMatrixWorld(true);const muzzleWorld=weaponRig.userData.muzzleAnchor?weaponRig.userData.muzzleAnchor.getWorldPosition(new THREE.Vector3()):origin.clone().add(dir.clone().multiplyScalar(.65));const start=thirdPerson?origin.clone().add(dir.clone().multiplyScalar(.65)):muzzleWorld;const end=target?targetPoint.clone():origin.clone().add(dir.clone().multiplyScalar(42));const bolt=new THREE.Mesh(new THREE.CylinderGeometry(.012,.022,1.25,6),new THREE.MeshBasicMaterial({color:target?0xffc46b:0x9df7ff,transparent:true,opacity:.86,depthWrite:false,toneMapped:false}));bolt.frustumCulled=false;scene.add(bolt);bullets.push({obj:bolt,life:.105,duration:.105,start,end,tracer:true,beam:true});fpFlash.visible=!thirdPerson;if(player.userData.muzzle)player.userData.muzzle.visible=true;if(player.userData.muzzleCore)player.userData.muzzleCore.visible=true;muzzleLife=.045}
+ scene.updateMatrixWorld(true);const muzzleWorld=weaponRig.userData.muzzleAnchor?weaponRig.userData.muzzleAnchor.getWorldPosition(new THREE.Vector3()):origin.clone().add(dir.clone().multiplyScalar(.65));const start=thirdPerson?origin.clone().add(dir.clone().multiplyScalar(.65)):muzzleWorld;const end=target?targetPoint.clone():origin.clone().add(dir.clone().multiplyScalar(42));const bolt=new THREE.Mesh(new THREE.CylinderGeometry(.025,.038,2.4,7),new THREE.MeshBasicMaterial({color:target?0xffc46b:0x9df7ff,transparent:true,opacity:1,depthWrite:false,depthTest:false,toneMapped:false}));bolt.frustumCulled=false;bolt.renderOrder=1001;scene.add(bolt);bullets.push({obj:bolt,life:.18,duration:.18,start,end,tracer:true,beam:true});fpFlash.visible=!thirdPerson;if(player.userData.muzzle)player.userData.muzzle.visible=true;if(player.userData.muzzleCore)player.userData.muzzleCore.visible=true;muzzleLife=.045}
 function spawnSpark(pos,color){const mesh=new THREE.Mesh(new THREE.SphereGeometry(.028,5,4),new THREE.MeshBasicMaterial({color,toneMapped:false}));mesh.position.copy(pos);scene.add(mesh);sparks.push({obj:mesh,life:.35,vel:new THREE.Vector3((Math.random()-.5)*5,Math.random()*4,(Math.random()-.5)*5)})}
 function enemyShoot(enemy,distance){
  const muzzle=enemy.position.clone().add(new THREE.Vector3(0,1.48,.32).applyAxisAngle(new THREE.Vector3(0,1,0),enemy.rotation.y));
@@ -927,7 +947,7 @@ function update(dt){
  else if(d<30){e.userData.fireCooldown-=dt;if(e.userData.fireCooldown<=0){enemyShoot(e,d);e.userData.fireCooldown=1.55+Math.random()*.7}}
  }
  if(fireHeld&&shotCooldown<=0)shoot();
- bullets.forEach(b=>{b.life-=dt;if(b.tracer){const progress=THREE.MathUtils.clamp(1-b.life/b.duration,0,1);const head=b.start.clone().lerp(b.end,progress);if(b.beam){const travel=b.end.clone().sub(b.start);const direction=travel.clone().normalize();b.obj.position.copy(head).addScaledVector(direction,-1.25);b.obj.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),direction);b.obj.material.opacity=Math.min(1,b.life/.07)}else{const tail=THREE.MathUtils.clamp(progress-.22,0,1);const a=b.start.clone().lerp(b.end,tail);b.obj.geometry.setFromPoints([a,head]);b.obj.material.opacity=Math.min(1,b.life/.045)}}if(b.life<=0){scene.remove(b.obj);b.obj.geometry.dispose();b.obj.material.dispose()}});for(let i=bullets.length-1;i>=0;i--)if(bullets[i].life<=0)bullets.splice(i,1);if(muzzleLife<=dt)fpFlash.visible=false;
+ bullets.forEach(b=>{b.life-=dt;if(b.tracer){const progress=THREE.MathUtils.clamp(1-b.life/b.duration,0,1);const head=b.start.clone().lerp(b.end,progress);if(b.beam){const travel=b.end.clone().sub(b.start);const direction=travel.clone().normalize();b.obj.position.copy(head).addScaledVector(direction,-1.2);b.obj.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),direction);b.obj.material.opacity=Math.min(1,b.life/.10)}else{const tail=THREE.MathUtils.clamp(progress-.22,0,1);const a=b.start.clone().lerp(b.end,tail);b.obj.geometry.setFromPoints([a,head]);b.obj.material.opacity=Math.min(1,b.life/.045)}}if(b.life<=0){scene.remove(b.obj);b.obj.geometry.dispose();b.obj.material.dispose()}});for(let i=bullets.length-1;i>=0;i--)if(bullets[i].life<=0)bullets.splice(i,1);if(muzzleLife<=dt)fpFlash.visible=false;
  sparks.forEach(s=>{s.life-=dt;s.obj.position.addScaledVector(s.vel,dt);s.vel.y-=9*dt;s.obj.scale.setScalar(Math.max(.01,s.life*3))});for(let i=sparks.length-1;i>=0;i--)if(sparks[i].life<=0){const deadSpark=sparks[i].obj;scene.remove(deadSpark);deadSpark.geometry.dispose();deadSpark.material.dispose();sparks.splice(i,1)}
  document.querySelector('#hpText').textContent=Math.round(hp)+'%';document.querySelector('#hpBar').style.width=hp+'%';document.querySelector('#fuelText').textContent=Math.round(fuel)+'%';document.querySelector('#fuelBar').style.width=fuel+'%';document.querySelector('#enemyText').textContent=remaining;document.querySelector('#missionText').textContent=remaining?`Hostiles remaining: ${remaining}`:'Zone clear';if(hp<=0)endGame(false);else if(remaining===0)endGame(true);
 }
