@@ -22,7 +22,7 @@ jobs:
         with:
           node-version: 20
       - name: Parse-check game source before browser test
-        run: node --check src/main.js
+        run: node --check src/main.js && node --check src/terrain-preview.js
       - name: Install Playwright
         run: |
           npm init -y
@@ -63,8 +63,46 @@ jobs:
             if (!result.canvas) throw new Error('Game canvas is missing');
             if (!result.canvasSize || result.canvasSize[0] < 1000 || result.canvasSize[1] < 600) throw new Error('Renderer did not resize canvas; game likely failed to initialise: ' + JSON.stringify(result.canvasSize));
             if (result.startupError.includes('STARTUP ERROR') || result.startupError.includes('3D ENGINE NOT LOADED')) throw new Error('Game startup error: ' + result.startupError);
-            if (errors.length) console.log('BROWSER ERRORS:', JSON.stringify(errors));
-            if (errors.some(e => /Uncaught|ReferenceError|SyntaxError|TypeError|Failed to fetch dynamically imported module|Failed to resolve module specifier|WebGL.*context/i.test(e))) throw new Error('Critical browser errors detected');
+            if (errors.length) console.log('GAME BROWSER ERRORS:', JSON.stringify(errors));
+            if (errors.some(e => /Uncaught|ReferenceError|SyntaxError|TypeError|Failed to fetch dynamically imported module|Failed to resolve module specifier|WebGL.*context/i.test(e))) throw new Error('Critical game browser errors detected');
+
+            // Also smoke-test the independent terrain diagnostic page and its real
+            // original-PCX reference panel (default map is rag01, 1660 x 1556).
+            errors.length = 0;
+            const terrainUrl = 'https://tapaccos2.github.io/OUTWORLD-Jetpack-Assault/terrain-preview.html?smoke=' + Date.now();
+            let terrainResponse;
+            for (let attempt = 0; attempt < 12; attempt++) {
+              try {
+                terrainResponse = await page.goto(terrainUrl, { waitUntil: 'domcontentloaded', timeout: 20000 });
+                if (terrainResponse && terrainResponse.ok()) break;
+              } catch (e) { if (attempt === 11) throw e; }
+              await page.waitForTimeout(5000);
+            }
+            if (!terrainResponse || !terrainResponse.ok()) throw new Error('Terrain preview returned HTTP ' + (terrainResponse?.status() ?? 'no response'));
+            await page.waitForFunction(() => {
+              const status = document.querySelector('#status')?.innerText || '';
+              const canvas = document.querySelector('#referenceCanvas');
+              return status.includes('MAP RAG01') && canvas && canvas.width === 1660 && canvas.height === 1556;
+            }, null, { timeout: 30000 });
+            await page.click('#referenceToggle');
+            const referenceVisible = await page.evaluate(() => {
+              const panel = document.querySelector('#referencePanel');
+              return !!panel && !panel.hidden && document.querySelector('#referenceCanvas').width === 1660;
+            });
+            if (!referenceVisible) throw new Error('Original rag01 mission-map reference did not display');
+            await page.click('#topDown');
+            await page.screenshot({ path: 'terrain-preview-smoke-test.png', fullPage: true });
+            console.log('TERRAIN PREVIEW CHECK:', JSON.stringify(await page.evaluate(() => ({
+              title: document.title,
+              map: document.querySelector('#map')?.value,
+              status: document.querySelector('#status')?.innerText,
+              referenceTitle: document.querySelector('#referenceTitle')?.innerText,
+              referenceSize: [document.querySelector('#referenceCanvas')?.width, document.querySelector('#referenceCanvas')?.height],
+              referenceVisible: !document.querySelector('#referencePanel')?.hidden,
+              topDownButton: !!document.querySelector('#topDown')
+            }))));
+            if (errors.length) console.log('TERRAIN BROWSER ERRORS:', JSON.stringify(errors));
+            if (errors.some(e => /Uncaught|ReferenceError|SyntaxError|TypeError|Failed to fetch dynamically imported module|Failed to resolve module specifier|WebGL.*context/i.test(e))) throw new Error('Critical terrain browser errors detected');
             await browser.close();
           })().catch(e => { console.error(e); process.exit(1); });
           EOF
