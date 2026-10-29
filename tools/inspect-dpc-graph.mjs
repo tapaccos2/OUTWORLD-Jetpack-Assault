@@ -77,7 +77,11 @@ while (queue.length && nodes.size < maxNodes) {
   if (item.parentOffset !== null) {
     edges.push({ from: item.parentOffset, to: offset, rootIndex: item.rootIndex, depth: item.depth, fieldIndex: item.fieldIndex });
   }
-  if (nodes.has(key)) continue;
+  if (nodes.has(key)) {
+    const existing = nodes.get(key);
+    if (!existing.rootIndices.includes(item.rootIndex)) existing.rootIndices.push(item.rootIndex);
+    continue;
+  }
   const node = {
     key, offset, kind, flags, classId,
     rootIndices: [item.rootIndex],
@@ -98,7 +102,7 @@ while (queue.length && nodes.size < maxNodes) {
       continue;
     }
     edges.push({ from: offset, to: ref.targetOffset, rootIndex: item.rootIndex, depth: item.depth + 1, fieldIndex: ref.index });
-    if (item.depth < maxDepth && !nodes.has(ref.targetOffset + ':' + b[ref.targetOffset] + ':' + u16(ref.targetOffset + 2))) {
+    if (item.depth < maxDepth) {
       queue.push({ ...ref, rootIndex: item.rootIndex, parentOffset: offset, fieldIndex: ref.index, depth: item.depth + 1 });
     }
   }
