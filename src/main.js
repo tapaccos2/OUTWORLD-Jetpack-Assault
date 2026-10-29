@@ -553,7 +553,7 @@ const muzzleCore=new THREE.Mesh(new THREE.SphereGeometry(.06,8,8),new THREE.Mesh
 }
 
 // First-person sci-fi assault rifle: layered receiver, heat-shrouded barrel, optic, rails, magazine and grip.
-const weaponRig=new THREE.Group();camera.add(weaponRig);weaponRig.position.set(.34,-.30,-.76);weaponRig.scale.set(.76,.76,.76);weaponRig.rotation.set(-.025,-.035,-.015);
+const weaponRig=new THREE.Group();camera.add(weaponRig);weaponRig.position.set(.24,-.24,-.90);weaponRig.scale.set(.56,.56,.56);weaponRig.rotation.set(-.025,-.035,-.015);
 const gunMetal=new THREE.MeshStandardMaterial({color:0x343a38,metalness:.72,roughness:.38});
 const gunEdge=new THREE.MeshStandardMaterial({color:0x7c8981,metalness:.66,roughness:.36});
 const gunDark=new THREE.MeshStandardMaterial({color:0x111715,metalness:.28,roughness:.62});
