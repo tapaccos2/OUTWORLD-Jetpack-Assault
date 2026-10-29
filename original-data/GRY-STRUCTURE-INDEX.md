@@ -1,49 +1,54 @@
-# GRY terrain structure index
+# Outwars `.GRY` audio-container index
 
-This index summarizes byte-level observations from the ten `.GRY` files whose binary bodies could be read. The 2,603,540-byte `oc.gry` is present in the repository, but the available GitHub binary-fetch path returned no body for it; its format is not inferred here.
+## Corrected identification
 
-| File | Bytes | Header U16 values (offsets 4, 6, 8, 10) | First signature start | Signature count | Bytes between header and signature | Candidate 20-byte units | Candidate 14-byte units | `fact` candidates | Signature → `fact` pairs |
-|---|---:|---|---:|---:|---:|---:|---:|---:|---:|
-| `Q.gry` | 87,615 | 28, 4, 4, 4 | 92 | 4 | 80 | 4 | 0 | 4 | 4 |
-| `a2.gry` | 49,142 | 11, 2, 2, 2 | 52 | 2 | 40 | 0 | 0 | 2 | 2 |
-| `d4.gry` | 411,857 | 24, 12, 14, 13 | 280 | 13 | 268 | 12 | 2 | 13 | 13 |
-| `j1.gry` | 4,082 | 25, 1, 1, 1 | 32 | 1 | 20 | 0 | 1 | 1 | 1 |
-| `o2.gry` | 71,108 | 4, 4, 4, 4 | 92 | 4 | 80 | 0 | 0 | 4 | 4 |
-| `o5.gry` | 142,611 | 7, 1, 1, 1 | 32 | 1 | 20 | 0 | 0 | 0 | 0 |
-| `o7.gry` | 148,294 | 9, 3, 4, 4 | 86 | 4 | 74 | 3 | 1 | 4 | 4 |
-| `r1.gry` | 77,150 | 15, 1, 1, 1 | 32 | 1 | 20 | 0 | 1 | 1 | 1 |
-| `r2.gry` | 28,329 | 16, 3, 3, 3 | 72 | 3 | 60 | 0 | 0 | 3 | 3 |
-| `r6.gry` | 36,962 | 20, 2, 2, 2 | 52 | 2 | 40 | 0 | 0 | 2 | 2 |
+**The `.GRY` files are sound-effect audio containers, not terrain geometry.** This was established by comparing the binary records with the extraction format posted in the ZenHAX thread [“GRY files [Twisted Metal 2, Jet Moto, and Outwars]”](https://zenhax.com/viewtopic.php@t=13514.html). That post explicitly identifies the Outwars files as sound effects and gives vgmstream settings for MS ADPCM in every file except `o5.gry`, which is PCM16LE.
 
-## Confirmed relationships
+The current repository investigation initially treated the records as terrain and tested their payloads with generic compression libraries. That was the wrong model: the payloads are encoded audio. The failed zlib/Deflate/gzip/Brotli tests do not indicate a proprietary terrain compressor.
 
-- All ten readable files begin with `27 70 06 03`.
-- The recurring signature is not the fixed four-byte sequence `00 A0 B9 B7`. The invariant is the three-byte suffix `A0 B9 B7` with a variable leading byte: `?? A0 B9 B7`.
-- There are 35 signature starts across the ten files. Thirty-four are exactly 59 bytes before a `fact` tag followed by the little-endian length `04 00 00 00`; `o5.gry` has one signature start with no matching `fact` candidate.
-- The two bytes at signature-relative offsets `+4..+5` look like sequential indices in the paired records; `+6..+7` are consistently `00 02`. Their meanings and byte order are not yet confirmed.
-- The first signature offset fits this exact byte-count formula in all ten files: `(header value 2 × 20) + ((header value 3 − header value 2) × 14)`, measured after the 12-byte header.
+## Container and record framing
 
-## Interpretation limits
+- All inspected files begin with `27 70 06 03`.
+- Each embedded sound record begins with the exact four-byte marker `A0 B9 B7 00`. Earlier scans recorded the preceding byte as part of the signature, making reported record starts one byte too early.
+- Outwars MS ADPCM records have `2E 3E 9D 00` at record-relative offset `+70`. The following four bytes are a little-endian audio stream size, and the audio payload begins at `+78`.
+- `o5.gry` is the PCM16LE variant: the data marker is at relative offset `+24`, its four-byte size follows, and the payload begins at `+32`.
+- MS ADPCM records contain `fact`, followed by a four-byte length of `4` and a four-byte value that behaves like decoded PCM byte length. This value is roughly twice the encoded stream size; it is not terrain metadata.
+- For all 35 records in the ten files whose bytes were inspected directly, `payloadOffset + streamSize` lands exactly on the next record start, or four bytes before EOF for the last record.
+- Files end with the four-byte trailer `22 75 28 03`. The byte immediately before that trailer belongs to the final audio payload, not to the trailer.
 
-The 20-byte and 14-byte units are candidate fixed-width blocks inferred from exact byte counts, not semantically decoded records. The `fact` payload and remaining terrain data have not yet been mapped to vertices, heights, faces, materials, or coordinates. Do not use this index as a geometry decoder.
+## Validation across ten files
+
+| File | Bytes | Sound records | Codec | Channels | Sample rate | Interleave | Boundary checks |
+|---|---:|---:|---|---:|---:|---:|---:|
+| `Q.gry` | 87,615 | 4 | MS ADPCM | 1 | 22,050 Hz | 512 | 4/4 pass |
+| `a2.gry` | 49,142 | 2 | MS ADPCM | 1 | 22,050 Hz | 512 | 2/2 pass |
+| `d4.gry` | 411,857 | 13 | MS ADPCM | 1 | 22,050 Hz | 512 | 13/13 pass |
+| `j1.gry` | 4,082 | 1 | MS ADPCM | 1 | 22,050 Hz | 512 | 1/1 pass |
+| `o2.gry` | 71,108 | 4 | MS ADPCM | 1 | 22,050 Hz | 512 | 4/4 pass |
+| `o5.gry` | 142,611 | 1 | PCM16LE | 1 | 22,050 Hz | — | 1/1 pass |
+| `o7.gry` | 148,294 | 4 | MS ADPCM | 1 | 22,050 Hz | 512 | 4/4 pass |
+| `r1.gry` | 77,150 | 1 | MS ADPCM | 1 | 22,050 Hz | 512 | 1/1 pass |
+| `r2.gry` | 28,329 | 3 | MS ADPCM | 1 | 22,050 Hz | 512 | 3/3 pass |
+| `r6.gry` | 36,962 | 2 | MS ADPCM | 1 | 22,050 Hz | 512 | 2/2 pass |
+
+The 2,603,540-byte `oc.gry` was previously scanned as having 132 candidate records, but its binary body was not available through the repository connector for the same byte-by-byte verification in this pass. Do not treat that count as newly revalidated here.
 
 ## Tools
 
-Run both inspectors from the repository root:
+Inspect sample records and verify their boundaries:
 
 ```sh
-node tools/inspect-gry-structure.mjs original-data/gry/*.gry
-node tools/scan-gry-tags.mjs original-data/gry/*.gry
+node tools/inspect-gry-audio.mjs original-data/gry/*.gry
 ```
 
-Detailed evidence and limitations are maintained in `FORMAT-NOTES.md`.
+Extract individual sample records as `.vgmstream` files with `.txth` sidecars for playback experiments:
 
-## Compressed-block framing
+```sh
+node tools/inspect-gry-audio.mjs --extract extracted-gry-audio original-data/gry/*.gry
+```
 
-- Each of the 34 paired records contains `2E 3E 9D 00` at record-relative offset `+71`.
-- The following three bytes are a little-endian compressed-payload length; the payload begins at `+78`.
-- Every non-final payload ends exactly at the next signature start. The final payload ends five bytes before EOF.
-- All ten readable files end with a five-byte trailer of the form `?? 22 75 28 03`.
-- The four-byte `fact` payload is a candidate uncompressed length; its relationship to the compressed length is consistently about 1.97:1, but decompression has not yet confirmed the meaning.
+The sidecar settings follow the community post above. Playback should be checked with vgmstream; this tool extracts records and validates framing, but does not itself decode PCM samples.
 
-Use `node tools/inspect-gry-blocks.mjs original-data/gry/*.gry` to verify the per-block offsets and boundaries.
+## What this does and does not establish
+
+The audio-container interpretation, codec distinction, sample metadata offsets, and record boundaries are supported by the file bytes and the cited extraction notes. No terrain vertices, heightmaps, triangles, materials, or world coordinates have been decoded from `.GRY`, because these files are sound-effect assets. Terrain geometry, if stored elsewhere, remains a separate investigation.
