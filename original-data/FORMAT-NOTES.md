@@ -48,3 +48,26 @@ node tools/inspect-original-data.mjs original-data > original-data-inventory.jso
 ```
 
 The script inventories readable strings and raw headers. It is deliberately described as an inventory tool, not a complete decoder.
+
+
+## Follow-up: terrain section boundary probe
+
+A byte scan across the readable `.GRY` files found the four-byte sequence `00 A0 B9 B7` at consistent early offsets in 8 of the 10 files whose binary body was returned by the GitHub file tool:
+
+| File | Offset of sequence |
+|---|---:|
+| `Q.gry` | 92 |
+| `a2.gry` | 52 |
+| `d4.gry` | 280 |
+| `j1.gry` | 32 |
+| `o2.gry` | 92 |
+| `o5.gry` | 32 |
+| `r1.gry` | 32 |
+| `r2.gry` | 72 |
+| `r6.gry` | 52 |
+
+No match was found in `o7.gry` within the scanned file body. `oc.gry` could not be read through that fetch path, so its contents are unknown here.
+
+Several files have repeating 20-byte blocks between the 12-byte prefix/header and this marker. The blocks contain five little-endian 32-bit values; their meaning has not been established. `d4.gry` has an additional 8 bytes before the marker compared with a simple 20-byte-record count, so a single fixed-count interpretation would be premature.
+
+A probe utility was added at `tools/inspect-gry-structure.mjs`. It reports the header words, marker offsets, candidate 20-byte blocks, and bytes following the marker. This is the next evidence-gathering step toward identifying the subsequent terrain data sections; it is not yet a terrain mesh decoder.
