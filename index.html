@@ -21,7 +21,7 @@
 <body>
 <canvas id="game"></canvas>
 <div id="cinemaGrade" aria-hidden="true"></div><div id="damageOverlay" aria-hidden="true"></div><div id="hud">
- <div class="panel brand">OUTWORLD <small>JETPACK ASSAULT · 3D PROTOTYPE</small></div>
+ <div class="panel brand">OUTWORLD <small>JETPACK ASSAULT · BUILD 0.2.0 · 29 OCT 2026</small></div>
  <div class="panel help"><b>PC CONTROLS</b><br>W A S D — Move<br>Mouse — Aim · Click — Fire<br>Space — Jump · Shift — Jetpack<br>Esc — Release mouse</div>
  <div class="panel stats"><div class="statrow"><span>ARMOUR</span><b id="hpText">100%</b></div><div class="bar"><div id="hpBar" class="fill armour"></div></div><div class="statrow"><span>JETPACK FUEL</span><b id="fuelText">100%</b></div><div class="bar"><div id="fuelBar" class="fill fuel"></div></div><div class="statrow"><span>HOSTILES</span><b id="enemyText">5</b></div></div>
  <div class="panel objective"><strong>MISSION: BREAK THROUGH THE HYDRAN NEST</strong><span id="missionText">Cross the ravine and destroy the Hydran defenders</span></div>
@@ -34,18 +34,20 @@
 (()=> {
 const canvas=document.querySelector('#game'), message=document.querySelector('#message');
 if(!window.THREE){message.innerHTML='3D ENGINE NOT LOADED<small>Connect to the internet and reload this HTML file.</small>';return}
-const renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});
-renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.75));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;renderer.setClearColor(0x91b3c2,1);renderer.info.autoReset=true;
+// Performance tiers: favour stable frame rate on Raspberry Pi and other low-power devices.
+const lowPowerDevice=(navigator.hardwareConcurrency||8)<=4||(navigator.deviceMemory||8)<=4||/raspberry|armv7|aarch64/i.test(navigator.userAgent);
+const renderer=new THREE.WebGLRenderer({canvas,antialias:!lowPowerDevice,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,lowPowerDevice?1:1.5));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=!lowPowerDevice;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;renderer.setClearColor(0x91b3c2,1);renderer.info.autoReset=true;
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x91b3c2);scene.fog=new THREE.FogExp2(0x9aaeb0,0.0054);
 const camera=new THREE.PerspectiveCamera(72,innerWidth/innerHeight,.1,250);
 const hemi=new THREE.HemisphereLight(0xbfe9ff,0x554b3b,2.0);scene.add(hemi);
-const sun=new THREE.DirectionalLight(0xffd5a1,3.2);sun.position.set(-25,45,18);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-55;sun.shadow.camera.right=55;sun.shadow.camera.top=55;sun.shadow.camera.bottom=-55;sun.shadow.bias=-0.00018;sun.shadow.normalBias=0.018;scene.add(sun);const fillLight=new THREE.DirectionalLight(0x75cfff,.9);fillLight.position.set(18,12,28);scene.add(fillLight);
+const sun=new THREE.DirectionalLight(0xffd5a1,3.2);sun.position.set(-25,45,18);sun.castShadow=!lowPowerDevice;sun.shadow.mapSize.set(lowPowerDevice?512:1024,lowPowerDevice?512:1024);sun.shadow.camera.left=-55;sun.shadow.camera.right=55;sun.shadow.camera.top=55;sun.shadow.camera.bottom=-55;sun.shadow.bias=-0.00018;sun.shadow.normalBias=0.018;scene.add(sun);const fillLight=new THREE.DirectionalLight(0x75cfff,.9);fillLight.position.set(18,12,28);scene.add(fillLight);
 const sunDisc=new THREE.Mesh(new THREE.SphereGeometry(3.2,20,16),new THREE.MeshBasicMaterial({color:0xffd8a0}));sunDisc.position.set(-34,31,-105);scene.add(sunDisc);
 const sunHalo=new THREE.Mesh(new THREE.SphereGeometry(5.4,20,16),new THREE.MeshBasicMaterial({color:0xffc875,transparent:true,opacity:.12,depthWrite:false}));sunHalo.position.copy(sunDisc.position);scene.add(sunHalo);
 const mat=(color,roughness=.8,metalness=.05)=>new THREE.MeshStandardMaterial({color,roughness,metalness});
 const groundCanvas=document.createElement('canvas');groundCanvas.width=groundCanvas.height=512;
 const gc=groundCanvas.getContext('2d');gc.fillStyle='#77725e';gc.fillRect(0,0,512,512);
-for(let i=0;i<19000;i++){const v=70+Math.random()*75;gc.fillStyle=`rgba(${v|0},${(v*.98)|0},${(v*.82)|0},${.08+Math.random()*.24})`;const r=Math.random()*2.8;gc.beginPath();gc.arc(Math.random()*512,Math.random()*512,r,0,Math.PI*2);gc.fill()}
+for(let i=0;i<(lowPowerDevice?5500:12000);i++){const v=70+Math.random()*75;gc.fillStyle=`rgba(${v|0},${(v*.98)|0},${(v*.82)|0},${.08+Math.random()*.24})`;const r=Math.random()*2.8;gc.beginPath();gc.arc(Math.random()*512,Math.random()*512,r,0,Math.PI*2);gc.fill()}
 for(let i=0;i<160;i++){gc.strokeStyle='rgba(40,48,41,.18)';gc.lineWidth=Math.random()*2+0.5;gc.beginPath();let x=Math.random()*512,y=Math.random()*512;gc.moveTo(x,y);gc.lineTo(x+Math.random()*28,y+Math.random()*16);gc.stroke()}
 const groundTex=new THREE.CanvasTexture(groundCanvas);groundTex.wrapS=groundTex.wrapT=THREE.RepeatWrapping;groundTex.repeat.set(24,24);groundTex.colorSpace=THREE.SRGBColorSpace;
 const groundBump=new THREE.CanvasTexture(groundCanvas);groundBump.wrapS=groundBump.wrapT=THREE.RepeatWrapping;groundBump.repeat.set(24,24);
@@ -56,7 +58,7 @@ const rockMat=mat(0x555e59), rockLite=mat(0x899084), dark=mat(0x17262b), armor=m
 function makeSurfaceTexture(base,light,dark,kind='stone'){
  const c=document.createElement('canvas');c.width=c.height=512;const x=c.getContext('2d');
  x.fillStyle=base;x.fillRect(0,0,512,512);
- for(let i=0;i<36000;i++){
+ for(let i=0;i<(lowPowerDevice?9000:22000);i++){
   const v=Math.random(),a=.025+Math.random()*.22;
   x.fillStyle=v>.5?light:dark;x.globalAlpha=a;
   const w=kind==='armor'?1+Math.random()*7:.5+Math.random()*4;
@@ -88,7 +90,8 @@ enemyMat.map=insectTexture;enemyMat.bumpMap=insectTexture;enemyMat.bumpScale=.07
 groundMat.map=groundDetailTexture;groundMat.bumpMap=groundDetailTexture;groundMat.bumpScale=.18;groundMat.roughness=.98;groundMat.needsUpdate=true;
 
 // GRAPHICS UPGRADE — rolling, eroded terrain instead of a perfectly flat arena.
-const terrainGeo=new THREE.PlaneGeometry(260,260,150,150);
+const terrainSegments=lowPowerDevice?64:112;
+const terrainGeo=new THREE.PlaneGeometry(260,260,terrainSegments,terrainSegments);
 const terrainPos=terrainGeo.attributes.position;
 for(let i=0;i<terrainPos.count;i++){
  const lx=terrainPos.getX(i), lz=-terrainPos.getY(i);
@@ -205,7 +208,7 @@ for(let i=0;i<78;i++){
  clump.position.set(x,.02,z);clump.rotation.y=Math.random()*Math.PI;clump.traverse(o=>{if(o.isMesh){o.castShadow=true}});scene.add(clump);
 }
 // Suspended dust motes catch the sun; points are subtle and do not obscure aiming.
-const dustCount=520,dustPositions=new Float32Array(dustCount*3);
+const dustCount=lowPowerDevice?140:360,dustPositions=new Float32Array(dustCount*3);
 for(let i=0;i<dustCount;i++){
  dustPositions[i*3]=(Math.random()-.5)*110;
  dustPositions[i*3+1]=.25+Math.random()*17;
@@ -613,7 +616,7 @@ function enemyShoot(enemy,distance){
  scene.add(line);bullets.push({obj:line,life:.18});
 }
 function endGame(victory){won=victory;dead=!victory;message.style.display='block';message.innerHTML=victory?'LANDING ZONE SECURED':'MARINE DOWN';message.innerHTML+='<small>Press R to redeploy</small>';if(document.pointerLockElement)document.exitPointerLock()}
-function resize(){updateViewportSize();renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.65));if(innerWidth<800)mobile.style.display='block'}addEventListener('resize',resize);
+function resize(){updateViewportSize();renderer.setPixelRatio(Math.min(devicePixelRatio||1,lowPowerDevice?1:1.5));if(innerWidth<800)mobile.style.display='block'}addEventListener('resize',resize);
 function update(dt){
  if(dead||won)return;
  shotCooldown=Math.max(0,shotCooldown-dt);damageFlash=Math.max(0,damageFlash-dt);document.querySelector('#damageOverlay').style.opacity=damageFlash>0?String(Math.min(.82,damageFlash*2.3)):'0';hitConfirmTimer=Math.max(0,hitConfirmTimer-dt);if(hitConfirmTimer===0)document.querySelector('.reticle').classList.remove('confirmed');muzzleLife=Math.max(0,muzzleLife-dt);if(muzzleLife===0){if(player.userData.muzzle)player.userData.muzzle.visible=false;if(player.userData.muzzleCore)player.userData.muzzleCore.visible=false;}
