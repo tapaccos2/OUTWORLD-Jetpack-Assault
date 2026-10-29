@@ -602,13 +602,24 @@ if(assetLoader){
   importedSoldier.rotation.y=0; // inherit player yaw; the parent already applies the forward-facing correction
   const soldierBones={head:null,neck:null,spine:null,leftArm:null,rightArm:null,leftForearm:null,rightForearm:null,leftHand:null,rightHand:null,leftLeg:null,rightLeg:null,leftShin:null,rightShin:null};
   const boneRest=new Map(),allBones=[];
+    const headsetName=/headphones?|head.?set|earpiece|earphones?|earmuffs?|ear.?cups?|head.?mounted.?display|comms?|microphones?|\\bmic\\b|audio.?device|helmet.?speaker|peltor|ear.?protection/i;
   importedSoldier.traverse(o=>{
+   // Some GLBs name the accessory parent, not its renderable mesh; hide matching nodes at any level.
+   if(o!==importedSoldier&&headsetName.test(o.name||'')){
+    o.visible=false;
+    console.info('OUTWORLD: removed headset/accessory node',o.name);
+   }
    if(o.isMesh){
     o.castShadow=true;o.receiveShadow=true;
-    // Strip detached headset/earpiece props from this character asset; these were rendering above the helmet.
-    if(/headphones?|head.?set|earpiece|earphones?|earmuffs?|ear.?cups?|head.?mounted.?display|comms?|microphones?|\bmic\b|audio.?device|helmet.?speaker|peltor|ear.?protection/i.test(o.name)){
+    // Fallback for ear cups merged as separately named meshes: small geometry at either side of the helmet.
+    o.geometry.computeBoundingBox?.();
+    const accessoryBounds=new THREE.Box3().setFromObject(o);
+    const accessorySize=accessoryBounds.getSize(new THREE.Vector3());
+    const accessoryCenter=accessoryBounds.getCenter(new THREE.Vector3());
+    const maxDim=Math.max(accessorySize.x,accessorySize.y,accessorySize.z);
+    if(maxDim<.42&&accessoryCenter.y>1.78&&accessoryCenter.y<2.25&&Math.abs(accessoryCenter.x)>.13&&Math.abs(accessoryCenter.x)<.43){
      o.visible=false;
-     console.info('OUTWORLD: hid detached head accessory mesh',o.name);
+     console.info('OUTWORLD: removed likely integrated headset ear cup',o.name);
     }
    }
    if(o.isBone){
@@ -651,9 +662,15 @@ if(assetLoader){
    rifle.rotation.set(0,Math.PI,0);
    rifle.updateMatrixWorld(true);
    rifle.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;o.frustumCulled=false;if(o.material){o.material.depthWrite=true;o.material.needsUpdate=true}}});
-   // Place the imported rifle at the marine's right shoulder/hand line, aimed forward.
-   rifle.position.add(new THREE.Vector3(.18,1.34,-.24));
-   importedSoldier.add(rifle);
+   // Parent the real rifle to the animated right hand so it follows the grip instead of floating beside the marine.
+   const gripBone=importedSoldier.userData.boneRig?.soldierBones?.rightHand||importedSoldier.userData.boneRig?.soldierBones?.rightForearm;
+   if(gripBone){
+    gripBone.add(rifle);
+    rifle.position.set(0,-.015,-.23);
+   }else{
+    importedSoldier.add(rifle);
+    rifle.position.set(.18,1.34,-.24);
+   }
    importedSoldier.userData.thirdPersonWeapon=rifle;
    console.info('OUTWORLD: imported third-person M4A1 rifle loaded');
   },undefined,e=>console.error('OUTWORLD third-person rifle asset failed to load.',e));
