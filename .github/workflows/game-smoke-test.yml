@@ -57,10 +57,10 @@ jobs:
             }));
             console.log('GAME CHECK:', JSON.stringify(result));
             if (!result.canvas) throw new Error('Game canvas is missing');
-            if (!result.canvasSize || result.canvasSize[0] < 100 || result.canvasSize[1] < 100) throw new Error('Canvas has invalid dimensions');
+            if (!result.canvasSize || result.canvasSize[0] < 1000 || result.canvasSize[1] < 600) throw new Error('Renderer did not resize canvas; game likely failed to initialise: ' + JSON.stringify(result.canvasSize));
             if (result.startupError.includes('STARTUP ERROR') || result.startupError.includes('3D ENGINE NOT LOADED')) throw new Error('Game startup error: ' + result.startupError);
             if (errors.length) console.log('BROWSER ERRORS:', JSON.stringify(errors));
-            if (errors.some(e => /Uncaught|ReferenceError|SyntaxError|TypeError|Failed to fetch dynamically imported module|WebGL.*context/i.test(e))) throw new Error('Critical browser errors detected');
+            if (errors.some(e => /Uncaught|ReferenceError|SyntaxError|TypeError|Failed to fetch dynamically imported module|Failed to resolve module specifier|WebGL.*context/i.test(e))) throw new Error('Critical browser errors detected');
             await browser.close();
           })().catch(e => { console.error(e); process.exit(1); });
           EOF
