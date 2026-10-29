@@ -19,7 +19,14 @@ button:hover{background:#2a3c43}
 input[type=checkbox]{accent-color:#6ee7d8}
 #status{position:fixed;z-index:2;left:12px;bottom:12px;max-width:min(760px,calc(100% - 24px));padding:9px 12px;border:1px solid #415056;border-radius:8px;background:#10191de8;color:#c4d3d7;font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap}
 #help{position:fixed;z-index:2;right:12px;bottom:12px;padding:8px 10px;border-radius:8px;background:#10191dbd;color:#b7c7cb;font-size:11px}
-@media(max-width:760px){#toolbar{gap:6px}#toolbar strong{width:100%}label,button,select{font-size:11px;padding:6px}#help{display:none}}
+
+#referencePanel{position:fixed;z-index:2;top:76px;right:12px;width:min(360px,34vw);max-height:calc(100vh - 152px);overflow:auto;padding:10px;border:1px solid #415056;border-radius:10px;background:#10191de8;backdrop-filter:blur(10px)}
+#referencePanel[hidden]{display:none}
+#referenceTitle{font-size:12px;font-weight:700;letter-spacing:.07em;color:#7fe4d6;margin-bottom:8px}
+#referenceCanvas{display:block;width:100%;height:auto;max-height:calc(100vh - 230px);object-fit:contain;background:#1b292e;border:1px solid #35474d}
+#referenceNote{margin:8px 0 0;color:#b7c7cb;font-size:11px;line-height:1.45}
+@media(max-width:760px){#toolbar{gap:6px}#toolbar strong{width:100%}label,button,select{font-size:11px;padding:6px}#help{display:none}#referencePanel{top:auto;bottom:54px;left:12px;right:12px;width:auto;max-height:42vh}#referenceCanvas{max-height:30vh}}
+
 </style>
 </head>
 <body>
@@ -45,8 +52,15 @@ input[type=checkbox]{accent-color:#6ee7d8}
   <label><input id="wireframe" type="checkbox"> Wireframe</label>
   <label><input id="normals" type="checkbox"> Show normals</label>
   <button id="load" type="button">Load map</button>
+  <button id="topDown" type="button">Top-down view</button>
   <button id="reset" type="button">Reset view</button>
+  <button id="referenceToggle" type="button">Show map reference</button>
 </div>
+<aside id="referencePanel" hidden>
+  <div id="referenceTitle">ORIGINAL MISSION MAP</div>
+  <canvas id="referenceCanvas" aria-label="Original mission map reference"></canvas>
+  <p id="referenceNote">Reference images are the original mission/briefing map graphics, not terrain textures. They are provided for visual comparison; no scale or coordinate registration is implied.</p>
+</aside>
 <div id="status">Loading terrain preview…</div>
 <div id="help">Drag: orbit · Wheel: zoom · Right-drag: pan</div>
 <script type="importmap">
