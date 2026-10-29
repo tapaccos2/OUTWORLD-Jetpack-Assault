@@ -52,7 +52,7 @@ The script inventories readable strings and raw headers. It is deliberately desc
 
 ## Follow-up: terrain section boundary probe
 
-A byte scan across the readable `.GRY` files found the four-byte sequence `00 A0 B9 B7` at consistent early offsets in 8 of the 10 files whose binary body was returned by the GitHub file tool:
+A byte scan across the readable `.GRY` files found the four-byte sequence `00 A0 B9 B7` at consistent early offsets in 9 of the 10 files whose binary body was returned by the GitHub file tool:
 
 | File | Offset of sequence |
 |---|---:|
