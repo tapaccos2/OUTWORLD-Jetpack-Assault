@@ -125,12 +125,13 @@ function main() {
       for (const v of verts) lines.push(`v ${v.x.toFixed(4)} ${v.y.toFixed(4)} ${v.z.toFixed(4)}`);
       const n = rec.normal;
       lines.push(`vn ${n[0].toFixed(7)} ${n[1].toFixed(7)} ${n[2].toFixed(7)}`);
+      const reverseWinding = rec.normal[2] < 0;
       if (diagonalOption === '1-2') {
-        lines.push(`f ${vertexBase}//${i + 1} ${vertexBase + 1}//${i + 1} ${vertexBase + 2}//${i + 1}`);
-        lines.push(`f ${vertexBase + 1}//${i + 1} ${vertexBase + 3}//${i + 1} ${vertexBase + 2}//${i + 1}`);
+        const tris = reverseWinding ? [[0, 2, 1], [1, 2, 3]] : [[0, 1, 2], [1, 3, 2]];
+        for (const tri of tris) lines.push(`f ${tri.map(k => `${vertexBase + k}//${i + 1}`).join(' ')}`);
       } else {
-        lines.push(`f ${vertexBase}//${i + 1} ${vertexBase + 1}//${i + 1} ${vertexBase + 3}//${i + 1}`);
-        lines.push(`f ${vertexBase}//${i + 1} ${vertexBase + 3}//${i + 1} ${vertexBase + 2}//${i + 1}`);
+        const tris = reverseWinding ? [[0, 3, 1], [0, 2, 3]] : [[0, 1, 3], [0, 3, 2]];
+        for (const tri of tris) lines.push(`f ${tri.map(k => `${vertexBase + k}//${i + 1}`).join(' ')}`);
       }
       vertexBase += 4;
       faceCount += 2;
