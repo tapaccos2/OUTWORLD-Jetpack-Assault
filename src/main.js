@@ -98,23 +98,23 @@ for(let i=0;i<(lowPowerDevice?70:170);i++){
 const skyTex=new THREE.CanvasTexture(skyCanvas);skyTex.colorSpace=THREE.SRGBColorSpace;
 const skyDome=new THREE.Mesh(new THREE.SphereGeometry(190,40,24),new THREE.MeshBasicMaterial({map:skyTex,side:THREE.BackSide,depthWrite:false}));skyDome.renderOrder=-10;scene.add(skyDome);
 // Load CC0 glTF environment models asynchronously; procedural terrain remains as fallback.
-if (typeof window.loadEnvironmentAssets === 'function') { window.loadEnvironmentAssets(THREE, scene, lowPowerDevice).catch(error => console.warn('Optional CC0 environment models failed to load; using procedural terrain:', error)); } else { console.warn('Optional environment asset loader unavailable; using procedural terrain.'); }
+// Imported nature pack disabled: its current models read as oversized smooth blobs at gameplay scale. Use the handcrafted environment below until suitable game-scale assets are integrated.
 // Removed the visible development grid for a natural, continuous alien terrain.
 // Distant rugged ridge silhouettes made from real 3D geometry.
-for(let i=0;i<(lowPowerDevice?12:22);i++){
- const h=3.8+Math.random()*5.8,w=4+Math.random()*7;
- const geo=new THREE.IcosahedronGeometry(1,3),p=geo.attributes.position;
- for(let j=0;j<p.count;j++){const x=p.getX(j),y=p.getY(j),z=p.getZ(j);const n=.72+Math.random()*.58;const peak=Math.sign(y)*Math.pow(Math.abs(y),.72);p.setXYZ(j,x*n,peak*n*(.8+Math.random()*.45),z*(.78+Math.random()*.42))}
+for(let i=0;i<(lowPowerDevice?18:30);i++){
+ const h=4.5+Math.random()*7,w=3+Math.random()*5.5;
+ const geo=new THREE.IcosahedronGeometry(1,2),p=geo.attributes.position;
+ for(let j=0;j<p.count;j++){const x=p.getX(j),y=p.getY(j),z=p.getZ(j);const n=.72+Math.sin(x*9+z*5+y*6)*.13+Math.sin(z*13-y*8)*.08+(Math.random()-.5)*.10;const peak=Math.sign(y)*Math.pow(Math.abs(y),.82);p.setXYZ(j,x*n,peak*n*(.82+Math.random()*.28),z*(.78+Math.random()*.18))}
  geo.computeVertexNormals();
- const ridgeMat=new THREE.MeshStandardMaterial({color:i%4?0x626b62:0x4a5750,map:rockTexture,bumpMap:rockTexture,bumpScale:.18,roughness:1});
- const m=new THREE.Mesh(geo,ridgeMat);m.scale.set(w*.72,h*.48,w*.40);m.position.set((i-17)*6.5,h*.25,-91-Math.random()*20);m.rotation.y=Math.random()*2;m.castShadow=true;m.receiveShadow=true;scene.add(m)
+ const ridgeMat=new THREE.MeshStandardMaterial({color:i%5===0?0x55584e:(i%3===0?0x66685b:0x777566),map:rockTexture,bumpMap:rockTexture,bumpScale:.24,roughness:1});
+ const m=new THREE.Mesh(geo,ridgeMat);m.scale.set(w*.68,h*.42,w*.38);m.position.set((i-15)*6.1,h*.18,-94-Math.random()*24);m.rotation.y=Math.random()*2.4;m.castShadow=true;m.receiveShadow=true;scene.add(m)
 }
 // Small luminous alien mineral outcrops scattered across the landing zone
 const crystalMat=new THREE.MeshStandardMaterial({color:0x777d69,emissive:0x090d08,emissiveIntensity:.12,roughness:.82,metalness:.08});
 for(let i=0;i<7;i++){const group=new THREE.Group();const count=2+Math.floor(Math.random()*2);for(let j=0;j<count;j++){const crystal=new THREE.Mesh(new THREE.ConeGeometry(.10+Math.random()*.12,.25+Math.random()*.48,5),crystalMat);crystal.position.set((Math.random()-.5)*.45,.14+Math.random()*.12,(Math.random()-.5)*.45);crystal.rotation.z=(Math.random()-.5)*.3;group.add(crystal)}group.userData.blocksEnemy=true;group.userData.blockRadius=.55;group.position.set((Math.random()-.5)*88,.03,-12-Math.random()*75);scene.add(group)}
 // Rock clusters
-for(let i=0;i<(lowPowerDevice?34:78);i++){
- const size=lowPowerDevice?.28+Math.random()*.58:.32+Math.random()*.92;
+for(let i=0;i<(lowPowerDevice?38:88);i++){
+ const size=lowPowerDevice?.16+Math.random()*.34:.18+Math.random()*.48;
  const geo=new THREE.IcosahedronGeometry(size,2),p=geo.attributes.position;
  for(let j=0;j<p.count;j++){const n=.58+Math.random()*.82;p.setXYZ(j,p.getX(j)*n,p.getY(j)*(.5+Math.random()*.72),p.getZ(j)*(.62+Math.random()*.76))}
  geo.computeVertexNormals();
@@ -123,7 +123,7 @@ for(let i=0;i<(lowPowerDevice?34:78);i++){
  r.scale.set(.8+Math.random()*.38,.42+Math.random()*.42,.72+Math.random()*.42);r.rotation.set(Math.random()*.18,Math.random()*3,Math.random()*.18);r.castShadow=true;r.receiveShadow=true;scene.add(r)
 }
 // Alien rock spires and weathered landing-zone barricades
-for(let i=0;i<(lowPowerDevice?7:14);i++){const h=2.5+Math.random()*5.8,w=.7+Math.random()*1.1;const geo=new THREE.IcosahedronGeometry(1,2),p=geo.attributes.position;for(let j=0;j<p.count;j++){const n=.78+Math.random()*.42;p.setXYZ(j,p.getX(j)*n,p.getY(j),p.getZ(j)*n)}geo.computeVertexNormals();const spire=new THREE.Mesh(geo,mat(i%3?0x343d37:0x4a4d40));spire.scale.set(w,h*.7,w*.8);spire.userData.blocksEnemy=true;spire.userData.blockRadius=w*1.2;spire.position.set((Math.random()-.5)*100,h*.32,-18-Math.random()*82);spire.rotation.set((Math.random()-.5)*.2,Math.random()*3,(Math.random()-.5)*.28);spire.castShadow=true;spire.receiveShadow=true;scene.add(spire)}
+for(let i=0;i<(lowPowerDevice?5:9);i++){const h=1.5+Math.random()*3.2,w=.45+Math.random()*.75;const geo=new THREE.IcosahedronGeometry(1,2),p=geo.attributes.position;for(let j=0;j<p.count;j++){const n=.78+Math.random()*.42;p.setXYZ(j,p.getX(j)*n,p.getY(j),p.getZ(j)*n)}geo.computeVertexNormals();const spire=new THREE.Mesh(geo,mat(i%3?0x343d37:0x4a4d40));spire.scale.set(w,h*.7,w*.8);spire.userData.blocksEnemy=true;spire.userData.blockRadius=w*1.2;spire.position.set((Math.random()-.5)*100,h*.32,-18-Math.random()*82);spire.rotation.set((Math.random()-.5)*.2,Math.random()*3,(Math.random()-.5)*.28);spire.castShadow=true;spire.receiveShadow=true;scene.add(spire)}
 for(let i=0;i<5;i++){const xPos=(i-2)*13;const base=new THREE.Mesh(new THREE.BoxGeometry(3.4,1.3,.7),mat(0x3b4b4b));base.userData.blocksEnemy=true;base.userData.blockRadius=2.2;base.position.set(xPos,.65,-18-(i%3)*9);base.rotation.y=(Math.random()-.5)*.22;base.castShadow=true;base.receiveShadow=true;scene.add(base);const stripe=new THREE.Mesh(new THREE.BoxGeometry(2.4,.09,.74),mat(0xd18b42));stripe.position.set(xPos,.95,-18-(i%3)*9);stripe.rotation.y=base.rotation.y;scene.add(stripe)}
 // Simple industrial debris
 for(let i=0;i<7;i++){let box=new THREE.Mesh(new THREE.BoxGeometry(1.8+Math.random()*2,.4+Math.random(),1+Math.random()*2),dark);box.userData.blocksEnemy=true;box.userData.blockRadius=1.65;box.position.set((Math.random()-.5)*65,.2,-8-Math.random()*70);box.rotation.y=Math.random()*Math.PI;box.castShadow=true;box.receiveShadow=true;scene.add(box)}
@@ -476,9 +476,19 @@ const chestPanel=new THREE.Mesh(new THREE.BoxGeometry(.18,.26,.055),isEnemy?viso
  }
  const packTop=new THREE.Mesh(new THREE.BoxGeometry(.30,.10,.08),isEnemy?enemyLite:armorLite);
  packTop.position.set(0,1.88,-.31);root.add(packTop);
- const gun=new THREE.Mesh(new THREE.BoxGeometry(.15,.16,.82),black);gun.position.set(.42,1.32,.52);gun.rotation.x=-.04;root.add(gun);
- const gunTop=new THREE.Mesh(new THREE.BoxGeometry(.07,.055,.48),isEnemy?enemyLite:cyan);gunTop.position.set(.42,1.415,.48);root.add(gunTop);
- const gunMuzzle=new THREE.Mesh(new THREE.CylinderGeometry(.065,.08,.13,8),dark);gunMuzzle.rotation.x=Math.PI/2;gunMuzzle.position.set(.42,1.32,.98);root.add(gunMuzzle);
+ const rifle=new THREE.Group();rifle.position.set(.39,1.30,.36);rifle.scale.setScalar(.76);root.add(rifle);
+ const receiver=new THREE.Mesh(new THREE.BoxGeometry(.17,.19,.62),black);receiver.position.set(0,0,.16);receiver.castShadow=true;rifle.add(receiver);
+ const receiverShell=new THREE.Mesh(new THREE.BoxGeometry(.178,.105,.37),armor);receiverShell.position.set(0,.055,.13);rifle.add(receiverShell);
+ const barrel=new THREE.Mesh(new THREE.CylinderGeometry(.043,.052,.50,12),dark);barrel.rotation.x=Math.PI/2;barrel.position.set(0,.005,.66);rifle.add(barrel);
+ const barrelSleeve=new THREE.Mesh(new THREE.CylinderGeometry(.063,.063,.20,12),armorLite);barrelSleeve.rotation.x=Math.PI/2;barrelSleeve.position.set(0,.005,.48);rifle.add(barrelSleeve);
+ const muzzle=new THREE.Mesh(new THREE.CylinderGeometry(.072,.072,.095,14),dark);muzzle.rotation.x=Math.PI/2;muzzle.position.set(0,.005,.91);rifle.add(muzzle);
+ const muzzleRing=new THREE.Mesh(new THREE.TorusGeometry(.055,.012,6,16),cyan);muzzleRing.position.set(0,.005,.963);rifle.add(muzzleRing);
+ const rail=new THREE.Mesh(new THREE.BoxGeometry(.07,.035,.49),dark);rail.position.set(0,.119,.22);rifle.add(rail);
+ for(let n=0;n<5;n++){const notch=new THREE.Mesh(new THREE.BoxGeometry(.078,.018,.035),armorLite);notch.position.set(0,.143,.03+n*.09);rifle.add(notch)}
+ const stock=new THREE.Mesh(new THREE.BoxGeometry(.13,.14,.24),dark);stock.position.set(0,-.015,-.25);rifle.add(stock);
+ const grip=new THREE.Mesh(new THREE.BoxGeometry(.095,.22,.13),black);grip.position.set(0,-.17,.10);grip.rotation.x=-.16;rifle.add(grip);
+ const magazine=new THREE.Mesh(new THREE.BoxGeometry(.115,.25,.15),armor);magazine.position.set(0,-.18,.28);magazine.rotation.x=-.12;rifle.add(magazine);
+ const powerCell=new THREE.Mesh(new THREE.BoxGeometry(.035,.12,.20),cyan);powerCell.position.set(.095,.01,.20);rifle.add(powerCell);
 
  // Character silhouette pass: collar, segmented shoulder trim, chest harness and side pouches.
  const collar=new THREE.Mesh(new THREE.CylinderGeometry(.19,.24,.12,8),dark);collar.position.set(0,1.99,.015);root.add(collar);
