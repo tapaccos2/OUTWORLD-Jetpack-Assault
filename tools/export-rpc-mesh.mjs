@@ -15,8 +15,8 @@
  *   +32/+36 i32 planar position pair
  *
  * Position-anchor semantics are not yet confirmed. The default assumes the
- * XY pair is the quad centre; --anchor=corner exports the alternative where
- * it is the local (0,0) corner. The 1-2 diagonal is the default because the
+ * XY pair is the local (0,0) corner; --anchor=center exports the alternative
+ * where it is the quad centre. The 1-2 diagonal is the default because the
  * stored normal agrees with corners 0,1,2. --diagonal=0-3 selects the other.
  *
  * Usage:
@@ -86,7 +86,7 @@ function main() {
   const args = process.argv.slice(2);
   if (args.length < 3) fail('Usage: node tools/export-rpc-mesh.mjs <map.gpc> <map.rpc> <output.obj> [--anchor=center|corner] [--diagonal=1-2|0-3]');
   const [gpcPath, rpcPath, outputPath, ...options] = args;
-  const anchorOption = options.find(x => x.startsWith('--anchor='))?.slice('--anchor='.length) ?? 'center';
+  const anchorOption = options.find(x => x.startsWith('--anchor='))?.slice('--anchor='.length) ?? 'corner';
   const diagonalOption = options.find(x => x.startsWith('--diagonal='))?.slice('--diagonal='.length) ?? '1-2';
   if (!['center', 'corner'].includes(anchorOption)) fail('Anchor must be center or corner');
   if (!['1-2', '0-3'].includes(diagonalOption)) fail('Diagonal must be 1-2 or 0-3');
@@ -112,7 +112,7 @@ function main() {
     `# Position assumption: ${anchorOption}`,
     `# Quad diagonal: ${diagonalOption}`,
     '# Dimensions, direction, normals, and corner-height relationships were validated.',
-    '# Position anchor and original renderer triangulation remain assumptions.',
+    '# Corner anchoring is supported by cross-surface edge continuity; original triangulation remains an assumption.',
   ];
   let vertexBase = 1;
   let faceCount = 0;
@@ -146,7 +146,7 @@ function main() {
     triangles: faceCount,
     anchor: anchorOption,
     diagonal: diagonalOption,
-    note: 'Candidate geometry only; compare both anchor and diagonal variants against an original map reference.',
+    note: 'Candidate geometry only; compare anchor and diagonal variants against an original map reference.',
   }, null, 2));
 }
 
