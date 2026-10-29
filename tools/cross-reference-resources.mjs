@@ -5,11 +5,15 @@
  *
  * Usage:
  *   node tools/cross-reference-resources.mjs original-data
+ *   node tools/cross-reference-resources.mjs original-data --include-tpc
  */
 import fs from 'node:fs';
 import path from 'node:path';
 
-const root = path.resolve(process.argv[2] ?? 'original-data');
+const args = process.argv.slice(2);
+const includeTpc = args.includes('--include-tpc');
+const rootArg = args.find(arg => !arg.startsWith('--')) ?? 'original-data';
+const root = path.resolve(rootArg);
 const dirs = ['misn', 'netmisn', 'structs'];
 const files = [];
 function walk(dir) {
@@ -44,7 +48,12 @@ function extractStrings(buf, min=4) {
 }
 const resourceRegex = /[A-Za-z0-9_][A-Za-z0-9_.-]{0,100}\.(?:dpc|gpc|rpc|tpc|gry|pcx|wav|avi|ff|spt|fnt|mis|txt)\b/gi;
 const refs = [];
-const candidates = uniqueFiles.filter(file => ['.mis','.dpc','.gpc','.rpc','.tpc','.ff'].includes(path.extname(file).toLowerCase()));
+// TPC files contain large binary texture payloads. Printable sequences there
+// produce filename-shaped false positives, so scan them only when explicitly requested.
+const sourceExtensions = includeTpc
+  ? ['.mis','.dpc','.gpc','.rpc','.tpc','.ff']
+  : ['.mis','.dpc','.gpc','.rpc','.ff'];
+const candidates = uniqueFiles.filter(file => sourceExtensions.includes(path.extname(file).toLowerCase()));
 for (const file of candidates) {
   const data=fs.readFileSync(file);
   const strings=extractStrings(data);
@@ -74,6 +83,8 @@ const result={
   indexedFileCount:uniqueFiles.length,
   extensionCounts,
   sourceFileCount:candidates.length,
+  includeTpc,
+  excludedSourceExtensions: includeTpc ? [] : ['.tpc'],
   referenceOccurrenceCount:refs.length,
   resolvedReferenceOccurrenceCount:resolved.filter(x=>x.resolvedPath).length,
   unresolvedUniqueBasenames:missing.length,
