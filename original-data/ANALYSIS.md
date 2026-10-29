@@ -34,11 +34,11 @@ This note records observations from the original files currently present in this
 
 ## New lead: map-named `.DPC` files
 
-Static inspection of `outwars.exe` found a parser that checks for the four-byte `DCPM` identifier followed by `C`. The loose `anub01.dpc` and `flag_blu.dpc` files begin with `DCPMC`, matching that check. The map-named `anub01.dpc` (539,188 bytes) and `rag01.dpc` (348,488 bytes) are now the next candidates to investigate for scene/terrain geometry; their contents include coordinate-like values, but the fields have not been decoded and this is not yet proof that terrain is stored there.
+Static inspection of `outwars.exe` found a parser that checks for the four-byte `DCPM` identifier followed by `C`; the executable also contains separate group/ramp parsers for the `CPMG` and `CPMR` signatures. The loose `anub01.dpc` and `flag_blu.dpc` files begin with `DCPMC`, matching the database parser check. The DPC header contains pointer-like addresses based at `0x80019c04`: for example, `0x80019c40` maps to byte offset 60 and `0x80019c60` maps to offset 92. The new `tools/inspect-dpc-headers.mjs` reports these candidate offsets without assigning meanings to them. Map-named `anub01.dpc` (539,188 bytes) and `rag01.dpc` (348,488 bytes) are now the next candidates for scene/terrain geometry; their contents include coordinate-like values, but no geometry has been decoded and this is not yet proof that terrain is stored there.
 
 ## Next technical work
 
 - Enumerate all files under `original-data/misn/` and `original-data/gry/`.
 - Inspect the mission binary schema across several files, identify record boundaries, and export a first machine-readable JSON representation.
-- Inspect/extract `.GRY` sound-effect audio; identify the separate asset format that stores terrain geometry.
+- Inspect/extract `.GRY` sound-effect audio; investigate pointer tables and record layouts in map-named `.DPC` files, while keeping the terrain interpretation provisional.
 - Check which referenced `.DPC`, `.PCX`, and other resources are available before rendering a faithful level.
