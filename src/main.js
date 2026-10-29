@@ -260,37 +260,38 @@ const sporeMat=new THREE.MeshStandardMaterial({color:0x9ac64c,emissive:0x334f08,
 const nestMat=new THREE.MeshStandardMaterial({color:0x544b35,roughness:.78});
 // Angular, stratified ravine walls. The old stretched icosahedra made huge smooth blobs.
 function makeStrataRock(side,index){
- const z=-7-index*5.1-Math.random()*2.0;
- const x=side*(15.5+Math.random()*4.8);
- const h=2.6+Math.random()*4.2,w=1.1+Math.random()*1.8,d=1.8+Math.random()*2.7;
+ const z=-9-index*6.0-Math.random()*2.0;
+ const x=side*(16.5+Math.random()*4.2);
+ const h=2.4+Math.random()*3.4,w=1.6+Math.random()*2.0,d=2.0+Math.random()*2.6;
+ // Broad low-poly boulders with restrained vertex variation; avoid the needle-like shards.
  const geo=new THREE.IcosahedronGeometry(1,1),p=geo.attributes.position;
  for(let k=0;k<p.count;k++){
-  const n=.72+Math.random()*.62;
-  p.setXYZ(k,p.getX(k)*n,p.getY(k)*(.82+Math.random()*.38),p.getZ(k)*(.78+Math.random()*.44));
+  const n=.91+Math.random()*.18;
+  p.setXYZ(k,p.getX(k)*n,p.getY(k)*(.92+Math.random()*.16),p.getZ(k)*(.90+Math.random()*.18));
  }
  geo.computeVertexNormals();
  const rock=new THREE.Mesh(geo,index%4===0?cliffLit:cliffMat);
- rock.scale.set(w,h,d);rock.position.set(x,h*.42,z);
- rock.rotation.set((Math.random()-.5)*.18,Math.random()*Math.PI,side*(Math.random()*.10));
+ rock.scale.set(w,h,d);rock.position.set(x,h*.43,z);
+ rock.rotation.set((Math.random()-.5)*.12,Math.random()*Math.PI,side*(Math.random()*.06));
  rock.castShadow=true;rock.receiveShadow=true;scene.add(rock);
- // Thin broken strata bands make the silhouette read as layered stone rather than smooth capsules.
+ // Low, broken horizontal strata ledges, tucked close to the rock body.
  for(let band=0;band<2;band++){
-  const ledge=new THREE.Mesh(new THREE.BoxGeometry(w*(1.25+Math.random()*.35),.12+Math.random()*.12,d*(.7+Math.random()*.25)),band?cliffMat:cliffLit);
-  ledge.position.set(x+(Math.random()-.5)*.35,h*(.34+band*.28),z+(Math.random()-.5)*.45);
-  ledge.rotation.set((Math.random()-.5)*.1,rock.rotation.y,(Math.random()-.5)*.16);
+  const ledge=new THREE.Mesh(new THREE.BoxGeometry(w*(1.05+Math.random()*.16),.10+Math.random()*.08,d*(.78+Math.random()*.12)),band?cliffMat:cliffLit);
+  ledge.position.set(x+(Math.random()-.5)*.18,h*(.32+band*.30),z+(Math.random()-.5)*.22);
+  ledge.rotation.set(0,rock.rotation.y,(Math.random()-.5)*.07);
   ledge.castShadow=true;ledge.receiveShadow=true;scene.add(ledge);
  }
 }
 for(const side of [-1,1]){
- for(let i=0;i<12;i++)makeStrataRock(side,i);
- // Keep alien growths on the outer shoulder so the centre lane stays readable.
- for(let i=0;i<8;i++){
-  const x=side*(9.8+Math.random()*3.8),z=-5-i*7.8;
-  const spike=new THREE.Mesh(new THREE.ConeGeometry(.28+Math.random()*.34,1.2+Math.random()*2.0,6),chitinMat);
-  spike.position.set(x,spike.geometry.parameters.height*.43,z);spike.rotation.z=side*(Math.random()*.16);spike.castShadow=true;scene.add(spike);
+ for(let i=0;i<9;i++)makeStrataRock(side,i);
+ // Sparse growths sit behind the rock line, preserving the open firing lane.
+ for(let i=0;i<6;i++){
+  const x=side*(11.5+Math.random()*2.8),z=-8-i*9.2;
+  const spike=new THREE.Mesh(new THREE.ConeGeometry(.24+Math.random()*.24,1.0+Math.random()*1.5,7),chitinMat);
+  spike.position.set(x,spike.geometry.parameters.height*.43,z);spike.rotation.z=side*(Math.random()*.10);spike.castShadow=true;scene.add(spike);
   if(i%2===0){
-   const pod=new THREE.Mesh(new THREE.SphereGeometry(.12+Math.random()*.09,9,7),sporeMat);
-   pod.position.set(x-side*.24,.65+Math.random()*.8,z-.12);pod.castShadow=true;scene.add(pod);
+   const pod=new THREE.Mesh(new THREE.SphereGeometry(.11+Math.random()*.07,9,7),sporeMat);
+   pod.position.set(x-side*.2,.55+Math.random()*.65,z-.12);pod.castShadow=true;scene.add(pod);
   }
  }
 }
@@ -613,9 +614,8 @@ if(window.GLTFLoader){
   // Normalize imported model dimensions, then orient its longest axis down the view direction.
   model.scale.setScalar(.96/longest);
   model.position.sub(center.multiplyScalar(.96/longest));
-  // This asset's muzzle axis is local X. Rotate it onto camera-forward (-Z),
-  // rather than leaving the rifle broadside across the screen.
-  model.rotation.set(0,-Math.PI/2,0);
+  // The asset's muzzle axis is local -Z. Keep that axis aligned with camera-forward.
+  model.rotation.set(0,0,0);
   model.position.set(.02,-.10,-.14);
   model.traverse(part=>{if(part.isMesh){part.castShadow=false;part.receiveShadow=false;part.renderOrder=1000;if(part.material){part.material.depthTest=false;part.material.depthWrite=false;part.material.needsUpdate=true}}});
   weaponRig.add(model);
