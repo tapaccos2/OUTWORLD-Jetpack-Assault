@@ -672,7 +672,7 @@ for(let i=0;i<enemySpawns.length;i++){
 // Keep the tested full-size procedural Hydran enemies visible. The imported GLB pack
 // currently has inconsistent in-game scale/orientation, so do not hide these meshes.
 if(window.loadEnvironmentAssets)window.loadEnvironmentAssets(THREE,scene,lowPowerDevice).catch(err=>console.warn('Environment GLB assets unavailable; procedural fallback remains active.',err));
-const bullets=[],sparks=[],clock=new THREE.Clock();let hp=100,fuel=100,yaw=0,pitch=-.05,targetYaw=0,targetPitch=-.05,vy=0,onGround=true,started=false,dead=false,won=false,fireHeld=false,boostHeld=false,jumpQueued=false,shotCooldown=0,damageFlash=0,lookTouch=null,stick={x:0,y:0},pointerLocked=false,lastShot=0,muzzleLife=0,hitConfirmTimer=0,thirdPerson=true,fireRecoil=0;
+const bullets=[],sparks=[],clock=new THREE.Clock();let thirdPersonCameraReady=false,hp=100,fuel=100,yaw=0,pitch=-.05,targetYaw=0,targetPitch=-.05,vy=0,onGround=true,started=false,dead=false,won=false,fireHeld=false,boostHeld=false,jumpQueued=false,shotCooldown=0,damageFlash=0,lookTouch=null,stick={x:0,y:0},pointerLocked=false,lastShot=0,muzzleLife=0,hitConfirmTimer=0,thirdPerson=true,fireRecoil=0;
 function startGame(){
  started=true;
  if(message) message.style.display='none';
@@ -681,7 +681,7 @@ function startGame(){
 // Start the simulation once the scene has been constructed; the start prompt is only UI.
 message.addEventListener('pointerdown',e=>{e.preventDefault();startGame()});
 message.addEventListener('click',startGame);
-const viewToggle=document.querySelector('#viewToggle');viewToggle.textContent='VIEW: THIRD PERSON';function toggleView(){thirdPerson=!thirdPerson;viewToggle.textContent=thirdPerson?'VIEW: THIRD PERSON':'VIEW: FIRST PERSON'}viewToggle.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();toggleView()});const keys={};addEventListener('keydown',e=>{if(e.code==='KeyV'){toggleView();return}startGame();keys[e.code]=true;if(e.code==='Space'){jumpQueued=true;e.preventDefault()}if(e.code==='KeyR'&&(dead||won))location.reload()});addEventListener('keyup',e=>keys[e.code]=false);
+const viewToggle=document.querySelector('#viewToggle');thirdPerson=true;viewToggle.textContent='VIEW: THIRD PERSON';function toggleView(){thirdPerson=!thirdPerson;viewToggle.textContent=thirdPerson?'VIEW: THIRD PERSON':'VIEW: FIRST PERSON';player.visible=thirdPerson;if(importedSoldier)importedSoldier.visible=thirdPerson;}viewToggle.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();toggleView()});const keys={};addEventListener('keydown',e=>{if(e.code==='KeyV'){toggleView();return}startGame();keys[e.code]=true;if(e.code==='Space'){jumpQueued=true;e.preventDefault()}if(e.code==='KeyR'&&(dead||won))location.reload()});addEventListener('keyup',e=>keys[e.code]=false);
 canvas.addEventListener('pointerdown',()=>startGame(),{passive:true});
 canvas.addEventListener('mousedown',e=>{if(e.button===0){startGame();fireHeld=true;shoot()}});canvas.addEventListener('click',()=>{startGame();if(innerWidth>700&&canvas.requestPointerLock&&!dead&&!won&&!pointerLocked)canvas.requestPointerLock()});
 addEventListener('mouseup',()=>fireHeld=false);addEventListener('blur',()=>fireHeld=false);document.addEventListener('pointerlockchange',()=>{pointerLocked=document.pointerLockElement===canvas;if((dead||won)&&document.pointerLockElement)document.exitPointerLock()});
@@ -801,7 +801,7 @@ function update(dt){
   player.rotation.y+=bodyDelta*(1-Math.exp(-dt*9));
  }
  player.position.y=Math.max(0,player.position.y);
- const lookDir=new THREE.Vector3(-Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),-Math.cos(yaw)*Math.cos(pitch));if(thirdPerson){const behind=4.9,high=2.45,shoulder=1.45;const desiredCam=new THREE.Vector3(player.position.x+Math.sin(yaw)*behind+Math.cos(yaw)*shoulder,player.position.y+high,player.position.z+Math.cos(yaw)*behind-Math.sin(yaw)*shoulder);camera.position.lerp(desiredCam,1-Math.exp(-dt*8));const aim=player.position.clone().add(new THREE.Vector3(0,1.4,0)).add(lookDir.clone().multiplyScalar(6.2)).add(new THREE.Vector3(Math.cos(yaw)*.85,0,-Math.sin(yaw)*.85));camera.lookAt(aim)}else{camera.position.set(player.position.x,player.position.y+2.15,player.position.z);camera.lookAt(camera.position.clone().add(lookDir.multiplyScalar(25)))}
+ const lookDir=new THREE.Vector3(-Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),-Math.cos(yaw)*Math.cos(pitch));if(thirdPerson){const behind=4.9,high=2.45,shoulder=1.45;const desiredCam=new THREE.Vector3(player.position.x+Math.sin(yaw)*behind+Math.cos(yaw)*shoulder,player.position.y+high,player.position.z+Math.cos(yaw)*behind-Math.sin(yaw)*shoulder);if(!thirdPersonCameraReady){camera.position.copy(desiredCam);thirdPersonCameraReady=true}else camera.position.lerp(desiredCam,1-Math.exp(-dt*8));const aim=player.position.clone().add(new THREE.Vector3(0,1.4,0)).add(lookDir.clone().multiplyScalar(6.2)).add(new THREE.Vector3(Math.cos(yaw)*.85,0,-Math.sin(yaw)*.85));camera.lookAt(aim)}else{camera.position.set(player.position.x,player.position.y+2.15,player.position.z);camera.lookAt(camera.position.clone().add(lookDir.multiplyScalar(25)))}
  const moving=Math.abs(fwd)+Math.abs(side)>.1;
  weaponRig.visible=false;armRig.visible=false;fpAssetRig.visible=!thirdPerson;marineRifle.visible=false;
  // The imported first-person arms and rifle follow look pitch and locomotion as one authored viewmodel.
@@ -810,6 +810,7 @@ function update(dt){
  fpAssetRig.position.set(moving?Math.sin(viewGait*.5)*.012:0,-.34+(moving?Math.abs(Math.sin(viewGait))*.014:0),-.58+(fireRecoil*.045));
  // Prevent the marine's own helmet/visor and armour from clipping across the first-person view.
  player.visible=thirdPerson;
+ if(importedSoldier)importedSoldier.visible=thirdPerson;
  // Drive the imported character's authored locomotion clips; do not fake walking by bobbing the blockout.
  if(importedSoldier?.userData.locomotion){
   const rig=importedSoldier.userData.locomotion;
