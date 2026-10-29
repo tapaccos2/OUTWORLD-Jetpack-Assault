@@ -80,3 +80,9 @@ A direct byte-level comparison of five campaign-matched pairs (`anub01`, `anub02
 - `rag02`: 106 GPC records partition all 988 RPC records; ranges begin `[0,5]`, `[6,11]`, `[12,17]` and end `[983,987]`.
 
 This is a validated cross-file index relationship and is the first evidence that the GPC/RPC pair is not just two files sharing related headers. The geometric meaning of the RPC records, the other GPC fields, and the actual mesh-generation rules are still unknown. A reusable validator is available at `tools/check-gpc-rpc-pairs.mjs`; run it across `original-data/structs/` to test every pair.
+
+## RPC field-pattern comparison across campaigns (2026-10-29)
+
+A direct comparison of the 40-byte RPC records in `anub01`, `anub02`, `rag01`, `rag02`, and `oasis01` shows a consistent pattern in the four 16-bit fields at record-relative byte offsets 16, 20, 24, and 28: many records repeat the same value across all four positions, while other records vary by position. Counts of records with all four values equal are 186/203 (`anub01`), 155/273 (`anub02`), 221/767 (`rag01`), 631/988 (`rag02`), and 103/305 (`oasis01`). This pattern is consistent across different campaign resources but is not sufficient to identify those fields as heights, vertices, texture values, or any other specific concept.
+
+The fields at offsets 32 and 36 also contain signed-looking 16-bit values in many records, but their semantics are not established. The current defensible result is that GPC ranges partition the RPC table and RPC records contain repeated, position-dependent 16-bit patterns. A geometry decoder still needs a reliable interpretation of record types and coordinate/value fields, ideally checked against the original executable's read/use sites or a rendered comparison against the mission map image.
