@@ -427,6 +427,23 @@ const muzzleCore=new THREE.Mesh(new THREE.SphereGeometry(.06,8,8),new THREE.Mesh
 // First-person weapon: use the imported GLB asset only. No procedural gun geometry.
 const weaponRig=new THREE.Group();camera.add(weaponRig);
 weaponRig.position.set(.24,-.24,-.90);weaponRig.scale.set(.56,.56,.56);
+// Reliable offline fallback: a compact rifle and gloved forearms remain visible if the remote GLB fails.
+const fallbackWeapon=new THREE.Group();weaponRig.add(fallbackWeapon);
+const fallbackMetal=new THREE.MeshStandardMaterial({color:0x28312f,metalness:.72,roughness:.38});
+const fallbackPolymer=new THREE.MeshStandardMaterial({color:0x41483e,metalness:.18,roughness:.72});
+const fallbackGlove=new THREE.MeshStandardMaterial({color:0x252b27,roughness:.9});
+function fallbackPart(geometry,material,position,rotation){
+ const mesh=new THREE.Mesh(geometry,material);mesh.position.set(...position);
+ if(rotation)mesh.rotation.set(...rotation);mesh.castShadow=false;mesh.frustumCulled=false;fallbackWeapon.add(mesh);return mesh;
+}
+fallbackPart(new THREE.BoxGeometry(.19,.17,.48),fallbackPolymer,[.08,-.02,-.20]);
+fallbackPart(new THREE.CylinderGeometry(.035,.035,.76,10),fallbackMetal,[.08,.015,-.77],[Math.PI/2,0,0]);
+fallbackPart(new THREE.BoxGeometry(.13,.13,.32),fallbackPolymer,[.08,-.02,.19],[.12,0,0]);
+fallbackPart(new THREE.BoxGeometry(.11,.27,.16),fallbackPolymer,[.08,-.20,-.20],[-.12,0,0]);
+fallbackPart(new THREE.BoxGeometry(.10,.10,.18),fallbackMetal,[.08,.13,-.34]);
+fallbackPart(new THREE.BoxGeometry(.09,.08,.12),fallbackMetal,[.08,.15,-.62]);
+fallbackPart(new THREE.BoxGeometry(.17,.12,.35),fallbackGlove,[-.12,-.24,-.38],[.12,0,-.18]);
+fallbackPart(new THREE.BoxGeometry(.16,.12,.31),fallbackGlove,[.27,-.25,-.57],[-.12,0,.2]);
 const fpFlash=new THREE.Group();
 const fpFlashOuter=new THREE.Mesh(new THREE.ConeGeometry(.038,.18,6),new THREE.MeshBasicMaterial({color:0xff9c2e,transparent:true,opacity:.95,depthWrite:false,depthTest:false,toneMapped:false}));
 fpFlashOuter.rotation.x=-Math.PI/2;fpFlashOuter.scale.set(1.8,1.8,1.8);fpFlashOuter.position.set(0,0,0);fpFlash.add(fpFlashOuter);
@@ -441,11 +458,8 @@ const armRig=new THREE.Group();camera.add(armRig);
 // The dedicated imported first-person GLB below is the only visible weapon asset.
 
 const player=soldier(false);
-// Compatibility handle for the third-person toggle only; contains no procedural weapon geometry.
+// Keep the procedural marine visible as a fallback until the imported character is attached successfully.
 const marineRifle=new THREE.Group();marineRifle.visible=false;player.add(marineRifle);
-// Never display the blockout soldier, even while network assets are loading.
-player.children.forEach(o=>{o.visible=false});
-// Imported character and first-person weapon assets only. No procedural soldier or viewmodel geometry.
 armRig.visible=false;
 const fpAssetRig=new THREE.Group();camera.add(fpAssetRig);
 fpAssetRig.position.set(.20,-.24,-.48);
@@ -471,6 +485,7 @@ if(assetLoader){
  assetLoader.load(soldierAssetURL,gltf=>{
   importedSoldier=gltf.scene;
   normalizeGLB(importedSoldier,2.35);
+  player.add(importedSoldier);
   importedSoldier.rotation.y=0; // inherit player yaw; the parent already applies the forward-facing correction
   const soldierBones={head:null,neck:null,spine:null,leftArm:null,rightArm:null,leftForearm:null,rightForearm:null,leftHand:null,rightHand:null,leftLeg:null,rightLeg:null,leftShin:null,rightShin:null};
   const boneRest=new Map(),allBones=[];
@@ -798,7 +813,7 @@ function update(dt){
  player.position.y=Math.max(0,player.position.y);
  const lookDir=new THREE.Vector3(-Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),-Math.cos(yaw)*Math.cos(pitch));if(thirdPerson){const behind=4.9,high=2.45,shoulder=1.45;const desiredCam=new THREE.Vector3(player.position.x+Math.sin(yaw)*behind+Math.cos(yaw)*shoulder,player.position.y+high,player.position.z+Math.cos(yaw)*behind-Math.sin(yaw)*shoulder);if(!thirdPersonCameraReady){camera.position.copy(desiredCam);thirdPersonCameraReady=true}else camera.position.lerp(desiredCam,1-Math.exp(-dt*8));const aim=player.position.clone().add(new THREE.Vector3(0,1.4,0)).add(lookDir.clone().multiplyScalar(6.2)).add(new THREE.Vector3(Math.cos(yaw)*.85,0,-Math.sin(yaw)*.85));camera.lookAt(aim)}else{camera.position.set(player.position.x,player.position.y+2.15,player.position.z);camera.lookAt(camera.position.clone().add(lookDir.multiplyScalar(25)))}
  const moving=Math.abs(fwd)+Math.abs(side)>.1;
- weaponRig.visible=false;armRig.visible=false;fpAssetRig.visible=!thirdPerson;marineRifle.visible=false;
+ weaponRig.visible=!thirdPerson&&!importedFP;armRig.visible=false;fpAssetRig.visible=!thirdPerson&&!!importedFP;marineRifle.visible=false;
  // The imported first-person arms and rifle follow look pitch and locomotion as one authored viewmodel.
  const viewGait=performance.now()*.010;
  fpAssetRig.rotation.set(THREE.MathUtils.clamp(-pitch*.20,-.22,.22),THREE.MathUtils.clamp(-yawDelta*.08,-.08,.08),moving?Math.sin(viewGait)*.012:0);
