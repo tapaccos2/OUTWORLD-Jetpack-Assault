@@ -629,25 +629,25 @@ if(window.GLTFLoader){
 
 
 const player=soldier(false);
-// Reuse the player character's articulated arm meshes in first person.
+// Reuse the marine's actual arm meshes, scaled down to a true first-person weapon pose.
 if(player.userData.arms&&player.userData.arms.length===2){
  const cloneArmMeshes=source=>{const arm=new THREE.Group();source.children.forEach(child=>arm.add(child.clone(true)));return arm};
  const leftArm=cloneArmMeshes(player.userData.arms[0]);
  const rightArm=cloneArmMeshes(player.userData.arms[1]);
  for(const arm of [leftArm,rightArm]){
-  // These limbs were authored in full-body character space; scale them for the camera view.
-  arm.rotation.set(0,Math.PI,0);arm.scale.setScalar(.48);
+  // Full-body limb dimensions are far too large at camera scale; keep a compact forearm/hand silhouette.
+  arm.rotation.set(0,Math.PI,0);arm.scale.setScalar(.20);
   arm.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;o.renderOrder=1000;if(o.material){o.material=o.material.clone();o.material.depthTest=false;o.material.depthWrite=false}}});
   armRig.add(arm);
  }
- // Put the support hand on the forward handguard and the firing hand at the trigger grip.
- leftArm.position.set(-.08,.13,-.72);
- rightArm.position.set(.35,.13,-.70);
- leftArm.rotation.z=.12;
- rightArm.rotation.z=-.08;
+ // Hands: left supports the forward handguard; right meets the trigger grip.
+ leftArm.position.set(.23,-.10,-1.02);
+ rightArm.position.set(.34,-.15,-.80);
+ leftArm.rotation.z=.06;
+ rightArm.rotation.z=-.04;
  const leftElbow=leftArm.children.find(o=>o.isGroup),rightElbow=rightArm.children.find(o=>o.isGroup);
- if(leftElbow){leftElbow.rotation.x=-.10;leftElbow.rotation.z=-.04}
- if(rightElbow){rightElbow.rotation.x=-.08;rightElbow.rotation.z=.03}
+ if(leftElbow){leftElbow.rotation.x=-.04;leftElbow.rotation.z=-.02}
+ if(rightElbow){rightElbow.rotation.x=-.04;rightElbow.rotation.z=.02}
 }
 
 // Third-person rifle mounted to the marine's forward hand; visible only in chase view.
