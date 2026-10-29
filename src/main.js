@@ -637,12 +637,12 @@ weaponRig.traverse(o=>{if(o.isMesh&&o!==fpFlashOuter&&o!==fpFlashCore)o.visible=
 // Imported character and first-person weapon assets only. No procedural soldier or viewmodel geometry.
 armRig.visible=false;
 const fpAssetRig=new THREE.Group();camera.add(fpAssetRig);
-fpAssetRig.position.set(0,-.34,-.58);
+fpAssetRig.position.set(.20,-.24,-.48);
 fpAssetRig.scale.setScalar(1);
 const assetLoader=window.GLTFLoader?new window.GLTFLoader():null;
 const externalMixers=[];
-const soldierAssetURL='https://raw.githubusercontent.com/cktang88/3d-fps/main/public/assets/models/characters/soldier_tac.glb';
-const firstPersonAssetURL='https://raw.githubusercontent.com/cktang88/3d-fps/main/public/assets/models/weapons/smg45_rifle_arms.glb';
+const soldierAssetURL='https://raw.githubusercontent.com/cktang88/3d-fps/main/public/assets/models/characters/soldier.glb';
+const firstPersonAssetURL='https://raw.githubusercontent.com/cktang88/3d-fps/main/public/assets/models/fp/m4a1.glb';
 let importedSoldier=null,importedFP=null;
 function normalizeGLB(model,targetHeight){
  model.updateMatrixWorld(true);
@@ -718,12 +718,11 @@ if(assetLoader){
  },undefined,e=>console.error('OUTWORLD soldier asset failed to load; procedural player remains hidden.',e));
  assetLoader.load(firstPersonAssetURL,gltf=>{
   importedFP=gltf.scene;
-  normalizeGLB(importedFP,.42);
-  importedFP.traverse(o=>{if(o.isMesh){
-   o.renderOrder=1000;o.frustumCulled=false;
-   if(/headphones?|headset|earpiece|earphones?|head.?mounted.?display|comms.?headband/i.test(o.name))o.visible=false;
-   if(o.material){o.material.depthTest=true;o.material.depthWrite=true;o.material.needsUpdate=true}
-  }});
+  // This is an authored FPS weapon rig (rifle + both gloved arms), not a standing arms mesh.
+  // Its source coordinates use +Y up and muzzle -Z forward; preserve that authored pose and scale.
+  importedFP.scale.setScalar(2.0);
+  importedFP.position.set(0,0,0);
+  importedFP.traverse(o=>{if(o.isMesh){o.renderOrder=1000;o.frustumCulled=false;if(o.material){o.material.depthTest=true;o.material.depthWrite=true;o.material.needsUpdate=true}}});
   fpAssetRig.add(importedFP);
   // Hide every procedural weapon mesh; the imported arms asset includes its own weapon.
   weaponRig.traverse(o=>{if(o.isMesh&&o!==fpFlashOuter&&o!==fpFlashCore)o.visible=false});
@@ -861,7 +860,18 @@ function update(dt){
  const moveX=wish.x*speed*dt,moveZ=wish.z*speed*dt;
  moveEntityWithCollision(player,moveX,moveZ,.62,true);
  if(jumpQueued&&onGround){vy=7.3;onGround=false}jumpQueued=false;vy-=18*dt;player.position.y+=vy*dt;if(player.position.y<=0){player.position.y=0;vy=0;onGround=true}
- player.rotation.y=yaw+Math.PI;player.position.y=Math.max(0,player.position.y);
+ // Face the actual travel direction in third person so strafing does not look like skating sideways.
+ const travelSpeed=Math.hypot(wish.x,wish.z);
+ if(thirdPerson&&travelSpeed>.15&&!boost){
+  const moveYaw=Math.atan2(-wish.x,-wish.z);
+  const bodyDelta=Math.atan2(Math.sin(moveYaw-player.rotation.y),Math.cos(moveYaw-player.rotation.y));
+  player.rotation.y+=bodyDelta*(1-Math.exp(-dt*7));
+ }else{
+  const aimBodyYaw=yaw+Math.PI;
+  const bodyDelta=Math.atan2(Math.sin(aimBodyYaw-player.rotation.y),Math.cos(aimBodyYaw-player.rotation.y));
+  player.rotation.y+=bodyDelta*(1-Math.exp(-dt*9));
+ }
+ player.position.y=Math.max(0,player.position.y);
  const lookDir=new THREE.Vector3(-Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),-Math.cos(yaw)*Math.cos(pitch));if(thirdPerson){const behind=4.9,high=2.45,shoulder=1.45;const desiredCam=new THREE.Vector3(player.position.x+Math.sin(yaw)*behind+Math.cos(yaw)*shoulder,player.position.y+high,player.position.z+Math.cos(yaw)*behind-Math.sin(yaw)*shoulder);camera.position.lerp(desiredCam,1-Math.exp(-dt*8));const aim=player.position.clone().add(new THREE.Vector3(0,1.4,0)).add(lookDir.clone().multiplyScalar(6.2)).add(new THREE.Vector3(Math.cos(yaw)*.85,0,-Math.sin(yaw)*.85));camera.lookAt(aim)}else{camera.position.set(player.position.x,player.position.y+2.15,player.position.z);camera.lookAt(camera.position.clone().add(lookDir.multiplyScalar(25)))}
  const moving=Math.abs(fwd)+Math.abs(side)>.1;
  weaponRig.visible=!thirdPerson;armRig.visible=false;fpAssetRig.visible=!thirdPerson;marineRifle.visible=false;
