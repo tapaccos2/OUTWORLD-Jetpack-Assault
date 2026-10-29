@@ -34,7 +34,7 @@ Do not use any of these outputs as a claim that the map or mission has been full
 node tools/inspect-gry-structure.mjs original-data/gry/*.gry
 ```
 
-Reports the common file prefix, little-endian header values, every occurrence of the observed `00 A0 B9 B7` byte pattern, candidate 20-byte blocks, candidate 14-byte blocks, the proposed header-count formula, and groups files by the 64-byte signature at that occurrence. These are structural observations, not decoded fields.
+Reports the common file prefix, little-endian header values, every occurrence of the variable-leading-byte `?? A0 B9 B7` signature, candidate 20-byte blocks, candidate 14-byte blocks, the proposed header-count formula, and groups files by the 64-byte signature at that occurrence. These are structural observations, not decoded fields.
 
 ## 5. Scan for candidate terrain tags
 
@@ -42,6 +42,6 @@ Reports the common file prefix, little-endian header values, every occurrence of
 node tools/scan-gry-tags.mjs original-data/gry/*.gry
 ```
 
-Searches for four-letter ASCII sequences followed by a plausible little-endian 32-bit length and reports candidate payload bytes plus both integer byte orders. Current scans find repeated `fact`/length-4 candidates in nine of the ten readable terrain files; this is a lead, not a proven chunk specification.
+Searches for four-letter ASCII sequences followed by a plausible little-endian 32-bit length and reports candidate payload bytes plus both integer byte orders. Current scans pair 34 `fact`/length-4 candidates with the signature exactly 59 bytes earlier; `o5.gry` has one signature without a matching `fact`. This is a strong structural lead, not a proven semantic specification.
 
 The full current evidence and limitations are documented in `original-data/FORMAT-NOTES.md`; per-file measurements are summarized in `original-data/GRY-STRUCTURE-INDEX.md`.
