@@ -26,12 +26,13 @@
  window.loadEnvironmentAssets=async function(THREE,scene,lowPowerDevice){
   if(!window.GLTFLoader)return {loaded:[],count:0};
   const loader=new window.GLTFLoader(),source=ROOT+'nature/';
-  // Keep imported nature assets at playable scale. The pack's mountain meshes have
-  // rounded silhouettes at this camera distance, so use rocks and narrow cliff faces only.
+  // Keep the imported props in the playable scale range. The cliff assets have
+  // broad, rounded silhouettes in this camera and were responsible for the giant wall-like blobs.
   const specs=[
-   {url:source+'Rock001.glb',x:-10,z:-26,s:2.0,r:.4},{url:source+'Rock002.glb',x:11,z:-30,s:2.2,r:1.2},
-   {url:source+'Rock003.glb',x:-17,z:-38,s:2.4,r:2.0},{url:source+'Rock001.glb',x:18,z:-41,s:2.4,r:.8},
-   {url:source+'Cliff001.glb',x:-38,z:-61,s:6.0,r:.2},{url:source+'Cliff002.glb',x:39,z:-64,s:6.2,r:2.9}
+   {url:source+'Rock001.glb',x:-9,z:-23,s:1.65,r:.4},{url:source+'Rock002.glb',x:10,z:-27,s:1.8,r:1.2},
+   {url:source+'Rock003.glb',x:-15,z:-34,s:1.9,r:2.0},{url:source+'Rock001.glb',x:16,z:-37,s:1.9,r:.8},
+   {url:source+'Rock002.glb',x:-21,z:-45,s:2.1,r:1.6},{url:source+'Rock003.glb',x:22,z:-48,s:2.2,r:2.9},
+   {url:source+'Rock001.glb',x:-27,z:-57,s:2.6,r:.2},{url:source+'Rock002.glb',x:28,z:-60,s:2.6,r:2.4}
   ];
   const loaded=await Promise.all(specs.map(async item=>{try{
    const gltf=await loader.loadAsync(item.url),model=gltf.scene;
