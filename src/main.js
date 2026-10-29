@@ -107,6 +107,22 @@ const beaconCore=new THREE.Mesh(new THREE.SphereGeometry(.32,16,12),new THREE.Me
 beaconCore.position.set(0,3.42,-56.5);landingZone.add(beaconCore);
 const beaconLight=new THREE.PointLight(0x49f4e7,4,16,2);beaconLight.position.set(0,3.25,-56.5);landingZone.add(beaconLight);
 scene.add(landingZone);
+// Three relay uplinks must be brought online before extraction can be completed.
+const relayObjectives=[];
+const relaySpecs=[{x:0,z:-11},{x:-7,z:-24},{x:7,z:-36}];
+for(let i=0;i<relaySpecs.length;i++){
+ const spec=relaySpecs[i],relay=new THREE.Group();relay.position.set(spec.x,0,spec.z);
+ const base=new THREE.Mesh(new THREE.CylinderGeometry(.8,1.05,.24,12),new THREE.MeshStandardMaterial({color:0x303d42,metalness:.7,roughness:.36}));
+ base.position.y=.12;base.castShadow=true;base.receiveShadow=true;relay.add(base);
+ const mast=new THREE.Mesh(new THREE.CylinderGeometry(.11,.17,1.85,8),new THREE.MeshStandardMaterial({color:0x667c80,metalness:.65,roughness:.32}));
+ mast.position.y=1.12;relay.add(mast);
+ const ring=new THREE.Mesh(new THREE.TorusGeometry(.72,.065,8,24),new THREE.MeshStandardMaterial({color:0xffa34d,emissive:0x7d3107,emissiveIntensity:1.1,metalness:.3,roughness:.3}));
+ ring.rotation.x=Math.PI/2;ring.position.y=.35;relay.add(ring);
+ const core=new THREE.Mesh(new THREE.OctahedronGeometry(.25,1),new THREE.MeshBasicMaterial({color:0xffb65c}));
+ core.position.y=2.15;relay.add(core);
+ const light=new THREE.PointLight(0xff963d,1.4,7,2);light.position.y=1.7;relay.add(light);
+ relay.userData.activated=false;relay.userData.index=i+1;relay.userData.ring=ring;relay.userData.core=core;relayObjectives.push(relay);scene.add(relay);
+}
 // Layered alien sky with generated cloud bands; no extra downloads required.
 const skyCanvas=document.createElement('canvas');skyCanvas.width=1024;skyCanvas.height=512;
 const skyCtx=skyCanvas.getContext('2d');
@@ -590,7 +606,8 @@ const enemySpawns=[
  {x:-5,z:-13,trigger:-7,wave:1},{x:5,z:-15,trigger:-7,wave:1},
  {x:7,z:-25,trigger:-18,wave:2},{x:-6,z:-28,trigger:-18,wave:2},
  {x:-4,z:-39,trigger:-30,wave:3},{x:6,z:-42,trigger:-30,wave:3},
- {x:0,z:-50,trigger:-42,wave:4}
+ {x:0,z:-50,trigger:-42,wave:4},
+ {x:-8,z:-26,trigger:-18,wave:2},{x:8,z:-40,trigger:-30,wave:3},{x:-2,z:-53,trigger:-42,wave:4}
 ];
 for(let i=0;i<enemySpawns.length;i++){
  const spawn=enemySpawns[i],obj=soldier(true),size=.78+Math.random()*.22;
@@ -707,7 +724,7 @@ function enemyShoot(enemy,distance){
  const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints([muzzle,end]),new THREE.LineBasicMaterial({color:0xff554c,transparent:true,opacity:.9}));
  scene.add(line);bullets.push({obj:line,life:.18});
 }
-function endGame(victory){won=victory;dead=!victory;message.style.display='block';message.innerHTML=victory?'LANDING ZONE SECURED':'MARINE DOWN';message.innerHTML+='<small>Press R to redeploy</small>';if(document.pointerLockElement)document.exitPointerLock()}
+function endGame(victory){won=victory;dead=!victory;message.style.display='block';message.innerHTML=victory?'MISSION COMPLETE — EXTRACTION SECURED':'MARINE DOWN';message.innerHTML+='<small>Press R to redeploy</small>';if(document.pointerLockElement)document.exitPointerLock()}
 function resize(){updateViewportSize();renderer.setPixelRatio(Math.min(devicePixelRatio||1,lowPowerDevice?0.82:1.6));if(innerWidth<800)mobile.style.display='block'}addEventListener('resize',resize);
 function update(dt){
  if(dead||won)return;
@@ -852,12 +869,24 @@ function update(dt){
  sparks.forEach(s=>{s.life-=dt;s.obj.position.addScaledVector(s.vel,dt);s.vel.y-=9*dt;s.obj.scale.setScalar(Math.max(.01,s.life*3))});for(let i=sparks.length-1;i>=0;i--)if(sparks[i].life<=0){const deadSpark=sparks[i].obj;scene.remove(deadSpark);deadSpark.geometry.dispose();deadSpark.material.dispose();sparks.splice(i,1)}
  document.querySelector('#hpText').textContent=Math.round(hp)+'%';document.querySelector('#hpBar').style.width=hp+'%';document.querySelector('#fuelText').textContent=Math.round(fuel)+'%';document.querySelector('#fuelBar').style.width=fuel+'%';document.querySelector('#enemyText').textContent=remaining;
  const allSpawned=enemies.every(e=>e.userData.spawned);
+ for(const relay of relayObjectives){
+  relay.userData.ring.rotation.z+=dt*.9;
+  relay.userData.core.rotation.y+=dt*1.8;
+  if(!relay.userData.activated&&Math.hypot(player.position.x-relay.position.x,player.position.z-relay.position.z)<2.35){
+   relay.userData.activated=true;
+   relay.userData.ring.material.color.setHex(0x56f4c4);relay.userData.ring.material.emissive.setHex(0x087d51);
+   relay.userData.core.material.color.setHex(0x7dffcf);
+   relay.userData.light=relay.children[4];relay.userData.light.color.setHex(0x38ffb0);relay.userData.light.intensity=2.8;
+  }
+ }
+ const relaysOnline=relayObjectives.filter(r=>r.userData.activated).length;
  const atLanding=Math.hypot(player.position.x,player.position.z+56.5)<3.6;
- if(remaining>0)document.querySelector('#missionText').textContent='Hostiles remaining: '+remaining+' · Reach the landing beacon';
- else if(!allSpawned)document.querySelector('#missionText').textContent='Advance through the ravine to draw out Hydran patrols';
- else if(!atLanding)document.querySelector('#missionText').textContent='Ravine clear — reach the illuminated landing beacon';
- else document.querySelector('#missionText').textContent='Landing zone reached';
- if(hp<=0)endGame(false);else if(allSpawned&&remaining===0&&atLanding)endGame(true);
+ if(remaining>0)document.querySelector('#missionText').textContent='Eliminate hostiles: '+remaining+' · Relays: '+relaysOnline+'/'+relayObjectives.length;
+ else if(relaysOnline<relayObjectives.length)document.querySelector('#missionText').textContent='Activate remaining relay uplinks: '+relaysOnline+'/'+relayObjectives.length;
+ else if(!allSpawned)document.querySelector('#missionText').textContent='Advance to draw out remaining Hydran patrols';
+ else if(!atLanding)document.querySelector('#missionText').textContent='All relays online — reach extraction';
+ else document.querySelector('#missionText').textContent='Extraction zone reached';
+ if(hp<=0)endGame(false);else if(allSpawned&&remaining===0&&relaysOnline===relayObjectives.length&&atLanding)endGame(true);
 }
 function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.04);for(const mixer of externalMixers)mixer.update(dt);update(dt);renderer.render(scene,camera)}loop();
 })();
