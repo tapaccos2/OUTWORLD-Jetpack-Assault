@@ -37,4 +37,4 @@ Readable strings inside the `.MIS` files contain resource references such as `.D
 
 ## Important limitation
 
-The briefing text is not the same as the mission's actual object placement or terrain. Full reconstruction still requires decoding binary `.MIS` records and `.GRY` terrain data, then matching referenced resources to their original files. The current inspector script only inventories byte offsets, printable strings, resource references, and initial terrain bytes; it is not yet a full decoder.
+The briefing text is not the same as the mission's actual object placement or terrain. Full reconstruction still requires decoding binary `.MIS` records and identifying the actual terrain asset format. The `.GRY` files are sound-effect audio containers, not terrain data; referenced resources must be matched to their original files. The current inspector script only inventories byte offsets, printable strings, resource references, and initial terrain bytes; it is not yet a full decoder.
