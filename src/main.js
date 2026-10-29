@@ -630,8 +630,7 @@ if(false && window.GLTFLoader){
 
 const player=soldier(false);
 // Imported character and first-person weapon assets only. No procedural soldier or viewmodel geometry.
-const armRig=new THREE.Group();camera.add(armRig);
-armRig.visible=true;
+armRig.visible=false;
 const fpAssetRig=new THREE.Group();camera.add(fpAssetRig);
 fpAssetRig.position.set(0,-.42,-.72);
 fpAssetRig.scale.setScalar(1);
