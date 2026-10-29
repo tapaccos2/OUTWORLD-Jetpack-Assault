@@ -45,6 +45,17 @@ Static disassembly identifies two terrain-specific resource formats that are abs
 
 These are confirmed parser expectations from the executable, not a complete specification of the files' geometry semantics. Neither `.GRP` nor `.RMP` appears in the current local file inventory, so their payloads cannot yet be inspected or validated. The map-named `.DPC` record table is now structurally decoded, but no terrain mesh has been reconstructed from it.
 
+## New structural result: group/ramp records are present under .GPC/.RPC names
+
+The terrain-resource scan found many existing `.GPC` files beginning with `CPMG` and `.RPC` files beginning with `CPMR`. Direct byte inspection of `rag01.gpc`, `rag01.rpc`, `anub01.gpc`, and `anub01.rpc` confirms the 20-byte header pattern: four-byte signature, version `0x43` at offset 4, and a record count at offset 16. The sample sizes match exactly:
+
+- `rag01.gpc`: 1,620 bytes = 20-byte header + 50 × 32-byte records.
+- `rag01.rpc`: 30,700 bytes = 20-byte header + 767 × 40-byte records.
+- `anub01.gpc`: 916 bytes = 20-byte header + 28 × 32-byte records.
+- `anub01.rpc`: 8,140 bytes = 20-byte header + 203 × 40-byte records.
+
+The executable's group/ramp buffer limits also match these record widths: `0x1900 = 200 × 32` and `0x9c40 = 1000 × 40`. This strongly establishes that the loose `.GPC` and `.RPC` files share the structural formats expected by the `.GRP` and `.RMP` loaders, even though the specifically named `TERRAIN/RED.GRP` and `TERRAIN/RAG01.RMP` files are not present in the repository inventory. The actual record fields and their geometric meaning remain undecoded; no terrain mesh has yet been reconstructed. A raw structural inspector is available as `tools/inspect-grp-rmp.mjs`.
+
 ## Next technical work
 
 - Enumerate all files under `original-data/misn/` and `original-data/gry/`.
