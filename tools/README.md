@@ -27,3 +27,21 @@ node tools/check-original-assets.mjs original-data > original-asset-dependencies
 Compares resource filenames found inside the `.MIS` files against filenames present anywhere under `original-data/`. This highlights dependencies that are not in the uploaded folders.
 
 Do not use any of these outputs as a claim that the map or mission has been fully decoded. The next stage is to identify and validate binary record layouts and recover terrain/object placement.
+
+## 4. Compare terrain byte structure
+
+```sh
+node tools/inspect-gry-structure.mjs original-data/gry/*.gry
+```
+
+Reports the common file prefix, little-endian header values, every occurrence of the observed `00 A0 B9 B7` byte pattern, candidate 20-byte blocks before the first occurrence, and groups files by the 64-byte signature at that occurrence. These are structural observations, not decoded fields.
+
+## 5. Scan for candidate terrain tags
+
+```sh
+node tools/scan-gry-tags.mjs original-data/gry/*.gry
+```
+
+Searches for four-letter ASCII sequences followed by a plausible little-endian 32-bit length and reports candidate payload bytes plus both integer byte orders. Current scans find repeated `fact`/length-4 candidates in nine of the ten readable terrain files; this is a lead, not a proven chunk specification.
+
+The full current evidence and limitations are documented in `original-data/FORMAT-NOTES.md`.
