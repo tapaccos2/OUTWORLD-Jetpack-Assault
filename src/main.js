@@ -665,10 +665,9 @@ if(assetLoader){
   importedFP.traverse(o=>{if(o.isMesh){o.renderOrder=1000;o.frustumCulled=false;if(o.material){o.material.depthTest=true;o.material.depthWrite=true;o.material.needsUpdate=true}}});
   fpAssetRig.add(importedFP);
   // Attach the muzzle flash to the forward end of the real imported weapon asset.
-  const fpLocalBounds=new THREE.Box3().setFromObject(importedFP);
-  const fpLocalSize=fpLocalBounds.getSize(new THREE.Vector3());
+  // Use the GLB's original local-space bounds; world-space bounds here would misplace the anchor.
   const muzzleAnchor=new THREE.Group();
-  muzzleAnchor.position.set(fpLocalBounds.getCenter(new THREE.Vector3()).x,fpLocalBounds.min.y+fpLocalSize.y*.43,fpLocalBounds.min.z-.025);
+  muzzleAnchor.position.set(fpCenter.x,fpBounds.min.y+fpSize.y*.43,fpBounds.min.z-.025);
   importedFP.add(muzzleAnchor);
   fpFlash.position.set(0,0,0);
   muzzleAnchor.add(fpFlash);
