@@ -70,10 +70,48 @@ jobs:
             if (errors.length) console.log('GAME BROWSER ERRORS:', JSON.stringify(errors));
             if (errors.some(e => /Uncaught|ReferenceError|SyntaxError|TypeError|Failed to fetch dynamically imported module|Failed to resolve module specifier|WebGL.*context/i.test(e))) throw new Error('Critical game browser errors detected');
 
-            // Also smoke-test the independent terrain diagnostic page and its real
-            // original-PCX reference panel (default map is rag01, 1660 x 1556).
+            // Smoke-test the terrain page from this checked-out commit. Using Pages
+            // here can race a separate deployment workflow and accidentally test the
+            // previous build instead of the source under test.
             errors.length = 0;
-            const terrainUrl = 'https://tapaccos2.github.io/OUTWORLD-Jetpack-Assault/terrain-preview.html?smoke=' + Date.now();
+            const fs = require('fs');
+            const path = require('path');
+            const http = require('http');
+            const repoRoot = process.cwd();
+            const mimeTypes = {
+              '.html': 'text/html; charset=utf-8',
+              '.js': 'text/javascript; charset=utf-8',
+              '.mjs': 'text/javascript; charset=utf-8',
+              '.css': 'text/css; charset=utf-8',
+              '.json': 'application/json; charset=utf-8',
+              '.gpc': 'application/octet-stream',
+              '.rpc': 'application/octet-stream',
+              '.pcx': 'application/octet-stream',
+              '.png': 'image/png',
+              '.obj': 'text/plain; charset=utf-8'
+            };
+            const localServer = http.createServer((request, response) => {
+              let requestPath;
+              try { requestPath = decodeURIComponent(new URL(request.url, 'http://127.0.0.1').pathname); }
+              catch { response.writeHead(400); response.end('Bad request'); return; }
+              const filePath = path.resolve(repoRoot, '.' + requestPath);
+              if (filePath !== repoRoot && !filePath.startsWith(repoRoot + path.sep)) {
+                response.writeHead(403); response.end('Forbidden'); return;
+              }
+              fs.readFile(filePath, (error, bytes) => {
+                if (error) { response.writeHead(error.code === 'ENOENT' ? 404 : 500); response.end('Not found'); return; }
+                response.writeHead(200, {
+                  'Content-Type': mimeTypes[path.extname(filePath).toLowerCase()] || 'application/octet-stream',
+                  'Cache-Control': 'no-store'
+                });
+                response.end(bytes);
+              });
+            });
+            await new Promise((resolve, reject) => {
+              localServer.once('error', reject);
+              localServer.listen(4173, '127.0.0.1', resolve);
+            });
+            const terrainUrl = 'http://127.0.0.1:4173/terrain-preview.html?smoke=' + Date.now();
             let terrainResponse;
             for (let attempt = 0; attempt < 12; attempt++) {
               try {
@@ -152,6 +190,7 @@ jobs:
             }))));
             if (errors.length) console.log('TERRAIN BROWSER ERRORS:', JSON.stringify(errors));
             if (errors.some(e => /Uncaught|ReferenceError|SyntaxError|TypeError|Failed to fetch dynamically imported module|Failed to resolve module specifier|WebGL.*context/i.test(e))) throw new Error('Critical terrain browser errors detected');
+            await new Promise(resolve => localServer.close(resolve));
             await browser.close();
           // Execute the DPC pointer graph diagnostics from the checkout as a
           // local parser smoke test. Numeric class IDs stay semantic-neutral.
