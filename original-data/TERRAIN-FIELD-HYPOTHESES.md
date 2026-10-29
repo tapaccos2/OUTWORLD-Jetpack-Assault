@@ -78,3 +78,15 @@ Duplicate-position statistics also show that repeated XY positions often have di
 The spatial-field consistency test was extended from the original seven samples to all 34 campaign/multiplayer GPC/RPC pairs present in the repository. All 34 pairs pass the contiguous, in-bounds GPC-to-RPC range partition check. Together they contain 749 GPC groups; the inferred origin/span rectangles contain every indexed RPC position in 717 groups (95.7%). The 32 non-fitting groups are concentrated in rag01 (5), rag02 (10), mik01 (2), anub03 (1), anub2m (2), anub3m (1), mik1m (2), and rag2m (9). The other 26 pairs have all groups fitting the inferred rectangles.
 
 The GPC reference value also appears among the indexed RPC corner-like values in every group across all 34 pairs. This is a broad cross-file consistency result, not a proof of units or topology. It significantly strengthens the spatial interpretation because it holds across single-player and multiplayer resources, including tiny/mostly-flat maps, not just the initial Ragnarok and Anubis examples.
+
+## Executable cross-check: a native record setter writes the corner fields
+
+The local original executable (`outwars.exe`, PE32, image base `0x00400000`) provides a direct code-level cross-check. At virtual address `0x00477030`, a routine computes a 40-byte record stride (`index * 40`) and writes into that record:
+
+- a 32-bit position from the input structure into RPC offsets `+32` and `+36`;
+- one signed value into both 32-bit fields at RPC offsets `+16` and `+20`;
+- another sign-extended value into both 32-bit fields at RPC offsets `+24` and `+28`.
+
+The stores are visible in the disassembly at `0x0047706d`–`0x00477095`. This confirms that the four 32-bit fields are treated as two pairs of surface-height values, and that the final two 32-bit fields are position components. It also matches the repeated `[a,a,b,b]` patterns found in sloped surfaces. The setter alone does not establish the coordinate axis convention, vertical units, or the orientation represented by each pair.
+
+The native file loader around `0x004EC990` validates the CPMG/CPMR magic, version `0x43`, and the 200/1000 record limits, then copies the fixed payload sizes (`0x1900` bytes for 200 × 32-byte GPC records and `0x9c40` bytes for 1000 × 40-byte RPC records). It does not interpret individual records in that routine. This separates the already-confirmed file-container parser from the record-field semantics inferred from other code paths.
