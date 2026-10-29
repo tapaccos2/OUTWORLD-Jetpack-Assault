@@ -574,6 +574,7 @@ const fpAssetRig=new THREE.Group();camera.add(fpAssetRig);
 fpAssetRig.position.set(.20,-.24,-.48);
 fpAssetRig.scale.setScalar(1);
 const assetLoader=window.GLTFLoader?new window.GLTFLoader():null;
+if(assetLoader&&window.MeshoptDecoder)assetLoader.setMeshoptDecoder(window.MeshoptDecoder);
 const externalMixers=[];
 const soldierAssetURL='https://raw.githubusercontent.com/cktang88/3d-fps/main/public/assets/models/characters/soldier_tac.glb';
 const firstPersonAssetURL='https://raw.githubusercontent.com/cktang88/3d-fps/main/public/assets/models/fp/m4a1.glb';
