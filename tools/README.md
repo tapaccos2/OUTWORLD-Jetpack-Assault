@@ -45,3 +45,11 @@ node tools/scan-gry-tags.mjs original-data/gry/*.gry
 Searches for four-letter ASCII sequences followed by a plausible little-endian 32-bit length and reports candidate payload bytes plus both integer byte orders. Current scans pair 34 `fact`/length-4 candidates with the signature exactly 59 bytes earlier; `o5.gry` has one signature without a matching `fact`. This is a strong structural lead, not a proven semantic specification.
 
 The full current evidence and limitations are documented in `original-data/FORMAT-NOTES.md`; per-file measurements are summarized in `original-data/GRY-STRUCTURE-INDEX.md`.
+
+## 6. Validate terrain block boundaries
+
+```sh
+node tools/inspect-gry-blocks.mjs original-data/gry/*.gry
+```
+
+Parses the candidate `?? A0 B9 B7` record starts, `fact` length-4 fields, the `2E 3E 9D 00` block header, and its three-byte little-endian compressed length. It checks whether each payload ends at the next record or five-byte file trailer. The `fact` payload is treated as a candidate uncompressed length, not a proven meaning; this tool does not decompress the payload.
