@@ -33,9 +33,25 @@
    buttress:'https://cdn.3dassets.dev/assets/36137/v1/model.glb',
    boulders:'https://cdn.3dassets.dev/assets/18142/v1/model.glb',
    crashSite:'https://cdn.3dassets.dev/assets/17375/v1/model.glb',
-   crate:'https://cdn.3dassets.dev/assets/27447/v1/model.glb'
+   crate:'https://cdn.3dassets.dev/assets/27447/v1/model.glb',
+   building:'https://www.innerscene.com/api/library/low-poly-city-house-building-low-77087adb/download'
   };
   const specs=[
+   // Close urban street walls made from imported CC0 building models.
+   {asset:'building',x:-10.2,z:5,height:9.5,rotation:0,kind:'building'},
+   {asset:'building',x:10.2,z:5,height:9.5,rotation:Math.PI,kind:'building'},
+   {asset:'building',x:-10.2,z:-4.2,height:9.5,rotation:0,kind:'building'},
+   {asset:'building',x:10.2,z:-4.2,height:9.5,rotation:Math.PI,kind:'building'},
+   {asset:'building',x:-10.2,z:-13.4,height:9.5,rotation:0,kind:'building'},
+   {asset:'building',x:10.2,z:-13.4,height:9.5,rotation:Math.PI,kind:'building'},
+   {asset:'building',x:-10.2,z:-22.6,height:9.5,rotation:0,kind:'building'},
+   {asset:'building',x:10.2,z:-22.6,height:9.5,rotation:Math.PI,kind:'building'},
+   {asset:'building',x:-10.2,z:-31.8,height:9.5,rotation:0,kind:'building'},
+   {asset:'building',x:10.2,z:-31.8,height:9.5,rotation:Math.PI,kind:'building'},
+   {asset:'building',x:-10.2,z:-41,height:9.5,rotation:0,kind:'building'},
+   {asset:'building',x:10.2,z:-41,height:9.5,rotation:Math.PI,kind:'building'},
+   {asset:'building',x:-10.2,z:-50.2,height:9.5,rotation:0,kind:'building'},
+   {asset:'building',x:10.2,z:-50.2,height:9.5,rotation:Math.PI,kind:'building'},
    // Omit the bundled crash-site scene: its large pale base slab reads as a floating platform.
    {asset:'canopy',x:-17,z:-19,height:8.5,rotation:.45,kind:'tree',collision:1.6},
    {asset:'buttress',x:18,z:-22,height:7.4,rotation:2.3,kind:'tree',collision:1.7},
@@ -105,13 +121,14 @@
   // The centre remains a clear lane; crates form the inner shoulder, rocks the mid-shoulder,
   // and tall trees the outside boundary. This changes placement only, never model geometry.
   for(const item of specs){
-   if(item.kind==='scene')continue;
+   if(item.kind==='scene'||item.kind==='building')continue;
    const side=item.x<0?-1:1;
    if(item.kind==='prop')item.x=side*(5.4+((Math.round(Math.abs(item.z)*2)%3)*.35));
    else if(item.kind==='rock')item.x=side*(8.2+((Math.round(Math.abs(item.z)*2)%3)*.55));
    else if(item.kind==='tree')item.x=side*(14.2+((Math.round(Math.abs(item.z)*2)%3)*1.1));
   }
-  const chosen=lowPowerDevice?specs.filter((item,index)=>item.kind!=='rock'||index%3===0):specs;
+  const urbanSpecs=specs.filter(item=>item.kind!=='tree');
+   const chosen=lowPowerDevice?urbanSpecs.filter((item,index)=>item.kind!=='rock'||index%3===0):urbanSpecs;
   // Only imported GLB scenery is rendered; failed downloads are logged and skipped.
   const sourceCache=new Map();
   const getSource=key=>{
