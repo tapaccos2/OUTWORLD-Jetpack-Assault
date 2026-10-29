@@ -599,7 +599,29 @@ gunPart(new THREE.BoxGeometry(.075,.035,.18),gunDark,[0,.09,-.20]);
 gunPart(new THREE.BoxGeometry(.036,.012,.12),gunEnergy,[0,.112,-.20]);
 weaponRig.traverse(o=>{if(o.isMesh){o.renderOrder=1000;if(o.material){o.material.depthTest=false;o.material.depthWrite=false}}});
 
-const fpFlash=new THREE.Group();const fpFlashOuter=new THREE.Mesh(new THREE.ConeGeometry(.038,.18,6),new THREE.MeshBasicMaterial({color:0xffb84d,transparent:true,opacity:.78,depthWrite:false,toneMapped:false}));fpFlashOuter.rotation.x=-Math.PI/2;fpFlashOuter.position.set(0,.015,-1.00);fpFlash.add(fpFlashOuter);const fpFlashCore=new THREE.Mesh(new THREE.SphereGeometry(.025,6,4),new THREE.MeshBasicMaterial({color:0xfff2cf,transparent:true,opacity:.9,depthWrite:false,toneMapped:false}));fpFlashCore.position.set(0,.015,-.91);fpFlash.add(fpFlashCore);fpFlash.visible=false;weaponRig.add(fpFlash);
+// First-person forearms and gloves, attached to the camera so the rifle is visibly held rather than floating.
+const armRig=new THREE.Group();camera.add(armRig);
+const sleeveMat=new THREE.MeshStandardMaterial({color:0x303a32,roughness:.92,metalness:.02});
+const sleeveEdgeMat=new THREE.MeshStandardMaterial({color:0x596451,roughness:.88,metalness:.02});
+const gloveMat=new THREE.MeshStandardMaterial({color:0x171b18,roughness:.96,metalness:.02});
+const cuffMat=new THREE.MeshStandardMaterial({color:0x202824,roughness:.9});
+function armSegment(a,b,r1,r2,mat,parent=armRig){const A=new THREE.Vector3(...a),B=new THREE.Vector3(...b),delta=B.clone().sub(A),mesh=new THREE.Mesh(new THREE.CylinderGeometry(r2,r1,delta.length(),8),mat);mesh.position.copy(A).add(B).multiplyScalar(.5);mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),delta.normalize());mesh.castShadow=false;mesh.receiveShadow=false;parent.add(mesh);return mesh}
+function armJoint(pos,r,mat){const m=new THREE.Mesh(new THREE.SphereGeometry(r,9,7),mat);m.position.set(...pos);armRig.add(m);return m}
+// Left support arm reaches across to the forward handguard; right arm grips the pistol grip.
+armSegment([-.64,-.78,-.54],[-.43,-.48,-.82],.105,.085,sleeveMat);
+armSegment([-.43,-.48,-.82],[-.12,-.32,-1.03],.083,.065,sleeveMat);
+armJoint([-.43,-.48,-.82],.075,sleeveEdgeMat);
+armSegment([-.12,-.32,-1.03],[-.035,-.245,-.91],.064,.052,gloveMat);
+armJoint([-.035,-.245,-.91],.064,gloveMat);
+armSegment([.62,-.80,-.48],[.48,-.55,-.72],.11,.085,sleeveMat);
+armSegment([.48,-.55,-.72],[.30,-.40,-.88],.082,.06,sleeveMat);
+armJoint([.48,-.55,-.72],.073,sleeveEdgeMat);
+armSegment([.30,-.40,-.88],[.22,-.29,-.77],.061,.05,gloveMat);
+armJoint([.22,-.29,-.77],.061,gloveMat);
+// Small cuff seams add definition without obscuring the weapon.
+armSegment([-.61,-.735,-.59],[-.56,-.68,-.65],.091,.091,cuffMat);
+armSegment([.59,-.745,-.54],[.54,-.69,-.61],.093,.093,cuffMat);
+const fpFlash=new THREE.Group();const fpFlashOuter=new THREE.Mesh(new THREE.ConeGeometry(.038,.18,6),new THREE.MeshBasicMaterial({color:0xffb84d,transparent:true,opacity:.78,depthWrite:false,toneMapped:false}));fpFlashOuter.rotation.x=-Math.PI/2;fpFlashOuter.position.set(0,.015,-.67);fpFlash.add(fpFlashOuter);const fpFlashCore=new THREE.Mesh(new THREE.SphereGeometry(.025,6,4),new THREE.MeshBasicMaterial({color:0xfff2cf,transparent:true,opacity:.9,depthWrite:false,toneMapped:false}));fpFlashCore.position.set(0,.015,-.59);fpFlash.add(fpFlashCore);fpFlash.visible=false;weaponRig.add(fpFlash);
 // Load a CC0 stylized assault-rifle GLB. The procedural rifle remains as a fallback if the asset host is unavailable.
 const fallbackWeaponMeshes=[];
 weaponRig.traverse(o=>{if(o.isMesh&&o!==fpFlashOuter&&o!==fpFlashCore)fallbackWeaponMeshes.push(o)});
@@ -737,7 +759,7 @@ function shoot(){if(dead||won||!started||shotCooldown>0)return;shotCooldown=.075
   if(along>=0&&along<bestAlong&&along<65){const t=THREE.MathUtils.clamp((axisTo+along*rayAxis)/Math.max(axisLen,1e-6),0,1),rayPoint=origin.clone().addScaledVector(dir,along),bodyPoint=foot.clone().addScaledVector(axis,t),radius=(e.userData.insect?.56:.48)*Math.max(e.scale.x,e.scale.z);if(rayPoint.distanceTo(bodyPoint)<radius){bestAlong=along;target=e;targetPoint=bodyPoint;targetDamage=t<.22?40:(t>.82?70:50)}}
  }
  if(target){target.userData.hp-=targetDamage;target.userData.hit=.2;document.querySelector('.reticle').classList.add('confirmed');hitConfirmTimer=.22;for(let i=0;i<10;i++)spawnSpark(targetPoint.clone().add(new THREE.Vector3((Math.random()-.5)*.42,(Math.random()-.5)*.48,(Math.random()-.5)*.35)),0xffad63);if(target.userData.hp<=0){target.visible=false;target.userData.hp=0;for(let i=0;i<24;i++)spawnSpark(target.position.clone().add(new THREE.Vector3((Math.random()-.5)*.9,1+Math.random()*1.5,(Math.random()-.5)*.9)),i%3===0?0x8caca4:0xff8d4d)}}
- const muzzleLocal=new THREE.Vector3(0.0,0.015,-1.02);const muzzleWorld=muzzleLocal.applyMatrix4(camera.matrixWorld);const start=thirdPerson?origin.clone().add(dir.clone().multiplyScalar(.65)):muzzleWorld;const end=target?targetPoint.clone():origin.clone().add(dir.clone().multiplyScalar(42));const bolt=new THREE.Mesh(new THREE.CylinderGeometry(.012,.022,1.25,6),new THREE.MeshBasicMaterial({color:target?0xffc46b:0x9df7ff,transparent:true,opacity:.86,depthWrite:false,toneMapped:false}));bolt.frustumCulled=false;scene.add(bolt);bullets.push({obj:bolt,life:.105,duration:.105,start,end,tracer:true,beam:true});fpFlash.visible=!thirdPerson;if(player.userData.muzzle)player.userData.muzzle.visible=true;if(player.userData.muzzleCore)player.userData.muzzleCore.visible=true;muzzleLife=.045}
+ const muzzleLocal=new THREE.Vector3(0.02,-.085,-.67);weaponRig.updateMatrixWorld(true);const muzzleWorld=muzzleLocal.applyMatrix4(weaponRig.matrixWorld);const start=thirdPerson?origin.clone().add(dir.clone().multiplyScalar(.65)):muzzleWorld;const end=target?targetPoint.clone():origin.clone().add(dir.clone().multiplyScalar(42));const bolt=new THREE.Mesh(new THREE.CylinderGeometry(.012,.022,1.25,6),new THREE.MeshBasicMaterial({color:target?0xffc46b:0x9df7ff,transparent:true,opacity:.86,depthWrite:false,toneMapped:false}));bolt.frustumCulled=false;scene.add(bolt);bullets.push({obj:bolt,life:.105,duration:.105,start,end,tracer:true,beam:true});fpFlash.visible=!thirdPerson;if(player.userData.muzzle)player.userData.muzzle.visible=true;if(player.userData.muzzleCore)player.userData.muzzleCore.visible=true;muzzleLife=.045}
 function spawnSpark(pos,color){const mesh=new THREE.Mesh(new THREE.SphereGeometry(.028,5,4),new THREE.MeshBasicMaterial({color,toneMapped:false}));mesh.position.copy(pos);scene.add(mesh);sparks.push({obj:mesh,life:.35,vel:new THREE.Vector3((Math.random()-.5)*5,Math.random()*4,(Math.random()-.5)*5)})}
 function enemyShoot(enemy,distance){
  const muzzle=enemy.position.clone().add(new THREE.Vector3(0,1.48,.32).applyAxisAngle(new THREE.Vector3(0,1,0),enemy.rotation.y));
@@ -762,7 +784,7 @@ function update(dt){
  if(jumpQueued&&onGround){vy=7.3;onGround=false}jumpQueued=false;vy-=18*dt;player.position.y+=vy*dt;if(player.position.y<=0){player.position.y=0;vy=0;onGround=true}
  player.rotation.y=yaw+Math.PI;player.position.y=Math.max(0,player.position.y);
  const lookDir=new THREE.Vector3(-Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),-Math.cos(yaw)*Math.cos(pitch));if(thirdPerson){const behind=4.9,high=2.45,shoulder=1.45;const desiredCam=new THREE.Vector3(player.position.x+Math.sin(yaw)*behind+Math.cos(yaw)*shoulder,player.position.y+high,player.position.z+Math.cos(yaw)*behind-Math.sin(yaw)*shoulder);camera.position.lerp(desiredCam,1-Math.exp(-dt*8));const aim=player.position.clone().add(new THREE.Vector3(0,1.4,0)).add(lookDir.clone().multiplyScalar(6.2)).add(new THREE.Vector3(Math.cos(yaw)*.85,0,-Math.sin(yaw)*.85));camera.lookAt(aim)}else{camera.position.set(player.position.x,player.position.y+2.15,player.position.z);camera.lookAt(camera.position.clone().add(lookDir.multiplyScalar(25)))}
- weaponRig.visible=!thirdPerson;marineRifle.visible=thirdPerson;
+ weaponRig.visible=!thirdPerson;armRig.visible=!thirdPerson;marineRifle.visible=thirdPerson;
  // Prevent the marine's own helmet/visor and armour from clipping across the first-person view.
  player.visible=thirdPerson;
  const moving=Math.abs(fwd)+Math.abs(side)>.1;
