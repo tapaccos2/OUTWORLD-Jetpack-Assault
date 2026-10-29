@@ -629,6 +629,9 @@ if(false && window.GLTFLoader){
 
 
 const player=soldier(false);
+// Never display the blockout soldier, even while network assets are loading.
+player.children.forEach(o=>{o.visible=false});
+weaponRig.traverse(o=>{if(o.isMesh&&o!==fpFlashOuter&&o!==fpFlashCore)o.visible=false});
 // Imported character and first-person weapon assets only. No procedural soldier or viewmodel geometry.
 armRig.visible=false;
 const fpAssetRig=new THREE.Group();camera.add(fpAssetRig);
