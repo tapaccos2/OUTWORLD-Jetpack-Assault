@@ -123,4 +123,17 @@ Rotate those gradients by the negative angle represented by the sine/cosine pair
 
 The expected surface normal is `normalize(-gxWorld, -gyWorld, 1)`. Compare it with the signed 16-bit normal at `+10/+12/+14`, normalized. This is not just a plausible fit: across all 8,005 RPC records, **8,003 match with a normalized dot product above 0.999**. The other two are the same flat record in `dead01.rpc` and `dead1m.rpc`: all four heights are 6487, but the stored normal is `(0,0,-4095)` rather than `(0,0,4095)`, so it is exactly inverted. Preserve that sign; do not force all normals upward.
 
-This confirms the working interpretation of `+2/+4` as the two surface dimensions, `+6/+8` as the orientation sine/cosine pair, `+10/+12/+14` as the normal, and `+16/+20/+24/+28` as the ordered corner heights. The remaining geometric uncertainty is the exact meaning of the position at `+32/+36` (most likely the surface center/anchor) and the triangulation convention for the fourth corner when the four heights are not coplanar. The checker now reports the normal-vs-gradient consistency test.
+This confirms the working interpretation of `+2/+4` as the two surface dimensions, `+6/+8` as the orientation sine/cosine pair, `+10/+12/+14` as the normal, and `+16/+20/+24/+28` as the ordered corner heights. The remaining geometric uncertainty is the exact meaning of the position at `+32/+36` (the local (0,0) corner is now the best-supported interpretation) and the triangulation convention for the fourth corner when the four heights are not coplanar. The checker now reports the normal-vs-gradient consistency test.
+
+## Position anchor resolved by cross-surface edge continuity
+
+I compared two possible interpretations of the final RPC XY pair across all 34 resource sets: (a) it is the centre of the rectangle, or (b) it is the local `(0,0)` corner. For each record, I generated the four XY corners from the stored width/depth and sine/cosine, rounded the fixed-point results to the nearest game coordinate, then counted shared edges and whether their endpoint heights matched exactly.
+
+| Position interpretation | Shared edge keys | Shared edges with matching endpoint heights |
+|---|---:|---:|
+| XY is rectangle centre | 445 | 175 |
+| XY is local `(0,0)` corner | 2,297 | 1,872 |
+
+The corner interpretation produces over five times as many shared edges and over ten times as many exact height-matched shared edges. It is better in 27 of the 34 resource sets. This is strong internal topological evidence that `+32/+36` is the local origin/corner, not the centre. The few sets where it is tied or worse are small or have overlapping/multiple surfaces; `oasis06` also contains substantial overlapping geometry, so its edge-height agreement is lower even though the corner interpretation creates more shared edges.
+
+The mesh exporter now defaults to corner anchoring, while retaining `--anchor=center` as a comparison option. This resolves the previous anchor ambiguity enough to build a first candidate mesh, but the result still needs a visual comparison against an original in-game map to validate scale and triangle diagonal.
