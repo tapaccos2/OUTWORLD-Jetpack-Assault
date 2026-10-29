@@ -62,3 +62,11 @@ The executable's group/ramp buffer limits also match these record widths: `0x190
 - Inspect the mission binary schema across several files, identify record boundaries, and export a first machine-readable JSON representation.
 - Inspect/extract `.GRY` sound-effect audio; investigate pointer tables and record layouts in map-named `.DPC` files, while keeping the terrain interpretation provisional.
 - Check which referenced `.DPC`, `.PCX`, and other resources are available before rendering a faithful level.
+
+## External release-manifest cross-check (2026-10-29)
+
+The public SteamDB listing for Outwars content depot 1431941 lists the shipped resource files and includes the campaign-matched `structs/*.gpc` and `structs/*.rpc` files (for example, `structs/rag01.gpc`, `structs/rag01.rpc`, and corresponding Anubis/Ragnarok pairs). The same listing does not show a `TERRAIN/` directory or the specific `TERRAIN/RED.GRP` / `TERRAIN/RAG01.RMP` paths. This independently matches the repository inventory: the named files are not simply missing from the loose-file upload; they are also absent from the public depot's listed paths.
+
+This does **not** prove that the terrain files were never created or that they cannot be generated/renamed by another installation step. It means the next investigation should not spend time repeatedly searching for those exact paths in this release. The concrete shipped equivalents worth comparing are the campaign-matched `.GPC/.RPC` pairs under `structs/`. Their header and record-size layouts match the executable's `CPMG`/`CPMR` parser expectations, but their field semantics and any conversion between these names and the old `TERRAIN` paths remain unproven.
+
+Source: [SteamDB Outwars Content depot 1431941](https://steamdb.info/depot/1431941/), public file listing accessed 2026-10-29. The depot listing is external corroboration of filenames and sizes only; it is not a terrain-format specification.
