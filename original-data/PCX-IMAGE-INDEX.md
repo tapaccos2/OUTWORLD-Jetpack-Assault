@@ -19,4 +19,4 @@ A converter is available at `tools/pcx-to-png.mjs`:
 node tools/pcx-to-png.mjs original-data/misn/anub01m1.PCX
 ```
 
-This supports 8-bit indexed single-plane and 8-bit three-plane RGB PCX files. The resulting PNGs are intended for visual inspection/reference. Their pixel dimensions and visual contents have not been used as a substitute for the still-undecoded `.GRY` terrain geometry.
+This supports 8-bit indexed single-plane and 8-bit three-plane RGB PCX files. The resulting PNGs are intended for visual inspection/reference. Their pixel dimensions and visual contents have not been used as a substitute for the still-unidentified original terrain geometry format; `.GRY` files are sound-effect audio containers.
