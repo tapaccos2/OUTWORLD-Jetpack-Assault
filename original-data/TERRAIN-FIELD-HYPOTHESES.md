@@ -99,6 +99,12 @@ The first 16 bytes are not just an opaque block: the 16-bit signed values at RPC
 
 This code-level interpretation also matches every shipped RPC record checked: across all 34 RPC files and **8,005 records**, the magnitude `sqrt(sin² + cos²)` for the signed 16-bit pair at offsets `+6/+8` lies within 2 units of 4095. The observed minimum is 4094.34 and maximum is 4096.62. That near-constant magnitude is decisive confirmation that these fields are the fixed-point sine/cosine components of a direction/rotation, rather than arbitrary texture coordinates. The checker now reports this test automatically.
 
-The angle itself, the meaning of fields at offsets `+0`, `+2`, `+4`, `+10`, `+12`, and `+14`, and how the orientation vector transforms the four corners are still unresolved. This is the next useful target for disassembly: follow the code that consumes the orientation pair to see how it derives the four surface positions.
+The angle itself, the meaning of fields at offsets `+0`, `+2`, and `+4`, and how the orientation vector transforms the four corners are still unresolved. The three fields at `+10`, `+12`, and `+14` are now strongly identified as a normal-like vector; see the next section.
 
 **Reachability caveat:** this setter is a real routine in the executable, but a simple static cross-reference scan did not find a direct call instruction or literal function-pointer reference to `0x00477030`. Its runtime reachability is therefore unconfirmed; treat it as strong structural evidence for the record layout, not yet proof that this exact routine processes the campaign files during normal gameplay.
+
+## A second fixed-point vector: surface normal candidate
+
+The signed 16-bit triplet at RPC offsets `+10`, `+12`, and `+14` also has a near-constant magnitude. Across all 34 RPC files and **8,005 records**, `sqrt(nx² + ny² + nz²)` is within 2 units of 4095 for every record; the observed range is 4094.27–4095.75. Flat records commonly store `(0, 0, 4095)`, while sloped records use non-zero first/second components and a reduced third component. This is strong evidence that the triplet is a fixed-point surface-normal vector.
+
+The first 16 bytes of each RPC record therefore appear to contain at least: a 2D orientation/direction pair at `+6/+8` and a 3D normal at `+10/+12/+14`, alongside still-unknown fields at `+0/+2/+4`. The native setter directly writes the direction pair and the height/position fields; the normal-vector identification is currently supported by the across-file invariant and flat-versus-slope pattern, but still needs a direct executable use-site to be considered fully confirmed.
