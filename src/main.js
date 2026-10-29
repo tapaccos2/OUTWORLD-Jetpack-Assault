@@ -659,16 +659,36 @@ if(assetLoader){
   importedSoldier=gltf.scene;
   normalizeGLB(importedSoldier,2.35);
   importedSoldier.rotation.y=0; // inherit player yaw; the parent already applies the forward-facing correction
-  importedSoldier.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
+  const soldierBones={head:null,neck:null,leftArm:null,rightArm:null,leftLeg:null,rightLeg:null};
+  const boneRest=new Map();
+  importedSoldier.traverse(o=>{
+   if(o.isMesh){o.castShadow=true;o.receiveShadow=true}
+   if(o.isBone){
+    const n=o.name.toLowerCase().replace(/[^a-z0-9]/g,'');
+    if(!soldierBones.head&&/(head|mixamorighead)$/.test(n))soldierBones.head=o;
+    if(!soldierBones.neck&&n.includes('neck'))soldierBones.neck=o;
+    if(!soldierBones.leftArm&&/(leftarm|leftupperarm|mixamorigleftarm|upperarml)/.test(n))soldierBones.leftArm=o;
+    if(!soldierBones.rightArm&&/(rightarm|rightupperarm|mixamorigrightarm|upperarmr)/.test(n))soldierBones.rightArm=o;
+    if(!soldierBones.leftLeg&&/(leftupleg|leftthigh|mixamorigleftupleg|thighl)/.test(n))soldierBones.leftLeg=o;
+    if(!soldierBones.rightLeg&&/(rightupleg|rightthigh|mixamorigrightupleg|thighr)/.test(n))soldierBones.rightLeg=o;
+    boneRest.set(o,o.quaternion.clone());
+   }
+  });
+  importedSoldier.userData.boneRig={soldierBones,boneRest};
   player.add(importedSoldier);
+  // Re-align the actual asset's feet to the player ground plane after attaching it to the player.
+  importedSoldier.updateMatrixWorld(true);
+  const footBounds=new THREE.Box3().setFromObject(importedSoldier);
+  if(Number.isFinite(footBounds.min.y))importedSoldier.position.y-=footBounds.min.y-player.position.y;
   // The original blockout is deliberately kept invisible; only the imported character is rendered.
   player.children.forEach(o=>{if(o!==importedSoldier)o.visible=false});
   if(gltf.animations&&gltf.animations.length){
    const mixer=new THREE.AnimationMixer(importedSoldier);externalMixers.push(mixer);
-   const idleClip=gltf.animations.find(a=>/idle|stand|breath/i.test(a.name))||gltf.animations[0];
    const moveClip=gltf.animations.find(a=>/walk|run|jog|move|locomotion/i.test(a.name)&&!/idle/i.test(a.name))||null;
-   const idleAction=mixer.clipAction(idleClip);idleAction.play();
+   const idleClip=gltf.animations.find(a=>/idle|stand|breath/i.test(a.name))||null;
+   const idleAction=idleClip?mixer.clipAction(idleClip):null;
    const moveAction=moveClip?mixer.clipAction(moveClip):null;
+   if(idleAction)idleAction.play();
    if(moveAction){moveAction.enabled=true;moveAction.setEffectiveWeight(0);}
    importedSoldier.userData.locomotion={idleAction,moveAction,active:'idle'};
   }
@@ -824,12 +844,28 @@ function update(dt){
   if(next!==rig.active){
    const from=rig.active==='move'?rig.moveAction:rig.idleAction;
    const to=next==='move'?rig.moveAction:rig.idleAction;
-   if(to){to.reset();to.setEffectiveTimeScale(next==='move'?1:1);to.setEffectiveWeight(1);to.play();if(from)to.crossFadeFrom(from,.18,true);}
+   if(to){to.reset();to.setEffectiveTimeScale(1);to.setEffectiveWeight(1);to.play();if(from)to.crossFadeFrom(from,.18,true);}
    if(from&&!to)from.fadeOut(.18);
    rig.active=next;
   }
   if(rig.moveAction)rig.moveAction.setEffectiveWeight(wantsMove?1:0);
-  rig.idleAction.setEffectiveWeight(wantsMove?0:1);
+  if(rig.idleAction)rig.idleAction.setEffectiveWeight(wantsMove?0:1);
+ }
+ // Aim the imported soldier's real head and arms with the camera pitch; use authored bones only.
+ if(importedSoldier?.userData.boneRig){
+  const {soldierBones,boneRest}=importedSoldier.userData.boneRig;
+  const aimPitch=THREE.MathUtils.clamp(pitch,-.85,.85);
+  for(const key of ['head','neck']){const b=soldierBones[key];if(b){b.quaternion.copy(boneRest.get(b));b.rotateX(-aimPitch*(key==='head'?.72:.38));}}
+  for(const key of ['leftArm','rightArm']){const b=soldierBones[key];if(b){b.quaternion.copy(boneRest.get(b));b.rotateX(-aimPitch*.24);}}
+  // If the asset has no authored locomotion clip, animate its actual leg/arm bones as a fallback.
+  if(moving&&onGround&&!importedSoldier.userData.locomotion?.moveAction){
+   const phase=performance.now()*.009;
+   for(const [key,sign] of [['leftLeg',1],['rightLeg',-1],['leftArm',-1],['rightArm',1]]){
+    const b=soldierBones[key];if(b){b.quaternion.copy(boneRest.get(b));b.rotateX(Math.sin(phase)*.48*sign);}
+   }
+  }else if(!moving){
+   for(const key of ['leftLeg','rightLeg']){const b=soldierBones[key];if(b)b.quaternion.copy(boneRest.get(b));}
+  }
  }
  fireRecoil=Math.max(0,fireRecoil-dt*5.5);
  const gait=performance.now()*.012;
