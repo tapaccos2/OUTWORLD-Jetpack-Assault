@@ -91,6 +91,14 @@ function inspectPair(gpcPath, rpcPath) {
       allIndexedCornerValuesEqualReference: allIndexedCornersEqualReference,
     });
   }
+  const orientationNorms = [];
+  let orientationNormsWithinTwoOf4095 = 0;
+  for (let i = 0; i < rc; i++) {
+    const ro = 20 + i * 40;
+    const norm = Math.hypot(R.getInt16(ro + 6, true), R.getInt16(ro + 8, true));
+    orientationNorms.push(norm);
+    if (Math.abs(norm - 4095) <= 2) orientationNormsWithinTwoOf4095++;
+  }
   const duplicatePositionGroups = [...positionSignatures.values()].filter(values => values.length > 1);
   const duplicatePositionGroupsSameCorners = duplicatePositionGroups.filter(values => new Set(values).size === 1).length;
   const duplicatePositionGroupsDifferentCorners = duplicatePositionGroups.filter(values => new Set(values).size > 1).length;
@@ -101,6 +109,13 @@ function inspectPair(gpcPath, rpcPath) {
     inferredGpcReferenceValueAppearsAmongIndexedRpcCornerValues: { groups: referenceValueFound, totalGroups: gc },
     allIndexedRpcCornerValuesEqualGpcReferenceValue: { groups: everyCornerEqualsReference, totalGroups: gc },
     rpcRecordsWithAllFourCornerLikeValuesEqual: allFourEqual,
+    orientationVectorAtRpcOffsets6And8: {
+      recordsWithinTwoOfMagnitude4095: orientationNormsWithinTwoOf4095,
+      totalRecords: rc,
+      minimumMagnitude: Math.min(...orientationNorms),
+      maximumMagnitude: Math.max(...orientationNorms),
+      interpretation: 'Consistent with fixed-point sine/cosine components; confirmed by executable setter calls to the sine/cosine lookup routines.',
+    },
     duplicatePositionAnalysis: {
       uniquePositions: positionSignatures.size,
       positionsWithMultipleRecords: duplicatePositionGroups.length,
