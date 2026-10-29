@@ -7,6 +7,16 @@ const renderer=new THREE.WebGLRenderer({canvas,antialias:!lowPowerDevice,powerPr
 renderer.setPixelRatio(Math.min(devicePixelRatio||1,lowPowerDevice?1:2));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.92;renderer.setClearColor(0x91b3c2,1);renderer.info.autoReset=true;
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x829a9c);scene.fog=new THREE.FogExp2(0x829a9c,0.0034);
 const camera=new THREE.PerspectiveCamera(72,innerWidth/innerHeight,.1,250);
+// Modern rendering pass: restrained HDR-style bloom makes emissive relays, visor and jetpack
+// exhaust read clearly without washing out terrain detail. Keep a direct-render fallback.
+let composer=null;
+try{
+ const fx=window.OUTWORLD_POSTFX;
+ if(fx){composer=new fx.EffectComposer(renderer);composer.addPass(new fx.RenderPass(scene,camera));
+  const bloom=new fx.UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight),lowPowerDevice?.18:.32,.52,.82);
+  composer.addPass(bloom);composer.addPass(new fx.OutputPass());
+ }
+}catch(err){console.warn('OUTWORLD post-processing unavailable; using direct renderer',err);composer=null;}
 scene.add(camera); // Required for camera-attached first-person weapon meshes to render.
 const hemi=new THREE.HemisphereLight(0xdbe9ef,0x51473a,1.12);scene.add(hemi);
 const sun=new THREE.DirectionalLight(0xffdfb4,3.25);sun.position.set(-25,45,18);sun.castShadow=!lowPowerDevice;sun.shadow.mapSize.set(lowPowerDevice?768:2048,lowPowerDevice?768:2048);sun.shadow.camera.left=-55;sun.shadow.camera.right=55;sun.shadow.camera.top=55;sun.shadow.camera.bottom=-55;sun.shadow.bias=-0.00018;sun.shadow.normalBias=0.018;scene.add(sun);const fillLight=new THREE.DirectionalLight(0x8cb8d1,.48);fillLight.position.set(18,12,28);scene.add(fillLight);
@@ -774,7 +784,7 @@ function enemyShoot(enemy,distance){
  scene.add(line);bullets.push({obj:line,life:.18});
 }
 function endGame(victory){won=victory;dead=!victory;message.style.display='block';message.innerHTML=victory?'MISSION COMPLETE — EXTRACTION SECURED':'MARINE DOWN';message.innerHTML+='<small>Press R to redeploy</small>';if(document.pointerLockElement)document.exitPointerLock()}
-function resize(){updateViewportSize();renderer.setPixelRatio(Math.min(devicePixelRatio||1,lowPowerDevice?0.82:1.6));if(innerWidth<800)mobile.style.display='block'}addEventListener('resize',resize);
+function resize(){updateViewportSize();renderer.setPixelRatio(Math.min(devicePixelRatio||1,lowPowerDevice?0.82:1.6));if(composer)composer.setSize(innerWidth,innerHeight);if(innerWidth<800)mobile.style.display='block'}addEventListener('resize',resize);
 function update(dt){
  if(dead||won)return;
   // Frame-rate-independent damped aim filters micro-jitter without adding a fixed-frame delay.
@@ -943,5 +953,5 @@ function update(dt){
  else document.querySelector('#missionText').textContent='Extraction zone reached';
  if(hp<=0)endGame(false);else if(allSpawned&&remaining===0&&relaysOnline===relayObjectives.length&&atLanding)endGame(true);
 }
-function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.04);for(const mixer of externalMixers)mixer.update(dt);update(dt);renderer.render(scene,camera)}loop();
+function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.04);for(const mixer of externalMixers)mixer.update(dt);update(dt);if(composer)composer.render();else renderer.render(scene,camera)}loop();
 })();
