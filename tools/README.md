@@ -53,3 +53,19 @@ node tools/inspect-gry-blocks.mjs original-data/gry/*.gry
 ```
 
 Parses the candidate `?? A0 B9 B7` record starts, `fact` length-4 fields, the `2E 3E 9D 00` block header, and its three-byte little-endian compressed length. It checks whether each payload ends at the next record or five-byte file trailer. The `fact` payload is treated as a candidate uncompressed length, not a proven meaning; this tool does not decompress the payload.
+
+## 7. Validate and extract FF archive resources
+
+First validate the archive directory and list resource offsets:
+
+```sh
+node tools/inspect-ff-archives.mjs original-data/units.ff original-data/motion.ff original-data/shelldb/*.ff
+```
+
+For archives that pass the known directory-table checks, extract each resource into a subdirectory named after its archive:
+
+```sh
+node tools/extract-ff-resources.mjs original-data/motion.ff original-data/shelldb/*.ff --out extracted-ff
+```
+
+Try `units.ff` separately as well. The extractor refuses to extract an archive if its count, table boundaries, monotonic offsets, or empty-name EOF sentinel do not match the observed format. A failed validation means this layout has not been established for that archive; it does not mean the archive is corrupt. Extracted files are raw resource payloads and may need further format-specific decoding.
