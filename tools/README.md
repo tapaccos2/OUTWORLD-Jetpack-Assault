@@ -54,13 +54,14 @@ node tools/inspect-gry-blocks.mjs original-data/gry/*.gry
 
 Legacy command retained for compatibility; it now delegates to the audio-aware inspector. The previous generic-compression and terrain-block interpretation was incorrect. Use `inspect-gry-audio.mjs` directly for new work.
 
-## 7. Inspect map-named DPC database headers
+## 7. Inspect DPC headers and typed records
 
 ```sh
 node tools/inspect-dpc-headers.mjs original-data/structs/*.dpc
+node tools/inspect-dpc-records.mjs original-data/structs/anub01.dpc original-data/structs/rag01.dpc original-data/structs/flag_blu.dpc
 ```
 
-Checks the `DCPMC` signature and reports pointer-like header fields resolved against the observed base `0x80019c04`. This is a pointer-offset probe only: it does not assign meanings to sections or decode terrain geometry.
+The header inspector checks the `DCPMC` signature and resolves pointers using the relocation base stored at offset 12. The record inspector reads the count at offset 32, follows pointers beginning at offset 36, and reports each record's file bounds and raw kind/flag/class fields. These checks validate the record table; they do not yet decode geometry.
 
 ## 8. Validate and extract FF archive resources
 
