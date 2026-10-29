@@ -639,11 +639,17 @@ stickEl.addEventListener('touchmove',e=>{if(stickPointer!=='touch')return;const 
 function resetTouchStick(){if(stickPointer==='touch')resetStick()}
 stickEl.addEventListener('touchend',resetTouchStick);
 stickEl.addEventListener('touchcancel',resetTouchStick);
-const lookArea=document.querySelector('#lookArea');lookTouch=null;
-lookArea.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();if(lookTouch)return;lookTouch={id:e.pointerId,x:e.clientX,y:e.clientY};try{lookArea.setPointerCapture(e.pointerId)}catch(_){}startGame()});
-window.addEventListener('pointermove',e=>{if(lookTouch&&e.pointerId===lookTouch.id){const dx=e.clientX-lookTouch.x,dy=e.clientY-lookTouch.y;yaw-=dx*.008;pitch=Math.max(-.8,Math.min(.65,pitch-dy*.006));lookTouch.x=e.clientX;lookTouch.y=e.clientY}});
-function stopLook(e){if(lookTouch&&e.pointerId===lookTouch.id)lookTouch=null}
+const lookArea=document.querySelector('#lookArea');
+let lookTouchId=null;
+function applyLookDelta(dx,dy){targetYaw-=dx*.008;targetPitch=Math.max(-.8,Math.min(.65,targetPitch-dy*.006))}
+lookArea.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse')return;e.preventDefault();e.stopPropagation();if(lookTouch)return;lookTouch={id:e.pointerId,x:e.clientX,y:e.clientY};try{lookArea.setPointerCapture(e.pointerId)}catch(_){}startGame()},{passive:false});
+window.addEventListener('pointermove',e=>{if(!lookTouch||e.pointerId!==lookTouch.id)return;applyLookDelta(e.clientX-lookTouch.x,e.clientY-lookTouch.y);lookTouch.x=e.clientX;lookTouch.y=e.clientY},{passive:false});
+function stopLook(e){if(lookTouch&&lookTouch.id!=='touch'&&e.pointerId===lookTouch.id)lookTouch=null}
 window.addEventListener('pointerup',stopLook);window.addEventListener('pointercancel',stopLook);
+lookArea.addEventListener('touchstart',e=>{if(lookTouchId!==null)return;const t=e.changedTouches[0];if(!t)return;e.preventDefault();lookTouchId=t.identifier;lookTouch={id:'touch',x:t.clientX,y:t.clientY};startGame()},{passive:false});
+lookArea.addEventListener('touchmove',e=>{if(lookTouchId===null)return;const t=Array.from(e.changedTouches).find(x=>x.identifier===lookTouchId);if(!t)return;e.preventDefault();applyLookDelta(t.clientX-lookTouch.x,t.clientY-lookTouch.y);lookTouch.x=t.clientX;lookTouch.y=t.clientY},{passive:false});
+function stopTouchLook(e){if(lookTouchId===null||!Array.from(e.changedTouches).some(t=>t.identifier===lookTouchId))return;lookTouchId=null;if(lookTouch&&lookTouch.id==='touch')lookTouch=null}
+lookArea.addEventListener('touchend',stopTouchLook,{passive:true});lookArea.addEventListener('touchcancel',stopTouchLook,{passive:true});
 function shoot(){if(dead||won||!started||shotCooldown>0)return;shotCooldown=.075;fireRecoil=1;const dir=new THREE.Vector3();camera.getWorldDirection(dir);const origin=camera.position.clone();scene.updateMatrixWorld(true);let target=null,targetPoint=null,bestAlong=66,targetDamage=0;
  const raycaster=new THREE.Raycaster(origin,dir,0,65);
  // First test the actual animated enemy meshes, including the legs.
