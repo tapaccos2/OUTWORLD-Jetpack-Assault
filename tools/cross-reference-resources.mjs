@@ -11,7 +11,6 @@ import path from 'node:path';
 
 const root = path.resolve(process.argv[2] ?? 'original-data');
 const dirs = ['misn', 'netmisn', 'structs'];
-const knownExts = new Set(['.dpc', '.gpc', '.rpc', '.tpc', '.gry', '.pcx', '.wav', '.avi', '.ff', '.spt', '.fnt', '.mis', '.txt']);
 const files = [];
 function walk(dir) {
   if (!fs.existsSync(dir)) return;
@@ -39,7 +38,7 @@ function extractStrings(buf, min=4) {
   }
   return out;
 }
-const resourceRegex = /[A-Za-z0-9_][A-Za-z0-9_. -]{0,100}\.(?:dpc|gpc|rpc|tpc|gry|pcx|wav|avi|ff|spt|fnt|mis|txt)\b/gi;
+const resourceRegex = /[A-Za-z0-9_][A-Za-z0-9_.-]{0,100}\.(?:dpc|gpc|rpc|tpc|gry|pcx|wav|avi|ff|spt|fnt|mis|txt)\b/gi;
 const refs = [];
 const candidates = uniqueFiles.filter(file => ['.mis','.dpc','.gpc','.rpc','.tpc','.ff'].includes(path.extname(file).toLowerCase()));
 for (const file of candidates) {
