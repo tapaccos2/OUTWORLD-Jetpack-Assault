@@ -561,9 +561,6 @@ fpFlashOuter.rotation.x=-Math.PI/2;fpFlashOuter.position.set(0,0,0);fpFlash.add(
 const fpFlashCore=new THREE.Mesh(new THREE.SphereGeometry(.025,6,4),new THREE.MeshBasicMaterial({color:0xfff2cf,transparent:true,opacity:.9,depthWrite:false,toneMapped:false}));
 fpFlashCore.position.set(0,0,0);fpFlash.add(fpFlashCore);fpFlash.visible=false;weaponRig.add(fpFlash);
 const armRig=new THREE.Group();camera.add(armRig);
-// The first-person viewmodel uses the marine's actual armour, elbow joints, forearm plates and gloves.
-const armRig=new THREE.Group();camera.add(armRig);
-const fpFlash=new THREE.Group();const fpFlashOuter=new THREE.Mesh(new THREE.ConeGeometry(.038,.18,6),new THREE.MeshBasicMaterial({color:0xffb84d,transparent:true,opacity:.78,depthWrite:false,toneMapped:false}));fpFlashOuter.rotation.x=-Math.PI/2;fpFlashOuter.position.set(0,.015,-.67);fpFlash.add(fpFlashOuter);const fpFlashCore=new THREE.Mesh(new THREE.SphereGeometry(.025,6,4),new THREE.MeshBasicMaterial({color:0xfff2cf,transparent:true,opacity:.9,depthWrite:false,toneMapped:false}));fpFlashCore.position.set(0,.015,-.59);fpFlash.add(fpFlashCore);fpFlash.visible=false;weaponRig.add(fpFlash);
 // The dedicated imported first-person GLB below is the only visible weapon asset.
 
 const player=soldier(false);
@@ -571,7 +568,6 @@ const player=soldier(false);
 const marineRifle=new THREE.Group();marineRifle.visible=false;player.add(marineRifle);
 // Never display the blockout soldier, even while network assets are loading.
 player.children.forEach(o=>{o.visible=false});
-// Keep the procedural rifle visible as a reliable fallback; the imported viewmodel has failed to render consistently in GitHub Pages.
 // Imported character and first-person weapon assets only. No procedural soldier or viewmodel geometry.
 armRig.visible=false;
 const fpAssetRig=new THREE.Group();camera.add(fpAssetRig);
