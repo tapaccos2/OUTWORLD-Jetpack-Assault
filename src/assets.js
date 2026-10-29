@@ -37,25 +37,13 @@
    building:'https://cdn.3dassets.dev/assets/36525/v1/model.glb'
   };
   const specs=[
-   // Close urban street walls made from imported CC0 building models.
-   {asset:'building',x:-8.7,z:7,height:8.2,rotation:0,kind:'building'},
-   {asset:'building',x:8.7,z:7,height:8.2,rotation:Math.PI,kind:'building'},
-   {asset:'building',x:-8.7,z:0,height:8.2,rotation:0,kind:'building'},
-   {asset:'building',x:8.7,z:0,height:8.2,rotation:Math.PI,kind:'building'},
-   {asset:'building',x:-8.7,z:-7,height:8.2,rotation:0,kind:'building'},
-   {asset:'building',x:8.7,z:-7,height:8.2,rotation:Math.PI,kind:'building'},
-   {asset:'building',x:-8.7,z:-14,height:8.2,rotation:0,kind:'building'},
-   {asset:'building',x:8.7,z:-14,height:8.2,rotation:Math.PI,kind:'building'},
-   {asset:'building',x:-8.7,z:-21,height:8.2,rotation:0,kind:'building'},
-   {asset:'building',x:8.7,z:-21,height:8.2,rotation:Math.PI,kind:'building'},
-   {asset:'building',x:-8.7,z:-28,height:8.2,rotation:0,kind:'building'},
-   {asset:'building',x:8.7,z:-28,height:8.2,rotation:Math.PI,kind:'building'},
-   {asset:'building',x:-8.7,z:-35,height:8.2,rotation:0,kind:'building'},
-   {asset:'building',x:8.7,z:-35,height:8.2,rotation:Math.PI,kind:'building'},
-   {asset:'building',x:-8.7,z:-42,height:8.2,rotation:0,kind:'building'},
-   {asset:'building',x:8.7,z:-42,height:8.2,rotation:Math.PI,kind:'building'},
-   {asset:'building',x:-8.7,z:-49,height:8.2,rotation:0,kind:'building'},
-   {asset:'building',x:8.7,z:-49,height:8.2,rotation:Math.PI,kind:'building'},
+   // Scattered ruined outpost structures, with open lanes and jetpack routes between them.
+   {asset:'building',x:-14,z:-5,height:6.2,rotation:.18,kind:'building'},
+   {asset:'building',x:15,z:-16,height:5.8,rotation:2.5,kind:'building'},
+   {asset:'building',x:-18,z:-29,height:6.8,rotation:1.15,kind:'building'},
+   {asset:'building',x:12,z:-37,height:5.6,rotation:3.8,kind:'building'},
+   {asset:'building',x:-11,z:-49,height:6.0,rotation:2.1,kind:'building'},
+   {asset:'building',x:18,z:-55,height:5.4,rotation:.72,kind:'building'},
    // Omit the bundled crash-site scene: its large pale base slab reads as a floating platform.
    {asset:'canopy',x:-17,z:-19,height:8.5,rotation:.45,kind:'tree',collision:1.6},
    {asset:'buttress',x:18,z:-22,height:7.4,rotation:2.3,kind:'tree',collision:1.7},
@@ -121,18 +109,9 @@
    {asset:'crate',x:-4.8,z:10.5,scale:.54,rotation:.6,kind:'prop',collision:.75},
    {asset:'crate',x:4.8,z:10.5,scale:.54,rotation:2.4,kind:'prop',collision:.75}
   ];
-  // Arrange imported models in continuous roadside bands instead of scattering them.
-  // The centre remains a clear lane; crates form the inner shoulder, rocks the mid-shoulder,
-  // and tall trees the outside boundary. This changes placement only, never model geometry.
-  for(const item of specs){
-   if(item.kind==='scene'||item.kind==='building')continue;
-   const side=item.x<0?-1:1;
-   if(item.kind==='prop')item.x=side*(5.4+((Math.round(Math.abs(item.z)*2)%3)*.35));
-   else if(item.kind==='rock')item.x=side*(8.2+((Math.round(Math.abs(item.z)*2)%3)*.55));
-   else if(item.kind==='tree')item.x=side*(14.2+((Math.round(Math.abs(item.z)*2)%3)*1.1));
-  }
-  const urbanSpecs=specs.filter(item=>item.kind!=='tree');
-   const chosen=lowPowerDevice?urbanSpecs.filter((item,index)=>item.kind!=='rock'||index%3===0):urbanSpecs;
+  // Keep the whole landscape: props, trees, rocks and ruins are intentionally staggered
+  // to create flanking routes, cover pockets and open jetpack approaches rather than a corridor.
+  const chosen=lowPowerDevice?specs.filter((item,index)=>item.kind!=='rock'||index%3===0):specs;
   // Only imported GLB scenery is rendered; failed downloads are logged and skipped.
   const sourceCache=new Map();
   const getSource=key=>{
