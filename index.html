@@ -21,8 +21,8 @@
 <body>
 <canvas id="game"></canvas>
 <div id="cinemaGrade" aria-hidden="true"></div><div id="damageOverlay" aria-hidden="true"></div><div id="hud">
- <div class="panel brand">OUTWORLD <small>JETPACK ASSAULT · BUILD 0.2.0 · 29 OCT 2026</small></div>
- <div class="panel help"><b>PC CONTROLS</b><br>W A S D — Move<br>Mouse — Aim · Click — Fire<br>Space — Jump · Shift — Jetpack<br>Esc — Release mouse</div>
+ <div class="panel brand">OUTWORLD <small>JETPACK ASSAULT · BUILD 0.3.0 · 29 OCT 2026</small></div>
+ <div class="panel help"><b>PC CONTROLS</b><br>W A S D — Move<br>Mouse — Aim · Click — Fire<br>Space — Jump · Shift — Jetpack<br>V — Camera · Esc — Release mouse</div>
  <div class="panel stats"><div class="statrow"><span>ARMOUR</span><b id="hpText">100%</b></div><div class="bar"><div id="hpBar" class="fill armour"></div></div><div class="statrow"><span>JETPACK FUEL</span><b id="fuelText">100%</b></div><div class="bar"><div id="fuelBar" class="fill fuel"></div></div><div class="statrow"><span>HOSTILES</span><b id="enemyText">5</b></div></div>
  <div class="panel objective"><strong>MISSION: BREAK THROUGH THE HYDRAN NEST</strong><span id="missionText">Cross the ravine and destroy the Hydran defenders</span></div>
  <div class="reticle"><i></i></div>
@@ -37,7 +37,7 @@ if(!window.THREE){message.innerHTML='3D ENGINE NOT LOADED<small>Connect to the i
 // Performance tiers: favour stable frame rate on Raspberry Pi and other low-power devices.
 const lowPowerDevice=(navigator.hardwareConcurrency||8)<=4||(navigator.deviceMemory||8)<=4||/raspberry|armv7|aarch64/i.test(navigator.userAgent);
 const renderer=new THREE.WebGLRenderer({canvas,antialias:!lowPowerDevice,powerPreference:'high-performance'});
-renderer.setPixelRatio(Math.min(devicePixelRatio||1,lowPowerDevice?1:1.5));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=!lowPowerDevice;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;renderer.setClearColor(0x91b3c2,1);renderer.info.autoReset=true;
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,lowPowerDevice?0.7:1.5));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=!lowPowerDevice;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;renderer.setClearColor(0x91b3c2,1);renderer.info.autoReset=true;
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x91b3c2);scene.fog=new THREE.FogExp2(0x9aaeb0,0.0054);
 const camera=new THREE.PerspectiveCamera(72,innerWidth/innerHeight,.1,250);
 const hemi=new THREE.HemisphereLight(0xbfe9ff,0x554b3b,2.0);scene.add(hemi);
@@ -58,7 +58,7 @@ const rockMat=mat(0x555e59), rockLite=mat(0x899084), dark=mat(0x17262b), armor=m
 function makeSurfaceTexture(base,light,dark,kind='stone'){
  const c=document.createElement('canvas');c.width=c.height=512;const x=c.getContext('2d');
  x.fillStyle=base;x.fillRect(0,0,512,512);
- for(let i=0;i<(lowPowerDevice?9000:22000);i++){
+ for(let i=0;i<(lowPowerDevice?2500:22000);i++){
   const v=Math.random(),a=.025+Math.random()*.22;
   x.fillStyle=v>.5?light:dark;x.globalAlpha=a;
   const w=kind==='armor'?1+Math.random()*7:.5+Math.random()*4;
@@ -67,12 +67,12 @@ function makeSurfaceTexture(base,light,dark,kind='stone'){
  }
  x.globalAlpha=1;
  // Fine scratches and erosion streaks.
- for(let i=0;i<(kind==='armor'?340:210);i++){
+ for(let i=0;i<(lowPowerDevice?70:(kind==='armor'?340:210));i++){
   x.strokeStyle=Math.random()>.5?light:dark;x.globalAlpha=.12+Math.random()*.25;x.lineWidth=.35+Math.random()*1.2;
   const px=Math.random()*512,py=Math.random()*512;x.beginPath();x.moveTo(px,py);x.lineTo(px+(Math.random()-.5)*(kind==='armor'?32:20),py+(Math.random()-.5)*7);x.stroke();
  }
  // Fine pores / pits give the surface a non-plastic finish.
- for(let i=0;i<900;i++){
+ for(let i=0;i<(lowPowerDevice?260:900);i++){
   x.globalAlpha=.08+Math.random()*.24;x.fillStyle=dark;x.beginPath();x.ellipse(Math.random()*512,Math.random()*512,.4+Math.random()*1.8,.4+Math.random()*1.2,Math.random()*3,0,Math.PI*2);x.fill();
  }
  x.globalAlpha=1;
@@ -90,7 +90,7 @@ enemyMat.map=insectTexture;enemyMat.bumpMap=insectTexture;enemyMat.bumpScale=.07
 groundMat.map=groundDetailTexture;groundMat.bumpMap=groundDetailTexture;groundMat.bumpScale=.18;groundMat.roughness=.98;groundMat.needsUpdate=true;
 
 // GRAPHICS UPGRADE — rolling, eroded terrain instead of a perfectly flat arena.
-const terrainSegments=lowPowerDevice?64:112;
+const terrainSegments=lowPowerDevice?40:112;
 const terrainGeo=new THREE.PlaneGeometry(260,260,terrainSegments,terrainSegments);
 const terrainPos=terrainGeo.attributes.position;
 for(let i=0;i<terrainPos.count;i++){
@@ -107,7 +107,7 @@ const ground=new THREE.Mesh(terrainGeo,groundMat);ground.rotation.x=-Math.PI/2;g
 const skyCanvas=document.createElement('canvas');skyCanvas.width=1024;skyCanvas.height=512;
 const skyCtx=skyCanvas.getContext('2d');
 const skyGrad=skyCtx.createLinearGradient(0,0,0,512);skyGrad.addColorStop(0,'#263f55');skyGrad.addColorStop(.36,'#648797');skyGrad.addColorStop(.72,'#b2b9ad');skyGrad.addColorStop(1,'#e0bd91');skyCtx.fillStyle=skyGrad;skyCtx.fillRect(0,0,1024,512);
-for(let i=0;i<170;i++){
+for(let i=0;i<(lowPowerDevice?70:170);i++){
  const x=Math.random()*1024,y=90+Math.random()*260,w=35+Math.random()*150,h=3+Math.random()*17;
  const cg=skyCtx.createRadialGradient(x,y,1,x,y,w);cg.addColorStop(0,`rgba(225,235,226,${.025+Math.random()*.055})`);cg.addColorStop(1,'rgba(225,235,226,0)');skyCtx.fillStyle=cg;skyCtx.save();skyCtx.translate(x,y);skyCtx.scale(1,h/Math.max(1,w));skyCtx.beginPath();skyCtx.arc(0,0,w,0,Math.PI*2);skyCtx.fill();skyCtx.restore();
 }
@@ -115,14 +115,14 @@ const skyTex=new THREE.CanvasTexture(skyCanvas);skyTex.colorSpace=THREE.SRGBColo
 const skyDome=new THREE.Mesh(new THREE.SphereGeometry(190,40,24),new THREE.MeshBasicMaterial({map:skyTex,side:THREE.BackSide,depthWrite:false}));skyDome.renderOrder=-10;scene.add(skyDome);
 // Removed the visible development grid for a natural, continuous alien terrain.
 // Distant rugged ridge silhouettes made from real 3D geometry.
-for(let i=0;i<32;i++){let h=7+Math.random()*18, geo=new THREE.ConeGeometry(5+Math.random()*9,h,5+Math.floor(Math.random()*3));let m=new THREE.Mesh(geo,mat(i%3?0x455b5d:0x34494e));m.position.set((i-16)*10,h*.42,-85-Math.random()*25);m.rotation.y=Math.random()*2;m.castShadow=true;scene.add(m)}
+for(let i=0;i<(lowPowerDevice?14:32);i++){let h=(lowPowerDevice?5:7)+Math.random()*(lowPowerDevice?10:18), geo=new THREE.ConeGeometry((lowPowerDevice?4:5)+Math.random()*(lowPowerDevice?5:9),h,lowPowerDevice?5:5+Math.floor(Math.random()*3));let m=new THREE.Mesh(geo,mat(i%3?0x455b5d:0x34494e));m.position.set((i-16)*10,h*.42,-85-Math.random()*25);m.rotation.y=Math.random()*2;m.castShadow=true;scene.add(m)}
 // Small luminous alien mineral outcrops scattered across the landing zone
 const crystalMat=new THREE.MeshStandardMaterial({color:0x48cbd3,emissive:0x12565d,emissiveIntensity:.8,roughness:.32,metalness:.18});
 for(let i=0;i<22;i++){const group=new THREE.Group();const count=2+Math.floor(Math.random()*3);for(let j=0;j<count;j++){const crystal=new THREE.Mesh(new THREE.ConeGeometry(.12+Math.random()*.16,.45+Math.random()*.8,5),crystalMat);crystal.position.set((Math.random()-.5)*.6,.25+Math.random()*.2,(Math.random()-.5)*.6);crystal.rotation.z=(Math.random()-.5)*.25;group.add(crystal)}group.position.set((Math.random()-.5)*95,.05,-5-Math.random()*85);scene.add(group)}
 // Rock clusters
-for(let i=0;i<115;i++){const geo=new THREE.IcosahedronGeometry(.6+Math.random()*1.8,2),r=new THREE.Mesh(geo,Math.random()>.35?rockMat:rockLite);r.position.set((Math.random()-.5)*105,.1+Math.random()*.35,-Math.random()*105+5);r.scale.y=.35+Math.random()*.65;r.rotation.set(Math.random(),Math.random()*3,Math.random());r.castShadow=true;r.receiveShadow=true;scene.add(r)}
+for(let i=0;i<(lowPowerDevice?38:115);i++){const size=lowPowerDevice?.45+Math.random()*1.05:.6+Math.random()*1.8;const geo=new THREE.IcosahedronGeometry(size,lowPowerDevice?0:2),r=new THREE.Mesh(geo,Math.random()>.35?rockMat:rockLite);r.position.set((Math.random()-.5)*105,.1+Math.random()*.35,-Math.random()*105+5);r.scale.y=.35+Math.random()*.65;r.rotation.set(Math.random(),Math.random()*3,Math.random());r.castShadow=true;r.receiveShadow=true;scene.add(r)}
 // Alien rock spires and weathered landing-zone barricades
-for(let i=0;i<30;i++){const h=3+Math.random()*10;const spire=new THREE.Mesh(new THREE.ConeGeometry(.8+Math.random()*1.5,h,5),mat(i%2?0x465451:0x62665a));spire.position.set((Math.random()-.5)*105,h/2,-18-Math.random()*82);spire.rotation.z=(Math.random()-.5)*.18;spire.castShadow=true;spire.receiveShadow=true;scene.add(spire)}
+for(let i=0;i<(lowPowerDevice?12:30);i++){const h=(lowPowerDevice?2:3)+Math.random()*(lowPowerDevice?5:10);const spire=new THREE.Mesh(new THREE.ConeGeometry(.8+Math.random()*1.5,h,5),mat(i%2?0x465451:0x62665a));spire.position.set((Math.random()-.5)*105,h/2,-18-Math.random()*82);spire.rotation.z=(Math.random()-.5)*.18;spire.castShadow=true;spire.receiveShadow=true;scene.add(spire)}
 for(let i=0;i<7;i++){const xPos=(i-3)*10;const base=new THREE.Mesh(new THREE.BoxGeometry(3.4,1.3,.7),mat(0x3b4b4b));base.position.set(xPos,.65,-18-(i%3)*9);base.rotation.y=(Math.random()-.5)*.22;base.castShadow=true;base.receiveShadow=true;scene.add(base);const stripe=new THREE.Mesh(new THREE.BoxGeometry(2.4,.09,.74),mat(0xd18b42));stripe.position.set(xPos,.95,-18-(i%3)*9);stripe.rotation.y=base.rotation.y;scene.add(stripe)}
 // Simple industrial debris
 for(let i=0;i<12;i++){let box=new THREE.Mesh(new THREE.BoxGeometry(1.8+Math.random()*2,.4+Math.random(),1+Math.random()*2),dark);box.position.set((Math.random()-.5)*65,.2,-8-Math.random()*70);box.rotation.y=Math.random()*Math.PI;box.castShadow=true;box.receiveShadow=true;scene.add(box)}
@@ -189,7 +189,7 @@ for(let i=0;i<5;i++){
 const plantStem=new THREE.MeshStandardMaterial({color:0x283e32,roughness:.9});
 const plantLeaf=new THREE.MeshStandardMaterial({color:0x718e48,roughness:.7,side:THREE.DoubleSide});
 const seedGlow=new THREE.MeshStandardMaterial({color:0xb9ed62,emissive:0x3f6512,emissiveIntensity:1.1,roughness:.3});
-for(let i=0;i<78;i++){
+for(let i=0;i<(lowPowerDevice?32:78);i++){
  const x=(Math.random()-.5)*100,z=-4-Math.random()*83;
  if(Math.abs(x)<7&&z>-34)continue;
  const clump=new THREE.Group();
@@ -616,7 +616,7 @@ function enemyShoot(enemy,distance){
  scene.add(line);bullets.push({obj:line,life:.18});
 }
 function endGame(victory){won=victory;dead=!victory;message.style.display='block';message.innerHTML=victory?'LANDING ZONE SECURED':'MARINE DOWN';message.innerHTML+='<small>Press R to redeploy</small>';if(document.pointerLockElement)document.exitPointerLock()}
-function resize(){updateViewportSize();renderer.setPixelRatio(Math.min(devicePixelRatio||1,lowPowerDevice?1:1.5));if(innerWidth<800)mobile.style.display='block'}addEventListener('resize',resize);
+function resize(){updateViewportSize();renderer.setPixelRatio(Math.min(devicePixelRatio||1,lowPowerDevice?0.7:1.5));if(innerWidth<800)mobile.style.display='block'}addEventListener('resize',resize);
 function update(dt){
  if(dead||won)return;
  shotCooldown=Math.max(0,shotCooldown-dt);damageFlash=Math.max(0,damageFlash-dt);document.querySelector('#damageOverlay').style.opacity=damageFlash>0?String(Math.min(.82,damageFlash*2.3)):'0';hitConfirmTimer=Math.max(0,hitConfirmTimer-dt);if(hitConfirmTimer===0)document.querySelector('.reticle').classList.remove('confirmed');muzzleLife=Math.max(0,muzzleLife-dt);if(muzzleLife===0){if(player.userData.muzzle)player.userData.muzzle.visible=false;if(player.userData.muzzleCore)player.userData.muzzleCore.visible=false;}
