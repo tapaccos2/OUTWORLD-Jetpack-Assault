@@ -1,0 +1,72 @@
+name: Game browser smoke test
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 */6 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  browser-smoke-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install Playwright
+        run: |
+          npm init -y
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Test published game in Chromium
+        run: |
+          cat > smoke-test.cjs <<'EOF'
+          const { chromium } = require('playwright');
+          (async () => {
+            const browser = await chromium.launch({ headless: true });
+            const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+            const errors = [];
+            page.on('pageerror', e => errors.push(e.message));
+            page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+            page.on('requestfailed', r => errors.push('REQUEST FAILED: ' + r.url() + ' — ' + r.failure()?.errorText));
+            const url = 'https://tapaccos2.github.io/OUTWORLD-Jetpack-Assault/?smoke=' + Date.now();
+            let response;
+            for (let attempt = 0; attempt < 12; attempt++) {
+              try {
+                response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 20000 });
+                if (response && response.ok()) break;
+              } catch (e) { if (attempt === 11) throw e; }
+              await page.waitForTimeout(5000);
+            }
+            if (!response || !response.ok()) throw new Error('GitHub Pages returned HTTP ' + (response?.status() ?? 'no response'));
+            await page.waitForTimeout(8000);
+            await page.screenshot({ path: 'game-smoke-test.png', fullPage: true });
+            const result = await page.evaluate(() => ({
+              title: document.title,
+              canvas: !!document.querySelector('#game'),
+              canvasSize: (() => { const c = document.querySelector('#game'); return c ? [c.width, c.height] : null; })(),
+              startupError: document.querySelector('#message')?.innerText || '',
+              webgl: (() => { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); })(),
+              build: document.querySelector('.brand small')?.innerText || ''
+            }));
+            console.log('GAME CHECK:', JSON.stringify(result));
+            if (!result.canvas) throw new Error('Game canvas is missing');
+            if (!result.canvasSize || result.canvasSize[0] < 100 || result.canvasSize[1] < 100) throw new Error('Canvas has invalid dimensions');
+            if (result.startupError.includes('STARTUP ERROR') || result.startupError.includes('3D ENGINE NOT LOADED')) throw new Error('Game startup error: ' + result.startupError);
+            if (errors.length) console.log('BROWSER ERRORS:', JSON.stringify(errors));
+            if (errors.some(e => /Uncaught|ReferenceError|SyntaxError|TypeError|Failed to fetch dynamically imported module|WebGL.*context/i.test(e))) throw new Error('Critical browser errors detected');
+            await browser.close();
+          })().catch(e => { console.error(e); process.exit(1); });
+          EOF
+          node smoke-test.cjs
+      - name: Upload browser screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: outworld-browser-smoke-test
+          path: game-smoke-test.png
+          if-no-files-found: ignore
