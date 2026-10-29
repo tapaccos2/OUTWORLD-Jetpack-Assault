@@ -23,10 +23,9 @@ function u32le(b, o) {
 const output = files.map(file => {
   const b = fs.readFileSync(file);
   const candidates = [];
-  const marker = [0x00, 0xa0, 0xb9, 0xb7];
-  const hasMarkerAt = offset => offset >= 0 && offset + 4 <= b.length && marker.every((v, i) => b[offset + i] === v);
-  const markerOffsets = [];
-  for (let i = 0; i <= b.length - 4; i++) if (hasMarkerAt(i)) markerOffsets.push(i);
+  const hasTerrainSignatureAt = offset => offset >= 0 && offset + 4 <= b.length && b[offset + 1] === 0xa0 && b[offset + 2] === 0xb9 && b[offset + 3] === 0xb7;
+  const signatureOffsets = [];
+  for (let i = 0; i <= b.length - 4; i++) if (hasTerrainSignatureAt(i)) signatureOffsets.push(i);
   for (let offset = 0; offset <= b.length - 8; offset++) {
     const tagBytes = b.subarray(offset, offset + 4);
     if (![...tagBytes].every(v => (v >= 0x41 && v <= 0x5a) || (v >= 0x61 && v <= 0x7a))) continue;
@@ -37,7 +36,8 @@ const output = files.map(file => {
     candidates.push({
       offset,
       tag: tagBytes.toString('ascii'),
-      precedingTerrainMarkerOffset: hasMarkerAt(offset - 59) ? offset - 59 : null,
+      precedingTerrainSignatureOffset: hasTerrainSignatureAt(offset - 59) ? offset - 59 : null,
+      signatureLeadingByte: hasTerrainSignatureAt(offset - 59) ? b[offset - 59] : null,
       length,
       payloadOffset: offset + 8,
       endOffset: offset + 8 + length,
@@ -48,7 +48,7 @@ const output = files.map(file => {
   }
   const counts = {};
   for (const c of candidates) counts[c.tag] = (counts[c.tag] ?? 0) + 1;
-  return { file: path.basename(file), bytes: b.length, terrainMarkerCount: markerOffsets.length, terrainMarkerOffsets: markerOffsets, markerToFactPairs: candidates.filter(c => c.tag === 'fact' && c.precedingTerrainMarkerOffset !== null).map(c => ({ markerOffset: c.precedingTerrainMarkerOffset, tagOffset: c.offset, gap: c.offset - c.precedingTerrainMarkerOffset })), candidateCount: candidates.length, tagCounts: counts, candidates };
+  return { file: path.basename(file), bytes: b.length, terrainSignatureCount: signatureOffsets.length, terrainSignatureOffsets: signatureOffsets, signatureToFactPairs: candidates.filter(c => c.tag === 'fact' && c.precedingTerrainSignatureOffset !== null).map(c => ({ signatureOffset: c.precedingTerrainSignatureOffset, leadingByte: c.signatureLeadingByte, tagOffset: c.offset, gap: c.offset - c.precedingTerrainSignatureOffset })), candidateCount: candidates.length, tagCounts: counts, candidates };
 });
 
 process.stdout.write(JSON.stringify(output, null, 2) + '\n');
