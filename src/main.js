@@ -597,6 +597,8 @@ gunPart(new THREE.BoxGeometry(.025,.055,.045),gunEdge,[0,.17,-.55]);
 gunPart(new THREE.BoxGeometry(.075,.035,.18),gunDark,[0,.09,-.20]);
 gunPart(new THREE.BoxGeometry(.036,.012,.12),gunEnergy,[0,.112,-.20]);
 weaponRig.traverse(o=>{if(o.isMesh){o.renderOrder=1000;if(o.material){o.material.depthTest=false;o.material.depthWrite=false}}});
+
+const fpFlash=new THREE.Group();const fpFlashOuter=new THREE.Mesh(new THREE.ConeGeometry(.038,.18,6),new THREE.MeshBasicMaterial({color:0xffb84d,transparent:true,opacity:.78,depthWrite:false,toneMapped:false}));fpFlashOuter.rotation.x=-Math.PI/2;fpFlashOuter.position.set(0,.015,-1.00);fpFlash.add(fpFlashOuter);const fpFlashCore=new THREE.Mesh(new THREE.SphereGeometry(.025,6,4),new THREE.MeshBasicMaterial({color:0xfff2cf,transparent:true,opacity:.9,depthWrite:false,toneMapped:false}));fpFlashCore.position.set(0,.015,-.91);fpFlash.add(fpFlashCore);fpFlash.visible=false;weaponRig.add(fpFlash);
 // Load a CC0 stylized assault-rifle GLB. The procedural rifle remains as a fallback if the asset host is unavailable.
 const fallbackWeaponMeshes=[];
 weaponRig.traverse(o=>{if(o.isMesh&&o!==fpFlashOuter&&o!==fpFlashCore)fallbackWeaponMeshes.push(o)});
@@ -626,7 +628,6 @@ if(window.GLTFLoader){
  },undefined,error=>console.warn('OUTWORLD rifle model unavailable; procedural rifle retained.',error));
 }
 
-const fpFlash=new THREE.Group();const fpFlashOuter=new THREE.Mesh(new THREE.ConeGeometry(.038,.18,6),new THREE.MeshBasicMaterial({color:0xffb84d,transparent:true,opacity:.78,depthWrite:false,toneMapped:false}));fpFlashOuter.rotation.x=-Math.PI/2;fpFlashOuter.position.set(0,.015,-1.00);fpFlash.add(fpFlashOuter);const fpFlashCore=new THREE.Mesh(new THREE.SphereGeometry(.025,6,4),new THREE.MeshBasicMaterial({color:0xfff2cf,transparent:true,opacity:.9,depthWrite:false,toneMapped:false}));fpFlashCore.position.set(0,.015,-.91);fpFlash.add(fpFlashCore);fpFlash.visible=false;weaponRig.add(fpFlash);
 
 const player=soldier(false);
 // Third-person rifle mounted to the marine's forward hand; visible only in chase view.
