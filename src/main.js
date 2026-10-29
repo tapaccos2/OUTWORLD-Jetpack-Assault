@@ -113,6 +113,21 @@ for(let i=0;i<terrainPos.count;i++){
 }
 terrainGeo.computeVertexNormals();
 const ground=new THREE.Mesh(terrainGeo,groundMat);ground.rotation.x=-Math.PI/2;ground.position.y=-.12;ground.receiveShadow=true;scene.add(ground);
+
+// Street infrastructure: a distinct asphalt carriageway, raised kerbs, concrete pavements,
+// and broken centre markings. These are road surfaces, not substitute scenery models.
+const asphaltMat=new THREE.MeshStandardMaterial({color:0x343a3c,roughness:.96,metalness:0});
+const concreteMat=new THREE.MeshStandardMaterial({color:0x8a8980,roughness:1});
+const kerbMat=new THREE.MeshStandardMaterial({color:0xb0aca0,roughness:.92});
+const lineMat=new THREE.MeshStandardMaterial({color:0xd8d6c7,roughness:.8});
+const makeRoadStrip=(width,length,material,x,y,z)=>{const mesh=new THREE.Mesh(new THREE.PlaneGeometry(width,length),material);mesh.rotation.x=-Math.PI/2;mesh.position.set(x,y,z);mesh.receiveShadow=true;scene.add(mesh);return mesh;};
+makeRoadStrip(7.25,136,asphaltMat,0,-.045,-22);
+for(const side of [-1,1]){
+ makeRoadStrip(1.2,136,concreteMat,side*4.35,-.035,-22);
+ const kerb=new THREE.Mesh(new THREE.BoxGeometry(.22,.16,136),kerbMat);
+ kerb.position.set(side*3.73,.015,-22);kerb.castShadow=true;kerb.receiveShadow=true;scene.add(kerb);
+}
+for(let z=8;z>-64;z-=5.5)makeRoadStrip(.12,2.25,lineMat,0,-.025,z);
 // Mission destination: illuminated landing beacon at the end of the ravine.
 const landingZone=new THREE.Group();
 const landingBase=new THREE.Mesh(new THREE.CylinderGeometry(2.35,2.8,.22,32),new THREE.MeshStandardMaterial({color:0x303b3c,metalness:.68,roughness:.42}));
