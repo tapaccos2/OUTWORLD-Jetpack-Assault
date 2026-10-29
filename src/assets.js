@@ -36,19 +36,19 @@
    crate:'https://cdn.3dassets.dev/assets/17350/v1/model.glb'
   };
   const specs=[
-   {asset:'crashSite',x:0,z:-77,scale:.82,rotation:0,kind:'scene'},
-   {asset:'canopy',x:-22,z:-27,height:8.5,rotation:.45,kind:'tree',collision:1.6},
-   {asset:'buttress',x:23,z:-31,height:7.4,rotation:2.3,kind:'tree',collision:1.7},
-   {asset:'canopy',x:-25,z:-52,height:8.0,rotation:2.6,kind:'tree',collision:1.6},
-   {asset:'buttress',x:25,z:-58,height:7.0,rotation:.9,kind:'tree',collision:1.7},
-   {asset:'canopy',x:-18,z:-76,height:7.7,rotation:1.7,kind:'tree',collision:1.6},
-   {asset:'buttress',x:19,z:-80,height:7.2,rotation:3.1,kind:'tree',collision:1.7},
-   {asset:'boulders',x:-27,z:-38,scale:1.0,rotation:.4,kind:'rock'},
-   {asset:'boulders',x:27,z:-44,scale:1.0,rotation:2.1,kind:'rock'},
-   {asset:'boulders',x:-26,z:-66,scale:.9,rotation:1.4,kind:'rock'},
-   {asset:'boulders',x:26,z:-72,scale:.9,rotation:2.8,kind:'rock'},
-   {asset:'crate',x:-18,z:-40,scale:.58,rotation:.4,kind:'prop',collision:1.0},
-   {asset:'crate',x:18,z:-51,scale:.58,rotation:2.4,kind:'prop',collision:1.0}
+   {asset:'crashSite',x:0,z:-54,scale:.62,rotation:0,kind:'scene'},
+   {asset:'canopy',x:-17,z:-19,height:8.5,rotation:.45,kind:'tree',collision:1.6},
+   {asset:'buttress',x:18,z:-22,height:7.4,rotation:2.3,kind:'tree',collision:1.7},
+   {asset:'canopy',x:-19,z:-37,height:8.0,rotation:2.6,kind:'tree',collision:1.6},
+   {asset:'buttress',x:19,z:-41,height:7.0,rotation:.9,kind:'tree',collision:1.7},
+   {asset:'canopy',x:-15,z:-54,height:7.7,rotation:1.7,kind:'tree',collision:1.6},
+   {asset:'buttress',x:15,z:-56,height:7.2,rotation:3.1,kind:'tree',collision:1.7},
+   {asset:'boulders',x:-20,z:-28,scale:1.0,rotation:.4,kind:'rock'},
+   {asset:'boulders',x:20,z:-32,scale:1.0,rotation:2.1,kind:'rock'},
+   {asset:'boulders',x:-20,z:-47,scale:.9,rotation:1.4,kind:'rock'},
+   {asset:'boulders',x:20,z:-50,scale:.9,rotation:2.8,kind:'rock'},
+   {asset:'crate',x:-13,z:-29,scale:.58,rotation:.4,kind:'prop',collision:1.0},
+   {asset:'crate',x:13,z:-38,scale:.58,rotation:2.4,kind:'prop',collision:1.0}
   ];
   const chosen=lowPowerDevice?specs.filter(item=>item.kind!=='rock'||(item.x<0&&item.z===-38)):specs;
   const sourceCache=new Map();
