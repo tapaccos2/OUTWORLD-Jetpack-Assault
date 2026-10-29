@@ -605,9 +605,9 @@ if(assetLoader){
     const headsetName=/headphones?|head.?set|earpiece|earphones?|earmuffs?|ear.?cups?|head.?mounted.?display|comms?|microphones?|\\bmic\\b|audio.?device|helmet.?speaker|peltor|ear.?protection/i;
   importedSoldier.traverse(o=>{
    // Some GLBs name the accessory parent, not its renderable mesh; hide matching nodes at any level.
-   if(o!==importedSoldier&&headsetName.test(o.name||'')){
+   if(o!==importedSoldier&&/(headphones?|head.?set|earpiece|earphones?|earmuffs?|ear.?cups?|head.?mounted.?display|comms?|microphones?|\\bmic\\b|audio.?device|helmet.?speaker|peltor|ear.?protection|headgear)/i.test(o.name||'')){
     o.visible=false;
-    console.info('OUTWORLD: removed headset/accessory node',o.name);
+    console.info('OUTWORLD: removed named headset/accessory node',o.name);
    }
    if(o.isMesh){
     o.castShadow=true;o.receiveShadow=true;
@@ -663,7 +663,7 @@ if(assetLoader){
    // Preserve the geometry-centering correction; overwriting position here previously discarded it.
    const centerOffset=new THREE.Vector3(-rifleCenter.x,-rifleCenter.y,-rifleCenter.z).multiplyScalar(rifle.scale.x);
    rifle.position.copy(centerOffset);
-   rifle.rotation.set(0,Math.PI,0);
+   rifle.rotation.set(0,0,0); // The imported M4A1 asset already faces forward; half-turn made it point backwards.
    rifle.updateMatrixWorld(true);
    rifle.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;o.frustumCulled=false;if(o.material){o.material.depthWrite=true;o.material.needsUpdate=true}}});
    // Parent the real rifle to the animated right hand and add grip offset to the centering correction.
