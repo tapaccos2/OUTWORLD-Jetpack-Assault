@@ -21,7 +21,7 @@
 <body>
 <canvas id="game"></canvas>
 <div id="cinemaGrade" aria-hidden="true"></div><div id="damageOverlay" aria-hidden="true"></div><div id="hud">
- <div class="panel brand">OUTWORLD <small>JETPACK ASSAULT · BUILD 2.1.1 · 29 OCT 2026</small></div>
+ <div class="panel brand">OUTWORLD <small>JETPACK ASSAULT · BUILD 2.2.0 · 29 OCT 2026</small></div>
  <div class="panel help"><b>PC CONTROLS</b><br>W A S D — Move<br>Right mouse drag — Aim · Click — Fire<br>Space — Jump · Shift — Jetpack<br>V — Camera · Esc — Release mouse</div>
  <div class="panel stats"><div class="statrow"><span>ARMOUR</span><b id="hpText">100%</b></div><div class="bar"><div id="hpBar" class="fill armour"></div></div><div class="statrow"><span>JETPACK FUEL</span><b id="fuelText">100%</b></div><div class="bar"><div id="fuelBar" class="fill fuel"></div></div><div class="statrow"><span>HOSTILES</span><b id="enemyText">7</b></div></div>
  <div class="panel objective"><strong>MISSION: BREAK THROUGH THE HYDRAN NEST</strong><span id="missionText">Cross the ravine and destroy the Hydran defenders</span></div>
@@ -639,21 +639,31 @@ lookArea.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation
 window.addEventListener('pointermove',e=>{if(lookTouch&&e.pointerId===lookTouch.id){const dx=e.clientX-lookTouch.x,dy=e.clientY-lookTouch.y;yaw-=dx*.008;pitch=Math.max(-.8,Math.min(.65,pitch-dy*.006));lookTouch.x=e.clientX;lookTouch.y=e.clientY}});
 function stopLook(e){if(lookTouch&&e.pointerId===lookTouch.id)lookTouch=null}
 window.addEventListener('pointerup',stopLook);window.addEventListener('pointercancel',stopLook);
-function shoot(){if(dead||won||!started||shotCooldown>0)return;shotCooldown=.075;fireRecoil=1;const dir=new THREE.Vector3();camera.getWorldDirection(dir);const origin=camera.position.clone();let target=null,targetPoint=null,bestAlong=66,targetDamage=0;
- // Test the bullet ray against the full enemy capsule, not just the chest. Legs are valid targets.
+function shoot(){if(dead||won||!started||shotCooldown>0)return;shotCooldown=.075;fireRecoil=1;const dir=new THREE.Vector3();camera.getWorldDirection(dir);const origin=camera.position.clone();scene.updateMatrixWorld(true);let target=null,targetPoint=null,bestAlong=66,targetDamage=0;
+ const raycaster=new THREE.Raycaster(origin,dir,0,65);
+ // First test the actual animated enemy meshes, including the legs.
  for(const e of enemies){if(!e.visible||e.userData.hp<=0)continue;
-  const foot=e.position.clone().add(new THREE.Vector3(0,.18,0)),head=e.position.clone().add(new THREE.Vector3(0,2.35*(e.scale.y||1),0));
-  const axis=head.clone().sub(foot),to=origin.clone().sub(foot),den=axis.lengthSq();
-  const rayDot=dir.dot(axis),rayTo=dir.dot(to),axisTo=axis.dot(to);
-  const denom=den-rayDot*rayDot;
-  let along=denom>1e-5?(rayDot*axisTo-den*rayTo)/denom:-rayTo;
-  along=Math.max(0,along);
-  let t=THREE.MathUtils.clamp((axisTo+along*rayDot)/Math.max(den,1e-5),0,1);
-  let rayPoint=origin.clone().addScaledVector(dir,along),bodyPoint=foot.clone().addScaledVector(axis,t);
-  let miss=rayPoint.distanceTo(bodyPoint);
-  if(along<0||along>65||along>=bestAlong)continue;
-  const hitRadius=(t<.34?.56:t>.82?.52:.68)*(e.scale.x||1);
-  if(miss<hitRadius){bestAlong=along;target=e;targetPoint=bodyPoint;targetDamage=t<.34?40:(t>.82?70:50)}
+  const hits=raycaster.intersectObject(e,true);
+  if(hits.length&&hits[0].distance<bestAlong){bestAlong=hits[0].distance;target=e;targetPoint=hits[0].point.clone();const local=e.worldToLocal(targetPoint.clone());const h=local.y/Math.max(.1,e.scale.y);targetDamage=h<.45?40:(h>.78?70:50)}
+  // Insect legs are thin; use forgiving ray-to-limb segments so a visible leg hit registers.
+  if(e.userData.insect&&Array.isArray(e.userData.limbs)){
+   for(const limb of e.userData.limbs){
+    const upper=limb.upper;const knee=upper.children.find(o=>o.type==='Group');if(!knee)continue;
+    const hipPoint=upper.getWorldPosition(new THREE.Vector3()),kneePoint=knee.getWorldPosition(new THREE.Vector3());
+    const lower=knee.children.find(o=>o.type==='Group');const footPoint=lower?lower.localToWorld(new THREE.Vector3(limb.side*.40,-.70,0)):kneePoint.clone().add(new THREE.Vector3(limb.side*.35,-.8,0));
+    const segments=[[hipPoint,kneePoint],[kneePoint,footPoint]];
+    for(let j=0;j<segments.length;j++){
+     const A=segments[j][0],B=segments[j][1],v=B.clone().sub(A),w=origin.clone().sub(A),vv=v.lengthSq(),dv=dir.dot(v),dw=dir.dot(w),vw=v.dot(w),den=vv-dv*dv;
+     const along=Math.max(0,den>1e-7?(dv*vw-vv*dw)/den:-dw);if(along>=bestAlong||along>65)continue;
+     const u=THREE.MathUtils.clamp((vw+along*dv)/Math.max(vv,1e-7),0,1),rp=origin.clone().addScaledVector(dir,along),sp=A.clone().addScaledVector(v,u),radius=(j===0?.17:.135)*Math.max(e.scale.x,e.scale.z);
+     if(rp.distanceTo(sp)<radius){bestAlong=along;target=e;targetPoint=sp;targetDamage=40}
+    }
+   }
+  }else{
+   // Marine-shaped fallback: test a full-height, forgiving body capsule, not just chest height.
+   const foot=e.localToWorld(new THREE.Vector3(0,.16,0)),head=e.localToWorld(new THREE.Vector3(0,2.35,0)),axis=head.clone().sub(foot),to=origin.clone().sub(foot),den=axis.lengthSq(),rayDot=dir.dot(axis),rayTo=dir.dot(to),axisTo=axis.dot(to),denom=den-rayDot*rayDot;
+   const along=denom>1e-5?(rayDot*axisTo-den*rayTo)/denom:-rayTo;if(along>=0&&along<bestAlong&&along<65){const t=THREE.MathUtils.clamp((axisTo+along*rayDot)/Math.max(den,1e-5),0,1),rp=origin.clone().addScaledVector(dir,along),bp=foot.clone().addScaledVector(axis,t),radius=(t<.34?.48:t>.82?.44:.58)*(e.scale.x||1);if(rp.distanceTo(bp)<radius){bestAlong=along;target=e;targetPoint=bp;targetDamage=t<.34?40:(t>.82?70:50)}}
+  }
  }
  if(target){target.userData.hp-=targetDamage;target.userData.hit=.2;document.querySelector('.reticle').classList.add('confirmed');hitConfirmTimer=.22;for(let i=0;i<10;i++)spawnSpark(targetPoint.clone().add(new THREE.Vector3((Math.random()-.5)*.42,(Math.random()-.5)*.48,(Math.random()-.5)*.35)),0xffad63);if(target.userData.hp<=0){target.visible=false;target.userData.hp=0;for(let i=0;i<24;i++)spawnSpark(target.position.clone().add(new THREE.Vector3((Math.random()-.5)*.9,1+Math.random()*1.5,(Math.random()-.5)*.9)),i%3===0?0x8caca4:0xff8d4d)}}
  const muzzleLocal=new THREE.Vector3(0.0,0.015,-1.02);const muzzleWorld=muzzleLocal.applyMatrix4(camera.matrixWorld);const start=thirdPerson?origin.clone().add(dir.clone().multiplyScalar(.65)):muzzleWorld;const end=target?targetPoint.clone():origin.clone().add(dir.clone().multiplyScalar(42));const bolt=new THREE.Mesh(new THREE.CylinderGeometry(.055,.085,2.8,8),new THREE.MeshBasicMaterial({color:target?0xffc46b:0x9df7ff,transparent:true,opacity:1,depthWrite:false}));bolt.frustumCulled=false;scene.add(bolt);bullets.push({obj:bolt,life:.22,duration:.22,start,end,tracer:true,beam:true});fpFlash.visible=!thirdPerson;if(player.userData.muzzle)player.userData.muzzle.visible=true;if(player.userData.muzzleCore)player.userData.muzzleCore.visible=true;muzzleLife=.085}
