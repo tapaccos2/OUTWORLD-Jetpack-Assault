@@ -70,3 +70,13 @@ The public SteamDB listing for Outwars content depot 1431941 lists the shipped r
 This does **not** prove that the terrain files were never created or that they cannot be generated/renamed by another installation step. It means the next investigation should not spend time repeatedly searching for those exact paths in this release. The concrete shipped equivalents worth comparing are the campaign-matched `.GPC/.RPC` pairs under `structs/`. Their header and record-size layouts match the executable's `CPMG`/`CPMR` parser expectations, but their field semantics and any conversion between these names and the old `TERRAIN` paths remain unproven.
 
 Source: [SteamDB Outwars Content depot 1431941](https://steamdb.info/depot/1431941/), public file listing accessed 2026-10-29. The depot listing is external corroboration of filenames and sizes only; it is not a terrain-format specification.
+
+## New cross-file structure result: GPC records partition RPC records
+
+A direct byte-level comparison of five campaign-matched pairs (`anub01`, `anub02`, `rag01`, `rag02`, and `oasis01`) found that 16-bit fields at byte offsets 24 and 26 in each 32-byte GPC record form inclusive start/end ranges into the paired RPC table. In all five samples, the ranges are in bounds, ordered, contiguous, begin at record 0, and cover the entire RPC table without gaps or overlap. Examples:
+
+- `anub01`: 28 GPC records partition all 203 RPC records; ranges begin `[0,2]`, `[3,5]`, `[6,8]` and end `[191,202]`.
+- `rag01`: 50 GPC records partition all 767 RPC records; ranges begin `[0,10]`, `[11,15]`, `[16,20]` and end `[678,766]`.
+- `rag02`: 106 GPC records partition all 988 RPC records; ranges begin `[0,5]`, `[6,11]`, `[12,17]` and end `[983,987]`.
+
+This is a validated cross-file index relationship and is the first evidence that the GPC/RPC pair is not just two files sharing related headers. The geometric meaning of the RPC records, the other GPC fields, and the actual mesh-generation rules are still unknown. A reusable validator is available at `tools/check-gpc-rpc-pairs.mjs`; run it across `original-data/structs/` to test every pair.
