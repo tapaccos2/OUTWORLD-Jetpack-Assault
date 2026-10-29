@@ -5,7 +5,7 @@ if(!window.THREE){message.innerHTML='3D ENGINE NOT LOADED<small>Connect to the i
 const lowPowerDevice=(navigator.hardwareConcurrency||8)<=4||(navigator.deviceMemory||8)<=4||/raspberry|armv7|aarch64/i.test(navigator.userAgent);
 const renderer=new THREE.WebGLRenderer({canvas,antialias:!lowPowerDevice,powerPreference:'high-performance'});
 renderer.setPixelRatio(Math.min(devicePixelRatio||1,lowPowerDevice?1:2));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.92;renderer.setClearColor(0x91b3c2,1);renderer.info.autoReset=true;
-const scene=new THREE.Scene();scene.background=new THREE.Color(0x7e9695);scene.fog=new THREE.FogExp2(0x7e9695,0.0025);
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x829a9c);scene.fog=new THREE.FogExp2(0x829a9c,0.0034);
 const camera=new THREE.PerspectiveCamera(72,innerWidth/innerHeight,.1,250);
 scene.add(camera); // Required for camera-attached first-person weapon meshes to render.
 const hemi=new THREE.HemisphereLight(0xdbe9ef,0x51473a,1.12);scene.add(hemi);
@@ -258,26 +258,41 @@ const cliffLit=new THREE.MeshStandardMaterial({color:0x4d5a49,roughness:.88});
 const chitinMat=new THREE.MeshStandardMaterial({color:0x293d31,roughness:.48,metalness:.12});
 const sporeMat=new THREE.MeshStandardMaterial({color:0x9ac64c,emissive:0x334f08,emissiveIntensity:.65,roughness:.38});
 const nestMat=new THREE.MeshStandardMaterial({color:0x544b35,roughness:.78});
-for(let side of [-1,1]){
-  // Layered ravine walls frame the route without sealing the playable area.
-  for(let i=0;i<12;i++){
-    const h=4+Math.random()*7, w=2.4+Math.random()*3;
-    const rock=new THREE.Mesh(new THREE.IcosahedronGeometry(1,2),i%3===0?cliffLit:cliffMat);
-    rock.scale.set(w,h,3+Math.random()*3);
-    rock.position.set(side*(12+Math.random()*5),h*.48,-8-i*6);
-    rock.rotation.set(Math.random()*.25,Math.random()*.5,side*(Math.random()*.12));
-    rock.castShadow=true;rock.receiveShadow=true;scene.add(rock);
+// Angular, stratified ravine walls. The old stretched icosahedra made huge smooth blobs.
+function makeStrataRock(side,index){
+ const z=-7-index*5.1-Math.random()*2.0;
+ const x=side*(15.5+Math.random()*4.8);
+ const h=2.6+Math.random()*4.2,w=1.1+Math.random()*1.8,d=1.8+Math.random()*2.7;
+ const geo=new THREE.IcosahedronGeometry(1,1),p=geo.attributes.position;
+ for(let k=0;k<p.count;k++){
+  const n=.72+Math.random()*.62;
+  p.setXYZ(k,p.getX(k)*n,p.getY(k)*(.82+Math.random()*.38),p.getZ(k)*(.78+Math.random()*.44));
+ }
+ geo.computeVertexNormals();
+ const rock=new THREE.Mesh(geo,index%4===0?cliffLit:cliffMat);
+ rock.scale.set(w,h,d);rock.position.set(x,h*.42,z);
+ rock.rotation.set((Math.random()-.5)*.18,Math.random()*Math.PI,side*(Math.random()*.10));
+ rock.castShadow=true;rock.receiveShadow=true;scene.add(rock);
+ // Thin broken strata bands make the silhouette read as layered stone rather than smooth capsules.
+ for(let band=0;band<2;band++){
+  const ledge=new THREE.Mesh(new THREE.BoxGeometry(w*(1.25+Math.random()*.35),.12+Math.random()*.12,d*(.7+Math.random()*.25)),band?cliffMat:cliffLit);
+  ledge.position.set(x+(Math.random()-.5)*.35,h*(.34+band*.28),z+(Math.random()-.5)*.45);
+  ledge.rotation.set((Math.random()-.5)*.1,rock.rotation.y,(Math.random()-.5)*.16);
+  ledge.castShadow=true;ledge.receiveShadow=true;scene.add(ledge);
+ }
+}
+for(const side of [-1,1]){
+ for(let i=0;i<12;i++)makeStrataRock(side,i);
+ // Keep alien growths on the outer shoulder so the centre lane stays readable.
+ for(let i=0;i<8;i++){
+  const x=side*(9.8+Math.random()*3.8),z=-5-i*7.8;
+  const spike=new THREE.Mesh(new THREE.ConeGeometry(.28+Math.random()*.34,1.2+Math.random()*2.0,6),chitinMat);
+  spike.position.set(x,spike.geometry.parameters.height*.43,z);spike.rotation.z=side*(Math.random()*.16);spike.castShadow=true;scene.add(spike);
+  if(i%2===0){
+   const pod=new THREE.Mesh(new THREE.SphereGeometry(.12+Math.random()*.09,9,7),sporeMat);
+   pod.position.set(x-side*.24,.65+Math.random()*.8,z-.12);pod.castShadow=true;scene.add(pod);
   }
-  // Alien chitin spires and glowing spore pods along the ravine edges.
-  for(let i=0;i<9;i++){
-    const x=side*(6.8+Math.random()*3.8), z=-5-i*7;
-    const spike=new THREE.Mesh(new THREE.ConeGeometry(.45+Math.random()*.45,1.8+Math.random()*2.8,7),chitinMat);
-    spike.position.set(x,spike.geometry.parameters.height*.48,z);spike.rotation.z=side*(Math.random()*.22);spike.castShadow=true;scene.add(spike);
-    if(i%2===0){
-      const pod=new THREE.Mesh(new THREE.SphereGeometry(.22+Math.random()*.14,10,8),sporeMat);
-      pod.position.set(x-side*.35,.9+Math.random()*1.4,z-.15);pod.castShadow=true;scene.add(pod);
-    }
-  }
+ }
 }
 // Cracked alien nest mound at the far end of the valley.
 const nest=new THREE.Mesh(new THREE.IcosahedronGeometry(1,2),nestMat);
@@ -536,35 +551,51 @@ const muzzleCore=new THREE.Mesh(new THREE.SphereGeometry(.06,8,8),new THREE.Mesh
  root.userData={legs,arms,muzzle,muzzleCore,isEnemy,chest,head,helmet,face,pack};return root
 }
 
-// First-person assault rifle: compact machined-metal silhouette, restrained wear and subdued status light.
+// First-person sci-fi assault rifle: layered receiver, heat-shrouded barrel, optic, rails, magazine and grip.
 const weaponRig=new THREE.Group();camera.add(weaponRig);weaponRig.position.set(.34,-.30,-.76);weaponRig.scale.set(.76,.76,.76);weaponRig.rotation.set(-.025,-.035,-.015);
-const gunMetal=new THREE.MeshStandardMaterial({color:0x343a38,metalness:.62,roughness:.48});
-const gunEdge=new THREE.MeshStandardMaterial({color:0x626863,metalness:.58,roughness:.43});
-const gunDark=new THREE.MeshStandardMaterial({color:0x171b19,metalness:.18,roughness:.72});
-const gunPolymer=new THREE.MeshStandardMaterial({color:0x282b26,metalness:.08,roughness:.86});
-const gunEnergy=new THREE.MeshStandardMaterial({color:0x5f8d8a,emissive:0x102a28,emissiveIntensity:.55,metalness:.18,roughness:.5});
-function gunPart(geo,material,pos,rot){const m=new THREE.Mesh(geo,material);m.position.set(...pos);if(rot)m.rotation.set(...rot);m.castShadow=false;m.receiveShadow=false;weaponRig.add(m)}
-gunPart(new THREE.BoxGeometry(.22,.19,.43),gunMetal,[0,0,0]);
-gunPart(new THREE.BoxGeometry(.205,.055,.39),gunEdge,[0,.115,-.015]);
-gunPart(new THREE.BoxGeometry(.17,.055,.2),gunDark,[0,.145,.07]);
-gunPart(new THREE.CylinderGeometry(.025,.03,.48,12),gunDark,[0,.015,-.43],[Math.PI/2,0,0]);
-gunPart(new THREE.CylinderGeometry(.042,.042,.075,12),gunEdge,[0,.015,-.685],[Math.PI/2,0,0]);
-gunPart(new THREE.CylinderGeometry(.012,.012,.34,8),gunMetal,[0,.07,-.36],[Math.PI/2,0,0]);
-gunPart(new THREE.BoxGeometry(.19,.105,.29),gunPolymer,[0,-.005,-.30]);
-for(let side of [-1,1])for(let j=0;j<6;j++)gunPart(new THREE.BoxGeometry(.012,.014,.035),gunEdge,[side*.099,.012,-.405+j*.043]);
-gunPart(new THREE.BoxGeometry(.12,.22,.16),gunDark,[0,-.18,-.02],[.16,0,0]);
-gunPart(new THREE.BoxGeometry(.105,.17,.13),gunPolymer,[0,-.16,.16],[.24,0,0]);
-gunPart(new THREE.BoxGeometry(.13,.16,.22),gunPolymer,[0,-.015,.30]);
-gunPart(new THREE.BoxGeometry(.12,.12,.17),gunDark,[0,-.01,.46]);
-gunPart(new THREE.BoxGeometry(.055,.12,.07),gunPolymer,[0,-.12,.075],[.18,0,0]);
-gunPart(new THREE.BoxGeometry(.055,.04,.11),gunDark,[0,.17,.075]);
-gunPart(new THREE.BoxGeometry(.145,.035,.24),gunEdge,[0,.105,-.19]);
-gunPart(new THREE.BoxGeometry(.06,.018,.30),gunEnergy,[0,.14,-.25]);
-gunPart(new THREE.BoxGeometry(.07,.055,.09),gunMetal,[.11,.015,-.02]);
-gunPart(new THREE.BoxGeometry(.07,.055,.09),gunMetal,[-.11,.015,-.02]);
-gunPart(new THREE.BoxGeometry(.12,.045,.12),gunDark,[0,.16,-.48]);
-gunPart(new THREE.BoxGeometry(.065,.035,.15),gunDark,[0,.16,-.12]);
-gunPart(new THREE.BoxGeometry(.018,.018,.075),gunEnergy,[0,.181,-.13]);
+const gunMetal=new THREE.MeshStandardMaterial({color:0x343a38,metalness:.72,roughness:.38});
+const gunEdge=new THREE.MeshStandardMaterial({color:0x7c8981,metalness:.66,roughness:.36});
+const gunDark=new THREE.MeshStandardMaterial({color:0x111715,metalness:.28,roughness:.62});
+const gunPolymer=new THREE.MeshStandardMaterial({color:0x252d2b,metalness:.12,roughness:.78});
+const gunEnergy=new THREE.MeshStandardMaterial({color:0x65b9b3,emissive:0x174a45,emissiveIntensity:.72,metalness:.28,roughness:.34});
+const gunRubber=new THREE.MeshStandardMaterial({color:0x171b18,roughness:.94});
+function gunPart(geo,material,pos,rot){const m=new THREE.Mesh(geo,material);m.position.set(...pos);if(rot)m.rotation.set(...rot);m.castShadow=false;m.receiveShadow=false;weaponRig.add(m);return m}
+// Receiver and angular upper cover
+gunPart(new THREE.BoxGeometry(.23,.19,.43),gunMetal,[0,0,0]);
+gunPart(new THREE.BoxGeometry(.205,.055,.38),gunEdge,[0,.112,-.015]);
+gunPart(new THREE.BoxGeometry(.18,.055,.20),gunDark,[0,.145,.075]);
+gunPart(new THREE.BoxGeometry(.18,.13,.16),gunPolymer,[0,-.02,.285]);
+gunPart(new THREE.BoxGeometry(.13,.12,.14),gunDark,[0,-.01,.405]);
+// Tapered barrel, muzzle brake and outer heat shroud
+gunPart(new THREE.CylinderGeometry(.035,.046,.43,10),gunDark,[0,.018,-.405],[Math.PI/2,0,0]);
+gunPart(new THREE.CylinderGeometry(.052,.044,.11,10),gunMetal,[0,.018,-.66],[Math.PI/2,0,0]);
+gunPart(new THREE.CylinderGeometry(.026,.026,.05,10),gunDark,[0,.018,-.733],[Math.PI/2,0,0]);
+gunPart(new THREE.CylinderGeometry(.012,.012,.34,8),gunEdge,[0,.072,-.39],[Math.PI/2,0,0]);
+gunPart(new THREE.BoxGeometry(.19,.10,.29),gunPolymer,[0,-.008,-.29]);
+for(let side of [-1,1]){
+ gunPart(new THREE.BoxGeometry(.018,.055,.29),gunDark,[side*.105,.015,-.32]);
+ for(let j=0;j<7;j++)gunPart(new THREE.BoxGeometry(.012,.018,.026),gunEdge,[side*.116,.018,-.435+j*.038]);
+ // Side vents and attachment rails
+ for(let j=0;j<4;j++)gunPart(new THREE.BoxGeometry(.009,.024,.026),gunMetal,[side*.119,.018,-.12+j*.047]);
+ gunPart(new THREE.BoxGeometry(.055,.07,.12),gunDark,[side*.13,-.01,.015]);
+}
+// Angled magazine, pistol grip and stock
+gunPart(new THREE.BoxGeometry(.135,.22,.16),gunDark,[0,-.18,-.015],[.16,0,0]);
+gunPart(new THREE.BoxGeometry(.105,.17,.13),gunRubber,[0,-.16,.15],[.24,0,0]);
+gunPart(new THREE.BoxGeometry(.14,.16,.22),gunPolymer,[0,-.02,.29]);
+gunPart(new THREE.BoxGeometry(.125,.12,.18),gunDark,[0,-.01,.43]);
+gunPart(new THREE.BoxGeometry(.09,.15,.10),gunRubber,[0,-.12,.06],[.18,0,0]);
+gunPart(new THREE.BoxGeometry(.07,.04,.11),gunDark,[0,.17,.075]);
+// Picatinny top rail, optic housing and front sight
+gunPart(new THREE.BoxGeometry(.15,.025,.31),gunEdge,[0,.135,-.20]);
+for(let j=0;j<8;j++)gunPart(new THREE.BoxGeometry(.025,.014,.018),gunDark,[-.06+j*.017,.153,-.31]);
+gunPart(new THREE.BoxGeometry(.105,.075,.13),gunDark,[0,.205,-.035]);
+gunPart(new THREE.CylinderGeometry(.035,.035,.055,12),gunEnergy,[0,.21,-.035],[Math.PI/2,0,0]);
+gunPart(new THREE.BoxGeometry(.025,.045,.055),gunEdge,[0,.19,-.36]);
+gunPart(new THREE.BoxGeometry(.025,.055,.045),gunEdge,[0,.17,-.55]);
+// Small recessed power cell with restrained cyan status light
+gunPart(new THREE.BoxGeometry(.075,.035,.18),gunDark,[0,.09,-.20]);
+gunPart(new THREE.BoxGeometry(.036,.012,.12),gunEnergy,[0,.112,-.20]);
 weaponRig.traverse(o=>{if(o.isMesh){o.renderOrder=1000;if(o.material){o.material.depthTest=false;o.material.depthWrite=false}}});
 const fpFlash=new THREE.Group();const fpFlashOuter=new THREE.Mesh(new THREE.ConeGeometry(.038,.18,6),new THREE.MeshBasicMaterial({color:0xffb84d,transparent:true,opacity:.78,depthWrite:false,toneMapped:false}));fpFlashOuter.rotation.x=-Math.PI/2;fpFlashOuter.position.set(0,.015,-1.00);fpFlash.add(fpFlashOuter);const fpFlashCore=new THREE.Mesh(new THREE.SphereGeometry(.025,6,4),new THREE.MeshBasicMaterial({color:0xfff2cf,transparent:true,opacity:.9,depthWrite:false,toneMapped:false}));fpFlashCore.position.set(0,.015,-.91);fpFlash.add(fpFlashCore);fpFlash.visible=false;weaponRig.add(fpFlash);
 
