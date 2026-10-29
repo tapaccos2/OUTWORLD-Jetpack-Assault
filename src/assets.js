@@ -101,11 +101,15 @@
    {asset:'crate',x:-4.8,z:10.5,scale:.54,rotation:.6,kind:'prop',collision:.75},
    {asset:'crate',x:4.8,z:10.5,scale:.54,rotation:2.4,kind:'prop',collision:.75}
   ];
-  // Keep a consistent open travel lane through the level: roadside models line the shoulders.
+  // Arrange imported models in continuous roadside bands instead of scattering them.
+  // The centre remains a clear lane; crates form the inner shoulder, rocks the mid-shoulder,
+  // and tall trees the outside boundary. This changes placement only, never model geometry.
   for(const item of specs){
-   if(item.kind!=='scene'&&Math.abs(item.x)<8.5){
-    item.x=(item.x<0?-1:1)*(9.2+Math.abs(item.x)*.18);
-   }
+   if(item.kind==='scene')continue;
+   const side=item.x<0?-1:1;
+   if(item.kind==='prop')item.x=side*(5.4+((Math.round(Math.abs(item.z)*2)%3)*.35));
+   else if(item.kind==='rock')item.x=side*(8.2+((Math.round(Math.abs(item.z)*2)%3)*.55));
+   else if(item.kind==='tree')item.x=side*(14.2+((Math.round(Math.abs(item.z)*2)%3)*1.1));
   }
   const chosen=lowPowerDevice?specs.filter((item,index)=>item.kind!=='rock'||index%3===0):specs;
   // Only imported GLB scenery is rendered; failed downloads are logged and skipped.
