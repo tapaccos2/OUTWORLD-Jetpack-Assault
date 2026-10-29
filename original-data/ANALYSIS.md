@@ -23,18 +23,18 @@ This note records observations from the original files currently present in this
 
 - `original-data/gry/Q.gry` is 87,615 bytes. Its first bytes are:
   `27 70 06 03 1c 00 04 00 04 00 04 00 ff 7f 00 00 01 00 00 00 ff 7f 00 00 3c 00 00 00 7f 00 00 00`
-  This is binary terrain data; these bytes alone are not enough to assert the complete layout or height encoding.
+  This is a sound-effect audio container. The embedded records use MS ADPCM; see `GRY-STRUCTURE-INDEX.md` for verified framing.
 
 ## Implications for the rebuild
 
 1. The `.MIS` files are structured binary mission-builder files, not plain text. Readable strings expose mission names, briefings, asset references, and event identifiers, but a proper parser must decode the surrounding binary fields.
-2. The mission files refer to additional assets, especially `.DPC` and `.PCX` files. The `.MIS` and `.GRY` folders alone may not contain everything required to reconstruct a level faithfully.
-3. Do not treat extracted strings as a complete map. The mission placement/object records and terrain format still need to be decoded and validated against the original game.
+2. The mission files refer to additional assets, especially `.DPC` and `.PCX` files. The `.MIS` files and loose resources alone may not contain everything required to reconstruct a level faithfully; `.GRY` files are sound-effect audio, not terrain.
+3. Do not treat extracted strings as a complete map. The mission placement/object records still need to be decoded, and the actual terrain asset format must be identified and validated against the original game.
 4. Preserve original filenames and case. The game references files with mixed-case names.
 
 ## Next technical work
 
 - Enumerate all files under `original-data/misn/` and `original-data/gry/`.
 - Inspect the mission binary schema across several files, identify record boundaries, and export a first machine-readable JSON representation.
-- Decode the `.GRY` header and terrain payload separately.
+- Inspect/extract `.GRY` sound-effect audio; identify the separate asset format that stores terrain geometry.
 - Check which referenced `.DPC`, `.PCX`, and other resources are available before rendering a faithful level.
