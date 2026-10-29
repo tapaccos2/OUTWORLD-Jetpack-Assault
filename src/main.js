@@ -633,7 +633,7 @@ const player=soldier(false);
 const marineRifle=new THREE.Group();marineRifle.visible=false;player.add(marineRifle);
 // Never display the blockout soldier, even while network assets are loading.
 player.children.forEach(o=>{o.visible=false});
-weaponRig.traverse(o=>{if(o.isMesh&&o!==fpFlashOuter&&o!==fpFlashCore)o.visible=false});
+// Keep the procedural rifle visible as a reliable fallback; the imported viewmodel has failed to render consistently in GitHub Pages.
 // Imported character and first-person weapon assets only. No procedural soldier or viewmodel geometry.
 armRig.visible=false;
 const fpAssetRig=new THREE.Group();camera.add(fpAssetRig);
@@ -879,7 +879,7 @@ function update(dt){
  player.position.y=Math.max(0,player.position.y);
  const lookDir=new THREE.Vector3(-Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),-Math.cos(yaw)*Math.cos(pitch));if(thirdPerson){const behind=4.9,high=2.45,shoulder=1.45;const desiredCam=new THREE.Vector3(player.position.x+Math.sin(yaw)*behind+Math.cos(yaw)*shoulder,player.position.y+high,player.position.z+Math.cos(yaw)*behind-Math.sin(yaw)*shoulder);camera.position.lerp(desiredCam,1-Math.exp(-dt*8));const aim=player.position.clone().add(new THREE.Vector3(0,1.4,0)).add(lookDir.clone().multiplyScalar(6.2)).add(new THREE.Vector3(Math.cos(yaw)*.85,0,-Math.sin(yaw)*.85));camera.lookAt(aim)}else{camera.position.set(player.position.x,player.position.y+2.15,player.position.z);camera.lookAt(camera.position.clone().add(lookDir.multiplyScalar(25)))}
  const moving=Math.abs(fwd)+Math.abs(side)>.1;
- weaponRig.visible=!thirdPerson;armRig.visible=false;fpAssetRig.visible=!thirdPerson;marineRifle.visible=false;
+ weaponRig.visible=!thirdPerson;armRig.visible=false;fpAssetRig.visible=false;marineRifle.visible=false;
  // The imported first-person arms and rifle follow look pitch and locomotion as one authored viewmodel.
  const viewGait=performance.now()*.010;
  fpAssetRig.rotation.set(THREE.MathUtils.clamp(-pitch*.20,-.22,.22),THREE.MathUtils.clamp(-yawDelta*.08,-.08,.08),moving?Math.sin(viewGait)*.012:0);
