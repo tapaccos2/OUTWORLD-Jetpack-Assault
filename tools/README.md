@@ -142,3 +142,21 @@ This reports whether RPC coordinate pairs fall inside the inferred GPC origin/sp
 The checker also measures the signed 16-bit pair at RPC offsets +6/+8. The original executable's sine/cosine lookup routines are called by a record setter and write to these exact offsets; across all 8,005 RPC records, the pair's magnitude stays within 2 of 4095. Runtime reachability of that setter is not yet confirmed, but the field interpretation is strongly supported by both code and data.
 The same checker tests the signed 16-bit triplet at RPC offsets +10/+12/+14 as a normal candidate; all 8,005 records also stay within 2 units of magnitude 4095, with flat records commonly using (0, 0, 4095). This is a high-confidence data-pattern inference pending a direct executable use-site.
 The checker now also validates each stored normal against the normal predicted from the first three corner heights, the two dimensions, and the sine/cosine pair. The full inventory result is 8,003/8,005 with normalized dot product above 0.999; the two inverted flat normals are documented exceptions.
+
+## 14. Export a candidate terrain mesh
+
+```sh
+node tools/export-rpc-mesh.mjs \
+  original-data/structs/rag01.gpc original-data/structs/rag01.rpc \
+  /tmp/rag01-center.obj
+
+node tools/export-rpc-mesh.mjs \
+  original-data/structs/rag01.gpc original-data/structs/rag01.rpc \
+  /tmp/rag01-corner.obj --anchor=corner
+
+node tools/export-rpc-mesh.mjs \
+  original-data/structs/rag01.gpc original-data/structs/rag01.rpc \
+  /tmp/rag01-alt-diagonal.obj --diagonal=0-3
+```
+
+The exporter emits four vertices and two triangles per RPC surface, grouped by the GPC ranges. The default uses the record XY pair as the surface centre and splits the quad along corner 1–2, because the stored normal agrees with the first three row-major heights. Both assumptions are still configurable: compare centre vs corner anchoring and diagonal 1–2 vs 0–3 against an original terrain screenshot before choosing the final runtime implementation. Raw game units are preserved; no arbitrary scale is applied.
