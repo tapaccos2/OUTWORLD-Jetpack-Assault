@@ -112,3 +112,32 @@ node tools/scan-gry-tags.mjs original-data/gry/*.gry
 The per-file measurements are summarized in `original-data/GRY-STRUCTURE-INDEX.md`. The 2,603,540-byte `oc.gry` is present in the repository, but its binary body could not be retrieved through the current GitHub file-fetch path; no claims are made about its internal structure.
 
 This is still format analysis, not a terrain decoder. No vertices, heights, triangles, materials, or coordinates have been reconstructed. The next step is to determine the meaning of the indexed record fields and validate the post-`fact` payloads against the remaining data.
+
+### Compressed-block framing
+
+The bytes after each paired `fact` record reveal a second, highly consistent structure:
+
+- At record-relative offset `+71`: `2E 3E 9D 00`.
+- At `+75..+77`: a three-byte little-endian compressed-payload length.
+- At `+78`: the compressed payload begins.
+- The four-byte value following `fact` behaves like an uncompressed-length field: across the 34 blocks it is consistently about 1.97 times the compressed payload length.
+- For every non-final block, `recordStart + 78 + compressedLength` lands exactly on the next record start.
+- The final five bytes of all ten readable `.GRY` files end in `22 75 28 03`, with a variable first trailer byte. The final compressed payload ends exactly five bytes before EOF.
+
+Examples:
+
+| File / record start | Candidate uncompressed length | Compressed length | Payload start | Payload end / next boundary | Ratio |
+|---|---:|---:|---:|---:|---:|
+| `Q.gry` / 92 | 51,264 | 25,938 | 170 | 26,108 | 1.9764 |
+| `d4.gry` / 280 | 50,736 | 25,674 | 358 | 26,032 | 1.9762 |
+| `d4.gry` / 403,297 (final) | 16,751 | 8,477 | 403,375 | 411,852, then 5-byte trailer | 1.9761 |
+
+The boundaries and size relationships are now strong enough to treat the framing as established for these 34 records. The interpretation of the `fact` value as uncompressed length is still a hypothesis until a decompressor produces exactly that many bytes. The compression algorithm itself has not been identified.
+
+The new `tools/inspect-gry-blocks.mjs` script reports record indices, candidate uncompressed lengths, compressed sizes, payload offsets, boundary validation, and trailer bytes:
+
+```sh
+node tools/inspect-gry-blocks.mjs original-data/gry/*.gry
+```
+
+`o5.gry` has the common five-byte file trailer and one signature start but no paired `fact`/compressed block, so it is a format variant or an unresolved special case.
