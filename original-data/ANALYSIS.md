@@ -110,3 +110,9 @@ This is now broad internal validation of the candidate spatial-field layout, not
 Static disassembly of the local original `outwars.exe` now provides a direct use-site confirmation. At VA `0x00477030`, a native routine computes the RPC record stride as `index * 40`, copies a position pair into offsets `+32` and `+36`, writes one signed height value to both `+16` and `+20`, and writes another sign-extended height value to both `+24` and `+28` (stores at `0x0047706d`–`0x00477095`). This confirms the four fields are used as two pairs of surface-height values and the last pair as position components; it does not establish axis orientation or scale.
 
 The loader at VA `0x004EC990` checks CPMG/CPMR magic, version `0x43`, and limits of 200 GPC and 1000 RPC records, then copies the fixed payload sizes (`0x1900` and `0x9c40` bytes). It does not decode individual records in that routine. Details and caveats are recorded in `original-data/TERRAIN-FIELD-HYPOTHESES.md`.
+
+### RPC orientation vector confirmed across all records
+
+The signed 16-bit values at RPC offsets `+6` and `+8` are confirmed fixed-point sine/cosine components. The native setter at VA `0x00477030` calls the executable's sine lookup at `0x004C51C4` and cosine lookup at `0x004C5230`, storing the results at exactly those offsets. Independently, every one of the 8,005 RPC records across all 34 files has `sqrt(sin² + cos²)` within 2 of 4095 (observed range 4094.34–4096.62). The terrain checker now measures this invariant automatically.
+
+This identifies a real orientation field and gives us a concrete next disassembly target: locate the code that consumes this vector to derive the ramp's four corner positions. The remaining fields at RPC offsets `+0`, `+2`, `+4`, `+10`, `+12`, and `+14` are not yet decoded.
