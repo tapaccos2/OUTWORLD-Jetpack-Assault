@@ -34,7 +34,7 @@ Do not use any of these outputs as a claim that the map or mission has been full
 node tools/inspect-gry-structure.mjs original-data/gry/*.gry
 ```
 
-Reports the common file prefix, little-endian header values, every occurrence of the observed `00 A0 B9 B7` byte pattern, candidate 20-byte blocks before the first occurrence, and groups files by the 64-byte signature at that occurrence. These are structural observations, not decoded fields.
+Reports the common file prefix, little-endian header values, every occurrence of the observed `00 A0 B9 B7` byte pattern, candidate 20-byte blocks, candidate 14-byte blocks, the proposed header-count formula, and groups files by the 64-byte signature at that occurrence. These are structural observations, not decoded fields.
 
 ## 5. Scan for candidate terrain tags
 
