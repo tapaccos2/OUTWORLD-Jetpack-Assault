@@ -84,6 +84,18 @@ groundTex.repeat.set(22,22);groundTex.needsUpdate=true;groundNormal.repeat.set(2
 const terrainSegments=lowPowerDevice?72:192;
 const terrainGeo=new THREE.PlaneGeometry(52,136,terrainSegments,terrainSegments);
 const terrainPos=terrainGeo.attributes.position;
+// A continuous worn dirt track gives the level a readable street-like route.
+// This is vertex colouring on the existing terrain mesh, not a separate primitive object.
+const roadColors=new Float32Array(terrainPos.count*3);
+for(let i=0;i<terrainPos.count;i++){
+ const x=terrainPos.getX(i),z=-terrainPos.getY(i),edge=Math.abs(x);
+ const shoulder=Math.max(0,Math.min(1,(edge-3.2)/2.4));
+ const worn=.91+.035*Math.sin(z*1.7+x*.6)+.025*Math.sin(z*3.1-x*1.3);
+ const r=1-shoulder*.20,g=1-shoulder*.24,b=1-shoulder*.31;
+ roadColors[i*3]=r*worn;roadColors[i*3+1]=g*worn;roadColors[i*3+2]=b*worn;
+}
+terrainGeo.setAttribute('color',new THREE.BufferAttribute(roadColors,3));
+groundMat.vertexColors=true;groundMat.needsUpdate=true;
 for(let i=0;i<terrainPos.count;i++){
  const lx=terrainPos.getX(i), lz=-terrainPos.getY(i);
  const edge=Math.min(1,Math.max(0,(Math.abs(lx)-4)/13));
