@@ -37,12 +37,12 @@ if(!window.THREE){message.innerHTML='3D ENGINE NOT LOADED<small>Connect to the i
 // Performance tiers: favour stable frame rate on Raspberry Pi and other low-power devices.
 const lowPowerDevice=(navigator.hardwareConcurrency||8)<=4||(navigator.deviceMemory||8)<=4||/raspberry|armv7|aarch64/i.test(navigator.userAgent);
 const renderer=new THREE.WebGLRenderer({canvas,antialias:!lowPowerDevice,powerPreference:'high-performance'});
-renderer.setPixelRatio(Math.min(devicePixelRatio||1,lowPowerDevice?0.62:1.5));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=!lowPowerDevice;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=lowPowerDevice?THREE.NoToneMapping:THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=lowPowerDevice?1:1.12;renderer.setClearColor(0x91b3c2,1);renderer.info.autoReset=true;
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,lowPowerDevice?0.72:1.5));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=!lowPowerDevice;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.18;renderer.setClearColor(0x91b3c2,1);renderer.info.autoReset=true;
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x91b3c2);scene.fog=new THREE.FogExp2(0x9aaeb0,0.0054);
 const camera=new THREE.PerspectiveCamera(72,innerWidth/innerHeight,.1,250);
 scene.add(camera); // Required for camera-attached first-person weapon meshes to render.
-const hemi=new THREE.HemisphereLight(0xbfe9ff,0x554b3b,2.0);scene.add(hemi);
-const sun=new THREE.DirectionalLight(0xffd5a1,3.2);sun.position.set(-25,45,18);sun.castShadow=!lowPowerDevice;sun.shadow.mapSize.set(lowPowerDevice?512:1024,lowPowerDevice?512:1024);sun.shadow.camera.left=-55;sun.shadow.camera.right=55;sun.shadow.camera.top=55;sun.shadow.camera.bottom=-55;sun.shadow.bias=-0.00018;sun.shadow.normalBias=0.018;scene.add(sun);const fillLight=new THREE.DirectionalLight(0x75cfff,.9);fillLight.position.set(18,12,28);scene.add(fillLight);
+const hemi=new THREE.HemisphereLight(0xc4d8df,0x37382f,1.25);scene.add(hemi);
+const sun=new THREE.DirectionalLight(0xffd8ad,2.25);sun.position.set(-25,45,18);sun.castShadow=!lowPowerDevice;sun.shadow.mapSize.set(lowPowerDevice?512:1024,lowPowerDevice?512:1024);sun.shadow.camera.left=-55;sun.shadow.camera.right=55;sun.shadow.camera.top=55;sun.shadow.camera.bottom=-55;sun.shadow.bias=-0.00018;sun.shadow.normalBias=0.018;scene.add(sun);const fillLight=new THREE.DirectionalLight(0x8aa8b5,.42);fillLight.position.set(18,12,28);scene.add(fillLight);
 const sunDisc=new THREE.Mesh(new THREE.SphereGeometry(3.2,20,16),new THREE.MeshBasicMaterial({color:0xffd8a0}));sunDisc.position.set(-34,31,-105);scene.add(sunDisc);
 const sunHalo=new THREE.Mesh(new THREE.SphereGeometry(5.4,20,16),new THREE.MeshBasicMaterial({color:0xffc875,transparent:true,opacity:.12,depthWrite:false}));sunHalo.position.copy(sunDisc.position);scene.add(sunHalo);
 const mat=(color,roughness=.8,metalness=.05)=>new THREE.MeshStandardMaterial({color,roughness,metalness});
@@ -52,8 +52,8 @@ for(let i=0;i<(lowPowerDevice?1800:12000);i++){const v=70+Math.random()*75;gc.fi
 for(let i=0;i<160;i++){gc.strokeStyle='rgba(40,48,41,.18)';gc.lineWidth=Math.random()*2+0.5;gc.beginPath();let x=Math.random()*512,y=Math.random()*512;gc.moveTo(x,y);gc.lineTo(x+Math.random()*28,y+Math.random()*16);gc.stroke()}
 const groundTex=new THREE.CanvasTexture(groundCanvas);groundTex.wrapS=groundTex.wrapT=THREE.RepeatWrapping;groundTex.repeat.set(24,24);groundTex.colorSpace=THREE.SRGBColorSpace;
 const groundBump=new THREE.CanvasTexture(groundCanvas);groundBump.wrapS=groundBump.wrapT=THREE.RepeatWrapping;groundBump.repeat.set(24,24);
-const groundMat=new THREE.MeshStandardMaterial({color:0xd2cdbb,map:groundTex,bumpMap:groundBump,bumpScale:.16,roughness:1.0});
-const rockMat=mat(0x555e59), rockLite=mat(0x899084), dark=mat(0x17262b), armor=mat(0x36535a,.5,.35), armorLite=mat(0x71898a,.48,.3), cyan=mat(0x47e7f5,.3,.2), enemyMat=mat(0x81382f,.65,.12), enemyLite=mat(0xc05a43,.55,.1), visor=mat(0xff4337,.3,.15), black=mat(0x10191c);
+const groundMat=new THREE.MeshStandardMaterial({color:0x96917b,map:groundTex,bumpMap:groundBump,bumpScale:.22,roughness:1.0});
+const rockMat=mat(0x424944,.96,.02), rockLite=mat(0x68695d,.94,.01), dark=mat(0x151a19,.86,.08), armor=mat(0x303a3a,.72,.16), armorLite=mat(0x606a65,.76,.12), cyan=mat(0x7dacae,.55,.12), enemyMat=mat(0x66543b,.78,.04), enemyLite=mat(0x88734d,.72,.06), visor=mat(0xc45d2b,.48,.08), black=mat(0x101413,.82,.08);
 
 // High-frequency procedural surface maps: fine grain, mineral mottling, scratches and worn edges.
 function makeSurfaceTexture(base,light,dark,kind='stone'){
@@ -88,7 +88,7 @@ const groundDetailTexture=makeSurfaceTexture('#77725e','#a39b7d','#3e4439','ston
 rockMat.map=rockTexture;rockMat.bumpMap=rockTexture;rockMat.bumpScale=.16;rockMat.roughness=.93;rockMat.needsUpdate=true;rockLite.map=rockTexture;rockLite.bumpMap=rockTexture;rockLite.bumpScale=.12;rockLite.roughness=.9;rockLite.needsUpdate=true;
 armor.map=armorTexture;armor.bumpMap=armorTexture;armor.bumpScale=.045;armor.roughness=.48;armor.needsUpdate=true;armorLite.map=armorLiteTexture;armorLite.bumpMap=armorLiteTexture;armorLite.bumpScale=.035;armorLite.roughness=.52;armorLite.needsUpdate=true;
 enemyMat.map=insectTexture;enemyMat.bumpMap=insectTexture;enemyMat.bumpScale=.075;enemyMat.roughness=.58;enemyMat.needsUpdate=true;enemyLite.map=insectTexture;enemyLite.bumpMap=insectTexture;enemyLite.bumpScale=.055;enemyLite.roughness=.48;enemyLite.needsUpdate=true;
-groundMat.map=groundDetailTexture;groundMat.bumpMap=groundDetailTexture;groundMat.bumpScale=.24;groundMat.roughness=1.0;groundMat.needsUpdate=true;
+groundMat.map=groundDetailTexture;groundMat.bumpMap=groundDetailTexture;groundMat.bumpScale=.32;groundMat.roughness=1.0;groundMat.color.setHex(0xaaa38b);groundMat.needsUpdate=true;
 
 // GRAPHICS UPGRADE — rolling, eroded terrain instead of a perfectly flat arena.
 const terrainSegments=lowPowerDevice?24:112;
@@ -128,6 +128,22 @@ for(let i=0;i<7;i++){const xPos=(i-3)*10;const base=new THREE.Mesh(new THREE.Box
 // Simple industrial debris
 for(let i=0;i<12;i++){let box=new THREE.Mesh(new THREE.BoxGeometry(1.8+Math.random()*2,.4+Math.random(),1+Math.random()*2),dark);box.position.set((Math.random()-.5)*65,.2,-8-Math.random()*70);box.rotation.y=Math.random()*Math.PI;box.castShadow=true;box.receiveShadow=true;scene.add(box)}
 
+// SOLID WORLD COLLISION: swept horizontal movement with axis sliding.
+function moveEntityWithCollision(entity,dx,dz,radius,checkActors=false){
+ const canOccupy=(x,z)=>{
+  if(x < -55+radius || x > 55-radius || z < -95+radius || z > 22-radius)return false;
+  for(const ob of scene.children){
+   if(!ob.userData||!ob.userData.blocksEnemy||ob===entity)continue;
+   const sx=ob.scale?Math.max(Math.abs(ob.scale.x),Math.abs(ob.scale.z)):1;
+   const rr=(ob.userData.blockRadius||1.5)*sx+radius,ox=x-ob.position.x,oz=z-ob.position.z;
+   if(Math.abs(ox)<rr&&Math.abs(oz)<rr&&ox*ox+oz*oz<rr*rr)return false;
+  }
+  if(checkActors)for(const other of enemies){if(other===entity||!other.visible||other.userData.hp<=0)continue;const rr=radius+(other.userData.collisionRadius||.62),ox=x-other.position.x,oz=z-other.position.z;if(ox*ox+oz*oz<rr*rr)return false}
+  return true;
+ };
+ const steps=Math.max(1,Math.ceil(Math.hypot(dx,dz)/.18)),sx=dx/steps,sz=dz/steps;
+ for(let i=0;i<steps;i++){let nx=entity.position.x+sx,nz=entity.position.z;if(canOccupy(nx,nz))entity.position.x=nx;nx=entity.position.x;nz=entity.position.z+sz;if(canOccupy(nx,nz))entity.position.z=nz}
+}
 // GRAPHICS MILESTONE 5 — environmental dressing (low-poly, mobile-conscious).
 // 2. Landing-zone paint: worn perimeter ring and broken hazard markings.
 const zoneRingMat=new THREE.MeshStandardMaterial({color:0x9ba99e,roughness:1,transparent:true,opacity:.48});
@@ -498,26 +514,30 @@ const muzzleCore=new THREE.Mesh(new THREE.SphereGeometry(.06,8,8),new THREE.Mesh
  root.userData={legs,arms,muzzle,muzzleCore,isEnemy,chest,head,helmet,face,pack};return root
 }
 
-// First-person pulse rifle: layered metal receiver, barrel, heat sink, optic and cyan energy cells.
-const weaponRig=new THREE.Group();camera.add(weaponRig);weaponRig.position.set(.43,-.30,-.82);weaponRig.scale.set(1.18,1.18,1.18);weaponRig.rotation.set(-.035,-.04,-.02);
-const gunMetal=new THREE.MeshStandardMaterial({color:0x25343a,metalness:.82,roughness:.28});
-const gunEdge=new THREE.MeshStandardMaterial({color:0x71878b,metalness:.76,roughness:.26});
-const gunDark=new THREE.MeshStandardMaterial({color:0x10191e,metalness:.35,roughness:.55});
-const gunEnergy=new THREE.MeshStandardMaterial({color:0x4ceaff,emissive:0x087aab,emissiveIntensity:2.6,metalness:.3,roughness:.22});
-function gunPart(geo,material,pos,rot){const m=new THREE.Mesh(geo,material);m.position.set(...pos);if(rot)m.rotation.set(...rot);m.castShadow=false;m.receiveShadow=false;weaponRig.add(m);return m}
-gunPart(new THREE.BoxGeometry(.24,.22,.62),gunMetal,[0,0,0]);
-gunPart(new THREE.BoxGeometry(.29,.075,.4),gunEdge,[0,.115,-.03]);
-gunPart(new THREE.BoxGeometry(.17,.18,.27),gunDark,[0,-.16,.05],[.22,0,0]);
-gunPart(new THREE.CylinderGeometry(.052,.065,.62,12),gunDark,[0,.015,-.47],[Math.PI/2,0,0]);
-gunPart(new THREE.CylinderGeometry(.075,.075,.08,12),gunEdge,[0,.015,-.78],[Math.PI/2,0,0]);
-gunPart(new THREE.BoxGeometry(.095,.06,.32),gunEnergy,[0,.105,-.36]);
-gunPart(new THREE.BoxGeometry(.12,.095,.18),gunDark,[0,.19,-.08]);
-gunPart(new THREE.BoxGeometry(.055,.045,.1),gunEnergy,[0,.245,-.08]);
-for(let side of [-1,1]){
- gunPart(new THREE.BoxGeometry(.035,.11,.28),gunEdge,[side*.13,.015,-.15]);
- for(let j=0;j<4;j++)gunPart(new THREE.BoxGeometry(.012,.018,.045),gunEnergy,[side*.13,.03,-.29+j*.07]);
-}
-gunPart(new THREE.BoxGeometry(.14,.055,.12),gunEdge,[0,-.045,.29],[.25,0,0]);
+// First-person assault rifle: compact machined-metal silhouette, restrained wear and subdued status light.
+const weaponRig=new THREE.Group();camera.add(weaponRig);weaponRig.position.set(.36,-.31,-.78);weaponRig.scale.set(.92,.92,.92);weaponRig.rotation.set(-.025,-.035,-.015);
+const gunMetal=new THREE.MeshStandardMaterial({color:0x343a38,metalness:.62,roughness:.48});
+const gunEdge=new THREE.MeshStandardMaterial({color:0x626863,metalness:.58,roughness:.43});
+const gunDark=new THREE.MeshStandardMaterial({color:0x171b19,metalness:.18,roughness:.72});
+const gunPolymer=new THREE.MeshStandardMaterial({color:0x282b26,metalness:.08,roughness:.86});
+const gunEnergy=new THREE.MeshStandardMaterial({color:0x5f8d8a,emissive:0x102a28,emissiveIntensity:.55,metalness:.18,roughness:.5});
+function gunPart(geo,material,pos,rot){const m=new THREE.Mesh(geo,material);m.position.set(...pos);if(rot)m.rotation.set(...rot);m.castShadow=false;m.receiveShadow=false;weaponRig.add(m)}
+gunPart(new THREE.BoxGeometry(.22,.19,.43),gunMetal,[0,0,0]);
+gunPart(new THREE.BoxGeometry(.205,.055,.39),gunEdge,[0,.115,-.015]);
+gunPart(new THREE.BoxGeometry(.17,.055,.2),gunDark,[0,.145,.07]);
+gunPart(new THREE.CylinderGeometry(.025,.03,.48,12),gunDark,[0,.015,-.43],[Math.PI/2,0,0]);
+gunPart(new THREE.CylinderGeometry(.042,.042,.075,12),gunEdge,[0,.015,-.685],[Math.PI/2,0,0]);
+gunPart(new THREE.CylinderGeometry(.012,.012,.34,8),gunMetal,[0,.07,-.36],[Math.PI/2,0,0]);
+gunPart(new THREE.BoxGeometry(.19,.105,.29),gunPolymer,[0,-.005,-.30]);
+for(let side of [-1,1])for(let j=0;j<6;j++)gunPart(new THREE.BoxGeometry(.012,.014,.035),gunEdge,[side*.099,.012,-.405+j*.043]);
+gunPart(new THREE.BoxGeometry(.12,.22,.16),gunDark,[0,-.18,-.02],[.16,0,0]);
+gunPart(new THREE.BoxGeometry(.105,.17,.13),gunPolymer,[0,-.16,.16],[.24,0,0]);
+gunPart(new THREE.BoxGeometry(.13,.16,.22),gunPolymer,[0,-.015,.30]);
+gunPart(new THREE.BoxGeometry(.12,.12,.17),gunDark,[0,-.01,.46]);
+gunPart(new THREE.BoxGeometry(.055,.12,.07),gunPolymer,[0,-.12,.075],[.18,0,0]);
+gunPart(new THREE.BoxGeometry(.055,.04,.11),gunDark,[0,.17,.075]);
+gunPart(new THREE.BoxGeometry(.065,.035,.15),gunDark,[0,.16,-.12]);
+gunPart(new THREE.BoxGeometry(.018,.018,.075),gunEnergy,[0,.181,-.13]);
 weaponRig.traverse(o=>{if(o.isMesh){o.renderOrder=1000;if(o.material){o.material.depthTest=false;o.material.depthWrite=false}}});
 const fpFlash=new THREE.Group();const fpFlashOuter=new THREE.Mesh(new THREE.ConeGeometry(.105,.42,8),new THREE.MeshBasicMaterial({color:0xffb84d,transparent:true,opacity:.95,depthWrite:false}));fpFlashOuter.rotation.x=-Math.PI/2;fpFlashOuter.position.set(0,.015,-1.03);fpFlash.add(fpFlashOuter);const fpFlashCore=new THREE.Mesh(new THREE.SphereGeometry(.075,8,6),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:1,depthWrite:false}));fpFlashCore.position.set(0,.015,-.86);fpFlash.add(fpFlashCore);fpFlash.visible=false;weaponRig.add(fpFlash);
 
@@ -619,13 +639,13 @@ function enemyShoot(enemy,distance){
  scene.add(line);bullets.push({obj:line,life:.18});
 }
 function endGame(victory){won=victory;dead=!victory;message.style.display='block';message.innerHTML=victory?'LANDING ZONE SECURED':'MARINE DOWN';message.innerHTML+='<small>Press R to redeploy</small>';if(document.pointerLockElement)document.exitPointerLock()}
-function resize(){updateViewportSize();renderer.setPixelRatio(Math.min(devicePixelRatio||1,lowPowerDevice?0.45:1.5));if(innerWidth<800)mobile.style.display='block'}addEventListener('resize',resize);
+function resize(){updateViewportSize();renderer.setPixelRatio(Math.min(devicePixelRatio||1,lowPowerDevice?0.72:1.5));if(innerWidth<800)mobile.style.display='block'}addEventListener('resize',resize);
 function update(dt){
  if(dead||won)return;
  shotCooldown=Math.max(0,shotCooldown-dt);damageFlash=Math.max(0,damageFlash-dt);document.querySelector('#damageOverlay').style.opacity=damageFlash>0?String(Math.min(.82,damageFlash*2.3)):'0';hitConfirmTimer=Math.max(0,hitConfirmTimer-dt);if(hitConfirmTimer===0)document.querySelector('.reticle').classList.remove('confirmed');muzzleLife=Math.max(0,muzzleLife-dt);if(muzzleLife===0){if(player.userData.muzzle)player.userData.muzzle.visible=false;if(player.userData.muzzleCore)player.userData.muzzleCore.visible=false;}
  const fwd=(keys.KeyW?1:0)-(keys.KeyS?1:0)-stick.y,side=(keys.KeyD?1:0)-(keys.KeyA?1:0)+stick.x;
  const boost=(keys.ShiftLeft||keys.ShiftRight||boostHeld)&&fuel>0;const speed=boost?13:7.2;if(boost){fuel=Math.max(0,fuel-26*dt);vy=Math.max(vy,2.6)}else fuel=Math.min(100,fuel+10*dt);
- const forward=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw)),right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));player.position.addScaledVector(forward,fwd*speed*dt);player.position.addScaledVector(right,side*speed*dt);player.position.x=THREE.MathUtils.clamp(player.position.x,-55,55);player.position.z=THREE.MathUtils.clamp(player.position.z,-95,22);
+ const forward=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw)),right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));const moveX=(forward.x*fwd+right.x*side)*speed*dt,moveZ=(forward.z*fwd+right.z*side)*speed*dt;moveEntityWithCollision(player,moveX,moveZ,.62,false);
  if(jumpQueued&&onGround){vy=7.3;onGround=false}jumpQueued=false;vy-=18*dt;player.position.y+=vy*dt;if(player.position.y<=0){player.position.y=0;vy=0;onGround=true}
  player.rotation.y=yaw+Math.PI;player.position.y=Math.max(0,player.position.y);
  const lookDir=new THREE.Vector3(-Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),-Math.cos(yaw)*Math.cos(pitch));if(thirdPerson){const behind=4.9,high=2.45,shoulder=1.45;const desiredCam=new THREE.Vector3(player.position.x+Math.sin(yaw)*behind+Math.cos(yaw)*shoulder,player.position.y+high,player.position.z+Math.cos(yaw)*behind-Math.sin(yaw)*shoulder);camera.position.lerp(desiredCam,1-Math.exp(-dt*8));const aim=player.position.clone().add(new THREE.Vector3(0,1.4,0)).add(lookDir.clone().multiplyScalar(6.2)).add(new THREE.Vector3(Math.cos(yaw)*.85,0,-Math.sin(yaw)*.85));camera.lookAt(aim)}else{camera.position.set(player.position.x,player.position.y+2.15,player.position.z);camera.lookAt(camera.position.clone().add(lookDir.multiplyScalar(25)))}
@@ -684,7 +704,7 @@ function update(dt){
  if(e.userData.hit>0&&e.children[0].material.emissive)e.children[0].material.emissive.setHex(0xff3820);
  else if(e.children[0].material.emissive)e.children[0].material.emissive.setHex(0x000000);
  e.rotation.y=Math.atan2(dx,dz);
- if(d>7.5){let moveX=dx/(d||1),moveZ=dz/(d||1);const wander=Math.sin(performance.now()*.0014+(e.userData.wanderPhase||0))*(e.userData.wanderStrength||.3);moveX+=-moveZ*wander;moveZ+=moveX*wander*.35;const avoidX=e.position.x,avoidZ=e.position.z;let steerX=0,steerZ=0;for(const ob of scene.children){if(!ob.userData||!ob.userData.blocksEnemy)continue;const ox=avoidX-ob.position.x,oz=avoidZ-ob.position.z,dist=Math.hypot(ox,oz),radius=ob.userData.blockRadius||2.5;if(dist<radius+2.1&&dist>.01){const weight=(radius+2.1-dist)/(radius+2.1);steerX+=(ox/dist)*weight*2.6;steerZ+=(oz/dist)*weight*2.6}}moveX+=steerX;moveZ+=steerZ;const ml=Math.hypot(moveX,moveZ)||1;moveX/=ml;moveZ/=ml;const enemySpeed=e.userData.moveSpeed||4.2;e.position.x+=moveX*enemySpeed*dt;e.position.z+=moveZ*enemySpeed*dt}
+ if(d>7.5){let moveX=dx/(d||1),moveZ=dz/(d||1);const wander=Math.sin(performance.now()*.0014+(e.userData.wanderPhase||0))*(e.userData.wanderStrength||.3);moveX+=-moveZ*wander;moveZ+=moveX*wander*.35;const avoidX=e.position.x,avoidZ=e.position.z;let steerX=0,steerZ=0;for(const ob of scene.children){if(!ob.userData||!ob.userData.blocksEnemy)continue;const ox=avoidX-ob.position.x,oz=avoidZ-ob.position.z,dist=Math.hypot(ox,oz),radius=ob.userData.blockRadius||2.5;if(dist<radius+2.1&&dist>.01){const weight=(radius+2.1-dist)/(radius+2.1);steerX+=(ox/dist)*weight*2.6;steerZ+=(oz/dist)*weight*2.6}}moveX+=steerX;moveZ+=steerZ;const ml=Math.hypot(moveX,moveZ)||1;moveX/=ml;moveZ/=ml;const enemySpeed=e.userData.moveSpeed||4.2;e.userData.collisionRadius=.62;moveEntityWithCollision(e,moveX*enemySpeed*dt,moveZ*enemySpeed*dt,.62,true)}
  else if(d<30){e.userData.fireCooldown-=dt;if(e.userData.fireCooldown<=0){enemyShoot(e,d);e.userData.fireCooldown=1.55+Math.random()*.7}}
  }
  if(fireHeld&&shotCooldown<=0)shoot();
