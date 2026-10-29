@@ -38,3 +38,23 @@ The coordinate pair at offsets 32 and 36 varies over a wider signed range and fr
 ## Important limitation
 
 No original terrain mesh has yet been reconstructed or visually validated. These field interpretations are deliberately marked as hypotheses so a provisional pattern is not mistaken for a confirmed format specification.
+
+## Stronger cross-file validation: group bounds contain ramp coordinates
+
+A follow-up test compared each GPC record's first five signed 32-bit fields with the RPC coordinates in its indexed range. Interpreting GPC offsets 0 and 4 as a 2D origin, offsets 12 and 16 as positive X/Y spans, and RPC offsets 32 and 36 as 2D positions, every RPC coordinate in a group falls inside the corresponding GPC rectangle for:
+
+| Pair | GPC groups | Groups whose full RPC coordinate bounds fit |
+|---|---:|---:|
+| anub01 | 28 | 28 |
+| anub02 | 22 | 22 |
+| rag01 | 50 | 45 |
+| rag02 | 106 | 96 |
+| oasis01 | 11 | 11 |
+| oasis02 | 8 | 8 |
+| mik01 | 29 | 27 |
+
+The handful of failures are close to the rectangle edge in most checked cases, which may reflect edge conventions, field interpretation, or a few special records; they are not silently treated as fits. This is strong evidence that the RPC pair at offsets 32/36 represents planar coordinates and that GPC offsets 0/4/12/16 describe a containing region or dimensions. It is still an inference from internal consistency rather than a comparison against a decoded mesh.
+
+A second consistency check found that the signed 32-bit value at GPC offset 8 appears at least once among the four RPC corner values in every group across all seven pairs above (266 groups total). In many groups, every corner value equals this GPC value. This supports interpreting GPC offset 8 as a reference/base elevation and RPC offsets 16/20/24/28 as four corner elevations, though their precise corner ordering and vertical scale remain unknown.
+
+The combined evidence is materially stronger than the earlier value-distribution observation: GPC records appear to describe a spatial region and reference elevation, while each indexed RPC record appears to describe a positioned surface with four corner values. The next step is to establish corner order, edge conventions, and scale, then compare a generated diagnostic mesh with an original map reference before calling this a decoder.
