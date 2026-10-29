@@ -115,3 +115,15 @@ node tools/cross-reference-resources.mjs original-data --include-tpc > resource-
 ```
 
 Treat unresolved names as candidates for investigation, not proof of missing files. The scan only sees printable filename-like strings and does not decode binary resource references.
+
+## 12. Validate paired GPC/RPC index ranges
+
+A cross-file comparison of `anub01`, `anub02`, `rag01`, `rag02`, and `oasis01` found the same pattern: each 32-byte `.GPC` record contains two 16-bit values at byte offsets 24 and 26 that form an inclusive range into the paired `.RPC` record table. Across these five samples, the ranges are in bounds, sorted, contiguous, start at RPC record 0, and end at the final RPC record. For example, `rag01.gpc` ranges start `[0,10]`, `[11,15]`, `[16,20]` and finish `[678,766]`, covering all 767 records in `rag01.rpc`. This is strong evidence for a GPC-to-RPC range/index relationship, though it does not identify what the RPC records represent geometrically.
+
+Run the validator over all paired resources:
+
+```sh
+node tools/check-gpc-rpc-pairs.mjs original-data/structs > gpc-rpc-pair-audit.json
+```
+
+The tool checks header/count equations, bounds, ordering, contiguity, and full coverage. It deliberately reports the offsets as candidate range fields rather than claiming the terrain mesh is decoded.
