@@ -42,6 +42,7 @@ function inspectPair(gpcPath, rpcPath) {
   let referenceValueFound = 0;
   let everyCornerEqualsReference = 0;
   let allFourEqual = 0;
+  const positionSignatures = new Map();
   const examples = [];
   for (let i = 0; i < gc; i++) {
     const go = 20 + i * 32;
@@ -59,7 +60,13 @@ function inspectPair(gpcPath, rpcPath) {
     let allIndexedCornersEqualReference = true;
     for (let j = start; j <= end && j < rc; j++) {
       const ro = 20 + j * 40;
-      points.push([R.getInt32(ro + 32, true), R.getInt32(ro + 36, true)]);
+      const px = R.getInt32(ro + 32, true);
+      const py = R.getInt32(ro + 36, true);
+      points.push([px, py]);
+      const positionKey = `${px},${py}`;
+      const cornerSignature = [16, 20, 24, 28].map(p => R.getInt32(ro + p, true)).join(',');
+      if (!positionSignatures.has(positionKey)) positionSignatures.set(positionKey, []);
+      positionSignatures.get(positionKey).push(cornerSignature);
       for (const p of [16, 20, 24, 28]) {
         const value = R.getInt32(ro + p, true);
         cornerValues.push(value);
@@ -85,6 +92,9 @@ function inspectPair(gpcPath, rpcPath) {
       allIndexedCornerValuesEqualReference: allIndexedCornersEqualReference,
     });
   }
+  const duplicatePositionGroups = [...positionSignatures.values()].filter(values => values.length > 1);
+  const duplicatePositionGroupsSameCorners = duplicatePositionGroups.filter(values => new Set(values).size === 1).length;
+  const duplicatePositionGroupsDifferentCorners = duplicatePositionGroups.filter(values => new Set(values).size > 1).length;
   return {
     gpcPath, rpcPath, valid: true, gpcCount: gc, rpcCount: rc,
     contiguousRpcRanges: rangesValid && nextExpected === rc,
@@ -92,6 +102,12 @@ function inspectPair(gpcPath, rpcPath) {
     inferredGpcReferenceValueAppearsAmongIndexedRpcCornerValues: { groups: referenceValueFound, totalGroups: gc },
     allIndexedRpcCornerValuesEqualGpcReferenceValue: { groups: everyCornerEqualsReference, totalGroups: gc },
     rpcRecordsWithAllFourCornerLikeValuesEqual: allFourEqual,
+    duplicatePositionAnalysis: {
+      uniquePositions: positionSignatures.size,
+      positionsWithMultipleRecords: duplicatePositionGroups.length,
+      duplicatePositionsWithSameCornerSignature: duplicatePositionGroupsSameCorners,
+      duplicatePositionsWithDifferentCornerSignatures: duplicatePositionGroupsDifferentCorners,
+    },
     examples,
     limitation: 'Internal consistency only; no mesh, corner ordering, units, or terrain semantics are confirmed.',
   };
