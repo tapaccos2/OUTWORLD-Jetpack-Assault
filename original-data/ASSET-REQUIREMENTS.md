@@ -14,6 +14,15 @@ The repository now contains 828 files under `original-data/`, including:
 
 The new assets materially improve coverage: mission-level structure resources and their companion graphics/resource tables are now present for multiple campaigns, along with packed game resources and the shell database assets.
 
+## Terrain files needed for the next step
+
+Static inspection of `outwars.exe` identifies two terrain-specific files that are absent from the current `original-data/` inventory:
+
+- `TERRAIN/RED.GRP`: the loader expects a `CPMG` signature, version value `0x43`, a count no greater than 200, and reads a 6,400-byte payload after a 20-byte header.
+- `TERRAIN/RAG01.RMP`: the loader expects a `CPMR` signature, version value `0x43`, a count no greater than 1,000, and reads a 40,000-byte payload after a 20-byte header.
+
+These are confirmed executable parser expectations; the payload semantics are not yet decoded. The files are required for the next terrain-format investigation. The map-named `.DPC` files have a validated top-level record table, but no terrain mesh has been reconstructed yet.
+
 ## Still to verify
 
 - Whether the uploaded `structs/` collection contains every structure/unit resource referenced by the mission files. The folder has many campaign-specific sets, but the current inventory alone does not prove completeness.
