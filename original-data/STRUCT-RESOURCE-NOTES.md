@@ -65,9 +65,9 @@ Next:
 1. Validate the FF directory-table hypothesis against `units.ff` and more shell archives.
 2. Use the extracted FF filenames and offsets to compare archive contents with loose files and mission references.
 3. Compare multiple `.DPC/.GPC/.RPC/.TPC` files by type and campaign to identify header fields and internal record layouts.
-4. Continue linking these assets to `.MIS` placements and `.GRY` terrain data.
+4. Continue linking these assets to `.MIS` placements and identify the separate terrain asset format; `.GRY` files are sound-effect audio.
 
-No model, texture, animation, terrain, or mission-logic decoder is claimed yet. These notes distinguish confirmed byte layout from fields whose meanings remain unknown.
+No model, texture, animation, terrain, or mission-logic decoder is claimed yet. The `.GRY` files are sound-effect audio containers, not terrain geometry. These notes distinguish confirmed byte layout from fields whose meanings remain unknown.
 
 ## Validation update: `units.ff`
 
