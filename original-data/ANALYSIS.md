@@ -118,3 +118,7 @@ The signed 16-bit values at RPC offsets `+6` and `+8` are confirmed fixed-point 
 This identifies a real orientation field and gives us a concrete next disassembly target: locate the code that consumes this vector to derive the ramp's four corner positions. The remaining fields at RPC offsets `+0`, `+2`, `+4`, `+10`, `+12`, and `+14` are not yet decoded.
 
 Reachability caveat: the setter at `0x00477030` is present in the executable, but a simple static cross-reference scan found no direct call instruction or literal function-pointer reference to that address. Its runtime reachability is not yet established, so it is strong record-layout evidence rather than proof that this exact routine processes campaign terrain in normal gameplay.
+
+### Second RPC vector: normal candidate
+
+The signed 16-bit triplet at RPC offsets `+10`, `+12`, and `+14` has a near-constant magnitude across the entire inventory: all 8,005 records in all 34 RPC files fall within 2 units of magnitude 4095 (observed range 4094.27–4095.75). Flat records commonly use `(0, 0, 4095)`; sloped records have non-zero horizontal components and a reduced third component. This strongly supports interpreting the triplet as a fixed-point surface normal. Unlike the `+6/+8` direction pair, a direct native code use-site for this normal triplet has not yet been found, so it remains a high-confidence data-pattern hypothesis.
