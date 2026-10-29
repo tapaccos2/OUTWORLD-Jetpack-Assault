@@ -37,3 +37,13 @@ node tools/scan-gry-tags.mjs original-data/gry/*.gry
 ```
 
 Detailed evidence and limitations are maintained in `FORMAT-NOTES.md`.
+
+## Compressed-block framing
+
+- Each of the 34 paired records contains `2E 3E 9D 00` at record-relative offset `+71`.
+- The following three bytes are a little-endian compressed-payload length; the payload begins at `+78`.
+- Every non-final payload ends exactly at the next signature start. The final payload ends five bytes before EOF.
+- All ten readable files end with a five-byte trailer of the form `?? 22 75 28 03`.
+- The four-byte `fact` payload is a candidate uncompressed length; its relationship to the compressed length is consistently about 1.97:1, but decompression has not yet confirmed the meaning.
+
+Use `node tools/inspect-gry-blocks.mjs original-data/gry/*.gry` to verify the per-block offsets and boundaries.
