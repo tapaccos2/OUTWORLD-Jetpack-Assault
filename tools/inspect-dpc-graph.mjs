@@ -74,9 +74,6 @@ while (queue.length && nodes.size < maxNodes) {
   const offset = item.targetOffset;
   const kind = b[offset], flags = b[offset + 1], classId = u16(offset + 2);
   const key = offset + ':' + kind + ':' + classId;
-  if (item.parentOffset !== null) {
-    edges.push({ from: item.parentOffset, to: offset, rootIndex: item.rootIndex, depth: item.depth, fieldIndex: item.fieldIndex });
-  }
   if (nodes.has(key)) {
     const existing = nodes.get(key);
     if (!existing.rootIndices.includes(item.rootIndex)) existing.rootIndices.push(item.rootIndex);
