@@ -167,3 +167,5 @@ The two exceptions above are not arbitrary: **all ten readable files fit the sam
 For nine files, the two header values are equal, so the 14-byte contribution is zero. In `o7.gry`, the values are 3 and 4, giving `3 × 20 + 1 × 14 = 74` bytes. In `d4.gry`, they are 12 and 14, giving `12 × 20 + 2 × 14 = 268` bytes. These exactly match the measured distances to the first marker in both files.
 
 This strongly supports a pre-marker region composed of a count of 20-byte units plus a difference-count of 14-byte units. It does **not** yet establish the meaning of either record type or prove that the units are records rather than other fixed-width fields. The inspector now checks this formula for every input file and reports whether it matches.
+
+The inspector also now dumps the candidate 14-byte blocks as seven little-endian 16-bit values. In `o7.gry`, the single block is at offset 72; in `d4.gry`, the two blocks are at offsets 252 and 266. Their values are visible for comparison, but field meanings are still unassigned.
