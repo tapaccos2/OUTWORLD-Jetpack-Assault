@@ -629,22 +629,25 @@ if(window.GLTFLoader){
 
 
 const player=soldier(false);
-// Reuse the player character's own arm meshes in first person instead of separate floating tube geometry.
+// Reuse the player character's articulated arm meshes in first person.
 if(player.userData.arms&&player.userData.arms.length===2){
- // Clone the articulated arm meshes only; the original pivot's userData contains an Object3D reference.
  const cloneArmMeshes=source=>{const arm=new THREE.Group();source.children.forEach(child=>arm.add(child.clone(true)));return arm};
  const leftArm=cloneArmMeshes(player.userData.arms[0]);
  const rightArm=cloneArmMeshes(player.userData.arms[1]);
  for(const arm of [leftArm,rightArm]){
-  arm.position.set(0,0,0);arm.rotation.set(0,Math.PI,0);arm.scale.setScalar(.72);
-  arm.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;o.renderOrder=1000;if(o.material){o.material.depthTest=false;o.material.depthWrite=false}}});
+  // These limbs were authored in full-body character space; scale them for the camera view.
+  arm.rotation.set(0,Math.PI,0);arm.scale.setScalar(.48);
+  arm.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;o.renderOrder=1000;if(o.material){o.material=o.material.clone();o.material.depthTest=false;o.material.depthWrite=false}}});
   armRig.add(arm);
  }
- leftArm.position.set(-.43,-.22,-.56);leftArm.rotation.z=.52;
- rightArm.position.set(.47,-.23,-.47);rightArm.rotation.z=-.28;
+ // Put the support hand on the forward handguard and the firing hand at the trigger grip.
+ leftArm.position.set(-.08,.13,-.72);
+ rightArm.position.set(.35,.13,-.70);
+ leftArm.rotation.z=.12;
+ rightArm.rotation.z=-.08;
  const leftElbow=leftArm.children.find(o=>o.isGroup),rightElbow=rightArm.children.find(o=>o.isGroup);
- if(leftElbow){leftElbow.rotation.x=-.20;leftElbow.rotation.z=-.10}
- if(rightElbow){rightElbow.rotation.x=-.14;rightElbow.rotation.z=.08}
+ if(leftElbow){leftElbow.rotation.x=-.10;leftElbow.rotation.z=-.04}
+ if(rightElbow){rightElbow.rotation.x=-.08;rightElbow.rotation.z=.03}
 }
 
 // Third-person rifle mounted to the marine's forward hand; visible only in chase view.
