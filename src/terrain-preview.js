@@ -211,7 +211,7 @@ function makeMesh() {
       positions.push((p.x - centerX) * currentScale, (p.y - centerY) * currentScale, (p.z - minZ) * currentScale);
       normals.push(...surface.normal);
       if (useGroupColors) {
-        heightPalette.setHSL(groupHue, 0.42, 0.36 + (j % 2) * 0.06);
+        heightPalette.setHSL(groupHue, 0.42, 0.40);
       } else {
         const t = (p.z - minZ) / spanZ;
         heightPalette.setHSL(0.095 + t * 0.09, 0.30, 0.24 + t * 0.32);
