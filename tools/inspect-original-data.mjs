@@ -1,20 +1,20 @@
 #!/usr/bin/env node
 /**
- * First-pass inventory tool for original Outwars mission and terrain files.
+ * First-pass inventory tool for original Outwars mission files and GRY sound-effect audio containers.
  *
  * Usage:
  *   node tools/inspect-original-data.mjs [original-data]
  *
  * This intentionally does NOT pretend to fully decode the proprietary binary
  * structures. It inventories readable strings, referenced resources, and
- * terrain headers so observations can be compared across files.
+ * GRY audio-container headers so observations can be compared across files.
  */
 import fs from 'node:fs';
 import path from 'node:path';
 
 const root = path.resolve(process.argv[2] ?? 'original-data');
 const missionDir = path.join(root, 'misn');
-const terrainDir = path.join(root, 'gry');
+const gryDir = path.join(root, 'gry');
 
 function printableStrings(buffer, minimum = 4) {
   const found = [];
@@ -42,7 +42,7 @@ function listFiles(dir, extensions) {
 }
 
 const missionFiles = listFiles(missionDir, new Set(['.mis']));
-const terrainFiles = listFiles(terrainDir, new Set(['.gry']));
+const gryFiles = listFiles(gryDir, new Set(['.gry']));
 
 const missions = missionFiles.map(file => {
   const data = fs.readFileSync(file);
@@ -59,7 +59,7 @@ const missions = missionFiles.map(file => {
   };
 });
 
-const terrain = terrainFiles.map(file => {
+const gryAudio = gryFiles.map(file => {
   const data = fs.readFileSync(file);
   return {
     file: path.basename(file),
@@ -72,7 +72,7 @@ const terrain = terrainFiles.map(file => {
 const result = {
   generatedAt: new Date().toISOString(),
   root,
-  counts: { missions: missions.length, terrainFiles: terrain.length },
+  counts: { missions: missions.length, gryAudioFiles: gryAudio.length },
   missions,
   terrain,
 };
