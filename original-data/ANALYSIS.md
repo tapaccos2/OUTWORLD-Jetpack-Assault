@@ -98,3 +98,9 @@ The old RPC field-pattern note above describes these offsets as 16-bit fields be
 A reproducible checker is now available at `tools/analyze-terrain-field-hypotheses.mjs`. It reports the inferred bounding-box fit and reference-value consistency for each paired file. The measured results and caveats are also recorded in `original-data/TERRAIN-FIELD-HYPOTHESES.md`.
 
 This is not yet a terrain decoder: RPC corner ordering, coordinate/height units, spans' exact meaning, and the role of RPC's leading 16 bytes remain unknown. The next work is to resolve those fields and validate a diagnostic mesh against an original map reference before building terrain into the browser prototype.
+
+### Expanded terrain-field check across all 34 resource pairs
+
+The spatial-field consistency check has now been run against every one of the 34 paired GPC/RPC resource sets in `original-data/structs/`. All 34 pairs preserve the contiguous, in-bounds range partition from GPC groups to RPC records. Across 749 groups total, the inferred GPC origin/span rectangle contains all indexed RPC positions in 717 groups (95.7%); the 32 exceptions are concentrated in `rag01` (5), `rag02` (10), `mik01` (2), `anub03` (1), `anub2m` (2), `anub3m` (1), `mik1m` (2), and `rag2m` (9). The inferred GPC reference value appears among the indexed RPC corner-like values in every group across all 34 pairs.
+
+This is now broad internal validation of the candidate spatial-field layout, not just a handful of examples. It still does not prove the coordinate axis convention, corner ordering, world scale, or the semantic role of the RPC record's leading 16 bytes. The reusable checker is `tools/analyze-terrain-field-hypotheses.mjs`; the current measurements and limits are in `original-data/TERRAIN-FIELD-HYPOTHESES.md`.
