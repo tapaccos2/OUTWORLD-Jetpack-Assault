@@ -606,7 +606,7 @@ const fpFlash=new THREE.Group();const fpFlashOuter=new THREE.Mesh(new THREE.Cone
 const fallbackWeaponMeshes=[];
 weaponRig.traverse(o=>{if(o.isMesh&&o!==fpFlashOuter&&o!==fpFlashCore)fallbackWeaponMeshes.push(o)});
 const rifleAssetURL='https://raw.githubusercontent.com/petroulacl/fps-asset-kit/main/weapons/flat_guns_west/Flat%20Guns%20West/GLB/Rifle_Assault_West.glb';
-if(window.GLTFLoader){
+if(false && window.GLTFLoader){
  const rifleLoader=new window.GLTFLoader();
  rifleLoader.load(rifleAssetURL,gltf=>{
   const model=gltf.scene;
@@ -635,7 +635,7 @@ const fpArmor=new THREE.MeshStandardMaterial({color:0x34413f,metalness:.58,rough
 const fpEdge=new THREE.MeshStandardMaterial({color:0x788982,metalness:.62,roughness:.38});
 const fpGlove=new THREE.MeshStandardMaterial({color:0x151b1a,metalness:.12,roughness:.88});
 const fpLight=new THREE.MeshStandardMaterial({color:0x55d9d1,emissive:0x0d514c,emissiveIntensity:.8,metalness:.25,roughness:.35});
-function fpPart(parent,geo,mat,pos,rot){const m=new THREE.Mesh(geo,mat);m.position.set(...pos);if(rot)m.rotation.set(...rot);m.renderOrder=1001;m.frustumCulled=false;m.castShadow=false;m.receiveShadow=false;mat.depthTest=false;mat.depthWrite=false;parent.add(m);return m}
+function fpPart(parent,geo,mat,pos,rot){const m=new THREE.Mesh(geo,mat);m.position.set(...pos);if(rot)m.rotation.set(...rot);m.renderOrder=999;m.frustumCulled=false;m.castShadow=false;m.receiveShadow=false;mat.depthTest=false;mat.depthWrite=false;parent.add(m);return m}
 function makeFPArm(side){
  const arm=new THREE.Group();armRig.add(arm);
  // Compact diagonal forearm enters from the lower edge, with layered armour and a visible glove.
@@ -651,8 +651,9 @@ function makeFPArm(side){
 }
 const leftArm=makeFPArm(-1),rightArm=makeFPArm(1);
 // Support hand approaches the front handguard; trigger hand sits under the receiver/grip.
-leftArm.position.set(.02,.015,-.04);
-rightArm.position.set(.01,-.015,.02);
+leftArm.scale.setScalar(.62);rightArm.scale.setScalar(.62);
+leftArm.position.set(-.035,-.105,-.22);
+rightArm.position.set(.025,-.12,-.18);
 
 // Third-person rifle mounted to the marine's forward hand; visible only in chase view.
 const marineRifle=new THREE.Group();
