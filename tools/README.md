@@ -138,3 +138,5 @@ node tools/analyze-terrain-field-hypotheses.mjs \
 ```
 
 This reports whether RPC coordinate pairs fall inside the inferred GPC origin/span rectangle and whether the GPC reference value appears among the indexed RPC corner-like values. Current results support the spatial-field hypothesis across several campaign pairs, but this is still internal consistency testing, not a validated mesh decoder. See `original-data/TERRAIN-FIELD-HYPOTHESES.md` for measured results and limitations.
+
+The checker also measures the signed 16-bit pair at RPC offsets +6/+8. The original executable's sine/cosine lookup routines are called by a record setter and write to these exact offsets; across all 8,005 RPC records, the pair's magnitude stays within 2 of 4095. Runtime reachability of that setter is not yet confirmed, but the field interpretation is strongly supported by both code and data.
