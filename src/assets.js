@@ -48,9 +48,18 @@
    {asset:'boulders',x:-20,z:-47,scale:.9,rotation:1.4,kind:'rock',collision:1.7},
    {asset:'boulders',x:20,z:-50,scale:.9,rotation:2.8,kind:'rock',collision:1.7},
    {asset:'crate',x:-13,z:-29,scale:.58,rotation:.4,kind:'prop',collision:1.0},
-   {asset:'crate',x:13,z:-38,scale:.58,rotation:2.4,kind:'prop',collision:1.0}
+   {asset:'crate',x:13,z:-38,scale:.58,rotation:2.4,kind:'prop',collision:1.0},
+   {asset:'crate',x:-11,z:-16,scale:.62,rotation:1.2,kind:'prop',collision:1.0},
+   {asset:'crate',x:11,z:-25,scale:.62,rotation:2.0,kind:'prop',collision:1.0},
+   {asset:'crate',x:-12,z:-43,scale:.62,rotation:.6,kind:'prop',collision:1.0},
+   {asset:'crate',x:12,z:-48,scale:.62,rotation:2.8,kind:'prop',collision:1.0},
+   {asset:'boulders',x:-13,z:-20,scale:.7,rotation:1.1,kind:'rock',collision:1.5},
+   {asset:'boulders',x:13,z:-35,scale:.7,rotation:2.4,kind:'rock',collision:1.5},
+   {asset:'boulders',x:-13,z:-51,scale:.7,rotation:.2,kind:'rock',collision:1.5},
+   {asset:'canopy',x:-12,z:-31,height:6.3,rotation:1.8,kind:'tree',collision:1.5},
+   {asset:'buttress',x:12,z:-46,height:6.0,rotation:2.2,kind:'tree',collision:1.5}
   ];
-  const chosen=lowPowerDevice?specs.filter(item=>item.kind!=='rock'||(item.x<0&&item.z===-38)):specs;
+  const chosen=lowPowerDevice?specs.filter((item,index)=>item.kind!=='rock'||index%3===0):specs;
   const sourceCache=new Map();
   const getSource=key=>{
    if(!sourceCache.has(key))sourceCache.set(key,loader.loadAsync(URLS[key]));
