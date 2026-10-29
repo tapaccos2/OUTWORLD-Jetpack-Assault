@@ -82,3 +82,9 @@ node tools/inspect-gry-structure.mjs original-data/gry/*.gry
 ```
 
 This remains byte-level format investigation—not a terrain decoder. The next useful step is to identify the shared preamble and then validate any proposed fields against file lengths and the terrain/mission resources. No terrain geometry has yet been reconstructed.
+
+### Cross-file signature result
+
+Comparing bytes relative to each file's first `00 A0 B9 B7` occurrence shows that nine files (`Q.gry`, `a2.gry`, `d4.gry`, `j1.gry`, `o2.gry`, `o7.gry`, `r1.gry`, `r2.gry`, and `r6.gry`) have the same following 64-byte sequence. `o5.gry` shares the initial four-byte pattern but diverges at relative byte 7. In the nine-file sequence, the ASCII bytes `66 61 63 74` (`fact`) occur at relative offset 60.
+
+This makes the first occurrence look more like a shared structured preamble/signature than a random isolated match, but it still does not identify the fields or prove that the marker begins a complete section. The updated inspector now groups files by their 64-byte signature at the first occurrence so the comparison can be repeated locally.
