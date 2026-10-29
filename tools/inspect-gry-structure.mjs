@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * Compare Outwars .GRY headers and repeated byte sequences across terrain files.
- * The sequence 00 A0 B9 B7 is an observed byte pattern, not a proven section
- * boundary. This tool reports observations only; it does not decode terrain.
+ * Compare Outwars .GRY headers and repeated terrain signatures across files.
+ * The three-byte suffix A0 B9 B7 recurs with a variable leading byte. This is
+ * an observed signature, not a decoded field. This tool does not decode terrain.
  *
  * Usage:
  *   node tools/inspect-gry-structure.mjs original-data/gry/*.gry
@@ -47,9 +47,10 @@ const records = files.map(file => {
   if (b.length < 12) {
     return { file: path.basename(file), bytes: b.length, error: 'File too short or empty', buffer: b };
   }
-  const marker = Buffer.from([0x00, 0xa0, 0xb9, 0xb7]);
-  const markerOffsets = findAll(b, marker);
-  const firstMarker = markerOffsets[0] ?? null;
+  const signatureSuffix = Buffer.from([0xa0, 0xb9, 0xb7]);
+  const signatureSuffixOffsets = findAll(b, signatureSuffix);
+  const signatureOffsets = signatureSuffixOffsets.filter(offset => offset > 0).map(offset => offset - 1);
+  const firstSignature = signatureOffsets[0] ?? null;
   const header = [u16(b, 4), u16(b, 6), u16(b, 8), u16(b, 10)];
   const candidateRecords = [];
   if (firstMarker !== null && firstMarker >= 12) {
@@ -81,7 +82,7 @@ const records = files.map(file => {
     magic: hex(b, 0, 4),
     headerU16LE: header,
     markerOffsets,
-    bytesBeforeFirstMarker: firstMarker === null ? null : firstMarker - 12,
+    bytesBeforeFirstSignature: firstMarker === null ? null : firstMarker - 12,
     candidate20ByteRecordsBeforeMarker: candidateRecords,
     candidate14ByteBlocksAfter20ByteRegion: candidate14ByteBlocks,
     candidate20ByteRecordCount: candidateRecords.length,
@@ -90,7 +91,7 @@ const records = files.map(file => {
     headerThirdMinusSecondTimes14: firstMarker === null ? null : (header[2] - header[1]) * 14,
     candidatePreMarkerBytes: firstMarker === null ? null : (header[1] * 20) + ((header[2] - header[1]) * 14),
     candidateRecordModelMatches: firstMarker === null ? null : (firstMarker - 12) === (header[1] * 20) + ((header[2] - header[1]) * 14),
-    bytesAtFirstMarker: firstMarker === null ? null : hex(b, firstMarker, Math.min(firstMarker + 64, b.length)),
+    bytesAtFirstSignature: firstMarker === null ? null : hex(b, firstMarker, Math.min(firstMarker + 64, b.length)),
     bytesAfterFirstMarkerHex: firstMarker === null ? null : hex(b, firstMarker, Math.min(firstMarker + 32, b.length)),
     buffer: b,
     firstMarker,
@@ -112,9 +113,9 @@ const output = {
   summary: {
     filesInspected: records.length,
     commonPrefixAtFileStart: commonPrefix(records.filter(r => r.buffer).map(r => r.buffer)),
-    filesWithMarker: valid.length,
-    commonBytesStartingAtFirstMarker: commonAfterMarker,
-    identical64ByteSignaturesAtFirstMarker: [...markerSignatures.entries()].map(([signatureHex, files]) => ({ files, signatureHex })),
+    filesWithSignature: valid.length,
+    commonBytesStartingAtFirstSignature: commonAfterMarker,
+    identical64ByteSignaturesAtFirstSignature: [...markerSignatures.entries()].map(([signatureHex, files]) => ({ files, signatureHex })),
     note: 'A repeated sequence or shared byte prefix is evidence of structure, not proof of field meanings or a section boundary.',
   },
   files: records.map(({ buffer, firstMarker, ...record }) => record),
