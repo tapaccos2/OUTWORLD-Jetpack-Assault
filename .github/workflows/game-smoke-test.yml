@@ -105,11 +105,37 @@ jobs:
               throw error;
             }
             await page.click('#referenceToggle');
-            const referenceVisible = await page.evaluate(() => {
+            const referenceCheck = await page.evaluate(() => {
               const panel = document.querySelector('#referencePanel');
-              return !!panel && !panel.hidden && document.querySelector('#referenceCanvas').width === 1660;
+              const reference = document.querySelector('#referenceCanvas');
+              const overlay = document.querySelector('#overlayCanvas');
+              let overlayAlphaPixels = 0;
+              if (overlay && overlay.width > 1 && overlay.height > 1) {
+                const pixels = overlay.getContext('2d').getImageData(0, 0, overlay.width, overlay.height).data;
+                for (let i = 3; i < pixels.length; i += 4) if (pixels[i] > 0) overlayAlphaPixels++;
+              }
+              return {
+                visible: !!panel && !panel.hidden,
+                referenceSize: [reference?.width, reference?.height],
+                overlaySize: [overlay?.width, overlay?.height],
+                overlaySurfaceCount: Number(overlay?.dataset.surfaceCount || 0),
+                overlayAlphaPixels,
+                overlayRotation: overlay?.dataset.rotation
+              };
             });
-            if (!referenceVisible) throw new Error('Original rag01 mission-map reference did not display');
+            console.log('TERRAIN OVERLAY ASSERTION:', JSON.stringify(referenceCheck));
+            if (!referenceCheck.visible ||
+                referenceCheck.referenceSize[0] !== 1660 || referenceCheck.referenceSize[1] !== 1556 ||
+                referenceCheck.overlaySize[0] !== 1660 || referenceCheck.overlaySize[1] !== 1556 ||
+                referenceCheck.overlaySurfaceCount !== 767 || referenceCheck.overlayAlphaPixels === 0) {
+              throw new Error('Original map or candidate RPC surface overlay did not render correctly');
+            }
+            await page.locator('#overlayRotation').evaluate(el => { el.value = '30'; el.dispatchEvent(new Event('input', { bubbles: true })); });
+            const rotated = await page.evaluate(() => document.querySelector('#overlayCanvas')?.dataset.rotation);
+            if (rotated !== '30') throw new Error('RPC overlay rotation control failed');
+            await page.click('#overlayReset');
+            const resetRotation = await page.evaluate(() => document.querySelector('#overlayCanvas')?.dataset.rotation);
+            if (resetRotation !== '0') throw new Error('RPC overlay alignment reset failed');
             await page.click('#topDown');
             await page.screenshot({ path: 'terrain-preview-smoke-test.png', fullPage: true });
             console.log('TERRAIN PREVIEW CHECK:', JSON.stringify(await page.evaluate(() => ({
@@ -118,6 +144,9 @@ jobs:
               status: document.querySelector('#status')?.innerText,
               referenceTitle: document.querySelector('#referenceTitle')?.innerText,
               referenceSize: [document.querySelector('#referenceCanvas')?.width, document.querySelector('#referenceCanvas')?.height],
+              overlaySize: [document.querySelector('#overlayCanvas')?.width, document.querySelector('#overlayCanvas')?.height],
+              overlaySurfaceCount: document.querySelector('#overlayCanvas')?.dataset.surfaceCount,
+              overlayRotation: document.querySelector('#overlayCanvas')?.dataset.rotation,
               referenceVisible: !document.querySelector('#referencePanel')?.hidden,
               topDownButton: !!document.querySelector('#topDown')
             }))));
