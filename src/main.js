@@ -82,7 +82,7 @@ groundTex.repeat.set(22,22);groundTex.needsUpdate=true;groundNormal.repeat.set(2
 
 // GRAPHICS UPGRADE — rolling, eroded terrain instead of a perfectly flat arena.
 const terrainSegments=lowPowerDevice?72:192;
-const terrainGeo=new THREE.PlaneGeometry(260,260,terrainSegments,terrainSegments);
+const terrainGeo=new THREE.PlaneGeometry(52,136,terrainSegments,terrainSegments);
 const terrainPos=terrainGeo.attributes.position;
 for(let i=0;i<terrainPos.count;i++){
  const lx=terrainPos.getX(i), lz=-terrainPos.getY(i);
@@ -95,6 +95,18 @@ for(let i=0;i<terrainPos.count;i++){
 }
 terrainGeo.computeVertexNormals();
 const ground=new THREE.Mesh(terrainGeo,groundMat);ground.rotation.x=-Math.PI/2;ground.position.y=-.12;ground.receiveShadow=true;scene.add(ground);
+// Mission destination: illuminated landing beacon at the end of the ravine.
+const landingZone=new THREE.Group();
+const landingBase=new THREE.Mesh(new THREE.CylinderGeometry(2.35,2.8,.22,32),new THREE.MeshStandardMaterial({color:0x303b3c,metalness:.68,roughness:.42}));
+landingBase.position.set(0,.02,-56.5);landingBase.receiveShadow=true;landingBase.castShadow=true;landingZone.add(landingBase);
+const landingRing=new THREE.Mesh(new THREE.TorusGeometry(1.72,.075,8,40),new THREE.MeshStandardMaterial({color:0x55e6e0,emissive:0x159b9a,emissiveIntensity:1.8,metalness:.35,roughness:.3}));
+landingRing.rotation.x=Math.PI/2;landingRing.position.set(0,.18,-56.5);landingZone.add(landingRing);
+const beaconMast=new THREE.Mesh(new THREE.CylinderGeometry(.09,.16,3.2,10),new THREE.MeshStandardMaterial({color:0x526a6b,metalness:.62,roughness:.35}));
+beaconMast.position.set(0,1.75,-56.5);landingZone.add(beaconMast);
+const beaconCore=new THREE.Mesh(new THREE.SphereGeometry(.32,16,12),new THREE.MeshBasicMaterial({color:0x7afff4}));
+beaconCore.position.set(0,3.42,-56.5);landingZone.add(beaconCore);
+const beaconLight=new THREE.PointLight(0x49f4e7,4,16,2);beaconLight.position.set(0,3.25,-56.5);landingZone.add(beaconLight);
+scene.add(landingZone);
 // Layered alien sky with generated cloud bands; no extra downloads required.
 const skyCanvas=document.createElement('canvas');skyCanvas.width=1024;skyCanvas.height=512;
 const skyCtx=skyCanvas.getContext('2d');
@@ -110,7 +122,7 @@ const skyDome=new THREE.Mesh(new THREE.SphereGeometry(190,40,24),new THREE.MeshB
 // SOLID WORLD COLLISION: swept horizontal movement with axis sliding.
 function moveEntityWithCollision(entity,dx,dz,radius,checkActors=false){
  const canOccupy=(x,z)=>{
-  if(x < -55+radius || x > 55-radius || z < -95+radius || z > 22-radius)return false;
+  if(x < -24+radius || x > 24-radius || z < -61+radius || z > 12-radius)return false;
   for(const ob of scene.children){
    if(!ob.userData||!ob.userData.blocksEnemy||ob===entity)continue;
    const sx=ob.scale?Math.max(Math.abs(ob.scale.x),Math.abs(ob.scale.z)):1;
@@ -125,11 +137,11 @@ function moveEntityWithCollision(entity,dx,dz,radius,checkActors=false){
 }
 // Hand-built prop geometry removed: real textured GLB scenery is loaded by loadEnvironmentAssets().
 // Suspended dust motes catch the sun; points are subtle and do not obscure aiming.
-const dustCount=lowPowerDevice?40:360,dustPositions=new Float32Array(dustCount*3);
+const dustCount=lowPowerDevice?40:220,dustPositions=new Float32Array(dustCount*3);
 for(let i=0;i<dustCount;i++){
- dustPositions[i*3]=(Math.random()-.5)*110;
+ dustPositions[i*3]=(Math.random()-.5)*48;
  dustPositions[i*3+1]=.25+Math.random()*17;
- dustPositions[i*3+2]=4-Math.random()*105;
+ dustPositions[i*3+2]=8-Math.random()*66;
 }
 const dustGeo=new THREE.BufferGeometry();dustGeo.setAttribute('position',new THREE.BufferAttribute(dustPositions,3));
 const dustMat=new THREE.PointsMaterial({color:0xf3d8a2,size:.075,transparent:true,opacity:.42,depthWrite:false,sizeAttenuation:true});
@@ -572,7 +584,26 @@ for(const side of [-1,1]){
  glow.rotation.x=Math.PI/2;glow.position.set(side*.20,1.12,-.78);glow.visible=false;player.add(glow);jetGlows.push(glow);
 }
 scene.add(player);player.position.set(0,0,5);
-const enemies=[];const hydranPalettes=[0x78934a,0x9b5b3c,0x526b45,0x77705b,0x465b59];for(let i=0;i<7;i++){const obj=soldier(true);const size=.78+Math.random()*.48;obj.scale.set(size,.82+Math.random()*.42,size);obj.position.set((Math.random()-.5)*34,0,-20-Math.random()*34);obj.rotation.y=Math.PI+(Math.random()-.5)*.5;obj.userData.hp=100+Math.round(Math.random()*50);obj.userData.moveSpeed=3.7+Math.random()*1.7;obj.userData.cooldown=1.4+i*.35;obj.userData.fireCooldown=.9+i*.35;obj.userData.hit=0;obj.userData.walk=Math.random()*6;obj.userData.wanderPhase=Math.random()*Math.PI*2;obj.userData.wanderStrength=.2+Math.random()*.6;const palette=new THREE.Color(hydranPalettes[i%hydranPalettes.length]);obj.traverse(part=>{if(part.isMesh&&part.material&&part.material.map===insectTexture){part.material=part.material.clone();part.material.color.copy(palette);part.material.needsUpdate=true}});scene.add(obj);enemies.push(obj)}
+const enemies=[];
+const hydranPalettes=[0x78934a,0x9b5b3c,0x526b45,0x77705b,0x465b59];
+const enemySpawns=[
+ {x:-5,z:-13,trigger:-7,wave:1},{x:5,z:-15,trigger:-7,wave:1},
+ {x:7,z:-25,trigger:-18,wave:2},{x:-6,z:-28,trigger:-18,wave:2},
+ {x:-4,z:-39,trigger:-30,wave:3},{x:6,z:-42,trigger:-30,wave:3},
+ {x:0,z:-50,trigger:-42,wave:4}
+];
+for(let i=0;i<enemySpawns.length;i++){
+ const spawn=enemySpawns[i],obj=soldier(true),size=.78+Math.random()*.22;
+ obj.scale.set(size,.82+Math.random()*.18,size);obj.position.set(spawn.x,0,spawn.z);obj.visible=false;
+ obj.rotation.y=Math.PI+(Math.random()-.5)*.5;
+ obj.userData.spawned=false;obj.userData.triggerZ=spawn.trigger;obj.userData.wave=spawn.wave;
+ obj.userData.hp=100+Math.round(Math.random()*35);obj.userData.moveSpeed=3.7+Math.random()*1.2;
+ obj.userData.cooldown=1.4+i*.35;obj.userData.fireCooldown=.9+i*.35;obj.userData.hit=0;
+ obj.userData.walk=Math.random()*6;obj.userData.wanderPhase=Math.random()*Math.PI*2;obj.userData.wanderStrength=.2+Math.random()*.6;obj.userData.collisionRadius=.68;
+ const palette=new THREE.Color(hydranPalettes[i%hydranPalettes.length]);
+ obj.traverse(part=>{if(part.isMesh&&part.material&&part.material.map===insectTexture){part.material=part.material.clone();part.material.color.copy(palette);part.material.needsUpdate=true}});
+ scene.add(obj);enemies.push(obj);
+}
 // Keep the tested full-size procedural Hydran enemies visible. The imported GLB pack
 // currently has inconsistent in-game scale/orientation, so do not hide these meshes.
 if(window.loadEnvironmentAssets)window.loadEnvironmentAssets(THREE,scene,lowPowerDevice).catch(err=>console.warn('Environment GLB assets unavailable; procedural fallback remains active.',err));
@@ -784,8 +815,13 @@ function update(dt){
  // Persistent 3D jetpack flames: animate scale and glow without allocating meshes each frame.
  if(!player.userData.flames){player.userData.flames=[];for(const side of [-1,1]){const flame=new THREE.Mesh(new THREE.ConeGeometry(.095,.62,7),new THREE.MeshBasicMaterial({color:0xffa13b,transparent:true,opacity:.9,depthWrite:false}));flame.position.set(side*.13,.95,-.42);flame.rotation.x=Math.PI;flame.visible=false;player.add(flame);player.userData.flames.push(flame)}}
  player.userData.flames.forEach((flame,i)=>{flame.visible=boost;if(boost){flame.scale.y=.75+Math.random()*.65;flame.material.color.setHex(Math.random()>.25?0xffa13b:0x63edff);flame.material.opacity=.72+Math.random()*.25}})
- let remaining=0;for(const e of enemies){
- if(!e.visible)continue;
+ let remaining=0;
+ for(const e of enemies){
+  if(!e.userData.spawned&&player.position.z<=e.userData.triggerZ){
+   e.userData.spawned=true;e.visible=true;
+   document.querySelector('#missionText').textContent='Hydran ambush detected — eliminate the defenders';
+  }
+  if(!e.visible)continue;
  remaining++;
  const dx=player.position.x-e.position.x,dz=player.position.z-e.position.z,d=Math.hypot(dx,dz);
  e.userData.walk+=dt*7;
@@ -814,7 +850,14 @@ function update(dt){
  if(fireHeld&&shotCooldown<=0)shoot();
  bullets.forEach(b=>{b.life-=dt;if(b.tracer){const progress=THREE.MathUtils.clamp(1-b.life/b.duration,0,1);const head=b.start.clone().lerp(b.end,progress);if(b.beam){const travel=b.end.clone().sub(b.start);const direction=travel.clone().normalize();b.obj.position.copy(head).addScaledVector(direction,-1.2);b.obj.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),direction);b.obj.material.opacity=Math.min(1,b.life/.10)}else{const tail=THREE.MathUtils.clamp(progress-.22,0,1);const a=b.start.clone().lerp(b.end,tail);b.obj.geometry.setFromPoints([a,head]);b.obj.material.opacity=Math.min(1,b.life/.045)}}if(b.life<=0){scene.remove(b.obj);b.obj.geometry.dispose();b.obj.material.dispose()}});for(let i=bullets.length-1;i>=0;i--)if(bullets[i].life<=0)bullets.splice(i,1);if(muzzleLife<=dt)fpFlash.visible=false;
  sparks.forEach(s=>{s.life-=dt;s.obj.position.addScaledVector(s.vel,dt);s.vel.y-=9*dt;s.obj.scale.setScalar(Math.max(.01,s.life*3))});for(let i=sparks.length-1;i>=0;i--)if(sparks[i].life<=0){const deadSpark=sparks[i].obj;scene.remove(deadSpark);deadSpark.geometry.dispose();deadSpark.material.dispose();sparks.splice(i,1)}
- document.querySelector('#hpText').textContent=Math.round(hp)+'%';document.querySelector('#hpBar').style.width=hp+'%';document.querySelector('#fuelText').textContent=Math.round(fuel)+'%';document.querySelector('#fuelBar').style.width=fuel+'%';document.querySelector('#enemyText').textContent=remaining;document.querySelector('#missionText').textContent=remaining?`Hostiles remaining: ${remaining}`:'Zone clear';if(hp<=0)endGame(false);else if(remaining===0)endGame(true);
+ document.querySelector('#hpText').textContent=Math.round(hp)+'%';document.querySelector('#hpBar').style.width=hp+'%';document.querySelector('#fuelText').textContent=Math.round(fuel)+'%';document.querySelector('#fuelBar').style.width=fuel+'%';document.querySelector('#enemyText').textContent=remaining;
+ const allSpawned=enemies.every(e=>e.userData.spawned);
+ const atLanding=Math.hypot(player.position.x,player.position.z+56.5)<3.6;
+ if(remaining>0)document.querySelector('#missionText').textContent='Hostiles remaining: '+remaining+' · Reach the landing beacon';
+ else if(!allSpawned)document.querySelector('#missionText').textContent='Advance through the ravine to draw out Hydran patrols';
+ else if(!atLanding)document.querySelector('#missionText').textContent='Ravine clear — reach the illuminated landing beacon';
+ else document.querySelector('#missionText').textContent='Landing zone reached';
+ if(hp<=0)endGame(false);else if(allSpawned&&remaining===0&&atLanding)endGame(true);
 }
 function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.04);for(const mixer of externalMixers)mixer.update(dt);update(dt);renderer.render(scene,camera)}loop();
 })();
