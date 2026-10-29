@@ -15,7 +15,6 @@
  *   node tools/analyze-terrain-field-hypotheses.mjs original-data/structs/rag01.gpc original-data/structs/rag01.rpc
  */
 import fs from 'node:fs';
-import path from 'node:path';
 
 function inspectPair(gpcPath, rpcPath) {
   const g = fs.readFileSync(gpcPath);
