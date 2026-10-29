@@ -35,9 +35,9 @@ The imported glTF props are environment assets only. The player marine and Hydra
 
 ## Original Outwars data investigation
 
-The original mission and terrain files are being analyzed separately from the browser prototype. Current byte-level findings and limitations are tracked in:
+The original mission files and sound-effect audio containers are being analyzed separately from the browser prototype. The `.GRY` files are audio, not terrain geometry. Current byte-level findings and limitations are tracked in:
 
-- [Terrain structure index](original-data/GRY-STRUCTURE-INDEX.md)
+- [GRY audio-container index](original-data/GRY-STRUCTURE-INDEX.md)
 - [Binary format notes](original-data/FORMAT-NOTES.md)
 - [Mission catalog](original-data/MISSION-CATALOG.md)
 - [Missing asset requirements](original-data/ASSET-REQUIREMENTS.md)
