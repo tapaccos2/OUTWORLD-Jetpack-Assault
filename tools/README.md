@@ -161,3 +161,10 @@ node tools/export-rpc-mesh.mjs \
 
 The exporter emits four vertices and two triangles per RPC surface, grouped by the GPC ranges. The default treats the record XY pair as the local (0,0) corner and splits the quad along corner 1–2, because this interpretation produces far more shared edges with matching endpoint heights across the campaign files, and the stored normal agrees with the first three row-major heights. The centre-anchor alternative and diagonal 0–3 remain configurable for comparison against an original terrain screenshot before choosing the final runtime implementation. Raw game units are preserved; no arbitrary scale is applied.
 The checker now compares centre anchoring against local-corner anchoring by reconstructing quad corners and counting shared edges with identical endpoint heights. Across the full 34-file inventory, corner anchoring wins by a wide margin (2,297 shared edge keys / 1,872 exact-height matches versus 445 / 175 for centre anchoring).
+
+
+## 15. Compare candidate geometry with an original mission map
+
+Open `terrain-preview.html` on GitHub Pages or through a local HTTP server. The preview now has a **Top-down view** control and a collapsible **Show map reference** panel. For supported campaign maps it loads the matching original PCX mission/briefing image from `original-data/misn/` and decodes its 8-bit indexed PCX pixels in-browser.
+
+The reference panel is an inspection aid only: these PCX files are briefing/map graphics, not ground textures, and they have not been coordinate-registered to the exported mesh. Use the side-by-side comparison to check broad shape and orientation; do not treat visual resemblance alone as proof of world scale or placement. Unsupported map variants state that no reference is mapped rather than loading a guessed filename.
