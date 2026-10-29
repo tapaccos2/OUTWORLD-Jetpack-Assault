@@ -8,8 +8,8 @@ renderer.setPixelRatio(Math.min(devicePixelRatio||1,lowPowerDevice?0.82:1.6));re
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x89969a);scene.fog=new THREE.FogExp2(0x89969a,0.0042);
 const camera=new THREE.PerspectiveCamera(72,innerWidth/innerHeight,.1,250);
 scene.add(camera); // Required for camera-attached first-person weapon meshes to render.
-const hemi=new THREE.HemisphereLight(0xd2dce0,0x3b3930,1.05);scene.add(hemi);
-const sun=new THREE.DirectionalLight(0xffe1bd,2.65);sun.position.set(-25,45,18);sun.castShadow=!lowPowerDevice;sun.shadow.mapSize.set(lowPowerDevice?768:2048,lowPowerDevice?768:2048);sun.shadow.camera.left=-55;sun.shadow.camera.right=55;sun.shadow.camera.top=55;sun.shadow.camera.bottom=-55;sun.shadow.bias=-0.00018;sun.shadow.normalBias=0.018;scene.add(sun);const fillLight=new THREE.DirectionalLight(0x8aa8b5,.28);fillLight.position.set(18,12,28);scene.add(fillLight);
+const hemi=new THREE.HemisphereLight(0xdbe9ef,0x625b4b,1.45);scene.add(hemi);
+const sun=new THREE.DirectionalLight(0xffe8c9,3.0);sun.position.set(-25,45,18);sun.castShadow=!lowPowerDevice;sun.shadow.mapSize.set(lowPowerDevice?768:2048,lowPowerDevice?768:2048);sun.shadow.camera.left=-55;sun.shadow.camera.right=55;sun.shadow.camera.top=55;sun.shadow.camera.bottom=-55;sun.shadow.bias=-0.00018;sun.shadow.normalBias=0.018;scene.add(sun);const fillLight=new THREE.DirectionalLight(0x9dc9dd,.72);fillLight.position.set(18,12,28);scene.add(fillLight);
 const sunDisc=new THREE.Mesh(new THREE.SphereGeometry(3.2,20,16),new THREE.MeshBasicMaterial({color:0xffd8a0}));sunDisc.position.set(-34,31,-105);scene.add(sunDisc);
 const sunHalo=new THREE.Mesh(new THREE.SphereGeometry(5.4,20,16),new THREE.MeshBasicMaterial({color:0xffc875,transparent:true,opacity:.12,depthWrite:false}));sunHalo.position.copy(sunDisc.position);scene.add(sunHalo);
 const mat=(color,roughness=.8,metalness=.05)=>new THREE.MeshStandardMaterial({color,roughness,metalness});
@@ -102,25 +102,25 @@ window.loadEnvironmentAssets(THREE, scene, lowPowerDevice).catch(error => consol
 // Removed the visible development grid for a natural, continuous alien terrain.
 // Distant rugged ridge silhouettes made from real 3D geometry.
 for(let i=0;i<(lowPowerDevice?18:34);i++){
- const h=5+Math.random()*10,w=4+Math.random()*9;
+ const h=3.8+Math.random()*5.8,w=4+Math.random()*7;
  const geo=new THREE.IcosahedronGeometry(1,2),p=geo.attributes.position;
  for(let j=0;j<p.count;j++){const x=p.getX(j),y=p.getY(j),z=p.getZ(j);const n=.72+Math.random()*.58;const peak=Math.sign(y)*Math.pow(Math.abs(y),.72);p.setXYZ(j,x*n,peak*n*(.8+Math.random()*.45),z*(.78+Math.random()*.42))}
  geo.computeVertexNormals();
- const ridgeMat=new THREE.MeshStandardMaterial({color:i%4?0x414842:0x303a35,map:rockTexture,bumpMap:rockTexture,bumpScale:.28,roughness:1});
- const m=new THREE.Mesh(geo,ridgeMat);m.scale.set(w*.82,h*.62,w*.45);m.position.set((i-17)*6.5,h*.25,-91-Math.random()*20);m.rotation.y=Math.random()*2;m.castShadow=true;m.receiveShadow=true;scene.add(m)
+ const ridgeMat=new THREE.MeshStandardMaterial({color:i%4?0x626b62:0x4a5750,map:rockTexture,bumpMap:rockTexture,bumpScale:.18,roughness:1});
+ const m=new THREE.Mesh(geo,ridgeMat);m.scale.set(w*.72,h*.48,w*.40);m.position.set((i-17)*6.5,h*.25,-91-Math.random()*20);m.rotation.y=Math.random()*2;m.castShadow=true;m.receiveShadow=true;scene.add(m)
 }
 // Small luminous alien mineral outcrops scattered across the landing zone
 const crystalMat=new THREE.MeshStandardMaterial({color:0x777d69,emissive:0x090d08,emissiveIntensity:.12,roughness:.82,metalness:.08});
 for(let i=0;i<7;i++){const group=new THREE.Group();const count=2+Math.floor(Math.random()*2);for(let j=0;j<count;j++){const crystal=new THREE.Mesh(new THREE.ConeGeometry(.10+Math.random()*.12,.25+Math.random()*.48,5),crystalMat);crystal.position.set((Math.random()-.5)*.45,.14+Math.random()*.12,(Math.random()-.5)*.45);crystal.rotation.z=(Math.random()-.5)*.3;group.add(crystal)}group.userData.blocksEnemy=true;group.userData.blockRadius=.55;group.position.set((Math.random()-.5)*88,.03,-12-Math.random()*75);scene.add(group)}
 // Rock clusters
 for(let i=0;i<(lowPowerDevice?46:120);i++){
- const size=lowPowerDevice?.38+Math.random()*.82:.45+Math.random()*1.45;
+ const size=lowPowerDevice?.28+Math.random()*.58:.32+Math.random()*.92;
  const geo=new THREE.IcosahedronGeometry(size,2),p=geo.attributes.position;
  for(let j=0;j<p.count;j++){const n=.58+Math.random()*.82;p.setXYZ(j,p.getX(j)*n,p.getY(j)*(.5+Math.random()*.72),p.getZ(j)*(.62+Math.random()*.76))}
  geo.computeVertexNormals();
  const r=new THREE.Mesh(geo,Math.random()>.35?rockMat:rockLite);r.userData.blocksEnemy=true;r.userData.blockRadius=size*.78;
- r.position.set((Math.random()-.5)*102,.02+Math.random()*.08,-Math.random()*105+5);
- r.scale.set(.9+Math.random()*.55,.55+Math.random()*.65,.8+Math.random()*.6);r.rotation.set(Math.random()*.18,Math.random()*3,Math.random()*.18);r.castShadow=true;r.receiveShadow=true;scene.add(r)
+ r.position.set((Math.random()-.5)*92,.02+Math.random()*.05,-8-Math.random()*92);
+ r.scale.set(.8+Math.random()*.38,.42+Math.random()*.42,.72+Math.random()*.42);r.rotation.set(Math.random()*.18,Math.random()*3,Math.random()*.18);r.castShadow=true;r.receiveShadow=true;scene.add(r)
 }
 // Alien rock spires and weathered landing-zone barricades
 for(let i=0;i<(lowPowerDevice?10:24);i++){const h=2.5+Math.random()*5.8,w=.7+Math.random()*1.1;const geo=new THREE.IcosahedronGeometry(1,2),p=geo.attributes.position;for(let j=0;j<p.count;j++){const n=.78+Math.random()*.42;p.setXYZ(j,p.getX(j)*n,p.getY(j),p.getZ(j)*n)}geo.computeVertexNormals();const spire=new THREE.Mesh(geo,mat(i%3?0x343d37:0x4a4d40));spire.scale.set(w,h*.7,w*.8);spire.userData.blocksEnemy=true;spire.userData.blockRadius=w*1.2;spire.position.set((Math.random()-.5)*100,h*.32,-18-Math.random()*82);spire.rotation.set((Math.random()-.5)*.2,Math.random()*3,(Math.random()-.5)*.28);spire.castShadow=true;spire.receiveShadow=true;scene.add(spire)}
