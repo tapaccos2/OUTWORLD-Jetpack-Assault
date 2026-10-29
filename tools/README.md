@@ -127,3 +127,14 @@ node tools/check-gpc-rpc-pairs.mjs original-data/structs > gpc-rpc-pair-audit.js
 ```
 
 The tool checks header/count equations, bounds, ordering, contiguity, and full coverage. It deliberately reports the offsets as candidate range fields rather than claiming the terrain mesh is decoded.
+
+## 13. Test the current terrain-field hypothesis
+
+```sh
+node tools/analyze-terrain-field-hypotheses.mjs \
+  original-data/structs/rag01.gpc original-data/structs/rag01.rpc \
+  original-data/structs/anub01.gpc original-data/structs/anub01.rpc \
+  original-data/structs/rag02.gpc original-data/structs/rag02.rpc
+```
+
+This reports whether RPC coordinate pairs fall inside the inferred GPC origin/span rectangle and whether the GPC reference value appears among the indexed RPC corner-like values. Current results support the spatial-field hypothesis across several campaign pairs, but this is still internal consistency testing, not a validated mesh decoder. See `original-data/TERRAIN-FIELD-HYPOTHESES.md` for measured results and limitations.
