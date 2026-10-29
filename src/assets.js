@@ -14,12 +14,12 @@
       loaded[item.key]=model;
     }catch(err){console.warn('Optional environment model failed:',item.url,err);}}));
     const place=(key,positions)=>{if(!loaded[key])return;for(const p of positions){const model=loaded[key].clone(true);model.scale.multiplyScalar(p.s);model.position.set(p.x,0,p.z);model.rotation.y=p.r||0;model.traverse(n=>{if(n.isMesh&&n.material){n.material=n.material.clone();n.material.roughness=Math.max(n.material.roughness??.8,.78);}});scene.add(model);}};
-    place('rockA',[{x:-17,z:-12,s:3,r:.4},{x:18,z:-18,s:2.7,r:1.1},{x:-24,z:-31,s:3.8,r:2.1},{x:25,z:-34,s:3.5,r:.7},{x:-11,z:-43,s:2.2,r:2.8},{x:13,z:-48,s:2.6,r:1.9},{x:-32,z:-22,s:3.4,r:.3},{x:31,z:-26,s:3,r:2.5}]);
-    place('rockB',[{x:-20,z:-8,s:2,r:1.4},{x:22,z:-11,s:1.8,r:2.4},{x:-27,z:-39,s:2.3,r:.2},{x:29,z:-42,s:2.1,r:1.7},{x:-6,z:-54,s:1.6,r:2},{x:7,z:-57,s:1.7,r:.6}]);
-    place('rockC',[{x:-14,z:-27,s:1.8,r:1.2},{x:16,z:-30,s:2,r:2.4},{x:-29,z:-48,s:2.2,r:.7},{x:28,z:-51,s:2.1,r:1.6}]);
-    place('cliffB',[{x:-46,z:-25,s:8.5,r:.4},{x:47,z:-29,s:9,r:Math.PI-.3}]);
-    place('hill',[{x:-34,z:-76,s:12,r:.6},{x:35,z:-81,s:13,r:2.1}]);
-    place('cliff',[{x:-43,z:-36,s:8},{x:44,z:-39,s:8.5,r:Math.PI},{x:-35,z:-66,s:7,r:.2},{x:36,z:-69,s:7.5,r:Math.PI-.2}]);
+    place('rockA',[{x:-21,z:-25,s:1.45,r:.4},{x:22,z:-28,s:1.35,r:1.1},{x:-27,z:-39,s:1.8,r:2.1},{x:28,z:-42,s:1.65,r:.7},{x:-11,z:-48,s:1.25,r:2.8},{x:13,z:-53,s:1.35,r:1.9},{x:-36,z:-32,s:1.7,r:.3},{x:35,z:-36,s:1.5,r:2.5}]);
+    place('rockB',[{x:-24,z:-30,s:1.15,r:1.4},{x:25,z:-32,s:1.05,r:2.4},{x:-30,z:-46,s:1.35,r:.2},{x:31,z:-48,s:1.25,r:1.7},{x:-7,z:-59,s:1.0,r:2},{x:8,z:-61,s:1.0,r:.6}]);
+    place('rockC',[{x:-17,z:-36,s:1.1,r:1.2},{x:18,z:-39,s:1.15,r:2.4},{x:-32,z:-54,s:1.3,r:.7},{x:31,z:-57,s:1.25,r:1.6}]);
+    place('cliffB',[{x:-49,z:-36,s:5.2,r:.4},{x:50,z:-39,s:5.4,r:Math.PI-.3}]);
+    place('hill',[{x:-37,z:-86,s:7.5,r:.6},{x:38,z:-90,s:8,r:2.1}]);
+    place('cliff',[{x:-46,z:-47,s:5.2},{x:47,z:-50,s:5.4,r:Math.PI},{x:-38,z:-72,s:4.5,r:.2},{x:39,z:-75,s:4.7,r:Math.PI-.2}]);
     return {loaded:Object.keys(loaded),count:Object.keys(loaded).length};
   };
 })();
