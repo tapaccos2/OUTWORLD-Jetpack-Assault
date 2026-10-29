@@ -21,7 +21,7 @@
 <body>
 <canvas id="game"></canvas>
 <div id="cinemaGrade" aria-hidden="true"></div><div id="damageOverlay" aria-hidden="true"></div><div id="hud">
- <div class="panel brand">OUTWORLD <small>JETPACK ASSAULT · BUILD 0.7.0 · 29 OCT 2026</small></div>
+ <div class="panel brand">OUTWORLD <small>JETPACK ASSAULT · BUILD 0.8.0 · 29 OCT 2026</small></div>
  <div class="panel help"><b>PC CONTROLS</b><br>W A S D — Move<br>Right mouse drag — Aim · Click — Fire<br>Space — Jump · Shift — Jetpack<br>V — Camera · Esc — Release mouse</div>
  <div class="panel stats"><div class="statrow"><span>ARMOUR</span><b id="hpText">100%</b></div><div class="bar"><div id="hpBar" class="fill armour"></div></div><div class="statrow"><span>JETPACK FUEL</span><b id="fuelText">100%</b></div><div class="bar"><div id="fuelBar" class="fill fuel"></div></div><div class="statrow"><span>HOSTILES</span><b id="enemyText">5</b></div></div>
  <div class="panel objective"><strong>MISSION: BREAK THROUGH THE HYDRAN NEST</strong><span id="missionText">Cross the ravine and destroy the Hydran defenders</span></div>
@@ -115,7 +115,7 @@ const skyTex=new THREE.CanvasTexture(skyCanvas);skyTex.colorSpace=THREE.SRGBColo
 const skyDome=new THREE.Mesh(new THREE.SphereGeometry(190,40,24),new THREE.MeshBasicMaterial({map:skyTex,side:THREE.BackSide,depthWrite:false}));skyDome.renderOrder=-10;scene.add(skyDome);
 // Removed the visible development grid for a natural, continuous alien terrain.
 // Distant rugged ridge silhouettes made from real 3D geometry.
-for(let i=0;i<(lowPowerDevice?14:32);i++){let h=(lowPowerDevice?5:7)+Math.random()*(lowPowerDevice?10:18), geo=new THREE.ConeGeometry((lowPowerDevice?4:5)+Math.random()*(lowPowerDevice?5:9),h,lowPowerDevice?5:5+Math.floor(Math.random()*3));let m=new THREE.Mesh(geo,mat(i%3?0x455b5d:0x34494e));m.position.set((i-16)*10,h*.42,-85-Math.random()*25);m.rotation.y=Math.random()*2;m.castShadow=true;scene.add(m)}
+for(let i=0;i<(lowPowerDevice?12:26);i++){const h=(lowPowerDevice?3.2:4.5)+Math.random()*(lowPowerDevice?4.5:7),w=5+Math.random()*8;const geo=new THREE.IcosahedronGeometry(1,lowPowerDevice?1:2);const p=geo.attributes.position;for(let j=0;j<p.count;j++){const n=.82+Math.random()*.38;p.setXYZ(j,p.getX(j)*n,p.getY(j)*(.7+Math.random()*.42),p.getZ(j)*(.85+Math.random()*.35))}geo.computeVertexNormals();const m=new THREE.Mesh(geo,mat(i%3?0x455b5d:0x34494e));m.scale.set(w,h,w*.65);m.position.set((i-13)*8,h*.35,-85-Math.random()*25);m.rotation.y=Math.random()*2;m.castShadow=true;m.receiveShadow=true;scene.add(m)}
 // Small luminous alien mineral outcrops scattered across the landing zone
 const crystalMat=new THREE.MeshStandardMaterial({color:0x48cbd3,emissive:0x12565d,emissiveIntensity:.8,roughness:.32,metalness:.18});
 for(let i=0;i<22;i++){const group=new THREE.Group();const count=2+Math.floor(Math.random()*3);for(let j=0;j<count;j++){const crystal=new THREE.Mesh(new THREE.ConeGeometry(.12+Math.random()*.16,.45+Math.random()*.8,5),crystalMat);crystal.position.set((Math.random()-.5)*.6,.25+Math.random()*.2,(Math.random()-.5)*.6);crystal.rotation.z=(Math.random()-.5)*.25;group.add(crystal)}group.position.set((Math.random()-.5)*95,.05,-5-Math.random()*85);scene.add(group)}
@@ -517,6 +517,7 @@ for(let side of [-1,1]){
  for(let j=0;j<4;j++)gunPart(new THREE.BoxGeometry(.012,.018,.045),gunEnergy,[side*.13,.03,-.29+j*.07]);
 }
 gunPart(new THREE.BoxGeometry(.14,.055,.12),gunEdge,[0,-.045,.29],[.25,0,0]);
+weaponRig.traverse(o=>{if(o.isMesh){o.renderOrder=1000;if(o.material){o.material.depthTest=false;o.material.depthWrite=false}}});
 const fpFlash=new THREE.Group();const fpFlashOuter=new THREE.Mesh(new THREE.ConeGeometry(.105,.42,8),new THREE.MeshBasicMaterial({color:0xffb84d,transparent:true,opacity:.95,depthWrite:false}));fpFlashOuter.rotation.x=-Math.PI/2;fpFlashOuter.position.set(0,.015,-1.03);fpFlash.add(fpFlashOuter);const fpFlashCore=new THREE.Mesh(new THREE.SphereGeometry(.075,8,6),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:1,depthWrite:false}));fpFlashCore.position.set(0,.015,-.86);fpFlash.add(fpFlashCore);fpFlash.visible=false;weaponRig.add(fpFlash);
 
 const player=soldier(false);
@@ -555,8 +556,8 @@ message.addEventListener('pointerdown',e=>{e.preventDefault();startGame()});
 message.addEventListener('click',startGame);
 const viewToggle=document.querySelector('#viewToggle');function toggleView(){thirdPerson=!thirdPerson;viewToggle.textContent=thirdPerson?'VIEW: THIRD PERSON':'VIEW: FIRST PERSON'}viewToggle.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();toggleView()});const keys={};addEventListener('keydown',e=>{if(e.code==='KeyV'){toggleView();return}startGame();keys[e.code]=true;if(e.code==='Space'){jumpQueued=true;e.preventDefault()}if(e.code==='KeyR'&&(dead||won))location.reload()});addEventListener('keyup',e=>keys[e.code]=false);
 canvas.addEventListener('pointerdown',()=>startGame(),{passive:true});
-canvas.addEventListener('click',()=>{startGame();if(innerWidth>700&&canvas.requestPointerLock&&!dead&&!won&&!pointerLocked)canvas.requestPointerLock();shoot()});
-addEventListener('mouseup',()=>fireHeld=false);document.addEventListener('pointerlockchange',()=>{pointerLocked=document.pointerLockElement===canvas;if((dead||won)&&document.pointerLockElement)document.exitPointerLock()});
+canvas.addEventListener('mousedown',e=>{if(e.button===0){startGame();fireHeld=true;shoot()}});canvas.addEventListener('click',()=>{startGame();if(innerWidth>700&&canvas.requestPointerLock&&!dead&&!won&&!pointerLocked)canvas.requestPointerLock()});
+addEventListener('mouseup',()=>fireHeld=false);addEventListener('blur',()=>fireHeld=false);document.addEventListener('pointerlockchange',()=>{pointerLocked=document.pointerLockElement===canvas;if((dead||won)&&document.pointerLockElement)document.exitPointerLock()});
 let mouseLookDown=false;
 canvas.addEventListener('mousedown',e=>{if(e.button===2)mouseLookDown=true});
 addEventListener('mouseup',e=>{if(e.button===2)mouseLookDown=false});
