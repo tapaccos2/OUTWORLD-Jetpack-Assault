@@ -1,6 +1,3 @@
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-import { loadEnvironmentAssets } from './assets.js';
-window.THREE = THREE;
 (()=> {
 const canvas=document.querySelector('#game'), message=document.querySelector('#message');
 if(!window.THREE){message.innerHTML='3D ENGINE NOT LOADED<small>Connect to the internet and reload this HTML file.</small>';return}
@@ -101,7 +98,7 @@ for(let i=0;i<(lowPowerDevice?70:170);i++){
 const skyTex=new THREE.CanvasTexture(skyCanvas);skyTex.colorSpace=THREE.SRGBColorSpace;
 const skyDome=new THREE.Mesh(new THREE.SphereGeometry(190,40,24),new THREE.MeshBasicMaterial({map:skyTex,side:THREE.BackSide,depthWrite:false}));skyDome.renderOrder=-10;scene.add(skyDome);
 // Load CC0 glTF environment models asynchronously; procedural terrain remains as fallback.
-loadEnvironmentAssets(THREE, scene, lowPowerDevice).catch(error => console.warn('Optional CC0 environment models failed to load; using procedural terrain:', error));
+window.loadEnvironmentAssets(THREE, scene, lowPowerDevice).catch(error => console.warn('Optional CC0 environment models failed to load; using procedural terrain:', error));
 // Removed the visible development grid for a natural, continuous alien terrain.
 // Distant rugged ridge silhouettes made from real 3D geometry.
 for(let i=0;i<(lowPowerDevice?18:34);i++){
