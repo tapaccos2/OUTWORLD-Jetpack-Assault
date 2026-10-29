@@ -4,12 +4,12 @@ if(!window.THREE){message.innerHTML='3D ENGINE NOT LOADED<small>Connect to the i
 // Performance tiers: favour stable frame rate on Raspberry Pi and other low-power devices.
 const lowPowerDevice=(navigator.hardwareConcurrency||8)<=4||(navigator.deviceMemory||8)<=4||/raspberry|armv7|aarch64/i.test(navigator.userAgent);
 const renderer=new THREE.WebGLRenderer({canvas,antialias:!lowPowerDevice,powerPreference:'high-performance'});
-renderer.setPixelRatio(Math.min(devicePixelRatio||1,lowPowerDevice?0.82:1.6));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.04;renderer.setClearColor(0x91b3c2,1);renderer.info.autoReset=true;
-const scene=new THREE.Scene();scene.background=new THREE.Color(0x89969a);scene.fog=new THREE.FogExp2(0x89969a,0.0042);
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,lowPowerDevice?1:2));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.92;renderer.setClearColor(0x91b3c2,1);renderer.info.autoReset=true;
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x788a8b);scene.fog=new THREE.FogExp2(0x788a8b,0.0031);
 const camera=new THREE.PerspectiveCamera(72,innerWidth/innerHeight,.1,250);
 scene.add(camera); // Required for camera-attached first-person weapon meshes to render.
-const hemi=new THREE.HemisphereLight(0xdbe9ef,0x625b4b,1.45);scene.add(hemi);
-const sun=new THREE.DirectionalLight(0xffe8c9,3.0);sun.position.set(-25,45,18);sun.castShadow=!lowPowerDevice;sun.shadow.mapSize.set(lowPowerDevice?768:2048,lowPowerDevice?768:2048);sun.shadow.camera.left=-55;sun.shadow.camera.right=55;sun.shadow.camera.top=55;sun.shadow.camera.bottom=-55;sun.shadow.bias=-0.00018;sun.shadow.normalBias=0.018;scene.add(sun);const fillLight=new THREE.DirectionalLight(0x9dc9dd,.72);fillLight.position.set(18,12,28);scene.add(fillLight);
+const hemi=new THREE.HemisphereLight(0xdbe9ef,0x51473a,1.12);scene.add(hemi);
+const sun=new THREE.DirectionalLight(0xffdfb4,3.25);sun.position.set(-25,45,18);sun.castShadow=!lowPowerDevice;sun.shadow.mapSize.set(lowPowerDevice?768:2048,lowPowerDevice?768:2048);sun.shadow.camera.left=-55;sun.shadow.camera.right=55;sun.shadow.camera.top=55;sun.shadow.camera.bottom=-55;sun.shadow.bias=-0.00018;sun.shadow.normalBias=0.018;scene.add(sun);const fillLight=new THREE.DirectionalLight(0x8cb8d1,.48);fillLight.position.set(18,12,28);scene.add(fillLight);
 const sunDisc=new THREE.Mesh(new THREE.SphereGeometry(3.2,20,16),new THREE.MeshBasicMaterial({color:0xffd8a0}));sunDisc.position.set(-34,31,-105);scene.add(sunDisc);
 const sunHalo=new THREE.Mesh(new THREE.SphereGeometry(5.4,20,16),new THREE.MeshBasicMaterial({color:0xffc875,transparent:true,opacity:.12,depthWrite:false}));sunHalo.position.copy(sunDisc.position);scene.add(sunHalo);
 const mat=(color,roughness=.8,metalness=.05)=>new THREE.MeshStandardMaterial({color,roughness,metalness});
@@ -23,7 +23,7 @@ const groundCanvas=document.createElement('canvas');groundCanvas.width=groundCan
  for(let i=0;i<110;i++){const x=Math.random()*1024,y=Math.random()*1024;gc.strokeStyle='rgba(38,36,29,.25)';gc.lineWidth=.8+Math.random()*2.3;gc.beginPath();gc.moveTo(x,y);gc.lineTo(x+18+Math.random()*65,y+(Math.random()-.5)*12);gc.stroke()}
  const groundTex=new THREE.CanvasTexture(groundCanvas);groundTex.wrapS=groundTex.wrapT=THREE.RepeatWrapping;groundTex.repeat.set(15,15);groundTex.colorSpace=THREE.SRGBColorSpace;groundTex.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
  const groundBump=new THREE.CanvasTexture(groundCanvas);groundBump.wrapS=groundBump.wrapT=THREE.RepeatWrapping;groundBump.repeat.set(15,15);
- const groundMat=new THREE.MeshStandardMaterial({color:0x96917b,map:groundTex,bumpMap:groundBump,bumpScale:.34,roughness:1.0});
+ const groundMat=new THREE.MeshStandardMaterial({color:0xaaa18a,map:groundTex,bumpMap:groundBump,bumpScale:.18,roughness:.94});
 const rockMat=mat(0x424944,.96,.02), rockLite=mat(0x68695d,.94,.01), dark=mat(0x151a19,.86,.08), armor=mat(0x303a3a,.72,.16), armorLite=mat(0x606a65,.76,.12), cyan=mat(0x7dacae,.55,.12), enemyMat=mat(0x66543b,.78,.04), enemyLite=mat(0x88734d,.72,.06), visor=mat(0xc45d2b,.48,.08), black=mat(0x101413,.82,.08);
 
 // High-frequency procedural surface maps: fine grain, mineral mottling, scratches and worn edges.
@@ -90,7 +90,7 @@ const ground=new THREE.Mesh(terrainGeo,groundMat);ground.rotation.x=-Math.PI/2;g
 // Layered alien sky with generated cloud bands; no extra downloads required.
 const skyCanvas=document.createElement('canvas');skyCanvas.width=1024;skyCanvas.height=512;
 const skyCtx=skyCanvas.getContext('2d');
-const skyGrad=skyCtx.createLinearGradient(0,0,0,512);skyGrad.addColorStop(0,'#263943');skyGrad.addColorStop(.34,'#647d83');skyGrad.addColorStop(.68,'#9a9e91');skyGrad.addColorStop(1,'#c0ad8c');skyCtx.fillStyle=skyGrad;skyCtx.fillRect(0,0,1024,512);
+const skyGrad=skyCtx.createLinearGradient(0,0,0,512);skyGrad.addColorStop(0,'#172d3a');skyGrad.addColorStop(.24,'#3e606b');skyGrad.addColorStop(.52,'#829b9b');skyGrad.addColorStop(.76,'#c0b7a0');skyGrad.addColorStop(1,'#e0bd8b');skyCtx.fillStyle=skyGrad;skyCtx.fillRect(0,0,1024,512);
 for(let i=0;i<(lowPowerDevice?70:170);i++){
  const x=Math.random()*1024,y=90+Math.random()*260,w=35+Math.random()*150,h=3+Math.random()*17;
  const cg=skyCtx.createRadialGradient(x,y,1,x,y,w);cg.addColorStop(0,`rgba(225,235,226,${.025+Math.random()*.055})`);cg.addColorStop(1,'rgba(225,235,226,0)');skyCtx.fillStyle=cg;skyCtx.save();skyCtx.translate(x,y);skyCtx.scale(1,h/Math.max(1,w));skyCtx.beginPath();skyCtx.arc(0,0,w,0,Math.PI*2);skyCtx.fill();skyCtx.restore();
@@ -101,9 +101,9 @@ const skyDome=new THREE.Mesh(new THREE.SphereGeometry(190,40,24),new THREE.MeshB
 if (typeof window.loadEnvironmentAssets === 'function') { window.loadEnvironmentAssets(THREE, scene, lowPowerDevice).catch(error => console.warn('Optional CC0 environment models failed to load; using procedural terrain:', error)); } else { console.warn('Optional environment asset loader unavailable; using procedural terrain.'); }
 // Removed the visible development grid for a natural, continuous alien terrain.
 // Distant rugged ridge silhouettes made from real 3D geometry.
-for(let i=0;i<(lowPowerDevice?18:34);i++){
+for(let i=0;i<(lowPowerDevice?12:22);i++){
  const h=3.8+Math.random()*5.8,w=4+Math.random()*7;
- const geo=new THREE.IcosahedronGeometry(1,2),p=geo.attributes.position;
+ const geo=new THREE.IcosahedronGeometry(1,3),p=geo.attributes.position;
  for(let j=0;j<p.count;j++){const x=p.getX(j),y=p.getY(j),z=p.getZ(j);const n=.72+Math.random()*.58;const peak=Math.sign(y)*Math.pow(Math.abs(y),.72);p.setXYZ(j,x*n,peak*n*(.8+Math.random()*.45),z*(.78+Math.random()*.42))}
  geo.computeVertexNormals();
  const ridgeMat=new THREE.MeshStandardMaterial({color:i%4?0x626b62:0x4a5750,map:rockTexture,bumpMap:rockTexture,bumpScale:.18,roughness:1});
@@ -113,7 +113,7 @@ for(let i=0;i<(lowPowerDevice?18:34);i++){
 const crystalMat=new THREE.MeshStandardMaterial({color:0x777d69,emissive:0x090d08,emissiveIntensity:.12,roughness:.82,metalness:.08});
 for(let i=0;i<7;i++){const group=new THREE.Group();const count=2+Math.floor(Math.random()*2);for(let j=0;j<count;j++){const crystal=new THREE.Mesh(new THREE.ConeGeometry(.10+Math.random()*.12,.25+Math.random()*.48,5),crystalMat);crystal.position.set((Math.random()-.5)*.45,.14+Math.random()*.12,(Math.random()-.5)*.45);crystal.rotation.z=(Math.random()-.5)*.3;group.add(crystal)}group.userData.blocksEnemy=true;group.userData.blockRadius=.55;group.position.set((Math.random()-.5)*88,.03,-12-Math.random()*75);scene.add(group)}
 // Rock clusters
-for(let i=0;i<(lowPowerDevice?46:120);i++){
+for(let i=0;i<(lowPowerDevice?34:78);i++){
  const size=lowPowerDevice?.28+Math.random()*.58:.32+Math.random()*.92;
  const geo=new THREE.IcosahedronGeometry(size,2),p=geo.attributes.position;
  for(let j=0;j<p.count;j++){const n=.58+Math.random()*.82;p.setXYZ(j,p.getX(j)*n,p.getY(j)*(.5+Math.random()*.72),p.getZ(j)*(.62+Math.random()*.76))}
@@ -123,10 +123,10 @@ for(let i=0;i<(lowPowerDevice?46:120);i++){
  r.scale.set(.8+Math.random()*.38,.42+Math.random()*.42,.72+Math.random()*.42);r.rotation.set(Math.random()*.18,Math.random()*3,Math.random()*.18);r.castShadow=true;r.receiveShadow=true;scene.add(r)
 }
 // Alien rock spires and weathered landing-zone barricades
-for(let i=0;i<(lowPowerDevice?10:24);i++){const h=2.5+Math.random()*5.8,w=.7+Math.random()*1.1;const geo=new THREE.IcosahedronGeometry(1,2),p=geo.attributes.position;for(let j=0;j<p.count;j++){const n=.78+Math.random()*.42;p.setXYZ(j,p.getX(j)*n,p.getY(j),p.getZ(j)*n)}geo.computeVertexNormals();const spire=new THREE.Mesh(geo,mat(i%3?0x343d37:0x4a4d40));spire.scale.set(w,h*.7,w*.8);spire.userData.blocksEnemy=true;spire.userData.blockRadius=w*1.2;spire.position.set((Math.random()-.5)*100,h*.32,-18-Math.random()*82);spire.rotation.set((Math.random()-.5)*.2,Math.random()*3,(Math.random()-.5)*.28);spire.castShadow=true;spire.receiveShadow=true;scene.add(spire)}
-for(let i=0;i<7;i++){const xPos=(i-3)*10;const base=new THREE.Mesh(new THREE.BoxGeometry(3.4,1.3,.7),mat(0x3b4b4b));base.userData.blocksEnemy=true;base.userData.blockRadius=2.2;base.position.set(xPos,.65,-18-(i%3)*9);base.rotation.y=(Math.random()-.5)*.22;base.castShadow=true;base.receiveShadow=true;scene.add(base);const stripe=new THREE.Mesh(new THREE.BoxGeometry(2.4,.09,.74),mat(0xd18b42));stripe.position.set(xPos,.95,-18-(i%3)*9);stripe.rotation.y=base.rotation.y;scene.add(stripe)}
+for(let i=0;i<(lowPowerDevice?7:14);i++){const h=2.5+Math.random()*5.8,w=.7+Math.random()*1.1;const geo=new THREE.IcosahedronGeometry(1,2),p=geo.attributes.position;for(let j=0;j<p.count;j++){const n=.78+Math.random()*.42;p.setXYZ(j,p.getX(j)*n,p.getY(j),p.getZ(j)*n)}geo.computeVertexNormals();const spire=new THREE.Mesh(geo,mat(i%3?0x343d37:0x4a4d40));spire.scale.set(w,h*.7,w*.8);spire.userData.blocksEnemy=true;spire.userData.blockRadius=w*1.2;spire.position.set((Math.random()-.5)*100,h*.32,-18-Math.random()*82);spire.rotation.set((Math.random()-.5)*.2,Math.random()*3,(Math.random()-.5)*.28);spire.castShadow=true;spire.receiveShadow=true;scene.add(spire)}
+for(let i=0;i<5;i++){const xPos=(i-2)*13;const base=new THREE.Mesh(new THREE.BoxGeometry(3.4,1.3,.7),mat(0x3b4b4b));base.userData.blocksEnemy=true;base.userData.blockRadius=2.2;base.position.set(xPos,.65,-18-(i%3)*9);base.rotation.y=(Math.random()-.5)*.22;base.castShadow=true;base.receiveShadow=true;scene.add(base);const stripe=new THREE.Mesh(new THREE.BoxGeometry(2.4,.09,.74),mat(0xd18b42));stripe.position.set(xPos,.95,-18-(i%3)*9);stripe.rotation.y=base.rotation.y;scene.add(stripe)}
 // Simple industrial debris
-for(let i=0;i<12;i++){let box=new THREE.Mesh(new THREE.BoxGeometry(1.8+Math.random()*2,.4+Math.random(),1+Math.random()*2),dark);box.userData.blocksEnemy=true;box.userData.blockRadius=1.65;box.position.set((Math.random()-.5)*65,.2,-8-Math.random()*70);box.rotation.y=Math.random()*Math.PI;box.castShadow=true;box.receiveShadow=true;scene.add(box)}
+for(let i=0;i<7;i++){let box=new THREE.Mesh(new THREE.BoxGeometry(1.8+Math.random()*2,.4+Math.random(),1+Math.random()*2),dark);box.userData.blocksEnemy=true;box.userData.blockRadius=1.65;box.position.set((Math.random()-.5)*65,.2,-8-Math.random()*70);box.rotation.y=Math.random()*Math.PI;box.castShadow=true;box.receiveShadow=true;scene.add(box)}
 
 // SOLID WORLD COLLISION: swept horizontal movement with axis sliding.
 function moveEntityWithCollision(entity,dx,dz,radius,checkActors=false){
