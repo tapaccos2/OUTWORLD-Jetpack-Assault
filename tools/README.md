@@ -26,33 +26,33 @@ node tools/check-original-assets.mjs original-data > original-asset-dependencies
 
 Compares resource filenames found inside the `.MIS` files against filenames present anywhere under `original-data/`. This highlights dependencies that are not in the uploaded folders.
 
-Do not use any of these outputs as a claim that the map or mission has been fully decoded. The next stage is to identify and validate binary record layouts and recover terrain/object placement.
+Do not use any of these outputs as a claim that the map or mission has been fully decoded. The next stage is to identify and validate binary record layouts and recover object placement. Terrain geometry must be sourced from the correct asset format.
 
-## 4. Compare terrain byte structure
-
-```sh
-node tools/inspect-gry-structure.mjs original-data/gry/*.gry
-```
-
-Reports the common file prefix, little-endian header values, every occurrence of the variable-leading-byte `?? A0 B9 B7` signature, candidate 20-byte blocks, candidate 14-byte blocks, the proposed header-count formula, and groups files by the 64-byte signature at that occurrence. These are structural observations, not decoded fields.
-
-## 5. Scan for candidate terrain tags
+## 4. Inspect `.GRY` sound-effect audio
 
 ```sh
-node tools/scan-gry-tags.mjs original-data/gry/*.gry
+node tools/inspect-gry-audio.mjs original-data/gry/*.gry
 ```
 
-Searches for four-letter ASCII sequences followed by a plausible little-endian 32-bit length and reports candidate payload bytes plus both integer byte orders. Current scans pair 34 `fact`/length-4 candidates with the signature exactly 59 bytes earlier; `o5.gry` has one signature without a matching `fact`. This is a strong structural lead, not a proven semantic specification.
+Identifies embedded sound records beginning with `A0 B9 B7 00`, reports codec metadata and checks that each audio payload ends at the next record boundary.
 
-The full current evidence and limitations are documented in `original-data/FORMAT-NOTES.md`; per-file measurements are summarized in `original-data/GRY-STRUCTURE-INDEX.md`.
+## 5. Extract individual `.GRY` sound records
 
-## 6. Validate terrain block boundaries
+```sh
+node tools/inspect-gry-audio.mjs --extract extracted-gry-audio original-data/gry/*.gry
+```
+
+Writes each embedded sample as a `.vgmstream` file with a matching `.txth` sidecar. Most Outwars `.GRY` records are mono MS ADPCM at 22,050 Hz with 512-byte interleave; `o5.gry` uses PCM16LE. Check playback with vgmstream.
+
+The corrected audio-format evidence and limitations are documented in `original-data/FORMAT-NOTES.md` and `original-data/GRY-STRUCTURE-INDEX.md`.
+
+## 6. Backwards-compatible legacy commands
 
 ```sh
 node tools/inspect-gry-blocks.mjs original-data/gry/*.gry
 ```
 
-Parses the candidate `?? A0 B9 B7` record starts, `fact` length-4 fields, the `2E 3E 9D 00` block header, and its three-byte little-endian compressed length. It checks whether each payload ends at the next record or five-byte file trailer. The `fact` payload is treated as a candidate uncompressed length, not a proven meaning; this tool does not decompress the payload.
+Legacy command retained for compatibility; it now delegates to the audio-aware inspector. The previous generic-compression and terrain-block interpretation was incorrect. Use `inspect-gry-audio.mjs` directly for new work.
 
 ## 7. Validate and extract FF archive resources
 
