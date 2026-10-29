@@ -74,6 +74,8 @@ const output = files.map(file => {
   return {
     file: path.basename(file),
     bytes: b.length,
+    fileTrailerHex: b.length >= 5 ? hex(b, b.length - 5, b.length) : null,
+    fileTrailerPattern: b.length >= 5 && b[b.length - 4] === 0x22 && b[b.length - 3] === 0x75 && b[b.length - 2] === 0x28 && b[b.length - 1] === 0x03,
     signatureStarts: signatures,
     signatureCount: signatures.length,
     pairedFactBlockCount: blocks.length,
