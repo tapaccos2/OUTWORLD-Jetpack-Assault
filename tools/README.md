@@ -180,4 +180,4 @@ node tools/inspect-dpc-graph.mjs original-data/structs/rag01.dpc > rag01-dpc-gra
 node tools/inspect-dpc-graph-compare.mjs original-data/structs/rag01.dpc original-data/structs/rag02.dpc original-data/structs/rag04.dpc original-data/structs/anub01.dpc original-data/structs/dead01.dpc original-data/structs/oasis01.dpc > dpc-graph-comparison.json
 ```
 
-The kind-1 pointer array is based on the existing observed inspector layout. Following kind-4 pointers is tentative; compare results against executable read sites before relying on those nested edges.
+The kind-1 pointer array is based on the existing observed inspector layout. Following kind-4 pointers is tentative; compare results against executable read sites before relying on those nested edges. The latest six-campaign summary and unresolved class-ID leads are recorded in [`original-data/DPC-GRAPH-FINDINGS.md`](../original-data/DPC-GRAPH-FINDINGS.md).
