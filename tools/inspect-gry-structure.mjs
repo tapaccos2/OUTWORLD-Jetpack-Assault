@@ -58,7 +58,8 @@ const records = files.map(file => {
       const o = 12 + n * 20;
       candidateRecords.push({
         offset: o,
-        wordsLE: Array.from({ length: 5 }, (_, j) => u32(b, o + j * 4)),
+        wordsU32LE: Array.from({ length: 5 }, (_, j) => u32(b, o + j * 4)),
+        wordsU16LE: Array.from({ length: 10 }, (_, j) => u16(b, o + j * 2)),
       });
     }
   }
