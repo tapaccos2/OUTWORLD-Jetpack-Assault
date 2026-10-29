@@ -136,22 +136,7 @@ const beaconCore=new THREE.Mesh(new THREE.SphereGeometry(.32,16,12),new THREE.Me
 beaconCore.position.set(0,3.42,-56.5);landingZone.add(beaconCore);
 const beaconLight=new THREE.PointLight(0x49f4e7,4,16,2);beaconLight.position.set(0,3.25,-56.5);landingZone.add(beaconLight);
 scene.add(landingZone);
-// Three relay uplinks must be brought online before extraction can be completed.
-const relayObjectives=[];
-const relaySpecs=[{x:-8,z:-12},{x:10,z:-28},{x:-5,z:-43}];
-for(let i=0;i<relaySpecs.length;i++){
- const spec=relaySpecs[i],relay=new THREE.Group();relay.position.set(spec.x,0,spec.z);
- const base=new THREE.Mesh(new THREE.CylinderGeometry(.8,1.05,.24,12),new THREE.MeshStandardMaterial({color:0x303d42,metalness:.7,roughness:.36}));
- base.position.y=.12;base.castShadow=true;base.receiveShadow=true;relay.add(base);
- const mast=new THREE.Mesh(new THREE.CylinderGeometry(.11,.17,1.85,8),new THREE.MeshStandardMaterial({color:0x667c80,metalness:.65,roughness:.32}));
- mast.position.y=1.12;relay.add(mast);
- const ring=new THREE.Mesh(new THREE.TorusGeometry(.72,.065,8,24),new THREE.MeshStandardMaterial({color:0xffa34d,emissive:0x7d3107,emissiveIntensity:1.1,metalness:.3,roughness:.3}));
- ring.rotation.x=Math.PI/2;ring.position.y=.35;relay.add(ring);
- const core=new THREE.Mesh(new THREE.OctahedronGeometry(.25,1),new THREE.MeshBasicMaterial({color:0xffb65c}));
- core.position.y=2.15;relay.add(core);
- const light=new THREE.PointLight(0xff963d,1.4,7,2);light.position.y=1.7;relay.add(light);
- relay.userData.activated=false;relay.userData.index=i+1;relay.userData.ring=ring;relay.userData.core=core;relayObjectives.push(relay);scene.add(relay);
-}
+// Mission 01 is an evacuation across a devastated human outpost: no invented relay objectives.
 // Layered alien sky with generated cloud bands; no extra downloads required.
 const skyCanvas=document.createElement('canvas');skyCanvas.width=1024;skyCanvas.height=512;
 const skyCtx=skyCanvas.getContext('2d');
@@ -933,25 +918,13 @@ function update(dt){
  if(waveTransitionPending){waveIntermission-=dt;if(waveIntermission<=0){waveTransitionPending=false;activateWave(currentWave+1);}}
  document.querySelector('#hpText').textContent=Math.round(hp)+'%';document.querySelector('#hpBar').style.width=hp+'%';document.querySelector('#fuelText').textContent=Math.round(fuel)+'%';document.querySelector('#fuelBar').style.width=fuel+'%';document.querySelector('#enemyText').textContent=remaining;
  const allSpawned=allWavesComplete;
- for(const relay of relayObjectives){
-  relay.userData.ring.rotation.z+=dt*.9;
-  relay.userData.core.rotation.y+=dt*1.8;
-  if(!relay.userData.activated&&Math.hypot(player.position.x-relay.position.x,player.position.z-relay.position.z)<2.35){
-   relay.userData.activated=true;
-   relay.userData.ring.material.color.setHex(0x56f4c4);relay.userData.ring.material.emissive.setHex(0x087d51);
-   relay.userData.core.material.color.setHex(0x7dffcf);
-   relay.userData.light=relay.children[4];relay.userData.light.color.setHex(0x38ffb0);relay.userData.light.intensity=2.8;
-  }
- }
- const relaysOnline=relayObjectives.filter(r=>r.userData.activated).length;
  const atLanding=Math.hypot(player.position.x,player.position.z+56.5)<3.6;
- if(remaining>0)document.querySelector('#missionText').textContent='WAVE '+currentWave+'/3 — ELIMINATE HOSTILES: '+remaining+' · RELAYS: '+relaysOnline+'/'+relayObjectives.length;
- else if(waveTransitionPending)document.querySelector('#missionText').textContent='WAVE '+currentWave+' CLEARED — REINFORCEMENTS IN '+Math.ceil(waveIntermission)+'s';
- else if(!allWavesComplete)document.querySelector('#missionText').textContent='WAVE '+currentWave+' CLEARED — PREPARING NEXT ASSAULT';
- else if(relaysOnline<relayObjectives.length)document.querySelector('#missionText').textContent='Activate remaining relay uplinks: '+relaysOnline+'/'+relayObjectives.length;
- else if(!atLanding)document.querySelector('#missionText').textContent='All relays online — reach extraction';
- else document.querySelector('#missionText').textContent='Extraction zone reached';
- if(hp<=0)endGame(false);else if(allSpawned&&remaining===0&&relaysOnline===relayObjectives.length&&atLanding)endGame(true);
+ if(remaining>0)document.querySelector('#missionText').textContent='HOSTILES REMAINING: '+remaining+' — CLEAR THE RUINED OUTPOST';
+ else if(waveTransitionPending)document.querySelector('#missionText').textContent='HOSTILES IN RETREAT — HOLD POSITION '+Math.ceil(waveIntermission)+'s';
+ else if(!allWavesComplete)document.querySelector('#missionText').textContent='SEARCH THE RUINED OUTPOST — HOSTILES REMAIN';
+ else if(!atLanding)document.querySelector('#missionText').textContent='OUTPOST SECURE — REACH THE EVACUATION DROPSHIP';
+ else document.querySelector('#missionText').textContent='EVACUATION DROPSHIP REACHED';
+ if(hp<=0)endGame(false);else if(allSpawned&&remaining===0&&atLanding)endGame(true);
 }
 function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.04);for(const mixer of externalMixers)mixer.update(dt);update(dt);if(composer)composer.render();else renderer.render(scene,camera)}loop();
 })();
