@@ -589,8 +589,8 @@ for(const side of [-1,1]){
 }
 scene.add(player);player.position.set(0,0,5);
 const externalMixers=[];const enemies=[];const hydranPalettes=[0x78934a,0x9b5b3c,0x526b45,0x77705b,0x465b59];for(let i=0;i<7;i++){const obj=soldier(true);const size=.78+Math.random()*.48;obj.scale.set(size,.82+Math.random()*.42,size);obj.position.set((Math.random()-.5)*34,0,-20-Math.random()*34);obj.rotation.y=Math.PI+(Math.random()-.5)*.5;obj.userData.hp=100+Math.round(Math.random()*50);obj.userData.moveSpeed=3.7+Math.random()*1.7;obj.userData.cooldown=1.4+i*.35;obj.userData.fireCooldown=.9+i*.35;obj.userData.hit=0;obj.userData.walk=Math.random()*6;obj.userData.wanderPhase=Math.random()*Math.PI*2;obj.userData.wanderStrength=.2+Math.random()*.6;const palette=new THREE.Color(hydranPalettes[i%hydranPalettes.length]);obj.traverse(part=>{if(part.isMesh&&part.material&&part.material.map===insectTexture){part.material=part.material.clone();part.material.color.copy(palette);part.material.needsUpdate=true}});scene.add(obj);enemies.push(obj)}
-// Replace placeholder enemy meshes with textured, rigged GLB models when available.
-if(window.loadCombatModels)window.loadCombatModels(THREE,enemies).then(mixers=>externalMixers.push(...mixers)).catch(err=>console.warn('3D character assets unavailable; procedural fallback remains active.',err));
+// Keep the tested full-size procedural Hydran enemies visible. The imported GLB pack
+// currently has inconsistent in-game scale/orientation, so do not hide these meshes.
 if(window.loadEnvironmentAssets)window.loadEnvironmentAssets(THREE,scene,lowPowerDevice).catch(err=>console.warn('Environment GLB assets unavailable; procedural fallback remains active.',err));
 const bullets=[],sparks=[],clock=new THREE.Clock();let hp=100,fuel=100,yaw=0,pitch=-.05,targetYaw=0,targetPitch=-.05,vy=0,onGround=true,started=false,dead=false,won=false,fireHeld=false,boostHeld=false,jumpQueued=false,shotCooldown=0,damageFlash=0,lookTouch=null,stick={x:0,y:0},pointerLocked=false,lastShot=0,muzzleLife=0,hitConfirmTimer=0,thirdPerson=false,fireRecoil=0;
 function startGame(){
