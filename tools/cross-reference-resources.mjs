@@ -22,6 +22,10 @@ function walk(dir) {
 }
 for (const dir of dirs) walk(path.join(root, dir));
 walk(root); // Also include top-level archives and support resources.
+// Include extracted FF payloads alongside loose files when present, so mission
+// references resolve to resources packaged inside archives.
+const extractedRoot = path.join(path.dirname(root), 'extracted-ff');
+if (path.resolve(extractedRoot) !== root) walk(extractedRoot);
 const uniqueFiles = [...new Set(files)].sort();
 const byName = new Map(uniqueFiles.map(file => [path.basename(file).toLowerCase(), file]));
 const extensionCounts = {};
@@ -66,6 +70,7 @@ for(const ref of resolved.filter(x=>!x.resolvedPath)) {
 const missing=[...uniqueMissing.values()].map(x=>({name:x.name,sourceCount:x.sourceCount.size,examples:x.examples})).sort((a,b)=>a.name.localeCompare(b.name));
 const result={
   root,
+  extractedRoot: fs.existsSync(extractedRoot) ? extractedRoot : null,
   indexedFileCount:uniqueFiles.length,
   extensionCounts,
   sourceFileCount:candidates.length,
