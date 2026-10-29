@@ -1,8 +1,8 @@
 (function(){
   const SOURCE='https://raw.githubusercontent.com/Ariescar/gobkit-free-assets/main/nature/';
   window.loadEnvironmentAssets=async function(THREE,scene,lowPowerDevice){
-    if(!THREE.GLTFLoader){console.warn('GLTFLoader unavailable; keeping procedural environment.');return {loaded:[],count:0};}
-    const loader=new THREE.GLTFLoader();
+    if(!window.GLTFLoader){console.warn('GLTFLoader unavailable; keeping procedural environment.');return {loaded:[],count:0};}
+    const loader=new window.GLTFLoader();
     const defs=[{key:'rockA',url:SOURCE+'Rock001.glb'},{key:'rockB',url:SOURCE+'Rock002.glb'},{key:'cliff',url:SOURCE+'Cliff001.glb'},{key:'rockC',url:SOURCE+'Rock003.glb'},{key:'cliffB',url:SOURCE+'Cliff002.glb'},{key:'hill',url:SOURCE+'Hill001.glb'}];
     const loaded={};
     await Promise.all(defs.map(async item=>{try{
