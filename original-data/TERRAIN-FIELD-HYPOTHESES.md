@@ -60,3 +60,15 @@ A second consistency check found that the signed 32-bit value at GPC offset 8 ap
 The combined evidence is materially stronger than the earlier value-distribution observation: GPC records appear to describe a spatial region and reference elevation, while each indexed RPC record appears to describe a positioned surface with four corner values. The next step is to establish corner order, edge conventions, and scale, then compare a generated diagnostic mesh with an original map reference before calling this a decoder.
 
 Across the same 254 groups, the GPC reference value matches at least one indexed RPC corner-like value in all 254 groups; all corner-like values in the entire indexed range equal that reference value in 81 groups. This is a stronger, reproducible distinction than counting individual RPC records with four equal values: it tests the GPC value against the whole group it indexes.
+
+## Duplicate-position test supports four-corner values and a grid ordering
+
+A useful test case is `oasis01.rpc`, where multiple records share the exact same final coordinate pair but have different four-value patterns. At position `(4608, 18432)`, the records include:
+
+- `[800, 800, 800, 800]` — flat surface;
+- `[800, 800, 480, 480]` — one pair of corners high and the other pair low;
+- `[800, 480, 800, 480]` — the alternating pair pattern for the other axis.
+
+The same pattern occurs at `(1024, 32768)`. These examples are consistent with four ordered grid corners stored in row-major order, with the two pairs representing opposite sides of a surface. This is stronger evidence for a per-corner elevation interpretation than value ranges alone. The axis direction and exact corner order are still provisional, because the record's leading 16 bytes likely carry surface/type/texture or orientation information that has not yet been decoded.
+
+Duplicate-position statistics also show that repeated XY positions often have different corner values, especially in `oasis01` (79 of 80 duplicate positions) and `mik01` (140 of 153). This suggests the records at a position can describe distinct surface pieces or orientations rather than one unique point record. It is another reason not to build a mesh by blindly treating each RPC record as a unique vertex.
