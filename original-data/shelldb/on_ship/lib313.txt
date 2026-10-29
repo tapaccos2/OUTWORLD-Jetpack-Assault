@@ -1,0 +1,9 @@
+FBM-47 Fuel Bonding Missile
+Classification: Missile
+This weapon is only issued to troops expected to combat other rocket-pack-equipped units. This missile causes a chemical reaction within the plasma chamber of a rocket-pack, causing the molecules to bond differently and become inert. The net result is that for several seconds the rocket-pack looses usable fuel.
+
+Blast Radius: None
+Damage: Special
+Armor Pierce: None
+Rate of Fire: Low
+Effective Range: 800 feet

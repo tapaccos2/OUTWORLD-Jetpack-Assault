@@ -1,0 +1,2 @@
+Swarm Gun:
+This weapon fires a significant number of tiny, independently guided homing projectiles. They move slowly and erratically. The best way to avoid this weapon is to outrun the projectiles or to find cover.

@@ -1,0 +1,204 @@
+; MultiPlayer Join Screen Script
+
+IMAGE_FILE  "shelldb\\common\\button_n.pcx"					; 0
+IMAGE_FILE  "shelldb\\common\\button_d.pcx"					; 1
+IMAGE_FILE	"shelldb\\common\\button_p.pcx"					; 2
+IMAGE_FILE	"shelldb\\common\\button_h.pcx"					; 3
+IMAGE_FILE	"shelldb\\common\\button_f.pcx"					; 4
+IMAGE_FILE  "shelldb\\netimg\\netj00.pcx"					; 5
+
+IMAGE_FILE  "shelldb\\netjoin\\sessbar.pcx"					; 6
+IMAGE_FILE  "shelldb\\netjoin\\playbar.pcx"					; 7
+
+IMAGE_FILE	"shelldb\\netchat\\common\\SBUpArrow-n.pcx"		; 8
+IMAGE_FILE	"shelldb\\netchat\\common\\SBUpArrow-d.pcx"		; 9
+IMAGE_FILE	"shelldb\\netchat\\common\\SBUpArrow-s.pcx"		;10
+IMAGE_FILE	"shelldb\\netchat\\common\\SBUpArrow-h.pcx"		;11
+
+IMAGE_FILE	"shelldb\\netchat\\common\\SBDownArrow-n.pcx"	;12
+IMAGE_FILE	"shelldb\\netchat\\common\\SBDownArrow-d.pcx"	;13
+IMAGE_FILE	"shelldb\\netchat\\common\\SBDownArrow-s.pcx"	;14
+IMAGE_FILE	"shelldb\\netchat\\common\\SBDownArrow-h.pcx"	;15
+
+IMAGE_FILE	"shelldb\\netchat\\common\\SBSlider-n.pcx"		;16
+
+BACKGROUND	"shelldb\\netjoin\\netjoin.pcx"
+
+CONTROLS 	mouse, keyboard
+
+;Session Box
+LISTBOX 130
+	LOCATION    23  96
+	DIMENSIONS  273 113
+	HOTSPOTRECT 23  96  273 113
+	TEXT_COLOR        255 255 255
+	HILIGHT_COLOR	  255 255 0
+	FOCUS_COLOR		  255 255 255
+	DISABLE_COLOR	  127 127 127
+	CURSOR_COLOR      0   0   0
+	SELECT_COLOR      0   0   127
+	BG_COLOR_NORMAL   0   0   0
+	BG_COLOR_HILIGHT  0   0   0
+	BG_COLOR_FOCUS    0   0   0
+	TRANSPARENT
+	SCROLLBAR 130
+		LOCATION	270 99
+		DIMENSIONS  24  108
+		BORDER_SIZE 0
+		HOTSPOTRECT 270 99  24 108
+		PICTURE     #6, #6, #6, #6
+		SLIDE       #16,#16,#16,#16
+		LU_PICTURE  #8,	#9,	#10,#11
+		RD_PICTURE  #12,#13,#14,#15
+		ARROW_DIMENSIONS 24 21
+		SLIDE_DIMENSIONS 20 20
+		END
+	NEXT 132
+	PREV 240
+	END
+
+; Password Edit Box
+TEXTBOX 132
+	LOCATION    22  253
+	DIMENSIONS  275 20
+	HOTSPOTRECT 22  253 275 20
+	TEXT_COLOR        255 0   255
+	HILIGHT_COLOR	  255 255 255
+	FOCUS_COLOR		  255 255 255
+	DISABLE_COLOR	  63  63  63
+	CURSOR_COLOR      0   255 0
+	BG_COLOR_NORMAL   0   0   0
+	BG_COLOR_HILIGHT  0   0   0
+	BG_COLOR_FOCUS    0   0   0
+	BG_COLOR_DISABLED 25  25  25
+	TRANSPARENT
+	ABOVE 130
+	BELOW 180
+	NEXT  180
+	PREV  130
+	END
+
+; Join Button
+BUTTON 180
+	PICTURE	 #0,
+			 #1,
+			 #2,
+			 #3
+	FOCUS_PICTURE #4 111 339
+	LOCATION      34 339
+	HOTSPOTRECT	  22 301 125  52
+	RIGHT    240
+	LEFT     240
+	ABOVE    132
+	BELOW    181
+	NEXT     181
+	PREV     132
+	END
+
+
+; New Game Button
+BUTTON 181
+	PICTURE	 #0,
+			 #1,
+			 #2,
+			 #3
+	FOCUS_PICTURE #4 111 401
+	LOCATION      34 401
+	HOTSPOTRECT	  23 363 125  52
+	RIGHT    240
+	LEFT     240
+	ABOVE    180
+	BELOW    182
+	NEXT	 182
+	PREV     180
+	END
+	
+
+; Back Button
+BUTTON 182
+	PICTURE	 #0,
+			 #1,
+			 #2,
+			 #3
+	FOCUS_PICTURE #4 111 460
+	LOCATION      34 460
+	HOTSPOTRECT	  23 422 125  52
+	RIGHT    240
+	LEFT     240
+	ABOVE    181
+	BELOW    130
+	NEXT     240
+	PREV     181
+	END
+
+
+ANIMATION 1000 "shelldb\\pre_ship\\burn" 13
+	LOCATION 206 343
+	END
+
+RUNANIMATION 1001 1000 18
+	END
+
+LABEL 200
+	LOCATION 374 81
+	END
+
+LABEL 210
+	LOCATION 374 141
+	END
+
+LABEL 220
+	LOCATION 374 203
+	END
+
+LABEL 230
+	LOCATION 349 239
+	PICTURE #5
+	END
+
+LABEL 241
+	LOCATION 514 361
+	END
+
+LABEL 242
+	LOCATION 585 361
+	END
+
+LABEL 250
+	LOCATION 22 215
+	END
+
+
+LISTVIEW 240
+	LOCATION    352 374 
+	DIMENSIONS  262 91
+	HOTSPOTRECT 352 374 262 91
+	TEXT_COLOR        195 195 195
+	HILIGHT_COLOR	  255 255 255
+	FOCUS_COLOR		  255 255 0
+	DISABLE_COLOR	  195 195 195
+	CURSOR_COLOR      0   0   127
+	SELECT_COLOR      0   0   195
+	BG_COLOR_NORMAL   0   0   0
+	BG_COLOR_HILIGHT  0   0   0
+	BG_COLOR_FOCUS    0   0   0
+	TRANSPARENT
+	SCROLLBAR 240
+		LOCATION	587 378
+		DIMENSIONS  24  84
+		BORDER_SIZE 0
+		HOTSPOTRECT 587 378 24 84
+		PICTURE     #7, #7, #7, #7
+		SLIDE       #16,#16,#16,#16
+		LU_PICTURE  #8,	#9,	#10,#11
+		RD_PICTURE  #12,#13,#14,#15
+		ARROW_DIMENSIONS 24 21
+		SLIDE_DIMENSIONS 20 20
+		END
+	RIGHT    182
+	LEFT     182
+	NEXT     130
+	PREV     182
+	END
+
+

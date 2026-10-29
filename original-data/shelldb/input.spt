@@ -1,0 +1,531 @@
+; graphics options screen script
+
+;DB 			"shelldb\\title"
+
+IMAGE_FILE  "shelldb\\common\\button_n.pcx"					; 0
+IMAGE_FILE  "shelldb\\common\\button_d.pcx"					; 1
+IMAGE_FILE	"shelldb\\common\\button_p.pcx"					; 2
+IMAGE_FILE	"shelldb\\common\\button_h.pcx"					; 3
+IMAGE_FILE  "shelldb\\common\\button_f.pcx"					; 4
+
+IMAGE_FILE  "shelldb\\common\\ctab_n.pcx"		; 5
+IMAGE_FILE  "shelldb\\common\\ctab_d.pcx"		; 6
+IMAGE_FILE  "shelldb\\common\\ctab_p.pcx"		; 7
+IMAGE_FILE  "shelldb\\common\\ctab_h.pcx"		; 8
+IMAGE_FILE  "shelldb\\common\\ctab_s.pcx"		; 9
+IMAGE_FILE  "shelldb\\common\\ctab_sd.pcx"		;10
+IMAGE_FILE  "shelldb\\common\\ctab_sp.pcx"		;11
+IMAGE_FILE  "shelldb\\common\\ctab_sh.pcx"		;12
+IMAGE_FILE  "shelldb\\common\\ctab_f.pcx"		;13
+
+IMAGE_FILE	"shelldb\\pre_ship\\keyboard.pcx"				;14
+IMAGE_FILE	"shelldb\\pre_ship\\mouse.pcx"					;15
+IMAGE_FILE	"shelldb\\pre_ship\\joystick.pcx"				;16
+IMAGE_FILE	"shelldb\\pre_ship\\inputmap.pcx"				;17
+
+IMAGE_FILE	"shelldb\\pre_ship\\ok_n.pcx"					;18
+IMAGE_FILE	"shelldb\\pre_ship\\ok_d.pcx"					;19
+IMAGE_FILE	"shelldb\\pre_ship\\ok_p.pcx"					;20
+IMAGE_FILE	"shelldb\\pre_ship\\ok_h.pcx"					;21
+IMAGE_FILE	"shelldb\\pre_ship\\cancel_n.pcx"				;22
+IMAGE_FILE	"shelldb\\pre_ship\\cancel_d.pcx"				;23
+IMAGE_FILE	"shelldb\\pre_ship\\cancel_p.pcx"				;24
+IMAGE_FILE	"shelldb\\pre_ship\\cancel_h.pcx"				;25
+
+IMAGE_FILE  "shelldb\\pre_ship\\joy_n.pcx" 				;26
+IMAGE_FILE  "shelldb\\pre_ship\\joy_d.pcx" 				;27
+IMAGE_FILE  "shelldb\\pre_ship\\joy_p.pcx" 				;28
+IMAGE_FILE  "shelldb\\pre_ship\\joy_h.pcx"	 			;29
+IMAGE_FILE  "shelldb\\pre_ship\\joy_s.pcx" 				;30
+IMAGE_FILE  "shelldb\\pre_ship\\joy_sd.pcx"				;31
+IMAGE_FILE  "shelldb\\pre_ship\\joy_sp.pcx"				;32
+IMAGE_FILE  "shelldb\\pre_ship\\joy_sh.pcx"				;33
+
+IMAGE_FILE  "shelldb\\pre_ship\\HSB_b_n.pcx"			;34
+IMAGE_FILE  "shelldb\\pre_ship\\HSB_b_d.pcx"			;35
+IMAGE_FILE	"shelldb\\pre_ship\\HSB_la_n.pcx"	 		;36
+IMAGE_FILE	"shelldb\\pre_ship\\HSB_la_d.pcx"			;37
+IMAGE_FILE	"shelldb\\pre_ship\\HSB_la_s.pcx"			;38
+IMAGE_FILE	"shelldb\\pre_ship\\HSB_la_h.pcx"			;39
+IMAGE_FILE	"shelldb\\pre_ship\\HSB_ra_n.pcx"			;40
+IMAGE_FILE	"shelldb\\pre_ship\\HSB_ra_d.pcx"			;41
+IMAGE_FILE	"shelldb\\pre_ship\\HSB_ra_s.pcx"			;42
+IMAGE_FILE	"shelldb\\pre_ship\\HSB_ra_h.pcx"			;43
+
+IMAGE_FILE	"shelldb\\pre_ship\\SB_bl_n.pcx"			;44
+IMAGE_FILE	"shelldb\\pre_ship\\SB_bl_d.pcx"			;45
+IMAGE_FILE	"shelldb\\pre_ship\\SB_s_n.pcx"				;46
+
+IMAGE_FILE	"shelldb\\pre_ship\\SB_ua_n.pcx"		;47
+IMAGE_FILE	"shelldb\\pre_ship\\SB_ua_d.pcx"		;48
+IMAGE_FILE	"shelldb\\pre_ship\\SB_ua_s.pcx"		;49
+IMAGE_FILE	"shelldb\\pre_ship\\SB_ua_h.pcx"		;50
+
+IMAGE_FILE	"shelldb\\pre_ship\\SB_da_n.pcx"		;51
+IMAGE_FILE	"shelldb\\pre_ship\\SB_da_d.pcx"		;52
+IMAGE_FILE	"shelldb\\pre_ship\\SB_da_s.pcx"		;53
+IMAGE_FILE	"shelldb\\pre_ship\\SB_da_h.pcx"		;54
+
+IMAGE_FILE	"shelldb\\pre_ship\\SB_bs_n.pcx"		;55
+IMAGE_FILE	"shelldb\\pre_ship\\SB_bs_d.pcx"		;56
+
+IMAGE_FILE  "shelldb\\pre_ship\\minvertn.pcx"			;57
+IMAGE_FILE  "shelldb\\pre_ship\\minvertd.pcx"			;58
+IMAGE_FILE  "shelldb\\pre_ship\\minvertp.pcx"			;59
+IMAGE_FILE  "shelldb\\pre_ship\\minverth.pcx"			;60
+
+BACKGROUND	"shelldb\\pre_ship\\input.pcx"
+
+CONTROLS 	mouse, keyboard
+
+LABEL 10
+	PICTURE #14
+	LOCATION 170 40
+	END
+	
+LABEL 11
+	PICTURE #15
+	LOCATION 170 40
+	INVISIBLE
+	END
+
+LABEL 12
+	PICTURE #16
+	LOCATION 170 40
+	INVISIBLE
+	END
+
+LABEL 13
+	PICTURE #17
+	LOCATION 170 40
+	INVISIBLE
+	END
+
+
+;Keyboard Mappings
+LISTVIEW 50
+	LOCATION    175  92 
+	DIMENSIONS  428 349
+	HOTSPOTRECT 175  92 428 349
+	TEXT_COLOR        195 195 195
+	HILIGHT_COLOR	  255 255 255
+	FOCUS_COLOR		  255 255 0
+	DISABLE_COLOR	  63  63  63
+	CURSOR_COLOR      0   0   127
+	SELECT_COLOR      0   0   195
+	BG_COLOR_NORMAL   0   0   0
+	BG_COLOR_HILIGHT  0   0   0
+	BG_COLOR_FOCUS    0   0   0
+	TRANSPARENT
+	SCROLLBAR 50
+		LOCATION	 579 94
+		DIMENSIONS   23  349
+		BORDER_SIZE   0
+		HOTSPOTRECT 579  94  23 349
+		PICTURE		#44, #45, #44, #44
+		SLIDE		#46, #46, #46, #46
+		LU_PICTURE	#47, #48, #49, #50
+		RD_PICTURE  #51, #52, #53, #54
+		ARROW_DIMENSIONS 23 20
+		SLIDE_DIMENSIONS 20 20
+		END
+	NEXT	 100
+	PREV	 301
+	END
+
+;Joystick Mappings
+LISTVIEW 60
+	LOCATION    175  92 
+	DIMENSIONS  428 283
+	HOTSPOTRECT 175  92 428 283
+	TEXT_COLOR        195 195 195
+	HILIGHT_COLOR	  255 255 255
+	FOCUS_COLOR		  255 255 0
+	DISABLE_COLOR	  63  63  63
+	CURSOR_COLOR      0   0   127
+	SELECT_COLOR      0   0   195
+	BG_COLOR_NORMAL   0   0   0
+	BG_COLOR_HILIGHT  0   0   0
+	BG_COLOR_FOCUS    0   0   0
+	TRANSPARENT
+	SCROLLBAR 60
+		LOCATION	 579 94 
+		DIMENSIONS   23  283
+		BORDER_SIZE   0
+		HOTSPOTRECT 579  94  23 283
+		PICTURE		#55, #56, #55, #55
+		SLIDE		#46, #46, #46, #46
+		LU_PICTURE	#47, #48, #49, #50
+		RD_PICTURE  #51, #52, #53, #54
+		ARROW_DIMENSIONS 23 20
+		SLIDE_DIMENSIONS 20 20
+		END
+;	LEFT	62
+;	RIGHT	61
+	NEXT	 102
+	PREV	 62
+	END
+
+;Joystick Devices
+;LISTBOX 61
+;	LOCATION    175 382 
+;	DIMENSIONS  269  58
+;	HOTSPOTRECT 175 382 269 58
+;	TEXT_COLOR        255 255 255
+;	HILIGHT_COLOR	  255 255 0
+;	FOCUS_COLOR		  255 255 255
+;	DISABLE_COLOR	  127 127 127
+;	CURSOR_COLOR      0   0   0
+;	SELECT_COLOR      0   0   127
+;	BG_COLOR_NORMAL   0   0   0
+;	BG_COLOR_HILIGHT  0   0   0
+;	BG_COLOR_FOCUS    0   0   0
+;	TRANSPARENT
+;;	LEFT	60
+;;	RIGHT	62
+;	NEXT	 62
+;	PREV	 301
+;	END
+
+; joystick dis/en able
+TOGGLE 62
+	PICTURE		#26, #27, #28, #29
+	SELECTED	#30, #31, #32, #33
+
+	LOCATION     452 381
+	HOTSPOTRECT	 452 381 153 59
+;	LEFT	61
+;	RIGHT	60
+	NEXT	 60
+	PREV	 301
+	END
+
+
+;Mouse Mappings
+LISTVIEW 70
+	LOCATION    175  92 
+	DIMENSIONS  428 283
+	HOTSPOTRECT 175  92 428 283
+	TEXT_COLOR        195 195 195
+	HILIGHT_COLOR	  255 255 255
+	FOCUS_COLOR		  255 255 0
+	DISABLE_COLOR	  63  63  63
+	CURSOR_COLOR      0   0   127
+	SELECT_COLOR      0   0   195
+	BG_COLOR_NORMAL   0   0   0
+	BG_COLOR_HILIGHT  0   0   0
+	BG_COLOR_FOCUS    0   0   0
+	TRANSPARENT
+	SCROLLBAR 70
+		LOCATION	579  94 
+		DIMENSIONS   23 283
+		BORDER_SIZE   0
+		HOTSPOTRECT 579  94  23 283
+		PICTURE		#55, #56, #55, #55
+		SLIDE		#46, #46, #46, #46
+		LU_PICTURE	#47, #48, #49, #50
+		RD_PICTURE  #51, #52, #53, #54
+		ARROW_DIMENSIONS 23 20
+		SLIDE_DIMENSIONS 20 20
+		END
+;	LEFT 	73
+;	RIGHT 	71
+	NEXT	 101
+	PREV	 71
+	END
+
+;Mouse Sensitivity Y Axis
+SCROLLBAR 71
+	LOCATION	450  398
+	DIMENSIONS  154  23
+	HOTSPOTRECT 450  398  154  23
+	MIN_MAX		  1   10
+	START		  5
+	BORDER_SIZE   0
+	ORIENTATION	  0
+	SLIDER_TYPE	  2
+	PICTURE		#34, #35, #34, #34
+	LU_PICTURE	#36, #37, #38, #39
+	RD_PICTURE  #40, #41, #42, #43
+	ARROW_DIMENSIONS 20 23
+	SLIDE_DIMENSIONS 20 20
+	CURSOR_COLOR  0  0  0
+	;LEFT 	209
+	;RIGHT 	209
+	;ABOVE 	202
+	;BELOW 	210
+	;NEXT	170
+	;PREV	193
+	ABOVE 	72
+	BELOW 	72
+	NEXT	 70
+	PREV	 73
+	END
+
+;Mouse Sensitivity X Axis
+SCROLLBAR 72
+	LOCATION	450  423
+	DIMENSIONS  154  23
+	HOTSPOTRECT 450  423  154  23
+	MIN_MAX		  1   10
+	START		  5
+	BORDER_SIZE   0
+	ORIENTATION	  0
+	SLIDER_TYPE	  2
+	PICTURE		#34, #35, #34, #34
+	LU_PICTURE	#36, #37, #38, #39
+	RD_PICTURE  #40, #41, #42, #43
+	ARROW_DIMENSIONS 20 23
+	SLIDE_DIMENSIONS 20 20
+	CURSOR_COLOR  0  0  0
+	;LEFT 	209
+	;RIGHT 	209
+	;ABOVE 	202
+	;BELOW 	210
+	;NEXT	170
+	;PREV	193
+	ABOVE 	71
+	BELOW 	71
+	NEXT	 70
+	PREV	 73
+	END
+
+TOGGLE 73
+	PICTURE		#57, #58, #59, #59
+	SELECTED	#59, #58, #59, #59
+
+	LOCATION     175 381
+	HOTSPOTRECT	 175 381 153 59
+;	ABOVE 	73
+;	BELOW 	70
+	NEXT	 71
+	PREV	 301
+	END
+
+
+
+;Input Mapping Instructions
+LISTBOX 80
+	LOCATION    186 79 
+	DIMENSIONS  406 103
+	HOTSPOTRECT 186 79 406 103
+	TEXT_COLOR        195 195 195		;White
+	HILIGHT_COLOR	  195 195 195		;White
+	FOCUS_COLOR		  195 195 195		;White
+	DISABLE_COLOR	  195 195 195
+	CURSOR_COLOR      0   0   127		;Blue
+	SELECT_COLOR      0   0   195		;Blue
+	BG_COLOR_NORMAL   0   0   0
+	BG_COLOR_HILIGHT  0   0   0
+	BG_COLOR_FOCUS    0   0   0
+	BG_COLOR_DISABLED 0   0   0
+	TRANSPARENT
+	DISABLED
+	END
+
+;Functionality
+TEXTBOX 81 
+	LOCATION    389 191
+	DIMENSIONS  200  24
+	HOTSPOTRECT	389 191 200  24
+	TEXT_COLOR        195 195 195
+	HILIGHT_COLOR	  255 255 255
+	FOCUS_COLOR		  255 255 0
+	DISABLE_COLOR	  195 195 195
+	CURSOR_COLOR      0   255 0
+	BG_COLOR_NORMAL   0   0   0
+	BG_COLOR_HILIGHT  0   0   0
+	BG_COLOR_FOCUS    0   0   0
+	BG_COLOR_DISABLED 0   0   0
+	TRANSPARENT
+	DISABLED
+	END
+
+;Current Mapping
+TEXTBOX 82
+	LOCATION    389 220
+	DIMENSIONS  200  24
+	HOTSPOTRECT	389 220 200  24
+	TEXT_COLOR        195 195 195
+	HILIGHT_COLOR	  255 255 255
+	FOCUS_COLOR		  255 255 0
+	DISABLE_COLOR	  195 195 195
+	CURSOR_COLOR      0   255 0
+	BG_COLOR_NORMAL   0   0   0
+	BG_COLOR_HILIGHT  0   0   0
+	BG_COLOR_FOCUS    0   0   0
+	BG_COLOR_DISABLED 0   0   0
+	TRANSPARENT
+	DISABLED
+	END
+
+;New Mapping
+TEXTBOX 83
+	LOCATION    389 261
+	DIMENSIONS  200  24
+	HOTSPOTRECT	389 261 200  24
+	TEXT_COLOR        195 195 195
+	HILIGHT_COLOR	  255 255 255
+	FOCUS_COLOR		  255 255 0
+	DISABLE_COLOR	  195 195 195
+	CURSOR_COLOR      0   255 0
+	BG_COLOR_NORMAL   0   0   0
+	BG_COLOR_HILIGHT  0   0   0
+	BG_COLOR_FOCUS    0   0   0
+	BG_COLOR_DISABLED 0   0   0
+	TRANSPARENT
+	DISABLED
+	END
+
+;Conflict List
+LISTBOX 84
+	LOCATION    186 297 
+	DIMENSIONS  406 101
+	HOTSPOTRECT 186 297 406 101
+	TEXT_COLOR        195 195 195		;White
+	HILIGHT_COLOR	  195 195 195		;White
+	FOCUS_COLOR		  195 195 195		;White
+	DISABLE_COLOR	  195 195 195
+	CURSOR_COLOR      0   0   127		;Blue
+	SELECT_COLOR      0   0   195		;Blue
+	BG_COLOR_NORMAL   0   0   0
+	BG_COLOR_HILIGHT  0   0   0
+	BG_COLOR_FOCUS    0   0   0
+	BG_COLOR_DISABLED 0   0   0
+	TRANSPARENT
+	SCROLLBAR 84
+		LOCATION	567  299 
+		DIMENSIONS   23 98
+		BORDER_SIZE   0
+		HOTSPOTRECT 567  299  23 98
+;		PICTURE		#55, #56, #55, #55
+		SLIDE		#46, #46, #46, #46
+		LU_PICTURE	#47, #48, #49, #50
+		RD_PICTURE  #51, #52, #53, #54
+		ARROW_DIMENSIONS 23 20
+		SLIDE_DIMENSIONS 20 20
+		END
+	DISABLED
+	END
+
+BUTTON 500  ; REMAP OK
+	PICTURE	 #18,  ; normal
+			 #19,  ; disabled
+			 #20,  ; pressed
+			 #21   ; highlighted (unused)
+
+;	FOCUS_PICTURE #18 350 420
+
+	LOCATION 250 400
+	HOTSPOTRECT 250 400 120 34
+	DISABLED
+	NEXT 501
+	PREV 501
+	RIGHT 501
+	END
+
+BUTTON 501  ; REMAP CANCEL
+	PICTURE	 #22,  ; normal
+			 #23,  ; disabled
+			 #24,  ; pressed
+			 #25   ; highlighted (unused)
+
+;	FOCUS_PICTURE #22 490 420
+
+	LOCATION 393 400
+	HOTSPOTRECT 393 400 120 34
+	DISABLED
+	PREV 500
+	NEXT 500
+	LEFT 500
+	END
+
+
+; keyboard toggle
+TOGGLE 100
+	PICTURE		#5, #6, #7, #8
+	SELECTED	#9, #10, #11, #12
+	FOCUS_PICTURE #13 11 74
+	LOCATION     11  74 
+	HOTSPOTRECT	 11  39 130 45
+	GROUP	 1
+	ABOVE    102
+	BELOW    101
+	NEXT	 200
+	PREV	 50
+	END
+
+; mouse toggle
+TOGGLE 101
+	PICTURE		#5, #6, #7, #8
+	SELECTED	#9, #10, #11, #12
+	FOCUS_PICTURE #13 11 124
+	LOCATION     11  124 
+	HOTSPOTRECT	 11  89 130 45
+	GROUP	 1
+	ABOVE    100
+	BELOW    102
+	NEXT	 200
+	PREV	 70
+	END
+	
+; joystick toggle
+TOGGLE 102
+	PICTURE		#5, #6, #7, #8
+	SELECTED	#9, #10, #11, #12
+	FOCUS_PICTURE #13 11 173
+	LOCATION     11  173 
+	HOTSPOTRECT	 11  138 130 45
+	GROUP	 1
+	ABOVE    101
+	BELOW    200
+	NEXT	 200
+	PREV	 60
+	END
+
+; default button
+BUTTON 200
+	PICTURE	 #0,  ; normal
+			 #1,  ; disabled
+			 #2,  ; pressed
+			 #3   ; highlighted (unused)
+
+	FOCUS_PICTURE #4 103 279
+	
+	LOCATION 26 279
+	HOTSPOTRECT 16 231 124 52
+	NEXT	 300
+	PREV	 100
+	END
+
+; cancel button
+BUTTON 300
+	PICTURE	 #0,  ; normal
+			 #1,  ; disabled
+			 #2,  ; pressed
+			 #3   ; highlighted (unused)
+
+	FOCUS_PICTURE #4 103 390
+
+	LOCATION 26 390
+	HOTSPOTRECT 16 352 124 52
+	NEXT	 301
+	PREV	 200
+	END
+
+; ok/back button
+BUTTON 301
+	PICTURE	 #0,  ; normal
+			 #1,  ; disabled
+			 #2,  ; pressed
+			 #3   ; highlighted (unused)
+
+	FOCUS_PICTURE #4 103 452
+
+	LOCATION 26 452
+	HOTSPOTRECT 16 414 124 52
+	NEXT 	 50
+	PREV 	 300
+	END
+
+

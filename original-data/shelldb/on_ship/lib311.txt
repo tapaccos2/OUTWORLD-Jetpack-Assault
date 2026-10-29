@@ -1,0 +1,9 @@
+HM-22 Guided Missile
+Classification: Missile
+Homing Missiles are not extremely damaging against other battle-armored combatants, but their ability to visually home in on a target selected from the tracking system makes up for this deficiency. The homing ability of the missile is subject to environmental conditions, as is the battlesuit's tracking-system. Once in flight, however, the homing missile rarely loses it's lock unless subjected to countermeasures (such as the ECM grenade) and is difficult to evade unless the target can find cover.
+
+Blast Radius: 4 feet
+Damage: Medium
+Armor Pierce: Low
+Rate of Fire: Low
+Effective Range: 700 feet

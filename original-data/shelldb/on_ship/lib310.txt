@@ -1,0 +1,9 @@
+RM-13 Rocket Pod
+Classification: Missile
+Rockets are unguided, long-range, line-of-sight weapons. Their long range makes them very useful for an airborne jump trooper.
+
+Blast Radius: 6 feet
+Damage: Medium
+Armor Pierce: Medium
+Rate of Fire: Medium
+Effective Range: 600 feet

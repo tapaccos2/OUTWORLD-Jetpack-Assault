@@ -1,0 +1,9 @@
+M-90 Gauss Cannon
+Classification: Rifle Attachment
+Nicknamed the "Whisper Cannon," this powerful weapon is still only in the prototype stages, but it should be entering production before the end of the year. Using extremely powerful, localized magnetic fields, it can project an armor-piercing round over significant distance almost silently. This makes it a perfect sniper's weapon since it is nearly imperceptible to modern tracking systems. 
+
+Blast Radius: None
+Damage: High
+Armor Pierce: High
+Rate of Fire: Low
+Effective Range: 500 feet

@@ -1,0 +1,292 @@
+; sound options screen script
+
+;DB 			"shelldb\\title"
+
+IMAGE_FILE  "shelldb\\common\\button_n.pcx"		  		; 0
+IMAGE_FILE  "shelldb\\common\\button_d.pcx"		  		; 1
+IMAGE_FILE	"shelldb\\common\\button_p.pcx"		  		; 2
+IMAGE_FILE	"shelldb\\common\\button_h.pcx"		  		; 3
+IMAGE_FILE  "shelldb\\common\\button_f.pcx"				; 4
+													
+IMAGE_FILE  "shelldb\\pre_ship\\hsb_b_n.pcx"			; 5
+IMAGE_FILE  "shelldb\\pre_ship\\hsb_b_d.pcx"			; 6
+
+IMAGE_FILE	"shelldb\\pre_ship\\hsb_la_n.pcx"			;7
+IMAGE_FILE	"shelldb\\pre_ship\\hsb_la_d.pcx"			;8
+IMAGE_FILE	"shelldb\\pre_ship\\hsb_la_s.pcx"			;9
+IMAGE_FILE	"shelldb\\pre_ship\\hsb_la_h.pcx"			;10
+
+IMAGE_FILE	"shelldb\\pre_ship\\hsb_ra_n.pcx"			;11
+IMAGE_FILE	"shelldb\\pre_ship\\hsb_ra_d.pcx"			;12
+IMAGE_FILE	"shelldb\\pre_ship\\hsb_ra_s.pcx"			;13
+IMAGE_FILE	"shelldb\\pre_ship\\hsb_ra_h.pcx"			;14
+
+IMAGE_FILE  "shelldb\\common\\ctab_n.pcx"				;15
+IMAGE_FILE  "shelldb\\common\\ctab_d.pcx"				;16
+IMAGE_FILE  "shelldb\\common\\ctab_p.pcx"				;17
+IMAGE_FILE  "shelldb\\common\\ctab_h.pcx"				;18
+IMAGE_FILE  "shelldb\\common\\ctab_s.pcx"				;19
+IMAGE_FILE  "shelldb\\common\\ctab_sd.pcx"				;20
+IMAGE_FILE  "shelldb\\common\\ctab_sp.pcx"				;21
+IMAGE_FILE  "shelldb\\common\\ctab_sh.pcx"				;22
+IMAGE_FILE  "shelldb\\common\\ctab_f.pcx"				;23
+
+IMAGE_FILE	"shelldb\\pre_ship\\opt_n.pcx"	  			; 24
+IMAGE_FILE	"shelldb\\pre_ship\\opt_d.pcx"	  			; 25
+IMAGE_FILE	"shelldb\\pre_ship\\opt_p.pcx"	  			; 26
+IMAGE_FILE	"shelldb\\pre_ship\\opt_h.pcx"	  			; 27
+IMAGE_FILE	"shelldb\\pre_ship\\opt_s.pcx"	  			; 28
+IMAGE_FILE	"shelldb\\pre_ship\\opt_sd.pcx"	  			; 29
+IMAGE_FILE	"shelldb\\pre_ship\\opt_sp.pcx"	  			; 30
+IMAGE_FILE	"shelldb\\pre_ship\\opt_sh.pcx"	  			; 31
+
+BACKGROUND	"shelldb\\pre_ship\\sound.pcx"
+
+CONTROLS 	mouse, keyboard
+
+; qsound3d/stereo
+TOGGLE 10
+	PICTURE		#24, #25, #26, #27
+	SELECTED	#28, #29, #30, #31
+	LOCATION    232 18
+;	DIMENSIONS	26  16
+	HOTSPOTRECT	232 18 26 16
+	GROUP	 1
+	ABOVE 11
+	BELOW 11
+	LEFT  20
+	RIGHT 20
+	NEXT 100
+	PREV 300
+	END
+
+; qsound3d/stereo
+TOGGLE 11
+	PICTURE		#24, #25, #26, #27
+	SELECTED	#28, #29, #30, #31
+	LOCATION    232 43
+;	DIMENSIONS	26 16
+	HOTSPOTRECT	232 43 26 16
+	GROUP	 1
+	ABOVE 10
+	BELOW 10
+	LEFT 21
+	RIGHT 21
+	NEXT 100
+	PREV 300
+	END
+
+; speakers/headphones
+TOGGLE 20
+	PICTURE		#24, #25, #26, #27
+	SELECTED	#28, #29, #30, #31
+	LOCATION    327 18
+;	DIMENSIONS	26  16
+	HOTSPOTRECT	327 18 26 16
+	GROUP	 2
+	ABOVE 21
+	BELOW 21
+	LEFT 10
+	RIGHT 10
+	NEXT 100
+	PREV 300
+	END
+
+; speakers/headphones
+TOGGLE 21
+	PICTURE		#24, #25, #26, #27
+	SELECTED	#28, #29, #30, #31
+	LOCATION    327 43
+;	DIMENSIONS	26 16
+	HOTSPOTRECT	327 43 26 16
+	GROUP	 2
+	ABOVE 20
+	BELOW 20
+	LEFT 11
+	RIGHT 11
+	NEXT 100
+	PREV 300
+	END
+
+; master volume slider
+SCROLLBAR 100
+;	PICTURE		#5, #6, #5, #5
+	LU_PICTURE	#7, #8, #9, #10
+	RD_PICTURE  #11, #12, #13, #14
+	LOCATION	285  150
+	DIMENSIONS   72  23
+	ARROW_DIMENSIONS 20 23
+;	SLIDE_DIMENSIONS 20 23
+	HOTSPOTRECT 285  150  72  23
+	BORDER_SIZE   0
+	MIN_MAX		  0   10
+	START		  5
+ 	ORIENTATION	  0
+	SLIDER_TYPE	  2	
+;	CURSOR_COLOR  0  0  0
+	NEXT 300
+	PREV 10
+	ABOVE 150
+	BELOW 110
+	END
+
+; sound fx slider
+SCROLLBAR 110
+;	PICTURE		#5, #6, #5, #5
+	LU_PICTURE	#7, #8, #9, #10
+	RD_PICTURE  #11, #12, #13, #14
+	LOCATION	285 185
+	DIMENSIONS   72  23
+	ARROW_DIMENSIONS 20 23
+	SLIDE_DIMENSIONS 20 23
+	HOTSPOTRECT 285  185  72  23
+	BORDER_SIZE   0
+	MIN_MAX		  0   10
+	START		  5
+	ORIENTATION	  0
+	SLIDER_TYPE	  2	
+;	CURSOR_COLOR  0  0  0
+	NEXT 300
+	PREV 10
+	ABOVE 100
+	BELOW 120
+	END
+
+; wav music slider
+SCROLLBAR 120
+;	PICTURE		#5, #6, #5, #5
+	LU_PICTURE	#7, #8, #9, #10
+	RD_PICTURE  #11, #12, #13, #14
+	LOCATION	285 255
+	DIMENSIONS  72  23
+	ARROW_DIMENSIONS 20 23
+	SLIDE_DIMENSIONS 20 23
+	HOTSPOTRECT 285 255 72  23
+	MIN_MAX		  0   10
+	START		  5
+	BORDER_SIZE   0
+	ORIENTATION	  0
+	SLIDER_TYPE	  2	
+;	CURSOR_COLOR  0  0  0
+	NEXT 300
+	PREV 10
+	ABOVE 110
+	BELOW 130
+;	LEFT 130
+;	RIGHT 110
+ 	END
+
+; cd music slider
+SCROLLBAR 130
+;	PICTURE		#5, #6, #5, #5
+	LU_PICTURE	#7, #8, #9, #10
+	RD_PICTURE  #11, #12, #13, #14
+	LOCATION	285 290
+	DIMENSIONS  72  23
+	ARROW_DIMENSIONS 20 23
+	SLIDE_DIMENSIONS 20 23
+	HOTSPOTRECT 285 290 72  23
+	MIN_MAX		  0   10
+	START		  5
+	BORDER_SIZE   0
+	ORIENTATION	  0
+	SLIDER_TYPE	  2	
+;	CURSOR_COLOR  0  0  0
+	NEXT 300
+	PREV 10
+	ABOVE 120
+	BELOW 140
+;	LEFT 140
+;	RIGHT 120
+ 	END
+	
+; base slider
+SCROLLBAR 140
+;	PICTURE		#5, #6, #5, #5
+	LU_PICTURE	#7, #8, #9, #10
+	RD_PICTURE  #11, #12, #13, #14
+	LOCATION	285 325
+	DIMENSIONS   72  23
+	ARROW_DIMENSIONS 20 23
+	SLIDE_DIMENSIONS 20 23
+	HOTSPOTRECT 285  325 72  23
+	MIN_MAX		  0   10
+	START		  5
+	BORDER_SIZE   0
+	ORIENTATION	  0
+	SLIDER_TYPE	  2	
+;	CURSOR_COLOR  0  0  0
+	NEXT 300
+	PREV 10
+	ABOVE 130
+  	BELOW 150
+	END
+	
+; treble slider
+SCROLLBAR 150
+;	PICTURE		#5, #6, #5, #5
+	LU_PICTURE	#7, #8, #9, #10
+	RD_PICTURE  #11, #12, #13, #14
+	LOCATION	285 360
+	DIMENSIONS   72  23
+	ARROW_DIMENSIONS 20 23
+	SLIDE_DIMENSIONS 20 23
+	HOTSPOTRECT 285 360 72  23
+	MIN_MAX		  0   10
+	START		  5
+	BORDER_SIZE   0
+	ORIENTATION	  0
+	SLIDER_TYPE	  2	
+;	CURSOR_COLOR  0  0  0
+	NEXT 300
+	PREV 10
+	ABOVE 140
+	BELOW 100
+	END
+	 
+; reset button
+BUTTON 200
+	PICTURE		#0, #1, #2, #3 		; #15, #16, #17, #18
+	FOCUS_PICTURE #4 588 181   		; 23 498 187
+	LOCATION     511 181 
+	HOTSPOTRECT	 511 146 130 45
+	NEXT 10
+	PREV 100
+	ABOVE 300
+	BELOW 201
+;	LEFT 100
+;	RIGHT 100
+	END
+
+; default button
+BUTTON 201
+	PICTURE		#0, #1, #2, #3
+	FOCUS_PICTURE #4 588 241
+	LOCATION     511 241 
+	HOTSPOTRECT	 511 206 130 45
+	NEXT 10
+	PREV 100
+	ABOVE    200
+	BELOW    300
+;	LEFT     100
+;	RIGHT    100
+	END
+
+
+; exit button
+BUTTON 300
+	PICTURE	 #0,  ; normal
+			 #1,  ; disabled
+			 #2,  ; pressed
+			 #3   ; highlighted (unused)
+
+	FOCUS_PICTURE #4 588 451
+
+	LOCATION 511 451
+	HOTSPOTRECT 501 413 124 52
+	NEXT  10
+	PREV  100
+	ABOVE 201
+	BELOW 200
+	END
+

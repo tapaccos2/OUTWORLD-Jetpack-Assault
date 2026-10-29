@@ -1,0 +1,9 @@
+M-215 Autorifle
+Classification: Rifle Attachment
+This rifle fires 3.5mm microplasma-propelled composite projectiles at an extremely high rate-of-fire. The highly compressed ammunition cartridge contains 180 rounds of ammunition, including a purple tracer for every 5-round burst. While each round does little damage (especially through armor), the unbelievable fire rate and high ammunition capacity make this a popular secondary weapon.
+
+Blast Radius: None
+Damage: Low
+Armor Pierce: Low
+Rate of Fire: Very High 
+Effective Range: 250 feet

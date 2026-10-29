@@ -1,0 +1,25 @@
+Captain Nathan Hackett
+
+Age: 48
+Height: 6'2"
+Weight: 193 lbs.
+DOB: December 31, 2235
+
+Background:
+  Captain Nathan Hackett was born on the planet Ramus III to the family of Commander Larry Hackett.  Nathan Hackett attended a series of military schools between the years 2243 and 2253. Education records reflect a strong scholastic track record and a string of achievement awards. 
+
+  Hackett attended technical college between the years 2253 and 2255, graduating with a degree in Computer Science.  
+
+  Hackett joined the military in 2255 as a private in the Colonial Defense Force Expeditionary Guard, 10th Division, Special Operations Group, where he specialized in advanced computer assisted combat. He then transferred to Strike Fleet Omega in 2277, where he received honors for infantry leadership. 
+
+  He joined the CDF Marine Jump Corps in 2259. He currently specializes in Rocket Pack Air Assault Training.  
+
+Military Experience:
+  Colonial Defense Force Expeditionary Guard 10th Division Special Operations Capable (SOC) 2255-2257
+  Strike Fleet Omega 2257-2275
+  CDF Marine Jump Corps 2275-present
+
+Areas of Expertise: 
+  Computer Assisted Combat
+  Rocket Pack Air Assault Training
+  Received award for infantry leadership

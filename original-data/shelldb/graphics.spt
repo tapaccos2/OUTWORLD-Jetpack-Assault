@@ -1,0 +1,243 @@
+; graphics options screen script
+
+;DB 			"shelldb\\title"
+
+IMAGE_FILE  "shelldb\\common\\button_n.pcx"					; 0
+IMAGE_FILE  "shelldb\\common\\button_d.pcx"					; 1
+IMAGE_FILE	"shelldb\\common\\button_p.pcx"					; 2
+IMAGE_FILE	"shelldb\\common\\button_h.pcx"					; 3
+IMAGE_FILE  "shelldb\\common\\button_f.pcx"					; 4
+
+IMAGE_FILE  "shelldb\\pre_ship\\hsb_b_n.pcx"				; 5
+IMAGE_FILE  "shelldb\\pre_ship\\hsb_b_d.pcx"				; 6
+IMAGE_FILE	"shelldb\\pre_ship\\sb_ua_n.pcx"				; 7
+IMAGE_FILE	"shelldb\\pre_ship\\sb_ua_d.pcx"				; 8
+IMAGE_FILE	"shelldb\\pre_ship\\sb_ua_s.pcx"				; 9
+IMAGE_FILE  "shelldb\\pre_ship\\sb_ua_h.pcx"				; 10
+IMAGE_FILE	"shelldb\\pre_ship\\sb_da_n.pcx"				; 11
+IMAGE_FILE	"shelldb\\pre_ship\\sb_da_d.pcx"				; 12
+IMAGE_FILE	"shelldb\\pre_ship\\sb_da_s.pcx"				; 13
+IMAGE_FILE  "shelldb\\pre_ship\\sb_da_h.pcx"				; 14
+
+IMAGE_FILE	"shelldb\\pre_ship\\opt_n.pcx"					; 15
+IMAGE_FILE	"shelldb\\pre_ship\\opt_d.pcx"					; 16
+IMAGE_FILE	"shelldb\\pre_ship\\opt_p.pcx"					; 17
+IMAGE_FILE	"shelldb\\pre_ship\\opt_h.pcx"					; 18
+IMAGE_FILE	"shelldb\\pre_ship\\opt_s.pcx"					; 19
+IMAGE_FILE	"shelldb\\pre_ship\\opt_sd.pcx"					; 20
+IMAGE_FILE	"shelldb\\pre_ship\\opt_sp.pcx"					; 21
+IMAGE_FILE	"shelldb\\pre_ship\\opt_sh.pcx"					; 22
+
+IMAGE_FILE	"shelldb\\pre_ship\\reset_n.pcx"				; 23
+IMAGE_FILE	"shelldb\\pre_ship\\reset_d.pcx"				; 24
+IMAGE_FILE	"shelldb\\pre_ship\\reset_p.pcx"				; 25
+IMAGE_FILE	"shelldb\\pre_ship\\reset_h.pcx"				; 26
+IMAGE_FILE	"shelldb\\pre_ship\\reset_s.pcx"				; 27
+
+BACKGROUND	"shelldb\\pre_ship\\graphics.pcx"
+
+CONTROLS 	mouse, keyboard
+
+; resolution mode
+;LISTBOX 100
+;	LOCATION     	   27 93
+;	DIMENSIONS        345 117
+;	HOTSPOTRECT        27 93 345 117
+;;	TEXT_COLOR        195 195 195		;White
+;;	HILIGHT_COLOR	  255 255 255		;Bright White
+;;	FOCUS_COLOR		  255 255 0			;Yellow
+;;	DISABLE_COLOR	  63  63  63		;Grey
+;;	CURSOR_COLOR      0   0   127		;Blue
+;;	SELECT_COLOR      0   0   195		;Blue
+;	BG_COLOR_NORMAL   0   0   0
+;	BG_COLOR_HILIGHT  0   0   0
+;	BG_COLOR_FOCUS    0   0   0
+;	BG_COLOR_DISABLED 0   0   0
+;	END
+	
+; fog
+LABEL 10
+	LOCATION 220 147
+	END
+
+; clip
+LABEL 11
+	LOCATION 220 167
+	END
+
+; granularity
+LABEL 12
+	LOCATION 220 187
+	END
+
+; klod
+LABEL 13
+	LOCATION 220 207
+	END
+
+; dynamic lighting
+LABEL 14
+	LOCATION 220 227
+	END
+
+; player shadow
+LABEL 15
+	LOCATION 220 248
+	END
+
+; detail low
+TOGGLE 100
+	PICTURE		#15, #16, #17, #18
+	SELECTED	#19, #20, #21, #22
+	LOCATION    105 82
+	DIMENSIONS	26  16
+	HOTSPOTRECT	105 82 26 16
+	GROUP	 1
+	LEFT  102
+	RIGHT 101
+	NEXT  201
+	PREV  300
+	END
+
+; detail medium
+TOGGLE 101
+	PICTURE		#15, #16, #17, #18
+	SELECTED	#19, #20, #21, #22
+	LOCATION    215 82
+	DIMENSIONS	26 16
+	HOTSPOTRECT	215 82 26 16
+	GROUP	 1
+	LEFT  100
+	RIGHT 102
+	NEXT  201
+	PREV  300
+	END
+
+; detail high	
+TOGGLE 102
+	PICTURE		#15, #16, #17, #18
+	SELECTED	#19, #20, #21, #22
+	LOCATION    325 82
+	DIMENSIONS	26  16
+	HOTSPOTRECT	325 82 26 16
+	GROUP	 1
+	LEFT  101
+	RIGHT 100
+	NEXT  201
+	PREV  300
+	END
+ 
+; resolution 
+LABEL 200
+	LOCATION    134 374
+	END
+
+; next resolution
+BUTTON 201
+	PICTURE	 #7, #8, #9, #10
+	LOCATION     100  362
+	HOTSPOTRECT	 100  362  22 19
+	ABOVE 202
+	BELOW 202
+	LEFT  203
+	RIGHT 203
+	NEXT  251
+	PREV  100
+	END
+
+; prev resolution
+BUTTON 202
+	PICTURE	 #11, #12, #13, #14
+	LOCATION     100  384
+	HOTSPOTRECT	 100  384  22 19
+	ABOVE 201
+	BELOW 201
+	LEFT  203
+	RIGHT 203
+	NEXT  251
+	PREV  100
+	END
+
+; reset default resolution
+BUTTON 203
+	PICTURE	 #23, #24, #25, #26
+	LOCATION     133  405
+	HOTSPOTRECT	 133  405  77 29 
+	LEFT  201
+	RIGHT 201
+	NEXT  251
+	PREV  100
+	END
+
+; d3d 
+LABEL 250
+	LOCATION    259 374
+	END
+
+; next d3d option
+BUTTON 251
+	PICTURE	 #7, #8, #9, #10
+	LOCATION     230  362
+	HOTSPOTRECT	 230  362  22 19
+	ABOVE 252
+	BELOW 252
+	LEFT  254
+	RIGHT 254
+	NEXT  300
+	PREV  201
+	END
+
+; prev d3d option
+BUTTON 252
+	PICTURE	 #11, #12, #13, #14
+	LOCATION     230  384
+	HOTSPOTRECT	 230  384  22 19
+	ABOVE 251
+	BELOW 251
+	LEFT  254
+	RIGHT 254
+	NEXT  300
+	PREV  201
+	END
+
+; reset d3d option
+BUTTON 253
+	PICTURE	 #23, #24, #25, #26
+	LOCATION     363  405
+	HOTSPOTRECT	 363  405  77 29 
+	INVISIBLE
+	DISABLED
+	LEFT  201
+	RIGHT 201
+	NEXT  300
+	PREV  100
+	END
+
+; use d3d
+TOGGLE 254
+	PICTURE		#15, #16, #17, #18
+	SELECTED	#19, #20, #21, #22
+	LOCATION    245 415
+	DIMENSIONS	26 16
+	HOTSPOTRECT	245 415 26 16
+	LEFT  251
+	RIGHT 251
+	NEXT  300
+	PREV  201
+	END
+		
+; exit button
+BUTTON 300
+	PICTURE	 #0,  ; normal
+			 #1,  ; disabled
+			 #2,  ; pressed
+			 #3   ; highlighted (unused)
+
+	FOCUS_PICTURE #4 554 447
+
+	LOCATION 477 447
+	HOTSPOTRECT 467 409 124 52
+	NEXT  100
+	PREV  251
+	END
+

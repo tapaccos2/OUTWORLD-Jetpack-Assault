@@ -1,0 +1,9 @@
+DM-13 Timed Mine
+Classification: Mine 
+This weapon is intended for demolitions of enemy structures. This mine has an explosive force greater than any other man-portable weapon and must be used with caution. After it is dropped, the mine will self-destruct after a short period of time (usually 10 seconds).  Jump Corps doctrine strongly recommends dispensing this mine only while in full flight. 
+
+Blast Radius: 50 feet
+Damage: Extreme 
+Armor Pierce: High
+Rate of Fire: Low
+Effective Range: 0 feet

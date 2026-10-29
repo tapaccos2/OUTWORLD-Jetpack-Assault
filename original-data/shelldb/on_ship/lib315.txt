@@ -1,0 +1,9 @@
+DM-9 Remote Detonation Mine
+Classification: Mine
+With almost twice the explosive force of the DM-5, the DM-9 is another "boobytrap" weapon. Once dropped, the weapon is armed to detonate by remote signal from the soldier.  All DM-9s are pre-coded to accept the detonation signal only from the soldier who deployed it. These mines are not intended as a long-term threat and will self-destruct after approximately one minute.
+
+Blast Radius: 25 feet
+Damage: Very High
+Armor Pierce: High
+Rate of Fire: Low
+Effective Range: 0 feet

@@ -1,0 +1,93 @@
+; instant action screen script
+
+;DB 			"shelldb\\title"
+
+IMAGE_FILE  "shelldb\\common\\button_n.pcx"				; 0
+IMAGE_FILE  "shelldb\\common\\button_d.pcx"				; 1
+IMAGE_FILE	"shelldb\\common\\button_p.pcx"				; 2
+IMAGE_FILE	"shelldb\\common\\button_h.pcx"				; 3
+IMAGE_FILE  "shelldb\\common\\button_f.pcx"				; 4
+
+; IMAGE_FILE  "shelldb\\pre_ship\\sb_b_n.pcx"				; 5
+; IMAGE_FILE  "shelldb\\pre_ship\\sb_b_d.pcx"				; 6
+
+IMAGE_FILE  "shelldb\\pre_ship\\sb_s_n.pcx"				; 5
+
+IMAGE_FILE  "shelldb\\pre_ship\\sb_ua_n.pcx"			; 6
+IMAGE_FILE  "shelldb\\pre_ship\\sb_ua_d.pcx"			; 7
+IMAGE_FILE  "shelldb\\pre_ship\\sb_ua_h.pcx"			; 8
+IMAGE_FILE  "shelldb\\pre_ship\\sb_ua_s.pcx"			; 9
+
+IMAGE_FILE	"shelldb\\pre_ship\\sb_da_n.pcx"			; 10
+IMAGE_FILE  "shelldb\\pre_ship\\sb_da_d.pcx"			; 11
+IMAGE_FILE  "shelldb\\pre_ship\\sb_da_h.pcx"			; 12
+IMAGE_FILE  "shelldb\\pre_ship\\sb_da_s.pcx"			; 13
+
+BACKGROUND	"shelldb\\pre_ship\\iact.pcx"
+
+CONTROLS 	mouse, keyboard
+		
+; start mission button
+BUTTON 100
+	PICTURE	 #0,  ; normal
+			 #1,  ; disabled
+			 #2,  ; pressed
+			 #3   ; highlighted (unused)
+
+	FOCUS_PICTURE #4 138 315
+
+;	DISABLED
+	LOCATION 61 315
+	HOTSPOTRECT 51 277 124 52
+	ABOVE 101
+	BELOW 101
+	NEXT 101
+	PREV 200
+	END
+
+; back button
+BUTTON 101
+	PICTURE	 #0,  ; normal
+			 #1,  ; disabled
+			 #2,  ; pressed
+			 #3   ; highlighted (unused)
+
+	FOCUS_PICTURE #4  138 448
+
+	LOCATION 61 448
+	HOTSPOTRECT 51 410 124 52
+	ABOVE 100
+	BELOW 100
+	NEXT 200
+	PREV 100
+	END
+
+; list of instant action battles to choose from
+LISTBOX 200
+	LOCATION 22 32
+	DIMENSIONS  142 207
+	HOTSPOTRECT 22 32 140 207
+;	TEXT_COLOR        255 0   0
+;	HILIGHT_COLOR	  0   255 0
+;	FOCUS_COLOR		  0   0   255
+;	DISABLE_COLOR	  126 127 127
+;	CURSOR_COLOR      255 255 255
+;	BG_COLOR_NORMAL   0   0   0
+	SCROLLBAR 200
+		LOCATION	140 32
+		DIMENSIONS   22  207
+		BORDER_SIZE   0
+		HOTSPOTRECT 140 32  22 207
+;		PICTURE  , #6 
+		SLIDE #5, #5, #5, #5
+		LU_PICTURE #6, #7, #8, #9
+ 		RD_PICTURE #10, #11, #12, #13
+		ARROW_DIMENSIONS 23 20
+		SLIDE_DIMENSIONS 20 20
+		SLIDER_TYPE 1
+		END
+	NEXT 100
+	PREV 101
+;	LEFT 101
+;	RIGHT 100
+	END

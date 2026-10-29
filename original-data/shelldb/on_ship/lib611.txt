@@ -1,0 +1,2 @@
+Hydran Rocket:
+A straight line-of-fire rocket, this Hydran weapon nevertheless has an impressive blast radius and damage potential. It has a kind of proximity fuse, which means it does not need to score a direct hit to explode and cause damage. The Hydran missile launcher fires it.

@@ -1,0 +1,13 @@
+DM-5 Proximity Mine
+Classification: Mine
+This mine, launched by the M-17, has a proximity fuse that detonates whenever it detects nearby movement without the correct corresponding IFF signal. This prevents it from detonating on friendly targets. It is not foolproof, however, it can still be detonated by the presence of another signal, even if a designated "friendly" is within the detection or blast radius. 
+
+CDF doctrine calls for DM-5s being laid across false retreat zones. Friendly units pretend to flee across a field mined with DM-5, far enough in advance of enemy units. The pursuing enemy, not transmitting the proper IFF codes, will detonate the mines and sustain heavy damage.
+
+The Jump Corps have determined an additional way to use the DM-5s. Flying high over a target via rocket pack, the dreadnaut drops a mine on top of concentrations of enemy units. The explosive radius will generally eliminate a number of soft targets. Always be sure to be at least 30 feet from a target before dispensing the mine. 
+
+Blast Radius: 10 feet
+Damage: High
+Armor Pierce: Medium
+Rate of Fire: Low
+Effective Range: 0 feet

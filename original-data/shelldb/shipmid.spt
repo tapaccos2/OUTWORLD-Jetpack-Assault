@@ -1,0 +1,134 @@
+; main screen script
+
+;DB 			"shelldb\\title"
+
+IMAGE_FILE  "shelldb\\common\\button_n.pcx"					; 0
+IMAGE_FILE  "shelldb\\common\\button_d.pcx"					; 1
+IMAGE_FILE	"shelldb\\common\\button_p.pcx"					; 2
+IMAGE_FILE	"shelldb\\common\\button_h.pcx"					; 3
+IMAGE_FILE  "shelldb\\common\\button_f.pcx"					; 4
+
+BACKGROUND	"shelldb\\on_ship\\mid.pcx"
+
+CONTROLS 	mouse, keyboard
+
+; generic message
+LABEL 0 
+	LOCATION 100 460
+	END
+		
+; weapons button
+BUTTON 100
+	PICTURE	 #0, #1, #2, #3
+	FOCUS_PICTURE #4 138 47
+	LOCATION 61 47 
+	HOTSPOTRECT 51 10 124 52
+	ABOVE 301
+	BELOW 101
+	NEXT  101
+	PREV  301
+	END
+
+; armor button
+BUTTON 101
+	PICTURE	 #0, #1, #2, #3
+ 	FOCUS_PICTURE #4 138 112
+	LOCATION 61 112 
+	HOTSPOTRECT 51 75 124 52
+	ABOVE 100
+	BELOW 102
+	NEXT  102
+	PREV  100
+	END
+
+; team button
+BUTTON 102
+	PICTURE	 #0, #1, #2, #3
+	FOCUS_PICTURE #4 138 181
+	LOCATION 61 181
+	HOTSPOTRECT 51 144 124 52
+	ABOVE 101
+	BELOW 103
+	NEXT  103
+	PREV  101
+	END
+
+; library button
+BUTTON 103
+	PICTURE	 #0, #1, #2, #3
+	FOCUS_PICTURE #4 138 248
+	LOCATION 61 248 
+	HOTSPOTRECT 51 211 124 52
+	ABOVE 102
+	BELOW 104
+	NEXT  104
+	PREV  102
+	END
+
+; help button
+BUTTON 104
+	PICTURE	 #0, #1, #2, #3
+	FOCUS_PICTURE #4 138 314
+	LOCATION 61 314 
+	HOTSPOTRECT 51 277 124 52
+	ABOVE 103
+	BELOW 105
+	NEXT  105
+	PREV  103
+	END
+
+; launch button
+BUTTON 105
+	PICTURE	 #0, #1, #2, #3
+	FOCUS_PICTURE #4 138  381
+	LOCATION 61 380
+	HOTSPOTRECT 51 341 124 52
+	ABOVE 104
+	BELOW 301
+	NEXT  301
+	PREV  104
+	END
+
+; briefing button
+;BUTTON 104 
+;	PICTURE #12, "", #13 ;, #14
+;	FOCUS_PICTURE #15 104 433
+;
+;	LOCATION 104 433
+;	HOTSPOTRECT	104 433 122 21
+;	NEXT 100
+;	PREV 301
+;	END
+
+; left arrow
+;BUTTON 104 
+;	PICTURE #20
+;
+;	LOCATION 52 149
+;	HOTSPOTRECT	52 149 71 23
+;	NEXT 102
+;	PREV 100
+;	END
+
+; right arrow
+;BUTTON 105 
+;	PICTURE #21
+;
+;	LOCATION 521 161
+;	HOTSPOTRECT	521 161 71 23
+;	NEXT 101
+;	PREV 102
+;	END
+
+; back to briefing button
+BUTTON 301
+	PICTURE	 #0, #1, #2, #3
+	FOCUS_PICTURE #4 138 448
+	LOCATION 61 448
+	HOTSPOTRECT 51 410 124 52
+	ABOVE 105
+	BELOW 100
+	NEXT  100
+	PREV  105
+	END
+

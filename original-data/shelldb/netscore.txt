@@ -1,0 +1,78 @@
+; MultiPlayer score script
+
+BACKGROUND	"shelldb\\netscore\\netscore.pcx"
+
+IMAGE_FILE	"shelldb\\netscore\\continue-n.pcx"				;0
+IMAGE_FILE	"shelldb\\netscore\\continue-d.pcx"				;1
+IMAGE_FILE	"shelldb\\netscore\\continue-p.pcx"				;2
+IMAGE_FILE	"shelldb\\netscore\\continue-h.pcx"				;3
+
+IMAGE_FILE	"shelldb\\netscore\\minfo_n.pcx"				;4
+IMAGE_FILE	"shelldb\\netscore\\minfo_d.pcx"				;5
+IMAGE_FILE	"shelldb\\netscore\\minfo_p.pcx"				;6
+IMAGE_FILE	"shelldb\\netscore\\minfo_h.pcx"				;7
+
+CONTROLS 	mouse, keyboard
+
+
+; Continue Button
+BUTTON 100
+	PICTURE	 #0,
+			 #1,
+			 #2,
+			 #3
+	LOCATION    459 405
+	HOTSPOTRECT	459 405 115 29
+	NEXT	 140
+	PREV	 120
+	END
+
+; More Info Button
+BUTTON 120
+	PICTURE	 #4,
+			 #5,
+			 #6,
+			 #7
+	LOCATION    334 405
+	HOTSPOTRECT	334 405 115 29
+	NEXT	 100
+	PREV	 141
+	END
+
+
+LISTVIEW 140
+	LOCATION    88 78 
+	DIMENSIONS  494 186
+	HOTSPOTRECT 88 78 494 186
+	TEXT_COLOR        195 195 195
+	HILIGHT_COLOR	  255 255 255
+	FOCUS_COLOR		  255 255 0
+	DISABLE_COLOR	  63  63  63
+	CURSOR_COLOR      0   0   127
+	SELECT_COLOR      0   0   195
+	BG_COLOR_NORMAL   0   0   0
+	BG_COLOR_HILIGHT  0   0   0
+	BG_COLOR_FOCUS    0   0   0
+	TRANSPARENT
+	NEXT	 141
+	PREV	 100
+	END
+
+
+LISTVIEW 141
+	LOCATION    88  296 
+	DIMENSIONS  494 103
+	HOTSPOTRECT 88  296 494 103
+	TEXT_COLOR        195 195 195
+	HILIGHT_COLOR	  255 255 255
+	FOCUS_COLOR		  255 255 0
+	DISABLE_COLOR	  63  63  63
+	CURSOR_COLOR      0   0   127
+	SELECT_COLOR      0   0   195
+	BG_COLOR_NORMAL   0   0   0
+	BG_COLOR_HILIGHT  0   0   0
+	BG_COLOR_FOCUS    0   0   0
+	TRANSPARENT
+	NEXT	 120
+	PREV	 140
+	END

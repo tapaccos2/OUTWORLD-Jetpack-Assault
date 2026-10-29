@@ -1,0 +1,2 @@
+Claw Missile:
+This missile trades explosive power for homing ability and a tight turn radius. It is fired by the Hydran missile launcher and is usually used against air threats. It is named for its pincer-like head.

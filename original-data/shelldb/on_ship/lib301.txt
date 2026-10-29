@@ -1,0 +1,11 @@
+M-81 Pulse Rifle
+Classification: Standard Combat Rifle
+This is the standard firearm for all combat personnel in the Colonial Marine Corps. It fires an amplified high-energy radiation pulse, which is accurate at up to 500 feet. This energy bolt experiences no measurable drop due to gravity or decrease in velocity in any atmosphere. These characteristics are critical for marines who find themselves fighting in a wide variety of environments at a moment's notice.
+
+The M-81's capacitor is capable of holding enough power for a sustained burst of 12 shots. It is recharged from a steady energy source, either the TPS-51 Energy Pack or the micro-fusion generator of a standard battlesuit. This means that the marine has an almost inexhaustable supply of ammunition for his primary weapon and never needs to be distracted from the fight on hand in order to reload his rifle.
+
+Blast Radius: None
+Damage: Low
+Armor Pierce: Medium
+Rate of Fire: High 
+Effective Range: 350 feet

@@ -1,0 +1,9 @@
+M-90 Flame Thrower
+Classification: Rifle Attachment
+This weapon mixes a highly flammable gas with pure oxygen just before ignition, ensuring that this weapon is usable in almost any atmosphere (or none at all). The weapon does not contain enough gas for prolonged use, but the extremely high temperature blast from this weapon is enough to destroy any lightly armored creature or vehicle at close range within moments.
+
+Blast Radius: Special
+Damage: Medium
+Armor Pierce: Low
+Rate of Fire: Constant
+Effective Range: 100 feet

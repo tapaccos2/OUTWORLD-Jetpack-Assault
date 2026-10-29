@@ -1,0 +1,9 @@
+SM-66 Swarm Missile
+Classification: Missile
+A new and improved version of the homing missile, swarm missiles have reduced homing ability and damage potential, but are fired in clusters of four. This makes them very difficult to evade and makes them more deadly against groups of targets. This weapon is just entering production and should be available to front-line forces soon.
+
+Blast Radius: 2 feet
+Damage: Medium
+Armor Pierce: Low
+Rate of Fire: Low
+Effective Range: 800 feet

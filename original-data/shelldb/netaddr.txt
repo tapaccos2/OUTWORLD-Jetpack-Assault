@@ -1,0 +1,181 @@
+; MultiPlayer Remote Address script
+
+BACKGROUND	"shelldb\\netaddr\\netaddr.pcx"
+
+IMAGE_FILE  "shelldb\\common\\button_n.pcx"					; 0
+IMAGE_FILE  "shelldb\\common\\button_d.pcx"					; 1
+IMAGE_FILE	"shelldb\\common\\button_p.pcx"					; 2
+IMAGE_FILE	"shelldb\\common\\button_h.pcx"					; 3
+IMAGE_FILE	"shelldb\\common\\button_f.pcx"					; 4
+
+IMAGE_FILE	"shelldb\\netchat\\common\\SBSlider-n.pcx"		; 5
+IMAGE_FILE  "shelldb\\netmain\\VSBUpArrow-n.pcx"			; 6
+IMAGE_FILE  "shelldb\\netmain\\VSBUpArrow-s.pcx"			; 7
+IMAGE_FILE  "shelldb\\netmain\\VSBUpArrow-h.pcx"			; 8
+IMAGE_FILE  "shelldb\\netmain\\VSBDnArrow-n.pcx"			; 9
+IMAGE_FILE  "shelldb\\netmain\\VSBDnArrow-s.pcx"			;10
+IMAGE_FILE  "shelldb\\netmain\\VSBDnArrow-h.pcx"			;11
+IMAGE_FILE	"shelldb\\netmain\\VSBbase.pcx"					;12
+
+CONTROLS 	mouse, keyboard
+
+
+;Address List Box
+LISTVIEW 100
+	LOCATION    51 99 
+	DIMENSIONS  352 188
+	HOTSPOTRECT 51 99 352 188
+	TEXT_COLOR        195 195 195
+	HILIGHT_COLOR	  255 255 255
+	FOCUS_COLOR		  255 255 0
+	DISABLE_COLOR	  63  63  63
+	CURSOR_COLOR      0   0   127
+	SELECT_COLOR      0   0   195
+	BG_COLOR_NORMAL   0   0   0
+	BG_COLOR_HILIGHT  0   0   0
+	BG_COLOR_FOCUS    0   0   0
+	TRANSPARENT
+	SCROLLBAR 100
+		LOCATION	425 95
+		DIMENSIONS  24  158
+		BORDER_SIZE 0
+		HOTSPOTRECT 425 95 24 158
+		PICTURE     #12, #12, #12, #12
+		SLIDE       #5,	#5,	#5,	#5
+		LU_PICTURE  #6,	#6,	#7,	#8
+		RD_PICTURE  #9,	#9,	#10, #11
+		ARROW_DIMENSIONS 24 21
+		SLIDE_DIMENSIONS 20 20
+		SLIDER_TYPE 1
+		END
+	NEXT	 200
+	PREV	 440
+	END
+
+
+;Name Text Box
+TEXTBOX 200
+	LOCATION          43  343
+	DIMENSIONS        369 24
+	HOTSPOTRECT       43  343 369 24
+	FOCUS_RECTANGLE   45  345 365 20
+	TEXT_COLOR        195 195 195
+	HILIGHT_COLOR	  255 255 255
+	FOCUS_COLOR		  255 255 0
+	DISABLE_COLOR	  63  63  63
+	CURSOR_COLOR      0   255 0
+	BG_COLOR_NORMAL   0   0   0
+	BG_COLOR_HILIGHT  0   0   0
+	BG_COLOR_FOCUS    0   0   0
+	BG_COLOR_DISABLED 25  25  25
+	TRANSPARENT
+	ABOVE 100
+	BELOW 300
+	NEXT  300
+	PREV  100
+	END
+
+
+;Address Text Box
+TEXTBOX 300
+	LOCATION          43  412
+	DIMENSIONS        369 24
+	HOTSPOTRECT       43  412 369 24
+	FOCUS_RECTANGLE   45  414 365 20
+	TEXT_COLOR        195 195 195
+	HILIGHT_COLOR	  255 255 255
+	FOCUS_COLOR		  255 255 0
+	DISABLE_COLOR	  63  63  63
+	CURSOR_COLOR      0   255 0
+	BG_COLOR_NORMAL   0   0   0
+	BG_COLOR_HILIGHT  0   0   0
+	BG_COLOR_FOCUS    0   0   0
+	BG_COLOR_DISABLED 25  25  25
+	TRANSPARENT
+	ABOVE 200
+	BELOW 100
+	NEXT  400
+	PREV  200
+	END
+
+
+;New Button
+BUTTON 400
+	PICTURE	 #0,
+			 #1,
+			 #2,
+			 #3
+	FOCUS_PICTURE #4 576 41
+	LOCATION    499 41
+	HOTSPOTRECT	488 5   126  52
+	ABOVE    440
+	BELOW    410
+	NEXT	 410
+	PREV     300
+	END
+
+
+;Edit Button
+BUTTON 410
+	PICTURE	 #0,
+			 #1,
+			 #2,
+			 #3
+	FOCUS_PICTURE #4 576 101
+	LOCATION    499 101
+	HOTSPOTRECT	488 65  126  52
+	ABOVE    400
+	BELOW    420
+	NEXT	 420
+	PREV     400
+	END
+
+
+;Delete Button
+BUTTON 420
+	PICTURE	 #0,
+			 #1,
+			 #2,
+			 #3
+	FOCUS_PICTURE #4 576 161
+	LOCATION    499 161
+	HOTSPOTRECT	488 125 126  52
+	ABOVE    410
+	BELOW    430
+	NEXT	 430
+	PREV     410
+	END
+
+
+;Connect Button
+BUTTON 430
+	PICTURE	 #0,
+			 #1,
+			 #2,
+			 #3
+	FOCUS_PICTURE #4 576 407
+	LOCATION    499 407
+	HOTSPOTRECT	488 371 126  52
+	ABOVE    420
+	BELOW    440
+	NEXT	 440
+	PREV     420
+	END
+
+
+;Back Button
+BUTTON 440
+	PICTURE	 #0,
+			 #1,
+			 #2,
+			 #3
+	FOCUS_PICTURE #4 576 466
+	LOCATION    499 466
+	HOTSPOTRECT	488 430 126  52
+	ABOVE    430
+	BELOW    400
+	NEXT	 100
+	PREV     430
+	END
+
+

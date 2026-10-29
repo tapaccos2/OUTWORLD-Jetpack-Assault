@@ -1,0 +1,122 @@
+; de-briefing screen script
+
+;DB  		"shelldb\\title"
+
+IMAGE_FILE  "shelldb\\common\\button_n.pcx"			; 0
+IMAGE_FILE  "shelldb\\common\\button_d.pcx"			; 1
+IMAGE_FILE	"shelldb\\common\\button_p.pcx"			; 2
+IMAGE_FILE	"shelldb\\common\\button_h.pcx"			; 3
+IMAGE_FILE  "shelldb\\common\\button_f.pcx"			; 4
+
+IMAGE_FILE  "shelldb\\pre_ship\\sb_bxs_n.pcx" 	  	; 5
+IMAGE_FILE  "shelldb\\pre_ship\\sb_bs_d.pcx"	  	; 6
+
+IMAGE_FILE  "shelldb\\pre_ship\\sb_s_n.pcx"		  	; 7
+
+IMAGE_FILE  "shelldb\\pre_ship\\sb_ua_n.pcx"		; 8
+IMAGE_FILE  "shelldb\\pre_ship\\sb_ua_d.pcx"		; 9
+IMAGE_FILE  "shelldb\\pre_ship\\sb_ua_h.pcx"		; 10
+IMAGE_FILE  "shelldb\\pre_ship\\sb_ua_s.pcx"		; 11
+
+IMAGE_FILE	"shelldb\\pre_ship\\sb_da_n.pcx"		; 12
+IMAGE_FILE  "shelldb\\pre_ship\\sb_da_d.pcx"		; 13
+IMAGE_FILE  "shelldb\\pre_ship\\sb_da_h.pcx"		; 14
+IMAGE_FILE  "shelldb\\pre_ship\\sb_da_s.pcx"		; 15
+
+
+BACKGROUND	"shelldb\\briefing\\dbrief.pcx"
+
+CONTROLS 	mouse, keyboard
+
+; message 
+LABEL 1
+	LOCATION 100 460
+	END
+
+; ok button
+BUTTON 100
+	PICTURE #0, #1, #2, #3
+	FOCUS_PICTURE #4 279 154
+
+	LOCATION 202 154
+	HOTSPOTRECT 195 116 124 52
+	NEXT 610
+	PREV 101
+	ABOVE 101
+	BELOW 101
+	END
+
+; save button
+BUTTON 101
+	PICTURE #0, #1, #2, #3
+	FOCUS_PICTURE #4 279 93
+
+	LOCATION 202 93
+	HOTSPOTRECT 195 55 124 52
+	NEXT 100
+	PREV 612
+	ABOVE 100
+	BELOW 100
+	END
+
+; replay movie - hidden
+BUTTON 15
+	LOCATION  78 42
+	HOTSPOTRECT 78 42 94 118
+	INVISIBLE
+	END
+
+; overview text
+LISTBOX 610
+	LOCATION 55 185
+	DIMENSIONS  216 253 
+	HOTSPOTRECT 55 185 216 253
+	TEXT_COLOR        255 255 255
+	SCROLLBAR 610
+		LOCATION	 283 211
+		DIMENSIONS   22  157
+		BORDER_SIZE   0
+		HOTSPOTRECT 283 211 22 157
+		PICTURE  #5, #6, #5, #5
+		SLIDE #7, #7, #7, #7
+		LU_PICTURE #8, #9, #10, #11
+ 		RD_PICTURE #12, #13, #14, #15
+		ARROW_DIMENSIONS 23 20
+		SLIDE_DIMENSIONS 20 20
+		SLIDER_TYPE 1
+		END
+;	TEXT_FILE "misn\\undefd.txt"
+	NEXT	 612
+	PREV	 100
+	END
+
+; objective text
+LISTBOX 612
+	LOCATION 337 17
+	DIMENSIONS 232 418
+	HOTSPOTRECT 337 17 232 418
+	TEXT_COLOR        255 255 255
+	SCROLLBAR 612
+		LOCATION 574 276
+		DIMENSIONS   22  157
+		BORDER_SIZE   0
+		HOTSPOTRECT 574 276 23 157
+	 	PICTURE  #5, #6, #5, #5
+		SLIDE #7, #7, #7, #7
+		LU_PICTURE #8, #9, #10, #11
+ 		RD_PICTURE #12, #13, #14, #15
+		ARROW_DIMENSIONS 23 20
+		SLIDE_DIMENSIONS 20 20
+		SLIDER_TYPE 1
+		END
+;	TEXT_FILE "misn\\undefda.txt"
+	NEXT	 101
+	PREV	 610
+	END
+
+MOVIE 700 "movies\\standind.avi"
+	LOCATION 78 42
+	END
+
+PLAYMOVIE 7000 700
+	END

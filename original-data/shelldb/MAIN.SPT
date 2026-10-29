@@ -1,0 +1,86 @@
+; main screen script
+
+;DB 			"shelldb\\title"
+
+IMAGE_FILE  "shelldb\\common\\button_n.pcx"					; 0
+IMAGE_FILE  "shelldb\\common\\button_d.pcx"					; 1
+IMAGE_FILE	"shelldb\\common\\button_p.pcx"					; 2
+IMAGE_FILE	"shelldb\\common\\button_h.pcx"					; 3
+IMAGE_FILE  "shelldb\\common\\button_f.pcx"					; 4
+
+
+BACKGROUND	"shelldb\\pre_ship\\main2.pcx"
+
+
+CONTROLS 	mouse, keyboard
+
+; solo campaign button
+BUTTON 100
+	PICTURE	 #0, #1, #2, #3
+	FOCUS_PICTURE #4 138 181
+	LOCATION 61 181
+	HOTSPOTRECT 51 143 124 52
+	ABOVE 301
+	BELOW 101
+	NEXT  101
+	PREV  301
+	END
+
+; instant action button
+BUTTON 101
+	PICTURE	 #0, #1, #2, #3
+	FOCUS_PICTURE #4 138 247
+
+	LOCATION 61 247
+	HOTSPOTRECT 51 209 124 52
+	ABOVE 100
+	BELOW 102
+	NEXT  102
+	PREV  100
+	END
+
+; group maneuvers button
+BUTTON 102
+	PICTURE	 #0, #1, #2, #3
+	FOCUS_PICTURE #4 138  315
+	
+	LOCATION 61 315
+	HOTSPOTRECT 51 277 124 52
+	ABOVE 101
+	BELOW 103
+	NEXT  103
+	PREV  101
+	END
+
+; options button
+BUTTON 103
+	PICTURE	 #0, #1, #2, #3
+	FOCUS_PICTURE #4 138  381
+
+	LOCATION 61 381
+	HOTSPOTRECT 51 343 124 52
+	ABOVE 102
+	BELOW 301
+	NEXT  301
+	PREV  102
+	END
+
+; exit button
+BUTTON 301
+	PICTURE	 #0, #1, #2, #3
+	FOCUS_PICTURE #4 138 448
+
+	LOCATION 61 448
+	HOTSPOTRECT 51 410 124 52
+	ABOVE 103
+	BELOW 100
+	NEXT  100
+	PREV  103
+	END
+
+ANIMATION 1000 "shelldb\\pre_ship\\burn" 13
+	LOCATION 85 39
+	END
+
+RUNANIMATION 1001 1000 18
+	END

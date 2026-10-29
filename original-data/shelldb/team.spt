@@ -1,0 +1,248 @@
+; assign team script
+
+;DB 			"shelldb\\title"
+
+IMAGE_FILE  "shelldb\\on_ship\\pan_n.pcx"				; 0
+IMAGE_FILE  "shelldb\\on_ship\\pan_d.pcx"				; 1
+IMAGE_FILE  "shelldb\\on_ship\\pan_sy.pcx"				; 2
+IMAGE_FILE  "shelldb\\on_ship\\pan_sg.pcx"				; 3
+IMAGE_FILE  "shelldb\\on_ship\\pan_sr.pcx"				; 4
+IMAGE_FILE  "shelldb\\on_ship\\pan_h.pcx"				; 5
+IMAGE_FILE  "shelldb\\on_ship\\pan_f.pcx"				; 6
+
+IMAGE_FILE  "shelldb\\common\\button_n.pcx"				; 7
+IMAGE_FILE  "shelldb\\common\\button_d.pcx"				; 8
+IMAGE_FILE	"shelldb\\common\\button_p.pcx"				; 9
+IMAGE_FILE	"shelldb\\common\\button_h.pcx"				; 10
+IMAGE_FILE  "shelldb\\common\\button_f.pcx"				; 11
+
+IMAGE_FILE  "shelldb\\on_ship\\slotarw.pcx"				; 12
+
+
+BACKGROUND	"shelldb\\on_ship\\team.pcx"
+
+CONTROLS 	mouse, keyboard
+
+;--------------------------------------------------------------------
+; main buttons for moving between teammate-armor-weapons screens
+;--------------------------------------------------------------------
+
+; generic message
+LABEL 0 
+	LOCATION 100 460
+	END
+
+; goto team - just to be consistant, we're already here
+TOGGLE 3
+	GROUP 1
+	PICTURE #3, #1, #3, #5
+	SELECTED #3, #3, #3, #3
+	FOCUS_PICTURE #6 204 273
+
+	LOCATION 204 241
+	HOTSPOT 47 281, 225 281, 225 241, 23 234
+	NEXT 100
+	PREV 301
+	ABOVE 2
+	BELOW 1
+	END
+
+TOGGLE 1  ; goto weapons
+	GROUP 1
+	PICTURE #0, #1, #4, #5
+	SELECTED #4, #4, #4, #4
+	FOCUS_PICTURE #6 204 110
+
+	LOCATION 204 78
+	HOTSPOT 22 167, 225 156, 225 37, 47 37
+	NEXT 100 
+	PREV 301
+	ABOVE 3
+	BELOW 2
+	END
+
+; goto armor
+TOGGLE 2
+	GROUP 1
+	PICTURE #0, #1, #2, #5
+	SELECTED #2, #2, #2, #2
+	FOCUS_PICTURE #6 204 210
+
+	LOCATION 204 178
+	HOTSPOT 71 224, 225 228, 225 169, 71 173
+	NEXT 100
+	PREV 301
+	ABOVE 1
+	BELOW 3
+	END
+
+; switch
+BUTTON 4
+	LOCATION 16 176
+	HOTSPOTRECT 16 176 50 50
+	END
+		 
+; current weapons load
+LABEL 10
+	LOCATION 52 67
+	END
+LABEL 11
+	LOCATION 52 77
+	END
+LABEL 12
+	LOCATION 52 87
+	END
+LABEL 13
+	LOCATION 52 97
+	END
+LABEL 14
+	LOCATION 52 107
+	END
+	
+; current assigned armor
+LABEL 15
+	LOCATION 88 194
+	END
+	
+; current teammate
+LABEL 16
+	LOCATION 57 262
+	END
+
+;--------------------------------------------------------------------
+; teammate selection actors
+;--------------------------------------------------------------------
+
+; player
+BUTTON 100	
+	LOCATION 300 270
+;	DIMENSIONS 330 28
+	HOTSPOTRECT 269 262 330 28
+;	TEXT_COLOR 255 0 0
+;	HILIGHT_COLOR	  0   255 0
+;	FOCUS_COLOR		  0   0   255
+;	DISABLE_COLOR	  126 127 127
+;	CURSOR_COLOR      255 255 0
+;	BG_COLOR_NORMAL   0   0   0
+;	BG_COLOR_HILIGHT  0   0   0
+;	BG_COLOR_FOCUS    0   0   0
+;	BG_COLOR_DISABLED 25  25  25
+	NEXT 301
+	PREV 1
+	ABOVE 102
+	BELOW 101
+	END
+
+; first teammate
+BUTTON 101
+	LOCATION 300 323
+;	DIMENSIONS 330 28
+	HOTSPOTRECT 269 315 330 28
+;	TEXT_COLOR 255 0 0
+;	HILIGHT_COLOR	  0   255 0
+;	FOCUS_COLOR		  0   0   255
+;	DISABLE_COLOR	  126 127 127
+;	CURSOR_COLOR      255 255 0
+;	BG_COLOR_NORMAL   0   0   0
+;	BG_COLOR_HILIGHT  0   0   0
+;	BG_COLOR_FOCUS    0   0   0
+;	BG_COLOR_DISABLED 25  25  25
+	NEXT 200
+	PREV 1
+	ABOVE 100
+	BELOW 102
+	END
+
+; second teammate
+BUTTON 102
+	LOCATION 300 374
+	DIMENSIONS 330 28
+	HOTSPOTRECT 269 366 330 28
+;	TEXT_COLOR 255 0   0
+;	HILIGHT_COLOR	  0   255 0
+;	FOCUS_COLOR		  0   0   255
+;	DISABLE_COLOR	  126 127 127
+;	CURSOR_COLOR      255 255 0
+;	BG_COLOR_NORMAL   0   0   0
+;	BG_COLOR_HILIGHT  0   0   0
+;	BG_COLOR_FOCUS    0   0   0
+;	BG_COLOR_DISABLED 25  25  25
+	NEXT 200
+	PREV 1
+	ABOVE 101
+	BELOW 100
+	END
+
+LABEL 110
+	PICTURE #12
+	LOCATION 270 263
+	END
+
+LABEL 111
+	PICTURE #12
+	LOCATION 270 316
+	INVISIBLE
+	END
+
+LABEL 112
+	PICTURE #12
+	LOCATION 270 367
+	INVISIBLE
+	END
+
+
+; third teammate
+;BUTTON 103
+;	LOCATION 269 418
+;	DIMENSIONS 330 28
+; 	HOTSPOTRECT 269 418 330 28
+;	TEXT_COLOR 255 0   0
+;;	HILIGHT_COLOR	  0   255 0
+;;	FOCUS_COLOR		  0   0   255
+;;	DISABLE_COLOR	  126 127 127
+;;	CURSOR_COLOR      255 255 0
+;;	BG_COLOR_NORMAL   0   0   0
+;;	BG_COLOR_HILIGHT  0   0   0
+;;	BG_COLOR_FOCUS    0   0   0
+;;	BG_COLOR_DISABLED 25  25  25
+;	END
+
+; list of teammates to choose from
+LISTBOX 200
+	LOCATION 420 66
+	DIMENSIONS 160 120
+	HOTSPOTRECT 420 66 160 120
+	NEXT 301
+	PREV 100
+	END
+
+;--------------------------------------------------------------------
+; marines' stats
+;--------------------------------------------------------------------
+
+; status
+LABEL 17
+	LOCATION 267 180
+	END
+
+; picture
+LABEL 18
+	PICTURE "shelldb\\on_ship\\lib101.pcx"
+	LOCATION 267 65
+	END
+
+;--------------------------------------------------------------------
+; exit button
+;--------------------------------------------------------------------
+; accept button
+BUTTON 301
+	PICTURE #7, #8, #9, #10
+	FOCUS_PICTURE #11 175 334
+
+	LOCATION 98 334
+	HOTSPOTRECT 88 296 124 52
+	NEXT 3
+	PREV 100
+	END
+
+

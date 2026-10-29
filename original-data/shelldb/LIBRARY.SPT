@@ -1,0 +1,127 @@
+; main screen script
+
+;DB 			"shelldb\\title"
+
+IMAGE_FILE  "shelldb\\common\\button_n.pcx"					; 0
+IMAGE_FILE  "shelldb\\common\\button_d.pcx"					; 1
+IMAGE_FILE	"shelldb\\common\\button_p.pcx"					; 2
+IMAGE_FILE	"shelldb\\common\\button_h.pcx"					; 3
+IMAGE_FILE  "shelldb\\common\\button_f.pcx"					; 4
+
+IMAGE_FILE  "shelldb\\netchat\\common\\SBBaseLarge-n.pcx"	; 5
+IMAGE_FILE  "shelldb\\netchat\\common\\SBBase-d.pcx"		; 6
+		
+IMAGE_FILE  "shelldb\\netchat\\common\\SBSlider-n.pcx"		; 7
+
+IMAGE_FILE  "shelldb\\netchat\\common\\SBUpArrow-n.pcx"		; 8
+IMAGE_FILE	"shelldb\\netchat\\common\\SBUpArrow-d.pcx"		; 9
+IMAGE_FILE	"shelldb\\netchat\\common\\SBUpArrow-h.pcx"		; 10
+IMAGE_FILE	"shelldb\\netchat\\common\\SBUpArrow-s.pcx"		; 11
+
+IMAGE_FILE  "shelldb\\netchat\\common\\SBDownArrow-n.pcx"	; 12
+IMAGE_FILE	"shelldb\\netchat\\common\\SBDownArrow-d.pcx" 	; 13
+IMAGE_FILE  "shelldb\\netchat\\common\\SBDownArrow-h.pcx"  	; 14
+IMAGE_FILE	"shelldb\\netchat\\common\\SBDownArrow-s.pcx"	; 15
+
+BACKGROUND	"shelldb\\on_ship\\library.pcx"
+
+CONTROLS 	mouse, keyboard
+
+LABEL 10 
+	PICTURE "shelldb\\on_ship\\lib101.pcx"
+	LOCATION 175 54
+	END
+
+; heading list
+LISTBOX 100
+	LOCATION 70 220
+	DIMENSIONS  192 50
+	HOTSPOTRECT 70 220 190 50
+;	TEXT_COLOR        255 0   0
+;	HILIGHT_COLOR	  0   255 0
+;	FOCUS_COLOR		  0   0   255
+;	DISABLE_COLOR	  126 127 127
+;	CURSOR_COLOR      255 255 255
+;	BG_COLOR_NORMAL   0   0   0
+	SCROLLBAR 100
+		LOCATION	238 220
+		DIMENSIONS   22  50
+		BORDER_SIZE   0
+		HOTSPOTRECT 238 220 22 50
+;		PICTURE  , #6 
+		SLIDE #7, #7, #7, #7
+		LU_PICTURE #8, #9, #10, #11
+ 		RD_PICTURE #12, #13, #14, #15
+		ARROW_DIMENSIONS 23 20
+		SLIDE_DIMENSIONS 20 20
+		SLIDER_TYPE 1
+		END
+	NEXT 200
+	PREV 301
+;	LEFT 102
+;	RIGHT 100
+	END
+
+; file list
+LISTBOX 200
+	LOCATION 70 300
+	DIMENSIONS  190 120
+	HOTSPOTRECT 70 300 190 120
+;	TEXT_COLOR        255 0   0
+;	HILIGHT_COLOR	  0   255 0
+;	FOCUS_COLOR		  0   0   255
+;	DISABLE_COLOR	  126 127 127
+;	CURSOR_COLOR      255 255 255
+;	BG_COLOR_NORMAL   0   0   0
+	SCROLLBAR 200
+		LOCATION	238 300
+		DIMENSIONS   22  120
+		BORDER_SIZE   0
+		HOTSPOTRECT 238 300 22 120
+;		PICTURE  , #6 
+		SLIDE #7, #7, #7, #7
+		LU_PICTURE #8, #9, #10, #11
+ 		RD_PICTURE #12, #13, #14, #15
+		ARROW_DIMENSIONS 23 20
+		SLIDE_DIMENSIONS 20 20
+		SLIDER_TYPE 1
+		END
+	NEXT 250
+	PREV 100
+;	LEFT 102
+;	RIGHT 100
+	END
+
+; library file listbox
+LISTBOX 250
+	LOCATION    340 20
+	DIMENSIONS  230 412
+	HOTSPOTRECT 340 20 230 412
+	TEXT_COLOR        255 255 255
+	SCROLLBAR 250
+		LOCATION	584 135
+		DIMENSIONS   22  157
+		BORDER_SIZE   0
+		HOTSPOTRECT 584 135 23 157
+		PICTURE  #5, #6, #5, #5
+		SLIDE #7, #7, #7, #7
+		LU_PICTURE #8, #9, #10, #11
+ 		RD_PICTURE #12, #13, #14, #15
+		ARROW_DIMENSIONS 23 20
+		SLIDE_DIMENSIONS 20 20
+		SLIDER_TYPE 1
+		END
+	TEXT_FILE	"shelldb\\on_ship\\lib101.txt"
+	NEXT	 301
+	PREV	 250
+	END
+
+; back button
+BUTTON 301
+	PICTURE	 #0, #1, #2, #3
+ 	FOCUS_PICTURE #4 104 153
+	LOCATION 27 153 
+	HOTSPOTRECT 17 116 124 52
+	NEXT  100
+	PREV  103
+	END

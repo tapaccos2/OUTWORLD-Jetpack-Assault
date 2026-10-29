@@ -1,0 +1,99 @@
+; player identification pop-up
+
+; the following files are loaded by solo.spt
+;IMAGE_FILE  "shelldb\\common\\button_n.pcx"				; 0
+;IMAGE_FILE  "shelldb\\common\\button_d.pcx"				; 1
+;IMAGE_FILE	"shelldb\\common\\button_p.pcx"					; 2
+;IMAGE_FILE	"shelldb\\common\\button_h.pcx"					; 3
+;IMAGE_FILE  "shelldb\\common\\button_f.pcx"				; 4
+
+;IMAGE_FILE  "shelldb\\pre_ship\\check_n.pcx"				; 5
+;IMAGE_FILE  "shelldb\\pre_ship\\check_s.pcx"				; 6
+
+LABEL 900
+	PICTURE "shelldb\\pre_ship\\playerid.pcx"
+	LOCATION 135 20
+	INVISIBLE
+	END
+
+; male button
+TOGGLE 901
+	PICTURE		#5, #5, #5, #5
+	SELECTED 	#6, #6, #6, #6
+
+	GROUP 1
+	LOCATION 168 71
+	HOTSPOTRECT 158 61 153 204
+	DISABLED
+	INVISIBLE
+;	ABOVE 903
+;	BELOW 903
+	LEFT 902
+	RIGHT 902
+	NEXT 903
+	PREV 1000
+	END
+
+; female button
+TOGGLE 902
+	PICTURE		#5, #5, #5, #5
+	SELECTED 	#6, #6, #6, #6
+
+	GROUP 1
+	LOCATION 397 71
+	HOTSPOTRECT 387 61 152 204
+	DISABLED
+	INVISIBLE
+;	ABOVE 1000
+;	BELOW 1000
+	LEFT 901
+	RIGHT 901
+	NEXT 903
+	PREV 304
+	END
+
+; player call-sign text box
+TEXTBOX 903
+	LOCATION 173 377
+	DIMENSIONS  188  25
+	HOTSPOTRECT	173 377 188 25
+;	TEXT_COLOR        0   0   128
+;	HILIGHT_COLOR	  0   0   255
+;	FOCUS_COLOR		  0   255 255
+;	DISABLE_COLOR	  127 127 127
+;	CURSOR_COLOR      255 255 0
+;	BG_COLOR_NORMAL   0   0   0
+;	BG_COLOR_HILIGHT  0   0   0
+;	BG_COLOR_FOCUS    0   0   0
+;	BG_COLOR_DISABLED 32  32  32
+	DISABLED
+	INVISIBLE
+;	ABOVE 901
+;	BELOW 901
+;	LEFT 1000
+;	RIGHT 1000
+	NEXT 1000
+	PREV 902
+	END
+
+; continue button
+BUTTON 1000
+	PICTURE	 #0,
+			 #1,
+			 #2,
+			 #3
+	FOCUS_PICTURE #4 482 405
+
+	LOCATION 405 405
+	HOTSPOTRECT 395 367 124 52
+	DISABLED
+	INVISIBLE
+;	ABOVE 902
+;	BELOW 902
+;	LEFT 903
+;	RIGHT 903
+	NEXT 901
+	PREV 903
+	END
+
+

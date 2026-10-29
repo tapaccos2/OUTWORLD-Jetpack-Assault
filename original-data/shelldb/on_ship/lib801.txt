@@ -1,0 +1,147 @@
+SINGLETRAC STUDIO
+
+Executive Producer: 
+Scott Campbell
+
+Director of Production: 
+Steve Cowser
+
+Art Director: 
+Michael Jackson
+
+Gameplay Advisor: 
+Jay Barnson
+
+Software Leads: 
+Mike Badger 
+Kirk Baum
+
+3D Graphic Design Leads: 
+Will Dougherty 
+Ken Carlson
+
+Alien Production and Animation: 
+Pierre Dufresne
+
+Director of Music, Sound, and Video: 
+Sandi Geary
+
+Game Software Development: 
+Jay Barnson
+Kirk Baum
+Hao Chen
+Brad Edwards
+Polly Harris 
+Steve Willis
+
+3D Graphic Designers: 
+Brice Broaddus
+Scott Campbell
+Marty Clayton
+Jonathan Hale
+Chad Liddell
+Deanna Lorenz
+Suzanne Malloy 
+Manuel Rangel 
+William Clarke Walker III
+
+3D Graphic Engine: 
+Bob Dawson
+
+3D Graphic Tools: 
+Russ Almond
+
+Game Tools:
+Polly Harris
+
+Concept Artist: 
+Owen Richardson
+
+Sound Design: 
+Sandi Geary
+Mark Kartchner 
+
+Audio Software Engineer: 
+Scott Turner
+
+Video Production: 
+Ken Teutsch
+
+Game Design: 
+Kellan Hatch
+Michael Jackson
+Peter Anthony Chiodo
+Jay Barnson
+
+Test Lead: 
+Thomas Zuccotti
+
+Testers: 
+Stephen Knopf
+Mike Snow
+Mara'D Smith
+Dan Silver
+Jon Marquette
+Tyler Pendleton
+Randy Jones
+
+Network Administration: 
+Bryan Brown
+Rex Funk 
+Matt Barnson
+
+Production Assistant: 
+Ginger Silver
+
+Booklet, QRC, and Online Help: 
+Adam R. Peterson
+
+Special Thanks: 
+Mary Steer
+Mike Ryder
+Jen Leininger
+Mike Bartholomew
+Hey-Kyu Sincock
+Susan Hadfield
+Randy Zorko
+Danny Lunt
+Brian Christensen
+Jennifer Fortin
+Alex Mathis
+Nate Pendleton
+Sandi Beckstead
+Jeff Yates
+
+Music Produced by: 
+Chuck E. Myers - Big Idea Inc.
+
+Music Composed by:
+Chuck E. Myers
+Benjamin Carson
+Tom Hopkins
+Brady Ellis
+Tino Saiki
+
+Shell Art and CGI: 
+Axiom Design
+
+Set Construction: 
+Todd Schmidt/Axiom Design
+
+Actors: 
+James Andrews
+Amber Baldwin
+Matt Barnson
+Doug Caputo
+Lincoln Hoppe
+Ed Johnson
+Kim Landry
+Kelly McCann
+Jeanette Morales
+Charles Paddock
+Owen Richardson
+Eric Robertson
+Ken Teutsch 
+Christina Thurmond
+Courtney Wrathall
+Connie High

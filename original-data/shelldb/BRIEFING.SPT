@@ -1,0 +1,220 @@
+; briefing screen script
+
+IMAGE_FILE  "shelldb\\common\\button_n.pcx"		  	; 0
+IMAGE_FILE  "shelldb\\common\\button_d.pcx"		  	; 1
+IMAGE_FILE	"shelldb\\common\\button_p.pcx"		  	; 2
+IMAGE_FILE	"shelldb\\common\\button_h.pcx"		  	; 3
+IMAGE_FILE  "shelldb\\common\\button_f.pcx"		  	; 4
+
+IMAGE_FILE  "shelldb\\on_ship\\panh_n.pcx"		  	; 5
+IMAGE_FILE  "shelldb\\on_ship\\panh_d.pcx"		  	; 6
+IMAGE_FILE  "shelldb\\on_ship\\panh_sy.pcx"		  	; 7
+IMAGE_FILE  "shelldb\\on_ship\\panh_sg.pcx"		  	; 8
+IMAGE_FILE  "shelldb\\on_ship\\panh_h.pcx"		  	; 9
+IMAGE_FILE  "shelldb\\on_ship\\panh_f.pcx"		  	; 10
+
+IMAGE_FILE  "shelldb\\pre_ship\\sb_bxs_n.pcx" 	  	; 11
+IMAGE_FILE  "shelldb\\pre_ship\\sb_bs_d.pcx"	  	; 12
+
+IMAGE_FILE  "shelldb\\pre_ship\\sb_s_n.pcx"		  	; 13
+
+IMAGE_FILE  "shelldb\\pre_ship\\sb_ua_n.pcx"		; 14
+IMAGE_FILE  "shelldb\\pre_ship\\sb_ua_d.pcx"		; 15
+IMAGE_FILE  "shelldb\\pre_ship\\sb_ua_h.pcx"		; 16
+IMAGE_FILE  "shelldb\\pre_ship\\sb_ua_s.pcx"		; 17
+
+IMAGE_FILE	"shelldb\\pre_ship\\sb_da_n.pcx"		; 18
+IMAGE_FILE  "shelldb\\pre_ship\\sb_da_d.pcx"		; 19
+IMAGE_FILE  "shelldb\\pre_ship\\sb_da_h.pcx"		; 20
+IMAGE_FILE  "shelldb\\pre_ship\\sb_da_s.pcx"		; 21
+
+ 
+BACKGROUND	"shelldb\\briefing\\brief.pcx"
+
+CONTROLS 	mouse, keyboard
+  
+LABEL 1 
+	PICTURE "misn\\anub04.pcx" ; cdf.pcx"  	
+	LOCATION 46 56
+	INVISIBLE
+	END
+
+LABEL 2 
+	PICTURE "misn\\nomap.pcx"
+	LOCATION 325 34
+	END
+
+; overview button
+TOGGLE 10
+	GROUP 1
+	PICTURE #5, #6, #7, #9
+	SELECTED #8, #8, #8, #8
+	FOCUS_PICTURE #10 289 213
+	
+	LOCATION 270 203
+	HOTSPOTRECT 125 202 188 20
+	ABOVE 11
+	BELOW 11
+	NEXT 100
+	PREV 610 
+	END
+
+; objectives button
+TOGGLE 11
+	GROUP 1
+	PICTURE #5, #6, #8, #9
+	SELECTED #8, #8, #8, #8
+	FOCUS_PICTURE #10 289 240
+
+	LOCATION 270 230
+	HOTSPOTRECT	125 228 188 20
+	ABOVE 10
+	BELOW 10
+	NEXT 100
+	PREV 610
+	END
+
+; replay movie - hidden
+BUTTON 15
+	LOCATION  196 58
+	HOTSPOTRECT 196 58 94 118
+	INVISIBLE
+	END
+
+; dial
+LABEL 20
+	PICTURE "shelldb\\briefing\\select_4.pcx"
+	LOCATION 55 197
+	INVISIBLE
+	END
+
+; switch
+BUTTON 30
+	LOCATION 60 197
+	HOTSPOTRECT 60 197 55 55
+	END
+
+; continue button
+BUTTON 100
+	PICTURE	 #0, #1, #2, #3
+	FOCUS_PICTURE #4 120 309
+
+	LOCATION 42 309
+	HOTSPOTRECT 30 272 124 52
+	ABOVE 101
+	BELOW 101
+	NEXT 101
+	PREV 10
+	END
+
+; back button
+BUTTON 101
+	PICTURE	 #0, #1, #2, #3
+	FOCUS_PICTURE #4 120 371
+
+	LOCATION 43 370
+	HOTSPOTRECT 30 332 124 52
+	ABOVE 100
+	BELOW 100
+	NEXT 610
+	PREV 100
+ 	END
+
+; overview text
+LISTBOX 610
+	LOCATION    182 270 
+	DIMENSIONS  369 165
+	HOTSPOTRECT 182 270 369 165
+	TEXT_COLOR        255 255 255
+	SCROLLBAR 610
+		LOCATION	574 276
+		DIMENSIONS   22  157
+		BORDER_SIZE   0
+		HOTSPOTRECT 574 276 23 157
+		PICTURE  #11, #12, #11, #11
+		SLIDE #13, #13, #13, #13
+		LU_PICTURE #14, #15, #16, #17
+ 		RD_PICTURE #18, #19, #20, #21
+		ARROW_DIMENSIONS 23 20
+		SLIDE_DIMENSIONS 20 20
+		SLIDER_TYPE 1
+		END
+	TEXT_FILE "misn\\undef.txt"
+;	INVISIBLE
+	NEXT	 10
+	PREV	 101
+	END
+
+; objective text
+;LISTBOX 612
+;	LOCATION    182 270 
+;	DIMENSIONS  369 165
+;	HOTSPOTRECT 182 270 369 165
+;	TEXT_COLOR        255 255 255
+;	SCROLLBAR 612
+;		LOCATION	574 276
+;		DIMENSIONS   22  157
+;		BORDER_SIZE   0
+;		HOTSPOTRECT 574 276 23 157
+;		PICTURE  #11, #12, #11, #11
+;		SLIDE #13, #13, #13, #13
+;		LU_PICTURE #14, #15, #16, #17
+; 		RD_PICTURE #18, #19, #20, #21
+;		ARROW_DIMENSIONS 23 20
+;		SLIDE_DIMENSIONS 20 20
+;		SLIDER_TYPE 1
+;		END
+;	TEXT_FILE "misn\\undefa.txt"
+;	INVISIBLE
+;	NEXT	 11
+;	PREV	 101
+;	END
+
+MOVIE 700 "movies\\standinb.avi"
+	LOCATION 196 55
+	END
+
+PLAYMOVIE 7000 700
+	END
+
+
+LABEL 2000
+	PICTURE "shelldb\\common\\msgscrn.pcx"
+	LOCATION 155 218
+	INVISIBLE
+	END
+
+; message  continue
+BUTTON 2001
+	PICTURE #0, #1, #2, #3
+	FOCUS_PICTURE #4 275 326
+
+	LOCATION 198 326
+	HOTSPOTRECT 188 288 124 52
+	DISABLED
+	INVISIBLE
+;	ABOVE 902
+;	BELOW 1001
+	NEXT 2002
+	PREV 2002
+	END
+
+; message cancel
+BUTTON 2002
+	PICTURE #0, #1, #2, #3
+	FOCUS_PICTURE #4 419 326
+
+	LOCATION 342 326
+	HOTSPOTRECT 332 288 124 52
+	DISABLED
+	INVISIBLE
+;	ABOVE 1000
+;	BELOW 901
+	NEXT 2001
+	PREV 2001
+	END
+
+LABEL 2003
+	LOCATION 180 248
+	INVISIBLE
+	END

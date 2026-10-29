@@ -1,0 +1,7 @@
+PA-9 Scout Suit
+Classification: Infantry Battle Suit, Propelled
+The PA-9 was the first of the rocket propelled battle suits. It is almost identical the IA-4, but includes a powerful, computer-stabilized plasma rocket pack and a more powerful micro-fusion generator. The pack superheats a limited amount of gasses into a plasma state before ejecting them through the vectored exhaust nozzles. The suit's computer makes constant, tiny adjustments to the nozzles' release vector to stabilize flight and responds to the wearer's commands to alter direction.
+
+The super-heating process takes place in a separate chamber of the rocket pack and takes several seconds to achieve maximum levels. This sharply limits the sustained flight potential of the pack. While work has been done to improve the capacity and speed of the processing chamber, no significant gains have yet been made without compromising the safety of the wearer.
+
+Additionally, the PA-9 is built with radar-, infrared-, and sound-absorbent composites to reduce its detectability on the battlefield.  The resulting limited stealth characteristics improve the PA-9's usefulness for reconnaissance missions.

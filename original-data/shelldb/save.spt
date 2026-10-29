@@ -1,0 +1,158 @@
+; save game pop-up
+
+; the following images are loaded by the base debriefing script
+;IMAGE_FILE  "shelldb\\common\\button_n.pcx"				; 0
+;IMAGE_FILE  "shelldb\\common\\button_d.pcx"				; 1
+;IMAGE_FILE	 "shelldb\\common\\button_p.pcx"				; 2
+;IMAGE_FILE	 "shelldb\\common\\button_h.pcx"				; 3
+;IMAGE_FILE  "shelldb\\common\\button_f.pcx"				; 4
+
+;IMAGE_FILE  "shelldb\\netchat\\common\\SBBaseLarge-n.pcx" 	; 5
+;IMAGE_FILE  "shelldb\\netchat\\common\\SBBase-d.pcx"		; 6
+
+;IMAGE_FILE  "shelldb\\netchat\\common\\SBSlider-n.pcx"		; 7
+
+;IMAGE_FILE  "shelldb\\netchat\\common\\SBUpArrow-n.pcx"	; 8
+;IMAGE_FILE  "shelldb\\netchat\\common\\SBUpArrow-d.pcx"	; 9
+;IMAGE_FILE  "shelldb\\netchat\\common\\SBUpArrow-h.pcx"	; 10
+;IMAGE_FILE  "shelldb\\netchat\\common\\SBUpArrow-s.pcx"	; 11
+
+;IMAGE_FILE	"shelldb\\netchat\\common\\SBDownArrow-n.pcx"	; 12
+;IMAGE_FILE  "shelldb\\netchat\\common\\SBDownArrow-d.pcx"	; 13
+;IMAGE_FILE  "shelldb\\netchat\\common\\SBDownArrow-h.pcx"	; 14
+;IMAGE_FILE  "shelldb\\netchat\\common\\SBDownArrow-s.pcx"	; 15
+
+LABEL 900
+	PICTURE "shelldb\\briefing\\save.pcx"
+	LOCATION 155 118
+	LOCATION 155 118
+	INVISIBLE
+	END
+
+; list of previously saved games
+LISTBOX 901
+	LOCATION 179 145
+	DIMENSIONS  261 90
+	HOTSPOTRECT	179 145 261 90
+	DISABLED
+	INVISIBLE
+	SCROLLBAR 901
+		LOCATION	440 145
+		DIMENSIONS   23  90
+		BORDER_SIZE   0
+		HOTSPOTRECT 440 145 23 90
+
+		PICTURE "","","",""
+		
+		SLIDE #7, #7, #7, #7
+		LU_PICTURE #8, #9, #10, #11
+ 		RD_PICTURE #12, #13, #14, #15
+;		SLIDE       "shelldb\\pre_ship\\SB_bs_n.pcx",
+;					"shelldb\\pre_ship\\SB_bs_n.pcx",
+;					"shelldb\\pre_ship\\SB_bs_n.pcx",
+;					"shelldb\\pre_ship\\SB_bs_n.pcx"
+
+;		LU_PICTURE  "shelldb\\pre_ship\\SB_ua_n.pcx",
+;	                "shelldb\\pre_ship\\SB_ua_h.pcx",
+;					"shelldb\\pre_ship\\SB_ua_s.pcx",
+;					"shelldb\\pre_ship\\SB_ua_d.pcx"
+
+;		RD_PICTURE  "shelldb\\pre_ship\\SB_da_n.pcx",
+;	                "shelldb\\pre_ship\\SB_da_h.pcx",
+;					"shelldb\\pre_ship\\SB_da_s.pcx",
+;					"shelldb\\pre_ship\\SB_da_d.pcx"
+
+		ARROW_DIMENSIONS 23 20
+		SLIDE_DIMENSIONS 20 20
+		SLIDER_TYPE 1
+		END
+	ABOVE 1001
+	BELOW 902
+	NEXT 902
+	PREV 1001
+	END
+	
+; name for this save game
+TEXTBOX	902
+	LOCATION 179 256
+	DIMENSIONS  284  16
+	HOTSPOTRECT 179 256 284 16
+	DISABLED
+	INVISIBLE
+	ABOVE 901
+	BELOW 1000
+	NEXT 1000
+	PREV 901
+	END
+
+; save button, save the game
+BUTTON 1000
+	PICTURE #0, #1, #2, #3
+	FOCUS_PICTURE #4 275 338
+
+	LOCATION 198 338
+	HOTSPOTRECT 188 300 124 52
+	DISABLED
+	INVISIBLE
+	ABOVE 902
+	BELOW 1001
+	NEXT 1001
+	PREV 902
+	END
+
+; cancel button, don't save now
+BUTTON 1001
+	PICTURE #0, #1, #2, #3
+	FOCUS_PICTURE #4 419 337
+
+	LOCATION 342 337
+	HOTSPOTRECT 332 299 124 52
+	DISABLED
+	INVISIBLE
+	ABOVE 1000
+	BELOW 901
+	NEXT 901
+	PREV 1000
+	END
+
+
+LABEL 2000
+	PICTURE "shelldb\\common\\msgscrn.pcx"
+	LOCATION 175 218
+	INVISIBLE
+	END
+
+; message  continue
+BUTTON 2001
+	PICTURE #0, #1, #2, #3
+	FOCUS_PICTURE #4 295 326
+
+	LOCATION 218 326
+	HOTSPOTRECT 208 288 124 52
+	DISABLED
+	INVISIBLE
+;	ABOVE 902
+;	BELOW 1001
+	NEXT 2002
+	PREV 2002
+	END
+
+; message cancel
+BUTTON 2002
+	PICTURE #0, #1, #2, #3
+	FOCUS_PICTURE #4 439 326
+
+	LOCATION 362 326
+	HOTSPOTRECT 352 288 124 52
+	DISABLED
+	INVISIBLE
+;	ABOVE 1000
+;	BELOW 901
+	NEXT 2001
+	PREV 2001
+	END
+
+LABEL 2003
+	LOCATION 200 248
+	INVISIBLE
+	END

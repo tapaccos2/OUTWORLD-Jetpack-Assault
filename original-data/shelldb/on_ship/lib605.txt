@@ -1,0 +1,2 @@
+Blaster Weapon:
+The most common weapon used by the enemy, the alien blaster is similar in many respects to our own pulse rifle projectiles. It has a slightly longer effective range of nearly two hundred meters, and the common model has a much lower rate of fire. The as yet to be confirmed "autoblaster" version has a much higher rate of fire, but is otherwise identical to the more common blaster.

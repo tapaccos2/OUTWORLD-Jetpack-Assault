@@ -1,0 +1,2 @@
+Defender:
+The "defender" class alien acts, as the designation suggests, as a guard or defender. These creatures move slowly, but carry very powerful weapons mounted to their backs. The most common varieties carry some kind of mortar and the nicknamed "swarm gun." Missile launchers have also been reported.

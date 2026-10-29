@@ -1,0 +1,46 @@
+MICROSOFT
+
+Producer: 
+Shannon Loftis
+
+Planner: 
+Doug Dyer
+
+Test Lead: 
+Matt Kowalczyk
+
+Testers: 
+Jason Janicki
+Tony Bradley
+Chris Liu
+Michelle Gamboa
+Paul Gradwohl
+Andy Kriger
+Mark Thomas
+Rick Lockyear
+Roisin Cree
+Fumiyoshi Kobayashi
+
+UE: 
+Jo Tyo
+Amy Robison
+JoAnne Williams
+
+Development: 
+Mike Lyons
+Craig Henry
+John Kane
+Andrew Farrier
+
+Product support:
+Steve Kastner
+
+Localization: 
+Laurence K. Smith
+Peter Connelly
+Atsushi Miyake
+
+Artist:
+Doug Herring
+
+

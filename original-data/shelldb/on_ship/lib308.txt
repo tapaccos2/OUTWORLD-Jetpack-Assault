@@ -1,0 +1,9 @@
+NG-90 Napalm Grenade
+Classification: Grenade
+This weapon creates a field of flame that lasts for several seconds, damaging anything within its radius. It is often used to suppress an enemy charge by creating a "wall of flame."
+
+Blast Radius: Special
+Damage: Medium
+Armor Pierce: Low
+Rate of Fire: Low
+Effective Range: 400 feet

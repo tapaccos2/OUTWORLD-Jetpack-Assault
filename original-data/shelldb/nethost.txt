@@ -1,0 +1,96 @@
+; MultiPlayer Remote Address script
+
+BACKGROUND	"shelldb\\nethost\\nethost.pcx"
+
+IMAGE_FILE  "shelldb\\common\\button_n.pcx"					; 0
+IMAGE_FILE  "shelldb\\common\\button_d.pcx"					; 1
+IMAGE_FILE	"shelldb\\common\\button_p.pcx"					; 2
+IMAGE_FILE	"shelldb\\common\\button_h.pcx"					; 3
+IMAGE_FILE	"shelldb\\common\\button_f.pcx"					; 4
+
+CONTROLS 	mouse, keyboard
+
+
+;Session Name Text Box
+TEXTBOX 100
+	LOCATION          175 193
+	DIMENSIONS        285 20
+	HOTSPOTRECT       175 193 285 20
+	FOCUS_RECTANGLE   177 195 281 16
+	TEXT_AREA		  175 193 193 20
+	TEXT_COLOR        195 195 195
+	HILIGHT_COLOR	  255 255 255
+	FOCUS_COLOR		  255 255 0
+	DISABLE_COLOR	  63  63  63
+	CURSOR_COLOR      0   255 0
+	BG_COLOR_NORMAL   0   0   0
+	BG_COLOR_HILIGHT  0   0   0
+	BG_COLOR_FOCUS    0   0   0
+	BG_COLOR_DISABLED 25  25  25
+	TRANSPARENT
+	ABOVE 300
+	BELOW 200
+	NEXT  200
+	PREV  400
+	END
+
+
+;Session Password Text Box
+TEXTBOX 200
+	LOCATION          175 248
+	DIMENSIONS        285 20
+	HOTSPOTRECT       175 248 285 20
+	FOCUS_RECTANGLE   177 250 281 16
+	TEXT_AREA		  175 248 225 20
+	TEXT_COLOR        195 195 195
+	HILIGHT_COLOR	  255 255 255
+	FOCUS_COLOR		  255 255 0
+	DISABLE_COLOR	  63  63  63
+	CURSOR_COLOR      0   255 0
+	BG_COLOR_NORMAL   0   0   0
+	BG_COLOR_HILIGHT  0   0   0
+	BG_COLOR_FOCUS    0   0   0
+	BG_COLOR_DISABLED 25  25  25
+	TRANSPARENT
+	ABOVE 100
+	BELOW 300
+	NEXT  300
+	PREV  100
+	END
+
+;Continue Button
+BUTTON 300
+	PICTURE	 #0,
+			 #1,
+			 #2,
+			 #3
+	FOCUS_PICTURE #4 271 333
+	LOCATION    194 333
+	HOTSPOTRECT	183 297 126 52
+	LEFT	 400
+	RIGHT	 400
+	ABOVE    200
+	BELOW    100
+	NEXT	 400
+	PREV     200
+	END
+
+
+;Cancel Button
+BUTTON 400
+	PICTURE	 #0,
+			 #1,
+			 #2,
+			 #3
+	FOCUS_PICTURE #4 415 332
+	LOCATION    338 332
+	HOTSPOTRECT	327 296 126 52
+	LEFT	 300
+	RIGHT	 300
+	ABOVE    200
+	BELOW    100
+	NEXT	 100
+	PREV     300
+	END
+
+

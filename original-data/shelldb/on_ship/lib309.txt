@@ -1,0 +1,9 @@
+EG-28 ECM Grenade
+Classification: Grenade
+This is a special defensive weapon. It acts as a decoy for most forms of homing projectiles. Homing weapons within the vicinity of an active ECM grenade will deflect from their course to pursue the grenade. The ECM grenade does not discriminate between forces - it effects friendly as well as enemy weaponry. 
+
+Blast Radius: None
+Damage: Special
+Armor Pierce: None
+Rate of Fire: Low
+Effective Range: 800 feet

@@ -1,0 +1,1797 @@
+; MultiPlayer screen script
+
+
+IMAGE_FILE  "shelldb\\common\\button_n.pcx"					; 0	x5
+IMAGE_FILE  "shelldb\\common\\button_d.pcx"					; 1
+IMAGE_FILE	"shelldb\\common\\button_p.pcx"					; 2
+IMAGE_FILE	"shelldb\\common\\button_h.pcx"					; 3
+IMAGE_FILE	"shelldb\\common\\button_f.pcx"					; 4
+
+IMAGE_FILE  "shelldb\\netchat\\common\\chattab-n.pcx"		; 5	x6
+IMAGE_FILE  "shelldb\\netchat\\common\\chattab-d.pcx"		; 6
+IMAGE_FILE  "shelldb\\netchat\\common\\chattab-p.pcx"		; 7
+IMAGE_FILE  "shelldb\\netchat\\common\\chattab-h.pcx"		; 8
+IMAGE_FILE  "shelldb\\netchat\\common\\chattab-s.pcx"		; 9
+IMAGE_FILE  "shelldb\\netchat\\common\\chattab-sd.pcx"		;10
+IMAGE_FILE  "shelldb\\netchat\\common\\chattab-sp.pcx"		;11
+IMAGE_FILE  "shelldb\\netchat\\common\\chattab-sh.pcx"		;12
+IMAGE_FILE  "shelldb\\netchat\\common\\chattab-f.pcx"		;13
+
+IMAGE_FILE	"shelldb\\netchat\\setup\\opt-n.pcx"			;14 X11
+IMAGE_FILE	"shelldb\\netchat\\setup\\opt-d.pcx"			;15
+IMAGE_FILE	"shelldb\\netchat\\setup\\opt-p.pcx"			;16
+IMAGE_FILE	"shelldb\\netchat\\setup\\opt-h.pcx"			;17
+IMAGE_FILE	"shelldb\\netchat\\setup\\opt-s.pcx"			;18
+IMAGE_FILE	"shelldb\\netchat\\setup\\opt-sd.pcx"			;19
+IMAGE_FILE	"shelldb\\netchat\\setup\\opt-sp.pcx"			;20
+IMAGE_FILE	"shelldb\\netchat\\setup\\opt-sh.pcx"			;21
+
+IMAGE_FILE  "shelldb\\netchat\\setup\\HSB-base-n.pcx"		;22	x3
+IMAGE_FILE  "shelldb\\netchat\\setup\\HSB-base-d.pcx"		;23
+IMAGE_FILE	"shelldb\\netchat\\setup\\HSB-la-n.pcx"			;24
+IMAGE_FILE	"shelldb\\netchat\\setup\\HSB-la-d.pcx"			;25
+IMAGE_FILE	"shelldb\\netchat\\setup\\HSB-la-s.pcx"			;26
+IMAGE_FILE	"shelldb\\netchat\\setup\\HSB-la-h.pcx"			;27
+IMAGE_FILE	"shelldb\\netchat\\setup\\HSB-ra-n.pcx"			;28
+IMAGE_FILE	"shelldb\\netchat\\setup\\HSB-ra-d.pcx"			;29
+IMAGE_FILE	"shelldb\\netchat\\setup\\HSB-ra-s.pcx"			;30
+IMAGE_FILE	"shelldb\\netchat\\setup\\HSB-ra-h.pcx"			;31
+
+IMAGE_FILE  "shelldb\\netchat\\teams\\teamprev-n.pcx"		;32 x2
+IMAGE_FILE  "shelldb\\netchat\\teams\\teamprev-f.pcx"		;33
+IMAGE_FILE  "shelldb\\netchat\\teams\\teamprev-s.pcx"		;34
+IMAGE_FILE  "shelldb\\netchat\\teams\\teamprev-h.pcx"		;35
+
+IMAGE_FILE	"shelldb\\netchat\\teams\\teamnext-n.pcx"		;36	x2
+IMAGE_FILE	"shelldb\\netchat\\teams\\teamnext-f.pcx"		;37
+IMAGE_FILE	"shelldb\\netchat\\teams\\teamnext-s.pcx"		;38
+IMAGE_FILE	"shelldb\\netchat\\teams\\teamnext-h.pcx"		;39
+
+IMAGE_FILE	"shelldb\\netchat\\common\\SBBase-n.pcx"		;40
+IMAGE_FILE	"shelldb\\netchat\\common\\SBBase-d.pcx"		;41
+IMAGE_FILE	"shelldb\\netchat\\common\\SBSlider-n.pcx"		;42
+
+IMAGE_FILE	"shelldb\\netchat\\common\\SBUpArrow-n.pcx"		;43
+IMAGE_FILE	"shelldb\\netchat\\common\\SBUpArrow-d.pcx"		;44
+IMAGE_FILE	"shelldb\\netchat\\common\\SBUpArrow-s.pcx"		;45
+IMAGE_FILE	"shelldb\\netchat\\common\\SBUpArrow-h.pcx"		;46
+
+IMAGE_FILE	"shelldb\\netchat\\common\\SBDownArrow-n.pcx"	;47
+IMAGE_FILE	"shelldb\\netchat\\common\\SBDownArrow-d.pcx"	;48
+IMAGE_FILE	"shelldb\\netchat\\common\\SBDownArrow-s.pcx"	;49
+IMAGE_FILE	"shelldb\\netchat\\common\\SBDownArrow-h.pcx"	;50
+
+IMAGE_FILE	"shelldb\\netchat\\battlefield\\SitesSBBase.pcx";51
+
+IMAGE_FILE  "shelldb\\netchat\\armory\\labelbs.pcx"			;52
+IMAGE_FILE  "shelldb\\netchat\\armory\\labelhw.pcx"			;53
+IMAGE_FILE  "shelldb\\netchat\\armory\\labelmw.pcx"			;54
+IMAGE_FILE  "shelldb\\netchat\\armory\\labelra.pcx"			;55
+
+IMAGE_FILE	"shelldb\\netchat\\setup\\opt2-n.pcx"			;56 X11
+IMAGE_FILE	"shelldb\\netchat\\setup\\opt2-d.pcx"			;57
+IMAGE_FILE	"shelldb\\netchat\\setup\\opt2-p.pcx"			;58
+IMAGE_FILE	"shelldb\\netchat\\setup\\opt2-h.pcx"			;59
+IMAGE_FILE	"shelldb\\netchat\\setup\\opt2-s.pcx"			;60
+IMAGE_FILE	"shelldb\\netchat\\setup\\opt2-sd.pcx"			;61
+IMAGE_FILE	"shelldb\\netchat\\setup\\opt2-sp.pcx"			;62
+IMAGE_FILE	"shelldb\\netchat\\setup\\opt2-sh.pcx"			;63
+
+IMAGE_FILE  "shelldb\\netchat\\armory\\scout_ma.pcx"		;64
+IMAGE_FILE  "shelldb\\netchat\\armory\\scout_md.pcx"		;65
+IMAGE_FILE  "shelldb\\netchat\\armory\\scout_mj.pcx"		;66
+IMAGE_FILE  "shelldb\\netchat\\armory\\scout_fa.pcx"		;67
+IMAGE_FILE  "shelldb\\netchat\\armory\\scout_fd.pcx"		;68
+IMAGE_FILE  "shelldb\\netchat\\armory\\scout_fj.pcx"		;69
+
+IMAGE_FILE  "shelldb\\netchat\\armory\\com_ma.pcx"		;70
+IMAGE_FILE  "shelldb\\netchat\\armory\\com_md.pcx"		;71
+IMAGE_FILE  "shelldb\\netchat\\armory\\com_mj.pcx"		;72
+IMAGE_FILE  "shelldb\\netchat\\armory\\com_fa.pcx"		;73
+IMAGE_FILE  "shelldb\\netchat\\armory\\com_fd.pcx"		;74
+IMAGE_FILE  "shelldb\\netchat\\armory\\com_fj.pcx"		;75
+
+IMAGE_FILE  "shelldb\\netchat\\armory\\ass_ma.pcx"		;76
+IMAGE_FILE  "shelldb\\netchat\\armory\\ass_md.pcx"		;77
+IMAGE_FILE  "shelldb\\netchat\\armory\\ass_mj.pcx"		;78
+IMAGE_FILE  "shelldb\\netchat\\armory\\ass_fa.pcx"		;79
+IMAGE_FILE  "shelldb\\netchat\\armory\\ass_fd.pcx"		;80
+IMAGE_FILE  "shelldb\\netchat\\armory\\ass_fj.pcx"		;81
+
+IMAGE_FILE  "shelldb\\netchat\\armory\\dread_ma.pcx"		;82
+IMAGE_FILE  "shelldb\\netchat\\armory\\dread_md.pcx"		;83
+IMAGE_FILE  "shelldb\\netchat\\armory\\dread_mj.pcx"		;84
+IMAGE_FILE  "shelldb\\netchat\\armory\\dread_fa.pcx"		;85
+IMAGE_FILE  "shelldb\\netchat\\armory\\dread_fd.pcx"		;86
+IMAGE_FILE  "shelldb\\netchat\\armory\\dread_fj.pcx"		;87
+
+IMAGE_FILE  "shelldb\\netchat\\armory\\gun.pcx"				;88
+IMAGE_FILE	"shelldb\\netimg\\netc00.pcx"					;89
+
+IMAGE_FILE  "shelldb\\netchat\\teams\\icon01.pcx"		  	;90
+IMAGE_FILE  "shelldb\\netchat\\teams\\icon02.pcx"			;91
+
+IMAGE_FILE  "shelldb\\netchat\\roster\\cdg.pcx"				;92
+IMAGE_FILE  "shelldb\\netchat\\roster\\cdgx.pcx"			;93
+IMAGE_FILE  "shelldb\\netchat\\roster\\cdr.pcx"				;94
+IMAGE_FILE  "shelldb\\netchat\\roster\\cdrx.pcx"			;95
+IMAGE_FILE  "shelldb\\netchat\\roster\\cdy.pcx"				;96
+IMAGE_FILE  "shelldb\\netchat\\roster\\cdyx.pcx"			;97
+IMAGE_FILE  "shelldb\\netchat\\roster\\cdyx.pcx"			;98	// dummy placeholder
+IMAGE_FILE  "shelldb\\netchat\\roster\\cdyx.pcx"			;99	// dummy placeholder
+
+;BACKGROUND	"shelldb\\netchat\\roster\\roster3.pcx"
+
+CONTROLS 	mouse, keyboard
+
+;---------------------------------------------------
+; 3A. Roster
+;---------------------------------------------------
+;Player Listview Box
+LISTVIEW 140
+	LOCATION    182  54 
+	DIMENSIONS  436 187
+	HOTSPOTRECT 182  54 436 187
+	TEXT_COLOR        195 195 195
+	HILIGHT_COLOR	  255 255 255
+	FOCUS_COLOR		  255 255 0
+	DISABLE_COLOR	  63  63  63
+	CURSOR_COLOR      0   0   127
+	SELECT_COLOR      0   0   195
+	BG_COLOR_NORMAL   0   0   0
+	BG_COLOR_HILIGHT  0   0   0
+	BG_COLOR_FOCUS    0   0   0
+	NEXT	 141
+	PREV	 190
+	END
+
+; Ready Button
+BUTTON 141
+	PICTURE	 #0,
+			 #1,
+			 #2,
+			 #3
+	FOCUS_PICTURE #4 265 290
+	LOCATION     189 290
+	HOTSPOTRECT	 178 253 126  52
+	RIGHT	 142
+	LEFT	 143
+	ABOVE	 140
+	BELOW    170
+	NEXT	 142
+	PREV	 140
+	END
+
+; Launch Button
+BUTTON 142
+	PICTURE	 #0,
+			 #1,
+			 #2,
+			 #3
+	FOCUS_PICTURE #4 424 290
+	LOCATION     347 290
+	HOTSPOTRECT	 336 253 126  52
+	RIGHT	 143
+	LEFT	 141
+	ABOVE	 140
+	BELOW    170
+	NEXT	 143
+	PREV	 141
+	END
+
+; Remove Button
+BUTTON 143
+	PICTURE	 #0,
+			 #1,
+			 #2,
+			 #3
+	FOCUS_PICTURE #4 582 290
+	LOCATION     505 290
+	HOTSPOTRECT	 494 253 126  52
+	RIGHT	 141
+	LEFT	 142
+	ABOVE    140
+	BELOW    170
+	NEXT	 170
+	PREV	 142
+	END
+
+;Suit info toggle
+TOGGLE 144
+	LOCATION     447 36
+	HOTSPOTRECT	 447 36  34  18
+	END
+
+
+LABEL 300
+	PICTURE	#92
+	LOCATION 0 0
+	DISABLED
+	INVISIBLE
+END
+
+LABEL 301
+	PICTURE	#93
+	LOCATION 0 0
+	DISABLED
+	INVISIBLE
+END
+
+LABEL 302
+	PICTURE	#94
+	LOCATION 0 0
+	DISABLED
+	INVISIBLE
+END
+
+LABEL 303
+	PICTURE	#95
+	LOCATION 0 0
+	DISABLED
+	INVISIBLE
+END
+
+LABEL 304
+	PICTURE	#96
+	LOCATION 0 0
+	DISABLED
+	INVISIBLE
+END
+
+LABEL 305
+	PICTURE	#97
+	LOCATION 0 0
+	DISABLED
+	INVISIBLE
+END
+
+LABEL 306
+	PICTURE	#98
+	LOCATION 0 0
+	DISABLED
+	INVISIBLE
+END
+
+LABEL 307
+	PICTURE	#99
+	LOCATION 0 0
+	DISABLED
+	INVISIBLE
+END
+
+
+
+;---------------------------------------------------
+; 3B. Armory
+; Battlesuit Setup Page
+;---------------------------------------------------
+
+; SUIT PIX
+LABEL 2000
+	PICTURE	 #64
+	LOCATION 186 49
+	DISABLED
+	INVISIBLE
+END
+LABEL 2001
+	PICTURE	 #65
+	LOCATION 186 49
+	DISABLED
+	INVISIBLE
+END
+LABEL 2002
+	PICTURE	 #66
+	LOCATION 186 49
+	DISABLED
+	INVISIBLE
+END
+LABEL 2003
+	PICTURE	 #67
+	LOCATION 186 49
+	DISABLED
+	INVISIBLE
+END
+LABEL 2004
+	PICTURE	 #68
+	LOCATION 186 49
+	DISABLED
+	INVISIBLE
+END
+LABEL 2005
+	PICTURE	 #69
+	LOCATION 186 49
+	DISABLED
+	INVISIBLE
+END
+LABEL 2006
+	PICTURE	 #70
+	LOCATION 186 49
+	DISABLED
+	INVISIBLE
+END
+LABEL 2007
+	PICTURE	 #71
+	LOCATION 186 49
+	DISABLED
+	INVISIBLE
+END
+LABEL 2008
+	PICTURE	 #72
+	LOCATION 186 49
+	DISABLED
+	INVISIBLE
+END
+LABEL 2009
+	PICTURE	 #73
+	LOCATION 186 49
+	DISABLED
+	INVISIBLE
+END
+LABEL 2010
+	PICTURE	 #74
+	LOCATION 186 49
+	DISABLED
+	INVISIBLE
+END
+LABEL 2011
+	PICTURE	 #75
+	LOCATION 186 49
+	INVISIBLE
+	DISABLED
+END
+LABEL 2012
+	PICTURE	 #76
+	LOCATION 186 49
+	INVISIBLE
+	DISABLED
+END
+LABEL 2013
+	PICTURE	 #77
+	LOCATION 186 49
+	INVISIBLE
+	DISABLED
+END
+LABEL 2014
+	PICTURE	 #78
+	LOCATION 186 49
+	INVISIBLE
+	DISABLED
+END
+LABEL 2015
+	PICTURE	 #79
+	LOCATION 186 49
+	INVISIBLE
+	DISABLED
+END
+LABEL 2016
+	PICTURE	 #80
+	LOCATION 186 49
+	INVISIBLE
+	DISABLED
+END
+LABEL 2017
+	PICTURE	 #81
+	LOCATION 186 49
+	INVISIBLE
+	DISABLED
+END
+LABEL 2018
+	PICTURE	 #82
+	LOCATION 186 49
+	INVISIBLE
+	DISABLED
+END
+LABEL 2019
+	PICTURE	 #83
+	LOCATION 186 49
+	INVISIBLE
+	DISABLED
+END
+LABEL 2020
+	PICTURE	 #84
+	LOCATION 186 49
+	INVISIBLE
+	DISABLED
+END
+LABEL 2021
+	PICTURE	 #85
+	LOCATION 186 49
+	INVISIBLE
+	DISABLED
+END
+LABEL 2022
+	PICTURE	 #86
+	LOCATION 186 49
+	INVISIBLE
+	DISABLED
+END
+LABEL 2023
+	PICTURE	 #87
+	LOCATION 186 49
+	INVISIBLE
+	DISABLED
+END
+
+LABEL 2100 ; GUN
+	PICTURE	 #88
+	LOCATION 325 120
+	INVISIBLE
+	DISABLED
+END
+
+
+;Armor
+TOGGLE 229
+	PICTURE  "shelldb\\netchat\\armory\\armor_n.pcx", 	; normal 
+			 "shelldb\\netchat\\armory\\armor_d.pcx", 	; disabled 
+			 "shelldb\\netchat\\armory\\armor_p.pcx",	; selected
+			 "shelldb\\netchat\\armory\\armor_h.pcx" 	; highlighted 
+	SELECTED "shelldb\\netchat\\armory\\armor_s.pcx",	
+			 "shelldb\\netchat\\armory\\armor_sd.pcx",
+			 "shelldb\\netchat\\armory\\armor_sp.pcx",
+			 "shelldb\\netchat\\armory\\armor_sh.pcx"
+	GROUP    4
+	LOCATION     377 39
+	HOTSPOTRECT	 377 39  77  29
+	RIGHT    230
+	LEFT     224
+;	ABOVE    228
+;	BELOW    225
+	NEXT	 230
+	PREV	 220
+	END
+
+;Weapons
+TOGGLE 230
+	PICTURE  "shelldb\\netchat\\armory\\weapons_n.pcx", 	; normal 
+			 "shelldb\\netchat\\armory\\weapons_d.pcx", 	; highlighted 
+			 "shelldb\\netchat\\armory\\weapons_p.pcx",		; selected 
+			 "shelldb\\netchat\\armory\\weapons_h.pcx"	 	; highlighted 
+	SELECTED "shelldb\\netchat\\armory\\weapons_s.pcx",	
+			 "shelldb\\netchat\\armory\\weapons_sd.pcx",
+			 "shelldb\\netchat\\armory\\weapons_sp.pcx",
+			 "shelldb\\netchat\\armory\\weapons_sh.pcx"
+	GROUP    4
+	LOCATION     456 39
+	HOTSPOTRECT	 456 39  77  29
+	RIGHT    231
+	LEFT     229
+;	ABOVE    228
+;	BELOW    225
+	NEXT	 231
+	PREV	 229
+	END
+
+;Gender
+TOGGLE 231
+	PICTURE  "shelldb\\netchat\\armory\\gender_n.pcx", 		; male normal
+			 "shelldb\\netchat\\armory\\gender_d.pcx", 		; male disabled 
+			 "shelldb\\netchat\\armory\\gender_p.pcx",		; male pressed
+			 "shelldb\\netchat\\armory\\gender_h.pcx"		; male hilight
+	SELECTED "shelldb\\netchat\\armory\\gender_sn.pcx",		; female normal
+			 "shelldb\\netchat\\armory\\gender_sd.pcx",		; female disabled
+			 "shelldb\\netchat\\armory\\gender_sp.pcx",		; female pressed
+			 "shelldb\\netchat\\armory\\gender_sh.pcx"		; female hilight
+	LOCATION     535 39
+	HOTSPOTRECT	 535 39  77  29
+	RIGHT    229
+	LEFT     230
+;	ABOVE    228
+;	BELOW    225
+	NEXT	 225
+	PREV	 230
+	END
+
+; H1 Button
+TOGGLE 220
+	HOTSPOTRECT	 192  50  50 50
+	GROUP    5
+	RIGHT    221
+	LEFT     221
+	ABOVE    222
+	BELOW    222
+	NEXT 	 229
+	PREV	 194
+	END
+
+; H2 Button
+TOGGLE 221
+	HOTSPOTRECT	 265  50  50 50
+	GROUP    5
+	RIGHT    220
+	LEFT     220
+	ABOVE    223
+	BELOW    223
+	NEXT 	 229
+	PREV 	 194
+	END
+
+; M1 Button
+TOGGLE 222
+	HOTSPOTRECT	 192 135  50 50
+	GROUP    5
+	RIGHT    223
+	LEFT     228
+	ABOVE    220
+	BELOW    220
+	NEXT 	 229
+	PREV 	 194
+	END
+
+; M2 Button
+TOGGLE 223
+	HOTSPOTRECT	 265 135  50 50
+	GROUP    5
+	RIGHT    224
+	LEFT     222
+	ABOVE    221
+	BELOW    221
+	NEXT 	 229
+	PREV 	 194
+	END
+
+; A1 Button
+TOGGLE 224
+	LOCATION 325 120
+	HOTSPOTRECT	 325 120  40  106
+	GROUP    5
+	RIGHT    225
+	LEFT     223
+	ABOVE    224
+	BELOW    224
+	NEXT 	 229
+	PREV 	 194
+	END
+
+; Heavy Weapon List
+LISTBOX 225
+	LOCATION    377 105 
+	DIMENSIONS  234 186
+	HOTSPOTRECT 377 105 234 186
+	TEXT_COLOR        255 255 255
+	HILIGHT_COLOR	  255 255 0
+	FOCUS_COLOR		  255 255 255
+	DISABLE_COLOR	  127 127 127
+	CURSOR_COLOR      0   0   0
+	SELECT_COLOR      0   0   127
+	BG_COLOR_NORMAL   0   0   0
+	BG_COLOR_HILIGHT  0   0   0
+	BG_COLOR_FOCUS    0   0   0
+	RIGHT    226
+	LEFT 	 224
+	ABOVE 	 225
+	BELOW 	 225
+	NEXT 	 226
+	PREV 	 231
+	END
+
+; Mine List
+LISTBOX 226
+	LOCATION    377 105 
+	DIMENSIONS  234 186
+	HOTSPOTRECT 377 105 234 186
+	TEXT_COLOR        255 255 255
+	HILIGHT_COLOR	  255 255 0
+	FOCUS_COLOR		  255 255 255
+	DISABLE_COLOR	  127 127 127
+	CURSOR_COLOR      0   0   0
+	SELECT_COLOR      0   0   127
+	BG_COLOR_NORMAL   0   0   0
+	BG_COLOR_HILIGHT  0   0   0
+	BG_COLOR_FOCUS    0   0   0
+	RIGHT    227
+	LEFT 	 225
+	ABOVE 	 226
+	BELOW 	 226
+	NEXT 	 227
+	PREV 	 225
+	END
+
+; Rifle Attachment Weapon List
+LISTBOX 227
+	LOCATION    377 105 
+	DIMENSIONS  234 186
+	HOTSPOTRECT 377 105 234 186
+	TEXT_COLOR        255 255 255
+	HILIGHT_COLOR	  255 255 0
+	FOCUS_COLOR		  255 255 255
+	DISABLE_COLOR	  127 127 127
+	CURSOR_COLOR      0   0   0
+	SELECT_COLOR      0   0   127
+	BG_COLOR_NORMAL   0   0   0
+	BG_COLOR_HILIGHT  0   0   0
+	BG_COLOR_FOCUS    0   0   0
+	RIGHT    228
+	LEFT  	 226
+	ABOVE 	 227
+	BELOW 	 227
+	NEXT 	 228
+	PREV	 226
+	END
+
+; Armor List
+LISTBOX 228
+	LOCATION    377 105 
+	DIMENSIONS  234 186
+	HOTSPOTRECT 377 105 234 186
+	TEXT_COLOR        255 255 255
+	HILIGHT_COLOR	  255 255 0
+	FOCUS_COLOR		  255 255 255
+	DISABLE_COLOR	  127 127 127
+	CURSOR_COLOR      0   0   0
+	SELECT_COLOR      0   0   127
+	BG_COLOR_NORMAL   0   0   0
+	BG_COLOR_HILIGHT  0   0   0
+	BG_COLOR_FOCUS    0   0   0
+	RIGHT    222
+	LEFT 	 227
+	ABOVE 	 228
+	BELOW 	 228
+	NEXT 	 170
+	PREV 	 227
+	END
+
+;Armor Label
+LABEL 234
+	PICTURE	 #52,
+			 #52,
+			 #52,
+			 #52
+	LOCATION    378 76
+	HOTSPOTRECT	378 76 223 29
+	END
+
+;Heavy Weapon Label
+LABEL 235
+	PICTURE	 #53,
+			 #53,
+			 #53,
+			 #53
+	LOCATION    378 76
+	HOTSPOTRECT	378 76 223 29
+	END
+
+;Mine Label
+LABEL 236
+	PICTURE	 #54,
+			 #54,
+			 #54,
+			 #54
+	LOCATION    378 76
+	HOTSPOTRECT	378 76 223 29
+	END
+
+;Rifle Attachment Label
+LABEL 237
+	PICTURE	 #55,
+			 #55,
+			 #55,
+			 #55
+	LOCATION    378 76
+	HOTSPOTRECT	378 76 223 29
+	END
+
+
+
+;---------------------------------------------------
+; 3C. Team Page
+;---------------------------------------------------
+;Team1 Prev
+BUTTON 160
+	PICTURE	 #32, #33, #34, #35
+	LOCATION     233  60
+	HOTSPOTRECT	 233  60  19 111
+	NEXT	 161
+	PREV	 191
+	END
+
+;Team1 Name
+TEXTBOX 161 
+	LOCATION    254 154
+	DIMENSIONS  103  19
+	HOTSPOTRECT	254 154 103  19
+	TEXT_COLOR        0   0   195
+	HILIGHT_COLOR	  255 255 255
+	FOCUS_COLOR		  255 255 0
+	DISABLE_COLOR	  0   0   195
+	CURSOR_COLOR      0   255 0
+	BG_COLOR_NORMAL   0   0   0
+	BG_COLOR_HILIGHT  0   0   0
+	BG_COLOR_FOCUS    0   0   0
+	BG_COLOR_DISABLED 25  25  25
+	NEXT	162
+	PREV	160
+	END
+
+;Team 1 Image
+LABEL 155
+	LOCATION 	256 61
+	PICTURE #90
+	END
+
+;Team1 Next
+BUTTON 162
+	PICTURE	 #36, #37, #38, #39
+	LOCATION     361  60
+	HOTSPOTRECT	 361  60  19 111
+	NEXT	 163
+	PREV	 161
+	END
+
+;Team2 Prev
+BUTTON 163
+	PICTURE	 #32, #33, #34, #35
+	LOCATION     415  60
+	HOTSPOTRECT	 415  60  19 111
+	NEXT	 164
+	PREV	 162
+	END
+
+;Team2 Name
+TEXTBOX 164 
+	LOCATION    436 154
+	DIMENSIONS  103  19
+	HOTSPOTRECT	436 154 103  19
+	TEXT_COLOR        195 0   0
+	HILIGHT_COLOR	  255 255 255
+	FOCUS_COLOR		  255 255 0
+	DISABLE_COLOR	  195 0   0
+	CURSOR_COLOR      0   255 0
+	BG_COLOR_NORMAL   0   0   0
+	BG_COLOR_HILIGHT  0   0   0
+	BG_COLOR_FOCUS    0   0   0
+	BG_COLOR_DISABLED 25  25  25
+	NEXT	165
+	PREV	163
+	END
+
+;Team 2 Image
+LABEL 156
+	LOCATION 	438 61
+	PICTURE #91
+	END
+
+;Team2 Next
+BUTTON 165
+	PICTURE	 #36, #37, #38, #39
+	LOCATION     543  60
+	HOTSPOTRECT	 543  60  19 111
+	NEXT	 167
+	PREV	 164
+	END
+
+;Team1 List
+LISTBOX 166
+	LOCATION    208 184 
+	DIMENSIONS  167 108
+	HOTSPOTRECT 208 184 166 108
+	TEXT_COLOR        0	  0   195
+	HILIGHT_COLOR	  0   0   255
+	FOCUS_COLOR		  0   0   255
+	DISABLE_COLOR	  63  63  63
+	CURSOR_COLOR      127 127 127
+	SELECT_COLOR      195 195 195
+	BG_COLOR_NORMAL   0   0   0
+	BG_COLOR_HILIGHT  0   0   0
+	BG_COLOR_FOCUS    0   0   0
+	END
+
+;Switch Team Button
+BUTTON 167
+	PICTURE  "shelldb\\netchat\\teams\\teamswitch-n.pcx", 	; normal 
+			 "shelldb\\netchat\\teams\\teamswitch-f.pcx",	; disabled
+			 "shelldb\\netchat\\teams\\teamswitch-s.pcx",	; pressed 
+			 "shelldb\\netchat\\teams\\teamswitch-h.pcx" 	; highlighted 
+	LOCATION     378 187
+	HOTSPOTRECT	 378 187  39 103
+	NEXT	 170
+	PREV	 165
+	END
+
+;Team2 List
+LISTBOX 168
+	LOCATION    420 184 
+	DIMENSIONS  167 108
+	HOTSPOTRECT 420 184 167 108
+	TEXT_COLOR        195 0   0
+	HILIGHT_COLOR	  255 0   0
+	FOCUS_COLOR		  255 0   0
+	DISABLE_COLOR	  63  63  63
+	CURSOR_COLOR      127 127 127
+	SELECT_COLOR      195 195 195
+	BG_COLOR_NORMAL   0   0   0
+	BG_COLOR_HILIGHT  0   0   0
+	BG_COLOR_FOCUS    0   0   0
+	END
+
+;---------------------------------------------------
+; 3D. Battlefield
+; Mission Location Page
+;---------------------------------------------------
+;Select Button
+BUTTON 151
+	PICTURE	 #0, #1, #2, #3
+	FOCUS_PICTURE #4 267 291
+	LOCATION     190 291
+	HOTSPOTRECT	 179 255 126  52
+	NEXT	 170
+	PREV	 150
+	END
+
+;Mission Listview Box
+LISTBOX 150
+	LOCATION    184  55 
+	DIMENSIONS  166 190
+	HOTSPOTRECT 184  55 166 190
+	TEXT_COLOR        195 195 195
+	HILIGHT_COLOR	  255 255 255
+	FOCUS_COLOR		  255 255 0
+	DISABLE_COLOR	  63  63  63
+	CURSOR_COLOR      0   0   127
+	SELECT_COLOR      0   0   195
+	BG_COLOR_NORMAL   0   0   0
+	BG_COLOR_HILIGHT  0   0   0
+	BG_COLOR_FOCUS    0   0   0
+	BG_COLOR_DISABLED 0   0   0
+	TRANSPARENT
+;	SCROLLBAR 150
+;		LOCATION	326 59 
+;		DIMENSIONS  23  183 
+;		BORDER_SIZE 0
+;		HOTSPOTRECT 326 59  23  183
+;		PICTURE		#51, #51, #51, #51
+;		SLIDE		#42, #42, #42, #42
+;		LU_PICTURE	#43, #44, #45, #46
+;		RD_PICTURE  #47, #48, #49, #50
+;		ARROW_DIMENSIONS 23 20
+;		SLIDE_DIMENSIONS 20 20
+;		END
+	NEXT	 151
+	PREV	 192
+	END
+
+;Current Mission Text
+LABEL 152 
+	LOCATION    380 285
+;	DIMENSIONS  276  20
+;	HOTSPOTRECT	330 276 276  20
+;	TEXT_COLOR        255 255 255
+;	HILIGHT_COLOR	  255 255 255
+;	FOCUS_COLOR		  255 255 0
+;	DISABLE_COLOR	  255 255 255
+;	CURSOR_COLOR      0   255 0
+;	BG_COLOR_NORMAL   0   0   0
+;	BG_COLOR_HILIGHT  0   0   0
+;	BG_COLOR_FOCUS    0   0   0
+;	BG_COLOR_DISABLED 32  32  32
+;	TRANSPARENT
+	END
+
+LABEL 154
+	LOCATION 355 55
+	PICTURE	#89
+	END
+
+;Mission Info Window
+LISTVIEW 153
+	LOCATION    355  55
+	DIMENSIONS  261 190
+	HOTSPOTRECT	355  55 261  190
+	TEXT_COLOR        255 255 255
+	HILIGHT_COLOR	  255 255 255
+	FOCUS_COLOR		  255 255 255
+	DISABLE_COLOR	  63  63  63
+	CURSOR_COLOR      0   0   127
+	SELECT_COLOR      0   0   195
+	BG_COLOR_NORMAL   0   0   0
+	BG_COLOR_HILIGHT  0   0   0
+	BG_COLOR_FOCUS    0   0   0
+	BG_COLOR_DISABLED 0   0   0
+	TRANSPARENT
+	END
+
+
+;---------------------------------------------------
+; 3E. Setup
+; Mission Parameters Page
+;---------------------------------------------------
+;Mission Name Text
+TEXTBOX 200 
+	LOCATION    182  51
+	DIMENSIONS  198  19
+	HOTSPOTRECT	182  51 198  19
+	TEXT_COLOR        195 195 195
+	HILIGHT_COLOR	  255 255 255
+	FOCUS_COLOR		  255 255 0
+	DISABLE_COLOR	  63  63  63
+	CURSOR_COLOR      0   255 0
+	BG_COLOR_NORMAL   0   0   0
+	BG_COLOR_HILIGHT  0   0   0
+	BG_COLOR_FOCUS    0   0   0
+	BG_COLOR_DISABLED 25  25  25
+	TRANSPARENT
+	RIGHT    200
+	LEFT     200
+	ABOVE    200
+	BELOW    200
+	NEXT	 202
+	PREV	 193
+	END
+
+;Mission Type Description Box
+LISTBOX 201
+	LOCATION    182  86 
+	DIMENSIONS  199  85
+	HOTSPOTRECT 182  86 199 85
+	TEXT_COLOR        195 195 195
+	HILIGHT_COLOR	  195 195 195
+	FOCUS_COLOR		  255 255 0
+	DISABLE_COLOR	  195 195 195
+	CURSOR_COLOR      0   0   195
+	SELECT_COLOR      0   0   195
+	BG_COLOR_NORMAL   0   0   0
+	BG_COLOR_HILIGHT  0   0   0
+	BG_COLOR_FOCUS    0   0   0
+	BG_COLOR_DISABLED 0   0   0
+	TRANSPARENT
+;	SCROLLBAR 150
+;		LOCATION	326 59 
+;		DIMENSIONS  23  183 
+;		BORDER_SIZE 0
+;		HOTSPOTRECT 326 59  23  183
+;		PICTURE		#51, #51, #51, #51
+;		SLIDE		#42, #42, #42, #42
+;		LU_PICTURE	#43, #44, #45, #46
+;		RD_PICTURE  #47, #48, #49, #50
+;		ARROW_DIMENSIONS 23 20
+;		SLIDE_DIMENSIONS 20 20
+;		END
+;	NEXT	 151
+;	PREV	 192
+	END
+
+;Mission Password
+TEXTBOX 202 
+	LOCATION    388  51
+	DIMENSIONS  230  19
+	HOTSPOTRECT	388  51 230  19
+	TEXT_COLOR        195 195 195
+	HILIGHT_COLOR	  255 255 255
+	FOCUS_COLOR		  255 255 0
+	DISABLE_COLOR	  63  63  63
+	CURSOR_COLOR      0   255 0
+	BG_COLOR_NORMAL   0   0   0
+	BG_COLOR_HILIGHT  0   0   0
+	BG_COLOR_FOCUS    0   0   0
+	BG_COLOR_DISABLED 25  25  25
+	TRANSPARENT
+	RIGHT    202
+	LEFT     202
+	ABOVE    202
+	BELOW    202
+	NEXT	 209
+	PREV	 200
+	END
+
+TOGGLE 203
+	PICTURE		#14, #15, #16, #17
+	SELECTED	#18, #19, #20, #21
+	LOCATION    185 175
+	DIMENSIONS	193  16
+	HOTSPOTRECT	185 175 193  16
+	GROUP	 3
+	RIGHT    212
+	LEFT     212
+	ABOVE    207
+	BELOW    204
+	NEXT	 204
+	PREV	 215
+	END
+
+TOGGLE 204
+	PICTURE		#14, #15, #16, #17
+	SELECTED	#18, #19, #20, #21
+	LOCATION    185 196
+	DIMENSIONS	193  16
+	HOTSPOTRECT	185 196 193  16
+	GROUP	 3
+	RIGHT    213
+	LEFT     213
+	ABOVE    203
+	BELOW    205
+	NEXT	 205
+	PREV	 203
+	END
+
+TOGGLE 205
+	PICTURE		#14, #15, #16, #17
+	SELECTED	#18, #19, #20, #21
+	LOCATION    185 217
+	DIMENSIONS	193  16
+	HOTSPOTRECT	185 217 193  16
+	GROUP	 3
+	RIGHT    214
+	LEFT     214
+	ABOVE    204
+	BELOW    206
+	NEXT	 206
+	PREV	 204
+	END
+
+TOGGLE 206
+	PICTURE		#14, #15, #16, #17
+	SELECTED	#18, #19, #20, #21
+	LOCATION    185 238
+	DIMENSIONS	193  16
+	HOTSPOTRECT	185 238 193  16
+	GROUP	 3
+	RIGHT    215
+	LEFT     215
+	ABOVE    205
+	BELOW    207
+	NEXT	 207
+	PREV	 205
+	END
+
+TOGGLE 207  
+	PICTURE		#14, #15, #16, #17
+	SELECTED	#18, #19, #20, #21
+	LOCATION    185 259
+	DIMENSIONS	193  16
+	HOTSPOTRECT	185 259 193  16
+	GROUP	 3
+	RIGHT    207
+	LEFT     207
+	ABOVE    206
+	BELOW    203
+	NEXT	 170
+	PREV	 206
+	END
+
+;TOGGLE 208
+;	PICTURE		#14, #15, #16, #17
+;	SELECTED	#18, #19, #20, #21
+;	LOCATION    185 280
+;	DIMENSIONS	193  16
+;	HOTSPOTRECT	185 280 193  16
+;	GROUP	 3
+;	RIGHT    216
+;	LEFT     216
+;	ABOVE    207
+;	BELOW    200
+;	NEXT	 170
+;	PREV	 193
+;	END
+
+;Maximum Players
+SCROLLBAR 209
+	LOCATION	392  90
+	DIMENSIONS   72  23
+	HOTSPOTRECT 392  90  72  23
+	MIN_MAX		  2   8
+	START		  8
+	BORDER_SIZE   0
+	ORIENTATION	  0
+	SLIDER_TYPE	  2
+	PICTURE		#22, #23, #22, #22
+	LU_PICTURE	#24, #25, #26, #27
+	RD_PICTURE  #28, #29, #30, #31
+	ARROW_DIMENSIONS 20 23
+	SLIDE_DIMENSIONS 20 23
+	CURSOR_COLOR  0  0  0
+	LEFT 	209
+	RIGHT 	209
+	ABOVE 	215
+	BELOW 	210
+	NEXT	210
+	PREV	202
+	END
+
+;Time Limit
+SCROLLBAR 210
+	LOCATION	392 117
+	DIMENSIONS   72  23
+	HOTSPOTRECT 392 117  72  23
+	MIN_MAX		  0 120  
+	START		  0
+	BORDER_SIZE   0
+	ORIENTATION	  0
+	SLIDER_TYPE	  2
+	PICTURE		#22, #23, #22, #22
+	LU_PICTURE	#24, #25, #26, #27
+	RD_PICTURE  #28, #29, #30, #31
+	ARROW_DIMENSIONS 20 23
+	SLIDE_DIMENSIONS 20 23
+	CURSOR_COLOR  0  0  0
+	LEFT 	210
+	RIGHT 	210
+	ABOVE 	209
+	BELOW 	211
+	NEXT	211
+	PREV	209
+	END
+
+;Score Limit
+SCROLLBAR 211
+	LOCATION	392 144
+	DIMENSIONS   72  23
+	HOTSPOTRECT 392 144  72  23
+	MIN_MAX		  0 9999  
+	START		  0
+	BORDER_SIZE   0
+	ORIENTATION	  0
+	SLIDER_TYPE	  2
+	PICTURE		#22, #23, #22, #22
+	LU_PICTURE	#24, #25, #26, #27
+	RD_PICTURE  #28, #29, #30, #31
+	ARROW_DIMENSIONS 20 23
+	SLIDE_DIMENSIONS 20 23
+	CURSOR_COLOR  0  0  0
+	LEFT 	211
+	RIGHT 	211
+	ABOVE 	210
+	BELOW 	212
+	NEXT	212
+	PREV	210
+	END
+
+;Player Regen Toggle
+TOGGLE 212
+	PICTURE		#14, #15, #16, #17
+	SELECTED	#18, #19, #20, #21
+	LOCATION    391 175
+	DIMENSIONS	225  16
+	HOTSPOTRECT	391 175 225  16
+	RIGHT    203
+	LEFT     203
+	ABOVE    211
+	BELOW    213
+	NEXT	 213
+	PREV	 211
+	END
+
+;Pickup Regen Toggle
+TOGGLE 213
+	PICTURE		#14, #15, #16, #17
+	SELECTED	#18, #19, #20, #21
+	LOCATION    391 196
+	DIMENSIONS	225  16
+	HOTSPOTRECT	391 196 225  16
+	RIGHT    204
+	LEFT     204
+	ABOVE    212
+	BELOW    214
+	NEXT	 214
+	PREV	 212
+	END
+
+;Allow Radar Toggle
+TOGGLE 214
+	PICTURE		#14, #15, #16, #17
+	SELECTED	#18, #19, #20, #21
+	LOCATION    391 217
+	DIMENSIONS	225  16
+	HOTSPOTRECT	391 217 225  16
+	RIGHT    205
+	LEFT     205
+	ABOVE    213
+	BELOW    215
+	NEXT	 215
+	PREV	 213
+	END
+
+;Allow Target IDs Toggle
+TOGGLE 215
+	PICTURE		#14, #15, #16, #17
+	SELECTED	#18, #19, #20, #21
+	LOCATION    391 238
+	DIMENSIONS	225  16
+	HOTSPOTRECT	391 238 225  16
+	RIGHT    206
+	LEFT     206
+	ABOVE    214
+	BELOW    209
+	NEXT	 203
+	PREV	 214
+	END
+
+;Alternate Scoring Toggle
+;TOGGLE 216
+;	PICTURE		#14, #15, #16, #17
+;	SELECTED	#18, #19, #20, #21
+;	LOCATION    391 259
+;	DIMENSIONS	225  16
+;	HOTSPOTRECT	391 259 225  16
+;	RIGHT    207
+;	LEFT     207
+;	ABOVE    215
+;	BELOW    202
+;	NEXT	 170
+;	PREV	 193
+;	END
+
+;---------------------------------------------------
+; 3F. Restrictions
+; Battlesuit Parameters Page
+;---------------------------------------------------
+
+;;;;Suit Types
+
+; SCOUT
+TOGGLE 1000 
+	PICTURE		#56, #57, #58, #59
+	SELECTED	#60, #61, #62, #63
+	LOCATION    184 65
+	DIMENSIONS	12 11
+	HOTSPOTRECT	184 65 125 11
+	ABOVE	 1008
+	BELOW    1001
+	LEFT	 1100
+	RIGHT	 1100
+	NEXT	 1001
+	PREV	 195
+	END
+
+; COMBAT
+TOGGLE 1001
+	PICTURE		#56, #57, #58, #59
+	SELECTED	#60, #61, #62, #63
+	LOCATION    184 77
+	DIMENSIONS	12 11
+	HOTSPOTRECT	184 77 125 11
+	ABOVE	 1000
+	BELOW    1002
+	LEFT	 1101
+	RIGHT	 1101
+	NEXT	 1002
+	PREV	 1000
+	END
+
+; ASSAULT
+TOGGLE 1002
+	PICTURE		#56, #57, #58, #59
+	SELECTED	#60, #61, #62, #63
+	LOCATION    184 89
+	DIMENSIONS	12 11
+	HOTSPOTRECT	184 89 125 11
+	ABOVE	 1001
+	BELOW    1003
+	LEFT	 1102
+	RIGHT	 1102
+	NEXT	 1003
+	PREV	 1001
+	END
+
+; DREADNAUT
+TOGGLE 1003
+	PICTURE		#56, #57, #58, #59
+	SELECTED	#60, #61, #62, #63
+	LOCATION    184 101
+	DIMENSIONS	12 11
+	HOTSPOTRECT	184 101 125 11
+	ABOVE	 1002
+	BELOW    1004
+	LEFT	 1103
+	RIGHT	 1103
+	NEXT	 1004
+	PREV	 1002
+	END
+
+;;;;;;;;;;;;;;;
+;;; GLIDER WING
+
+TOGGLE 1004
+	PICTURE		#56, #57, #58, #59
+	SELECTED	#60, #61, #62, #63
+	LOCATION    184 143
+	DIMENSIONS	12 11
+	HOTSPOTRECT	184 143 125 11
+	ABOVE	 1003
+	BELOW    1005
+	LEFT	 1107
+	RIGHT	 1107
+	NEXT	 1005
+	PREV	 1003
+	END
+
+;;;;;;;;;;;;;;
+;;; TECH LEVEL
+
+; LEVEL 1
+TOGGLE 1005
+	PICTURE		#56, #57, #58, #59
+	SELECTED	#60, #61, #62, #63
+	LOCATION    184 189
+	DIMENSIONS	12 11
+	HOTSPOTRECT	184 189 125 11
+	GROUP    6
+	ABOVE	 1004
+	BELOW    1006
+	LEFT	 1108
+	RIGHT	 1108
+	NEXT	 1006
+	PREV	 1004
+	END
+
+; LEVEL 2
+TOGGLE 1006
+	PICTURE		#56, #57, #58, #59
+	SELECTED	#60, #61, #62, #63
+	LOCATION    184 201
+	DIMENSIONS	12 11
+	HOTSPOTRECT	184 201 125 11
+	GROUP    6
+	ABOVE	 1005
+	BELOW    1007
+	LEFT	 1109
+	RIGHT	 1109
+	NEXT	 1007
+	PREV	 1005
+	END
+
+; LEVEL 3
+TOGGLE 1007
+	PICTURE		#56, #57, #58, #59
+	SELECTED	#60, #61, #62, #63
+	LOCATION    184 213
+	DIMENSIONS	12 11
+	HOTSPOTRECT	184 213 125 11
+	GROUP    6
+	ABOVE	 1006
+	BELOW    1008
+	LEFT	 1110
+	RIGHT	 1110
+	NEXT	 1008
+	PREV	 1006
+	END
+
+; LEVEL 4
+TOGGLE 1008
+	PICTURE		#56, #57, #58, #59
+	SELECTED	#60, #61, #62, #63
+	LOCATION    184 225
+	DIMENSIONS	12 11
+	HOTSPOTRECT	184 225 125 11
+	GROUP    6
+	ABOVE	 1007
+	BELOW    1000
+	LEFT	 1111
+	RIGHT 	 1111
+	NEXT	 1100
+	PREV	 1007
+	END
+
+;;;;;;;;;;;;;;;;;;;;;;
+;;; HEAVY WEAPONS
+
+; ROCKET POD
+TOGGLE 1100 
+	PICTURE		#56, #57, #58, #59
+	SELECTED	#60, #61, #62, #63
+	LOCATION    327 62
+	DIMENSIONS	12 11
+	HOTSPOTRECT	327 62 250 11
+	ABOVE    1114
+	BELOW    1101
+	LEFT	 1000
+	RIGHT	 1000
+	NEXT	 1101
+	PREV	 1008
+	END
+
+; FRAG GRENADE
+TOGGLE 1101 
+	PICTURE		#56, #57, #58, #59
+	SELECTED	#60, #61, #62, #63
+	LOCATION    327 74
+	DIMENSIONS	12 11
+	HOTSPOTRECT	327 74 250 11
+	ABOVE	 1100
+	BELOW    1102
+	LEFT     1001
+	RIGHT	 1001
+	NEXT	 1102
+	PREV	 1100
+	END
+
+; GUIDED MISSILE
+TOGGLE 1102
+	PICTURE		#56, #57, #58, #59
+	SELECTED	#60, #61, #62, #63
+	LOCATION    327 86
+	DIMENSIONS	12 11
+	HOTSPOTRECT	327 86 250 11
+	ABOVE	 1101
+	BELOW    1103
+	LEFT     1002
+	RIGHT	 1002
+	PREV	 1101
+	NEXT	 1103
+	END
+
+; NAPALM GRENADE
+TOGGLE 1103
+	PICTURE		#56, #57, #58, #59
+	SELECTED	#60, #61, #62, #63
+	LOCATION    327 98
+	DIMENSIONS	12 11
+	HOTSPOTRECT	327 98 250 11
+	ABOVE	 1102
+	BELOW    1104
+	LEFT     1003
+	RIGHT	 1003
+	PREV	 1102
+	NEXT	 1104
+	END
+
+; ECM GRENADE
+TOGGLE 1104
+	PICTURE		#56, #57, #58, #59
+	SELECTED	#60, #61, #62, #63
+	LOCATION    327 110
+	DIMENSIONS	12 11
+	HOTSPOTRECT	327 110 250 11
+	ABOVE	 1103
+	BELOW    1105
+	LEFT     1003
+	RIGHT	 1003
+	PREV	 1103
+	NEXT	 1105
+	END
+
+; SWARM MISSILE
+TOGGLE 1105
+	PICTURE		#56, #57, #58, #59
+	SELECTED	#60, #61, #62, #63
+	LOCATION    327 122
+	DIMENSIONS	12 11
+	HOTSPOTRECT	327 122 250 11
+	ABOVE	 1104
+	BELOW    1106
+	LEFT     1003
+	RIGHT	 1003
+	PREV	 1104
+	NEXT	 1106
+	END
+
+; CLUSTER GRENADE
+TOGGLE 1106
+	PICTURE		#56, #57, #58, #59
+	SELECTED	#60, #61, #62, #63
+	LOCATION    327 134
+	DIMENSIONS	12 11
+	HOTSPOTRECT	327 134 250 11
+	ABOVE	 1105
+	BELOW    1107
+	LEFT     1004
+	RIGHT	 1004
+	PREV	 1105
+	NEXT	 1107
+	END
+
+; ANTI-ROCKET MISSILES
+TOGGLE 1107
+	PICTURE		#56, #57, #58, #59
+	SELECTED	#60, #61, #62, #63
+	LOCATION    327 146
+	DIMENSIONS	12 11
+	HOTSPOTRECT	327 146 250 11
+	ABOVE	 1106
+	BELOW    1108
+	LEFT     1004
+	RIGHT	 1004
+	PREV	 1106
+	NEXT	 1108
+	END
+
+; AUTO-RIFLE
+TOGGLE 1108
+	PICTURE		#56, #57, #58, #59
+	SELECTED	#60, #61, #62, #63
+	LOCATION    327 187
+	DIMENSIONS	12 11
+	HOTSPOTRECT	327 187 250 11
+	ABOVE	 1107
+	BELOW    1109
+	LEFT     1005
+	RIGHT	 1005
+	PREV	 1107
+	NEXT	 1109
+	END
+
+; FLAME THROWER
+TOGGLE 1109
+	PICTURE		#56, #57, #58, #59
+	SELECTED	#60, #61, #62, #63
+	LOCATION    327 199
+	DIMENSIONS	12 11
+	HOTSPOTRECT	327 199 250 11
+	ABOVE	 1108
+	BELOW    1110
+	LEFT     1006
+	RIGHT	 1006
+	PREV	 1108
+	NEXT	 1110
+	END
+
+; FLECHETTE CANNON
+TOGGLE 1110
+	PICTURE		#56, #57, #58, #59
+	SELECTED	#60, #61, #62, #63
+	LOCATION    327 211
+	DIMENSIONS	12 11
+	HOTSPOTRECT	327 211 250 11
+	ABOVE	 1109
+	BELOW    1111
+	LEFT     1007
+	RIGHT	 1007
+	PREV	 1109
+	NEXT	 1111
+	END
+
+; PLASMA CANNON
+TOGGLE 1111
+	PICTURE		#56, #57, #58, #59
+	SELECTED	#60, #61, #62, #63
+	LOCATION    327 223
+	DIMENSIONS	12 11
+	HOTSPOTRECT	327 223 250 11
+	ABOVE	 1110
+	BELOW    1112
+	LEFT     1008
+	RIGHT	 1008
+	PREV	 1110
+	NEXT	 1112
+	END
+
+; TIMED MINE
+TOGGLE 1112
+	PICTURE		#56, #57, #58, #59
+	SELECTED	#60, #61, #62, #63
+	LOCATION    327 264
+	HOTSPOTRECT	327 264 250 11
+	ABOVE	 1111
+	BELOW    1113
+	PREV	 1111
+	NEXT	 1113
+	END
+
+; PROXIMITY MINE
+TOGGLE 1113
+	PICTURE		#56, #57, #58, #59
+	SELECTED	#60, #61, #62, #63
+	LOCATION    327 276
+	HOTSPOTRECT	327 276 250 11
+	ABOVE	 1112
+	BELOW    1114
+	PREV	 1112
+	NEXT	 1114
+	END
+
+; REMOTE MINE
+TOGGLE 1114
+	PICTURE		#56, #57, #58, #59
+	SELECTED	#60, #61, #62, #63
+	LOCATION    327 288
+	HOTSPOTRECT	327 288 250 11
+	ABOVE	 1113
+	BELOW	 1100
+	PREV	 1113
+	NEXT	 170
+	END
+
+
+
+;---------------------------------------------------
+; Chat Area
+;---------------------------------------------------
+; Chat Edit Box
+TEXTBOX 170
+	LOCATION    187 343
+	DIMENSIONS  299  23
+	HOTSPOTRECT	187 343 299  23
+	TEXT_AREA	189 343 250  23
+	TEXT_COLOR        195 195 195
+	HILIGHT_COLOR	  255 255 255
+	FOCUS_COLOR		  255 255 0
+	DISABLE_COLOR	  63  63  63
+	CURSOR_COLOR      0   255 0
+	BG_COLOR_NORMAL   0   0   0
+	BG_COLOR_HILIGHT  0   0   0
+	BG_COLOR_FOCUS    0   0   0
+	BG_COLOR_DISABLED 32  32  32
+	NEXT	 172
+	PREV	 143
+	END
+
+;Chat Listview Box
+LISTVIEW 171
+	LOCATION    187 388 
+	DIMENSIONS  426  76
+	HOTSPOTRECT 187 388 426  76
+	TEXT_COLOR        195 195 195
+	HILIGHT_COLOR	  255 255 255
+	FOCUS_COLOR		  255 255 0
+	DISABLE_COLOR	  63  63  63
+	CURSOR_COLOR      0   0   127
+	SELECT_COLOR      0   0   195
+	BG_COLOR_NORMAL   0   0   0
+	BG_COLOR_HILIGHT  0   0   0
+	BG_COLOR_FOCUS    0   0   0
+	SCROLLBAR 171
+		LOCATION	588 390 
+		DIMENSIONS   23  73
+		BORDER_SIZE   0
+		HOTSPOTRECT 588 390  23  73
+		PICTURE		#40, #41, #40, #40
+		SLIDE		#42, #42, #42, #42
+		LU_PICTURE	#43, #44, #45, #46
+		RD_PICTURE  #47, #48, #49, #50
+		ARROW_DIMENSIONS 23 20
+		SLIDE_DIMENSIONS 20 20
+		END
+	NEXT	 190
+	PREV	 173
+	END
+
+;Chat Send All Button
+TOGGLE 172
+	PICTURE  "shelldb\\netchat\\common\\all-n.pcx", 	; normal 
+			 "shelldb\\netchat\\common\\all-d.pcx", 	; highlighted 
+			 "shelldb\\netchat\\common\\all-p.pcx", 	; focused 
+			 "shelldb\\netchat\\common\\all-h.pcx" 		; disabled 
+	SELECTED "shelldb\\netchat\\common\\all-s.pcx",	
+			 "shelldb\\netchat\\common\\all-sd.pcx",
+			 "shelldb\\netchat\\common\\all-sp.pcx",
+			 "shelldb\\netchat\\common\\all-sh.pcx"
+	LOCATION     492 334
+	HOTSPOTRECT	 492 334  54  29
+	GROUP	 2
+	RIGHT    173
+	LEFT     173
+	NEXT	 173
+	PREV	 170
+	END
+
+;Chat Send Team Button
+TOGGLE 173
+	PICTURE  "shelldb\\netchat\\common\\team-n.pcx", 	; normal 
+			 "shelldb\\netchat\\common\\team-d.pcx", 	; highlighted 
+			 "shelldb\\netchat\\common\\team-p.pcx", 	; focused 
+			 "shelldb\\netchat\\common\\team-h.pcx" 	; disabled 
+	SELECTED "shelldb\\netchat\\common\\team-s.pcx",	
+			 "shelldb\\netchat\\common\\team-sd.pcx",
+			 "shelldb\\netchat\\common\\team-sp.pcx",
+			 "shelldb\\netchat\\common\\team-sh.pcx"
+	LOCATION     549 334
+	HOTSPOTRECT	 549 334  54  29
+	GROUP	 2
+	RIGHT    172
+	LEFT     172
+	NEXT	 171
+	PREV	 172
+	END
+
+
+
+;---------------------------------------------------
+;Button Bar
+;---------------------------------------------------
+; Roster
+; Players Button
+TOGGLE 190
+	PICTURE		#5, #6, #7, #8
+	SELECTED	#9, #10, #11, #12
+	FOCUS_PICTURE #13 20 61
+	LOCATION     20  61
+	HOTSPOTRECT	 20  26  130  45
+	GROUP	 1
+	RIGHT    190
+	LEFT     190
+	ABOVE    196
+	BELOW    194
+	NEXT	 140
+	PREV	 171
+	END
+
+; Armory
+; Battlesuit Setup Button
+TOGGLE 194
+	PICTURE		#5, #6, #7, #8
+	SELECTED	#9, #10, #11, #12
+	FOCUS_PICTURE #13 20 109
+	LOCATION     20  109 
+	HOTSPOTRECT	 20   74 130  45
+	GROUP	 1
+	RIGHT    194
+	LEFT     194
+	ABOVE    190
+	BELOW    191
+	NEXT	 220
+	PREV	 171
+	END
+
+; Teams
+; Team Button
+TOGGLE 191
+	PICTURE		#5, #6, #7, #8
+	SELECTED	#9, #10, #11, #12
+	FOCUS_PICTURE #13 20 157
+	LOCATION     20  157
+	HOTSPOTRECT	 20  122  130  45
+	GROUP	 1
+	RIGHT    191
+	LEFT     191
+	ABOVE    194
+	BELOW    192
+	NEXT	 160
+	PREV	 171
+	END
+
+; Battlefield
+; Mission Location Button
+TOGGLE 192
+	PICTURE		#5, #6, #7, #8
+	SELECTED	#9, #10, #11, #12
+	FOCUS_PICTURE #13 20 204
+	LOCATION     20  204 
+	HOTSPOTRECT	 20  169 130  45
+	GROUP	 1
+	RIGHT    192
+	LEFT     192
+	ABOVE    191
+	BELOW    193
+	NEXT	 150
+	PREV	 171
+	END
+
+; Setup
+; Mission Setup Button
+TOGGLE 193
+	PICTURE		#5, #6, #7, #8
+	SELECTED	#9, #10, #11, #12
+	FOCUS_PICTURE #13 20 251
+	LOCATION     20  251 
+	HOTSPOTRECT	 20  216 130  45
+	GROUP	 1
+	RIGHT    193
+	LEFT     193
+	ABOVE    192
+	BELOW    195
+	NEXT	 200
+	PREV	 171
+	END
+
+; Restrictions
+; Battlesuit Parameters Button
+TOGGLE 195
+	PICTURE		#5, #6, #7, #8
+	SELECTED	#9, #10, #11, #12
+	FOCUS_PICTURE #13 20 299
+	LOCATION     20  299 
+	HOTSPOTRECT	 20  264 130  45
+	GROUP	 1
+	RIGHT    195
+	LEFT     195
+	ABOVE    193
+	BELOW    196
+	NEXT	 1000
+	PREV	 171
+	END
+
+; Back Button
+BUTTON 196
+	PICTURE	 #0,
+			 #1,
+			 #2,
+			 #3
+	FOCUS_PICTURE #4 111 447
+	LOCATION     34  447
+	HOTSPOTRECT	 23  410 125  52
+	RIGHT    196
+	LEFT     196
+	ABOVE    195
+	BELOW    190
+	END
+
+

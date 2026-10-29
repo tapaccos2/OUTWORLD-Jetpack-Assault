@@ -1,0 +1,326 @@
+; MultiPlayer screen script
+
+BACKGROUND	"shelldb\\netmain\\netmain.pcx"
+
+IMAGE_FILE  "shelldb\\common\\button_n.pcx"					; 0
+IMAGE_FILE  "shelldb\\common\\button_d.pcx"					; 1
+IMAGE_FILE	"shelldb\\common\\button_p.pcx"					; 2
+IMAGE_FILE	"shelldb\\common\\button_h.pcx"					; 3
+IMAGE_FILE	"shelldb\\common\\button_f.pcx"					; 4
+
+IMAGE_FILE	"shelldb\\netchat\\common\\SBSlider-n.pcx"		; 5
+IMAGE_FILE  "shelldb\\netmain\\VSBUpArrow-n.pcx"			; 6
+IMAGE_FILE  "shelldb\\netmain\\VSBUpArrow-s.pcx"			; 7
+IMAGE_FILE  "shelldb\\netmain\\VSBUpArrow-h.pcx"			; 8
+IMAGE_FILE  "shelldb\\netmain\\VSBDnArrow-n.pcx"			; 9
+IMAGE_FILE  "shelldb\\netmain\\VSBDnArrow-s.pcx"			;10
+IMAGE_FILE  "shelldb\\netmain\\VSBDnArrow-h.pcx"			;11
+
+IMAGE_FILE	"shelldb\\netmain\\red-dim.pcx"					;12
+IMAGE_FILE  "shelldb\\netmain\\red-lit.pcx"					;13
+IMAGE_FILE  "shelldb\\netmain\\orange-dim.pcx"				;14
+IMAGE_FILE  "shelldb\\netmain\\orange-lit.pcx"				;15
+IMAGE_FILE  "shelldb\\netmain\\yellow-dim.pcx"				;16
+IMAGE_FILE  "shelldb\\netmain\\yellow-lit.pcx"				;17
+IMAGE_FILE  "shelldb\\netmain\\green-dim.pcx"				;18
+IMAGE_FILE  "shelldb\\netmain\\green-lit.pcx"				;19
+
+IMAGE_FILE	"shelldb\\netmain\\VSBbase.pcx"					;20
+
+IMAGE_FILE	"shelldb\\netmain\\scan00.pcx"					;21
+IMAGE_FILE	"shelldb\\netmain\\scan01.pcx"					;22
+IMAGE_FILE	"shelldb\\netmain\\scan02.pcx"					;23
+IMAGE_FILE	"shelldb\\netmain\\scan03.pcx"					;24
+IMAGE_FILE	"shelldb\\netmain\\scan04.pcx"					;25
+IMAGE_FILE	"shelldb\\netmain\\scan05.pcx"					;26
+IMAGE_FILE	"shelldb\\netmain\\scan06.pcx"					;27
+IMAGE_FILE	"shelldb\\netmain\\scan07.pcx"					;28
+IMAGE_FILE	"shelldb\\netmain\\scan08.pcx"					;29
+IMAGE_FILE	"shelldb\\netmain\\scan09.pcx"					;30
+IMAGE_FILE	"shelldb\\netmain\\scan10.pcx"					;31
+IMAGE_FILE	"shelldb\\netmain\\scan11.pcx"					;32
+IMAGE_FILE	"shelldb\\netmain\\scan12.pcx"					;33
+IMAGE_FILE	"shelldb\\netmain\\scan13.pcx"					;34
+
+CONTROLS 	mouse, keyboard
+
+
+; Test List Box	    
+LISTBOX 120
+	LOCATION     	   24 116
+	DIMENSIONS        332 188
+	HOTSPOTRECT        24 116 332 188
+	TEXT_COLOR        195 195 195		;White
+	HILIGHT_COLOR	  255 255 255		;Bright White
+	FOCUS_COLOR		  255 255 0			;Yellow
+	DISABLE_COLOR	  63  63  63		;Grey
+	CURSOR_COLOR      0   0   127		;Blue
+	SELECT_COLOR      0   0   195		;Blue
+	BG_COLOR_NORMAL   0   0   0
+	BG_COLOR_HILIGHT  0   0   0
+	BG_COLOR_FOCUS    0   0   0
+	BG_COLOR_DISABLED 0   0   0
+	SCROLLBAR 120
+		LOCATION	372 114
+		DIMENSIONS  24  158
+		BORDER_SIZE 0
+		HOTSPOTRECT 372 114 24 158
+		PICTURE     #20, #20, #20, #20
+		SLIDE       #5,	#5,	#5,	#5
+		LU_PICTURE  #6,	#6,	#7,	#8
+		RD_PICTURE  #9,	#9,	#10, #11
+		ARROW_DIMENSIONS 24 21
+		SLIDE_DIMENSIONS 20 20
+		SLIDER_TYPE 1
+		END
+	NEXT 121
+	PREV 182
+	END
+
+; Player Name Edit Box
+TEXTBOX 121
+	LOCATION           42 392
+	DIMENSIONS        337  30
+	HOTSPOTRECT        42 392 337  30
+	FOCUS_RECTANGLE    44 394 333  26
+	TEXT_COLOR        195 195 195
+	HILIGHT_COLOR	  255 255 255
+	FOCUS_COLOR		  255 255 0
+	DISABLE_COLOR	  63  63  63
+	CURSOR_COLOR      0   255 0
+	BG_COLOR_NORMAL   0   0   0
+	BG_COLOR_HILIGHT  0   0   0
+	BG_COLOR_FOCUS    0   0   0
+	BG_COLOR_DISABLED 25  25  25
+	NEXT  180
+	PREV  120
+	END
+
+
+ANIMATION 1000 "shelldb\\netmain\\eyeanim" 17
+	LOCATION 414  96
+	END
+
+RUNANIMATION 1001 1000 10
+	PLAYONCE
+	END
+
+ANIMATION 1002 "shelldb\\netmain\\rscan" 12
+	LOCATION 414  96
+	END
+
+RUNANIMATION 1003 1002 6
+	LOOP
+	END
+
+
+ANIMATION 1010 #21 14
+	LOCATION 433  20
+	END
+
+RUNANIMATION 1011 1010 6
+	LOOP
+	START 0
+	END
+
+
+ANIMATION 1020 #21 14
+	LOCATION 491  20
+	END
+
+RUNANIMATION 1021 1020 10
+	LOOP
+	START 5
+	END
+
+
+ANIMATION 1030 #21 14
+	LOCATION 549  20
+	END
+
+RUNANIMATION 1031 1030 14
+	LOOP
+	START 9
+	END
+
+
+ANIMATION 1040 "shelldb\\netmain\\rscan" 12
+	LOCATION 414  96
+	END
+
+RUNANIMATION 1041 1040 6
+	PLAYONCE
+	END
+
+
+TOGGLE 125
+	PICTURE  #12,
+			 #12,
+			 #12,
+			 #12 
+	SELECTED #13,
+	         #13,
+			 #13,
+			 #13
+	LOCATION    593  88
+	DIMENSIONS	 34  34
+	HOTSPOTRECT	593  88  34  34
+	END
+
+TOGGLE 126
+	PICTURE  #14,
+			 #14,
+			 #14,
+			 #14
+	SELECTED #15,
+	         #15,
+			 #15,
+			 #15
+	LOCATION    593 138
+	DIMENSIONS	 34  34
+	HOTSPOTRECT	593 138  34  34
+	END
+
+TOGGLE 127
+	PICTURE  #16,
+			 #16,
+			 #16,
+			 #16 
+	SELECTED #17,
+	         #17,
+			 #17,
+			 #17
+	LOCATION    593 188
+	DIMENSIONS	 34  34
+	HOTSPOTRECT	593 188  34  34
+	END
+
+TOGGLE 128
+	PICTURE  #18,
+			 #18,
+			 #18,
+			 #18 
+	SELECTED #19,
+	         #19,
+			 #19,
+			 #19
+	LOCATION    593 239
+	DIMENSIONS	 34  34
+	HOTSPOTRECT	593 239  34  34
+	END
+
+; Join Button
+BUTTON 180
+	PICTURE	 #0,
+			 #1,
+			 #2,
+			 #3
+	FOCUS_PICTURE #4 526 337
+	LOCATION    449 337
+	HOTSPOTRECT	438 301 126  52
+	ABOVE    182
+	BELOW    181
+	NEXT	 181
+	PREV     121
+	END
+	
+
+; New Game Button
+BUTTON 181
+	PICTURE	 #0,
+			 #1,
+			 #2,
+			 #3
+	FOCUS_PICTURE #4 526 399
+	LOCATION    449 399
+	HOTSPOTRECT	438 362 126  52
+	ABOVE    180
+	BELOW    182
+	NEXT     182
+	PREV     180
+	END
+
+
+; Back Button
+BUTTON 182
+	PICTURE	 #0,
+			 #1,
+			 #2,
+			 #3
+	FOCUS_PICTURE #4 526 458
+	LOCATION    449 458
+	HOTSPOTRECT	438 421 126  52
+	ABOVE    181
+	BELOW    180
+	NEXT     120
+	PREV     181
+	END
+
+
+
+
+;BUTTON 183
+;	PICTURE	 #0,
+;			 #1,
+;			 #2,
+;			 #3
+;	FOCUS_PICTURE #4 77 0
+;	LOCATION    0 0
+;	HOTSPOTRECT	0 0 126  52
+;	END
+
+
+;LABEL 184
+;	PICTURE	 #0,
+;			 #1,
+;			 #2,
+;			 #3
+;	LOCATION    150 0
+;	HOTSPOTRECT	150 0 126  52
+;	END
+
+
+;TOGGLE 186
+;	PICTURE  "shelldb\\netchat\\setup\\opt-n.pcx",
+;			 "shelldb\\netchat\\setup\\opt-d.pcx",
+;			 "shelldb\\netchat\\setup\\opt-p.pcx",
+;			 "shelldb\\netchat\\setup\\opt-h.pcx"
+;	SELECTED "shelldb\\netchat\\setup\\opt-s.pcx",	
+;			 "shelldb\\netchat\\setup\\opt-sd.pcx",
+;			 "shelldb\\netchat\\setup\\opt-sp.pcx",
+;			 "shelldb\\netchat\\setup\\opt-sh.pcx"
+;	LOCATION    400  0
+;	DIMENSIONS	 27  16
+;	HOTSPOTRECT	400  0  27  16
+;	GROUP	2
+;	END
+
+;TOGGLE 187
+;	PICTURE  "shelldb\\netchat\\setup\\opt-n.pcx",
+;			 "shelldb\\netchat\\setup\\opt-d.pcx",
+;			 "shelldb\\netchat\\setup\\opt-p.pcx",
+;			 "shelldb\\netchat\\setup\\opt-h.pcx"
+;	SELECTED "shelldb\\netchat\\setup\\opt-s.pcx",	
+;			 "shelldb\\netchat\\setup\\opt-sd.pcx",
+;			 "shelldb\\netchat\\setup\\opt-sp.pcx",
+;			 "shelldb\\netchat\\setup\\opt-sh.pcx"
+;	LOCATION    450  0
+;	DIMENSIONS	 27  16
+;	HOTSPOTRECT	450  0  27  16
+;	GROUP	2
+;	END
+
+
+;TOGGLE 188
+;	PICTURE  "shelldb\\netchat\\setup\\opt-n.pcx",
+;			 "shelldb\\netchat\\setup\\opt-d.pcx",
+;			 "shelldb\\netchat\\setup\\opt-p.pcx",
+;			 "shelldb\\netchat\\setup\\opt-h.pcx"
+;	SELECTED "shelldb\\netchat\\setup\\opt-s.pcx",	
+;			 "shelldb\\netchat\\setup\\opt-sd.pcx",
+;			 "shelldb\\netchat\\setup\\opt-sp.pcx",
+;			 "shelldb\\netchat\\setup\\opt-sh.pcx"
+;	LOCATION    500  0
+;	DIMENSIONS	 27  16
+;	HOTSPOTRECT	500  0  27  16
+;	END

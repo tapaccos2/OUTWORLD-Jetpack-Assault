@@ -1,0 +1,9 @@
+CG-55 Cluster Grenade
+Classification: Grenade
+This weapon is designed to explode in mid-air, releasing several small explosive "bomblets" that fall over a wide area. This weapon is frequently employed over small groups of enemy forces, especially those hiding behind cover. Due to the spread of the bomblets, it is usually not very effective against individual targets, although a direct hit at close range can be deadly (if somewhat of an overkill). Supplies of this weapon are as yet somewhat limited.
+
+Blast Radius: Special
+Damage: Special
+Armor Pierce: Medium
+Rate of Fire: Low
+Effective Range: 200 feet

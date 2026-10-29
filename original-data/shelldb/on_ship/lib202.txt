@@ -1,0 +1,7 @@
+IA-4 Infantry Suit
+Classification: Infantry Battle Suit
+The IA-4 Infantry Suit is the standard battle suit for the Colonial Marine Corps. It is capable of protecting the wearer from a limited sustained burst from the M-81 Pulse Rifle and has significantly improved the survivability of the soldier in the field in all theatres.
+
+The IA-4 includes an integral micro-fusion power generator, which powers the standard M-81 Pulse Rifle sidearm, as well as the micro-motorized muscle augmentation and impact-absorption systems. The impact absorption systems are particularly robust, allowing a soldier to fall up to thirty feet on high-gravity worlds with a minimal likelihood of injury. The Helmet Mounted Display provides "Heads-up" instrumentation concerning armor integrity, weapon status, and threat tracking.
+
+The IA-4 includes the standard M-81 and attachment power socket, as well as integral M-17 mine dispenser unit. 

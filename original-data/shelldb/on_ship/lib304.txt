@@ -1,0 +1,9 @@
+M-72 Flechette Cannon
+Classification: Rifle Attachment
+Firing literally hundreds of tiny, needle-like armor-piercing shards in a deadly cone, this weapon is lethal at close ranges. It should not be used in circumstances requiring precise aim. However, against clusters of enemy forces, it can be devastating since the shard burst is capable of hitting multiple opponents in a single blast.
+
+Blast Radius: None
+Damage: Medium
+Armor Pierce: Medium
+Rate of Fire: Medium
+Effective Range: 180 feet

@@ -1,0 +1,9 @@
+FG-20 Fragmentation Grenade
+Classification: Grenade
+This is the baseline grenade weapon. It is fired in a parabolic arc and so must be aimed above the intended target. The weapon is very useful in attacking targets behind cover, as the grenade can be lobbed over many obstacles. 
+
+Blast Radius: 5 feet
+Damage: High
+Armor Pierce: Medium
+Rate of Fire: Low
+Effective Range: 425 Feet
