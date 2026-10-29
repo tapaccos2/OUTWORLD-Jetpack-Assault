@@ -22,7 +22,7 @@ The next eight bytes vary as four little-endian 16-bit values. Samples:
 
 | File | Size (bytes) | First four 16-bit values after prefix |
 |---|---:|---|
-| `Q.gry` | 87,615 | 0x0006, 0x001c, 0x0004, 0x0004 |
+| `Q.gry` | 87,615 | 0x001c, 0x0004, 0x0004, 0x0004 |
 | `a2.gry` | 49,142 | 0x000b, 0x0002, 0x0002, 0x0002 |
 | `d4.gry` | 411,857 | 0x0018, 0x000c, 0x000e, 0x000d |
 | `j1.gry` | 4,082 | 0x0019, 0x0001, 0x0001, 0x0001 |
