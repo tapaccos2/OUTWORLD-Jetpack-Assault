@@ -120,4 +120,4 @@ const output = {
   },
   files: records.map(({ buffer, firstSignature, ...record }) => record),
 };
-process.stdout.write(JSON.stringify(output, null, 2) + '\\n');
+process.stdout.write(JSON.stringify(output, null, 2) + '\n');
