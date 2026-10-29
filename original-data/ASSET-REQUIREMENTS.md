@@ -14,27 +14,27 @@ The repository now contains 828 files under `original-data/`, including:
 
 The new assets materially improve coverage: mission-level structure resources and their companion graphics/resource tables are now present for multiple campaigns, along with packed game resources and the shell database assets.
 
-## Terrain files needed for the next step
+## Terrain-related executable expectations and current status
 
 Static inspection of `outwars.exe` identifies two terrain-specific files that are absent from the current `original-data/` inventory:
 
 - `TERRAIN/RED.GRP`: the loader expects a `CPMG` signature, version value `0x43`, a count no greater than 200, and reads a 6,400-byte payload after a 20-byte header.
 - `TERRAIN/RAG01.RMP`: the loader expects a `CPMR` signature, version value `0x43`, a count no greater than 1,000, and reads a 40,000-byte payload after a 20-byte header.
 
-These are confirmed executable parser expectations; the payload semantics are not yet decoded. The files are required for the next terrain-format investigation. The map-named `.DPC` files have a validated top-level record table, but no terrain mesh has been reconstructed yet.
+These are confirmed parser expectations in the executable, but the named files are absent from the current inventory and should not be repeatedly searched for in the public depot. Their relationship to the shipped map resources is unconfirmed and they may be a legacy/development path. Separately, the shipped map-named `.GPC/.RPC` pairs are now decoded far enough to reconstruct candidate terrain surfaces: dimensions, orientation, normals, corner heights, and the XY corner anchor cross-validate across all 34 pairs. A candidate OBJ exporter and interactive preview exist, but the mesh has not yet been visually validated against an original in-game map. See [terrain field analysis](TERRAIN-FIELD-HYPOTHESES.md) and [interactive preview](../terrain-preview.html).
 
 ## Still to verify
 
 - Whether the uploaded `structs/` collection contains every structure/unit resource referenced by the mission files. The folder has many campaign-specific sets, but the current inventory alone does not prove completeness.
 - Whether `units.ff` and the other `.FF` archives contain additional unit, model, texture, sound, or other resources needed by the game.
-- Which asset format contains the original terrain geometry. The `.GRY` files have now been identified as sound-effect audio containers.
+- How the decoded GPC/RPC surfaces map to original mission placement, textures, and absolute game scale. The `.GRY` files are sound-effect audio containers, not terrain.
 - Whether the `.MIS` binary structures can be parsed into placements, parameters, triggers, and mission logic. The readable names alone do not recover those values.
 
 ## Next analysis steps
 
 1. Compare every resource reference in both `misn/` and `netmisn/` against the filenames now present in the repository.
 2. Inspect headers and internal references in representative `.DPC`, `.TPC`, `.GPC`, and `.RPC` files, plus `units.ff`.
-3. Continue the `.MIS` format investigation and identify the actual terrain asset format, validating findings across multiple files before using them to reconstruct a level.
+3. Continue the `.MIS` format investigation to recover mission-level placement and spawn/object data, then validate the candidate terrain mesh against original map references.
 
 This inventory describes what is currently present. It does not claim that the assets have been fully decoded or that a playable reconstruction is complete.
 
