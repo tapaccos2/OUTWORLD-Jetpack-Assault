@@ -1,0 +1,23 @@
+1: Destroy Flare Targets:
+
+COMPLETE
+
+
+2: Destroy Pop-up Targets:
+
+COMPLETE
+
+
+3: Destroy Tracked Target:
+
+COMPLETE
+
+
+4: Destroy Flying Drone:
+
+COMPLETE
+
+
+5: Destroy Towers:
+
+COMPLETE

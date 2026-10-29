@@ -1,0 +1,7 @@
+MISSION OVERVIEW
+
+LOCATION: Oasis Command Center / Auxillary Training Area
+
+This is an individual tactical combat exercise.  You will engage in simulated combat against three other soldiers in a four-way free-for-all.  Each soldier is on his or her own against the others.
+
+The computer will tally the simulated "damage" and your suit will shut down if you reach a critical damage level.  The object is simple:  be the last person standing.

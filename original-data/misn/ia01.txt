@@ -1,0 +1,9 @@
+MISSION OVERVIEW
+
+Single Mission - Exercise 1
+
+This exercise will use simulated, holographic-projection weaponry to simulate an abstract combat situation. It will test your ability to command your team, complete complex objectives, and take advantage of stealth and terrain. 
+
+You must destroy the two target silos and the mobile Surface-To-Air Missile (SAM) launcher. To destroy the silos, you will need to place timed charge mines on or near them. Your mine dispenser will be empty when the mission begins, so you will have to acquire reloads at Nav Charlie on the southeast platform series.
+
+Be very careful attacking the SAM launcher. Try to stay behind cover or below its position to avoid getting hit by its missiles. And remember - you do not have to engage the enemy troops.
