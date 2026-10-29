@@ -91,3 +91,28 @@ This makes the first occurrence look more like a shared structured preamble/sign
 
 
 The `fact` tag observation narrows the next test: scan for other printable four-byte tags followed by plausible lengths and check whether their boundaries account for the remaining bytes. The `fact` tag's apparent length is grounded in its actual byte sequence; the overall chunk scheme remains unproven.
+
+### Candidate four-byte tags
+
+A second scan searched for four alphabetic ASCII bytes followed by a little-endian 32-bit value that would fit as a payload length. It found only the candidate tag `fact` in the accessible terrain files:
+
+| File | `fact` candidates |
+|---|---:|
+| `Q.gry` | 4 |
+| `a2.gry` | 2 |
+| `d4.gry` | 13 |
+| `j1.gry` | 1 |
+| `o2.gry` | 4 |
+| `o5.gry` | 0 |
+| `o7.gry` | 4 |
+| `r1.gry` | 1 |
+| `r2.gry` | 3 |
+| `r6.gry` | 2 |
+
+Every candidate has a length value of 4 and a four-byte payload that fits inside its file. The repeated tag and repeated length make a deliberate field/chunk interpretation plausible, but the scan only filters for candidate shapes; it does not prove the fields are chunks or explain why `o5.gry` differs. The scanner is available at `tools/scan-gry-tags.mjs`:
+
+```sh
+node tools/scan-gry-tags.mjs original-data/gry/*.gry
+```
+
+At this point the useful lead is not simply the `00 A0 B9 B7` sequence: it is the combination of a shared terrain preamble, repeated `fact`/length-4 candidates, and different patterns in `o5.gry`. The next validation should determine whether these candidate offsets form a consistent record sequence and whether the four-byte payload values correlate with the terrain header values or file lengths.
