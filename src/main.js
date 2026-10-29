@@ -558,7 +558,24 @@ if(assetLoader){
    importedSoldier.userData.thirdPersonWeapon=rifle;
    console.info('OUTWORLD: imported third-person M4A1 rifle loaded');
   },undefined,e=>console.error('OUTWORLD third-person rifle asset failed to load.',e));
-  player.add(importedSoldier);
+  // Add an original powered-marine jetpack silhouette to the imported soldier.
+  // The base character remains an imported GLB; these fittings are equipment, not a replacement body.
+  const jetpack=new THREE.Group();
+  const packShell=new THREE.Mesh(new THREE.BoxGeometry(.43,.56,.22),new THREE.MeshStandardMaterial({color:0x39443f,metalness:.62,roughness:.48}));
+  packShell.position.set(0,1.39,-.255);packShell.castShadow=true;jetpack.add(packShell);
+  const packPlate=new THREE.Mesh(new THREE.BoxGeometry(.34,.13,.055),new THREE.MeshStandardMaterial({color:0x70796d,metalness:.58,roughness:.42}));
+  packPlate.position.set(0,1.68,-.39);jetpack.add(packPlate);
+  for(const side of [-1,1]){
+   const bottle=new THREE.Mesh(new THREE.CylinderGeometry(.085,.095,.43,10),new THREE.MeshStandardMaterial({color:0x68736a,metalness:.72,roughness:.34}));
+   bottle.position.set(side*.255,1.39,-.29);bottle.castShadow=true;jetpack.add(bottle);
+   const nozzle=new THREE.Mesh(new THREE.CylinderGeometry(.09,.12,.18,10),new THREE.MeshStandardMaterial({color:0x202725,metalness:.78,roughness:.3}));
+   nozzle.rotation.x=Math.PI/2;nozzle.position.set(side*.16,1.13,-.38);jetpack.add(nozzle);
+   const nozzleCore=new THREE.Mesh(new THREE.CircleGeometry(.055,12),new THREE.MeshBasicMaterial({color:0xffb45d}));
+   nozzleCore.position.set(side*.16,1.13,-.478);jetpack.add(nozzleCore);
+   const shoulderPlate=new THREE.Mesh(new THREE.BoxGeometry(.29,.16,.32),new THREE.MeshStandardMaterial({color:0x59645b,metalness:.5,roughness:.52}));
+   shoulderPlate.position.set(side*.36,1.76,.015);shoulderPlate.rotation.z=side*.08;jetpack.add(shoulderPlate);
+  }
+  importedSoldier.add(jetpack);
   // Re-align the actual asset's feet to the player ground plane after attaching it to the player.
   importedSoldier.updateMatrixWorld(true);
   const footBounds=new THREE.Box3().setFromObject(importedSoldier);
@@ -624,9 +641,9 @@ const hydranPalettes=[0x78934a,0x9b5b3c,0x526b45,0x77705b,0x465b59];
 // Three escalating assault waves advance down the street. Enemies spawn in the open
 // carriageway, not inside building footprints, and attack immediately when each wave begins.
 const enemySpawns=[
- {x:-2.6,z:-24,wave:1},{x:2.6,z:-27,wave:1},{x:-1.7,z:-31,wave:1},{x:1.7,z:-34,wave:1},{x:0,z:-37,wave:1},
- {x:-2.7,z:-39,wave:2},{x:2.7,z:-40,wave:2},{x:-1.5,z:-43,wave:2},{x:1.5,z:-45,wave:2},{x:-2.2,z:-47,wave:2},{x:2.2,z:-48,wave:2},
- {x:-2.7,z:-46,wave:3},{x:2.7,z:-47,wave:3},{x:-1.1,z:-49,wave:3},{x:1.1,z:-50,wave:3},{x:-2.1,z:-52,wave:3},{x:2.1,z:-52,wave:3},{x:0,z:-54,wave:3}
+ {x:-8,z:-18,wave:1},{x:7,z:-21,wave:1},{x:-3,z:-27,wave:1},{x:4,z:-31,wave:1},{x:0,z:-34,wave:1},
+ {x:-12,z:-30,wave:2},{x:11,z:-33,wave:2},{x:-6,z:-38,wave:2},{x:8,z:-40,wave:2},{x:-2,z:-44,wave:2},{x:3,z:-46,wave:2},
+ {x:-13,z:-42,wave:3},{x:13,z:-44,wave:3},{x:-8,z:-48,wave:3},{x:8,z:-51,wave:3},{x:-3,z:-54,wave:3},{x:3,z:-55,wave:3},{x:0,z:-58,wave:3}
 ];
 let currentWave=0,waveIntermission=0,waveTransitionPending=false,allWavesComplete=false;
 function activateWave(wave){
