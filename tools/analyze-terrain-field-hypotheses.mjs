@@ -216,7 +216,7 @@ function inspectPair(gpcPath, rpcPath) {
       duplicatePositionsWithDifferentCornerSignatures: duplicatePositionGroupsDifferentCorners,
     },
     examples,
-    limitation: 'Field relationships and normal formula are cross-validated; edge continuity strongly favours the XY pair as the local (0,0) corner. Original triangle diagonal, units/scale, and visual match to an in-game map still need validation.',
+    limitation: 'Field relationships and normal formula are cross-validated; edge continuity strongly favours the XY pair as the local (0,0) corner. The original renderer's triangle diagonal, absolute world scale, textures, and visual match to an in-game map still need validation.',
   };
 }
 
