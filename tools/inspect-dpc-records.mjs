@@ -62,16 +62,44 @@ for (const file of files) {
     const end = nextPointer === null ? b.length : nextPointer - relocationBase;
     const validBounds = start >= 0 && start < b.length && end >= start && end <= b.length;
     if (!validBounds || start < previousOffset) failures++;
+    const kindByte = validBounds ? b[start] : null;
+    const pointerCount = validBounds && kindByte === 1 ? b[start + 20] : 0;
+    const references = [];
+    if (validBounds && kindByte === 1) {
+      for (let j = 0; j < pointerCount; j++) {
+        const field = start + 24 + j * 4;
+        if (field + 4 > b.length) {
+          references.push({ index: j + 1, error: 'pointer field exceeds file bounds' });
+          failures++;
+          break;
+        }
+        const refPointer = u32le(b, field);
+        const target = refPointer - relocationBase;
+        const targetValid = target >= 0 && target + 4 <= b.length;
+        references.push({
+          index: j + 1,
+          fieldOffset: field,
+          pointer: `0x${refPointer.toString(16)}`,
+          targetOffset: target,
+          targetValid,
+          targetKindByte: targetValid ? b[target] : null,
+          targetFlagsByte: targetValid ? b[target + 1] : null,
+          targetClassId: targetValid ? u16le(b, target + 2) : null,
+        });
+        if (!targetValid) failures++;
+      }
+    }
     const rec = validBounds ? {
       index: i + 1,
       pointer: `0x${pointer.toString(16)}`,
       start,
       end,
       size: end - start,
-      kindByte: b[start],
+      kindByte,
       flagsByte: b[start + 1],
       classId: u16le(b, start + 2),
-      pointerCountByteAt20: b[start + 20],
+      pointerCountByteAt20: pointerCount,
+      references,
       first32Hex: hex(b, start, Math.min(start + 32, b.length)),
       boundsValid: validBounds,
     } : {
