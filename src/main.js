@@ -658,15 +658,19 @@ if(assetLoader){
  assetLoader.load(soldierAssetURL,gltf=>{
   importedSoldier=gltf.scene;
   normalizeGLB(importedSoldier,2.35);
-  importedSoldier.rotation.y=Math.PI;
+  importedSoldier.rotation.y=0; // inherit player yaw; the parent already applies the forward-facing correction
   importedSoldier.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
   player.add(importedSoldier);
   // The original blockout is deliberately kept invisible; only the imported character is rendered.
   player.children.forEach(o=>{if(o!==importedSoldier)o.visible=false});
   if(gltf.animations&&gltf.animations.length){
    const mixer=new THREE.AnimationMixer(importedSoldier);externalMixers.push(mixer);
-   const idle=gltf.animations.find(a=>/idle|stand/i.test(a.name))||gltf.animations[0];
-   mixer.clipAction(idle).play();
+   const idleClip=gltf.animations.find(a=>/idle|stand|breath/i.test(a.name))||gltf.animations[0];
+   const moveClip=gltf.animations.find(a=>/walk|run|jog|move|locomotion/i.test(a.name)&&!/idle/i.test(a.name))||null;
+   const idleAction=mixer.clipAction(idleClip);idleAction.play();
+   const moveAction=moveClip?mixer.clipAction(moveClip):null;
+   if(moveAction){moveAction.enabled=true;moveAction.setEffectiveWeight(0);}
+   importedSoldier.userData.locomotion={idleAction,moveAction,active:'idle'};
   }
   console.info('OUTWORLD: imported CC BY 4.0 tactical soldier loaded');
  },undefined,e=>console.error('OUTWORLD soldier asset failed to load; procedural player remains hidden.',e));
@@ -812,6 +816,21 @@ function update(dt){
  // Prevent the marine's own helmet/visor and armour from clipping across the first-person view.
  player.visible=thirdPerson;
  const moving=Math.abs(fwd)+Math.abs(side)>.1;
+ // Drive the imported character's authored locomotion clips; do not fake walking by bobbing the blockout.
+ if(importedSoldier?.userData.locomotion){
+  const rig=importedSoldier.userData.locomotion;
+  const wantsMove=moving&&onGround&&!!rig.moveAction;
+  const next=wantsMove?'move':'idle';
+  if(next!==rig.active){
+   const from=rig.active==='move'?rig.moveAction:rig.idleAction;
+   const to=next==='move'?rig.moveAction:rig.idleAction;
+   if(to){to.reset();to.setEffectiveTimeScale(next==='move'?1:1);to.setEffectiveWeight(1);to.play();if(from)to.crossFadeFrom(from,.18,true);}
+   if(from&&!to)from.fadeOut(.18);
+   rig.active=next;
+  }
+  if(rig.moveAction)rig.moveAction.setEffectiveWeight(wantsMove?1:0);
+  rig.idleAction.setEffectiveWeight(wantsMove?0:1);
+ }
  fireRecoil=Math.max(0,fireRecoil-dt*5.5);
  const gait=performance.now()*.012;
  player.children[0].position.y=1.42+(moving?Math.abs(Math.sin(gait))*.045:Math.sin(performance.now()*.002)*.012);
