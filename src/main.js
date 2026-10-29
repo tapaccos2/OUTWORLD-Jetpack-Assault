@@ -606,7 +606,7 @@ if(assetLoader){
    if(o.isMesh){
     o.castShadow=true;o.receiveShadow=true;
     // Strip detached headset/earpiece props from this character asset; these were rendering above the helmet.
-    if(/headphones?|headset|earpiece|earphones?|head.?mounted.?display|comms.?headband/i.test(o.name)){
+    if(/headphones?|head.?set|earpiece|earphones?|earmuffs?|ear.?cups?|head.?mounted.?display|comms?|microphones?|\bmic\b|audio.?device|helmet.?speaker|peltor|ear.?protection/i.test(o.name)){
      o.visible=false;
      console.info('OUTWORLD: hid detached head accessory mesh',o.name);
     }
@@ -648,11 +648,11 @@ if(assetLoader){
    const rifleLength=Math.max(rifleSize.x,rifleSize.y,rifleSize.z)||1;
    rifle.scale.setScalar(.92/rifleLength);
    rifle.position.set(-rifleCenter.x*rifle.scale.x,-rifleCenter.y*rifle.scale.y,-rifleCenter.z*rifle.scale.z);
-   rifle.rotation.set(0,0,0);
+   rifle.rotation.set(0,Math.PI,0);
    rifle.updateMatrixWorld(true);
    rifle.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;o.frustumCulled=false;if(o.material){o.material.depthWrite=true;o.material.needsUpdate=true}}});
    // Place the imported rifle at the marine's right shoulder/hand line, aimed forward.
-   rifle.position.add(new THREE.Vector3(.22,1.28,-.30));
+   rifle.position.add(new THREE.Vector3(.18,1.34,-.24));
    importedSoldier.add(rifle);
    importedSoldier.userData.thirdPersonWeapon=rifle;
    console.info('OUTWORLD: imported third-person M4A1 rifle loaded');
@@ -693,7 +693,7 @@ if(assetLoader){
   // Attach the muzzle flash to the forward end of the real imported weapon asset.
   // Use the GLB's original local-space bounds; world-space bounds here would misplace the anchor.
   const muzzleAnchor=new THREE.Group();
-  muzzleAnchor.position.set(fpCenter.x,fpBounds.min.y+fpSize.y*.43,fpBounds.min.z-.025);
+  muzzleAnchor.position.set(fpCenter.x,fpBounds.min.y+fpSize.y*.43,fpBounds.max.z+.025);
   importedFP.add(muzzleAnchor);
   fpFlash.position.set(0,0,0);
   muzzleAnchor.add(fpFlash);
@@ -804,7 +804,7 @@ function shoot(){if(dead||won||!started||shotCooldown>0)return;shotCooldown=.075
   if(along>=0&&along<bestAlong&&along<65){const t=THREE.MathUtils.clamp((axisTo+along*rayAxis)/Math.max(axisLen,1e-6),0,1),rayPoint=origin.clone().addScaledVector(dir,along),bodyPoint=foot.clone().addScaledVector(axis,t),radius=(e.userData.insect?.56:.48)*Math.max(e.scale.x,e.scale.z);if(rayPoint.distanceTo(bodyPoint)<radius){bestAlong=along;target=e;targetPoint=bodyPoint;targetDamage=t<.22?40:(t>.82?70:50)}}
  }
  if(target){target.userData.hp-=targetDamage;target.userData.hit=.2;document.querySelector('.reticle').classList.add('confirmed');hitConfirmTimer=.22;for(let i=0;i<10;i++)spawnSpark(targetPoint.clone().add(new THREE.Vector3((Math.random()-.5)*.42,(Math.random()-.5)*.48,(Math.random()-.5)*.35)),0xffad63);if(target.userData.hp<=0){target.visible=false;target.userData.hp=0;for(let i=0;i<24;i++)spawnSpark(target.position.clone().add(new THREE.Vector3((Math.random()-.5)*.9,1+Math.random()*1.5,(Math.random()-.5)*.9)),i%3===0?0x8caca4:0xff8d4d)}}
- scene.updateMatrixWorld(true);const muzzleWorld=weaponRig.userData.muzzleAnchor?weaponRig.userData.muzzleAnchor.getWorldPosition(new THREE.Vector3()):origin.clone().add(dir.clone().multiplyScalar(.65));const start=thirdPerson?player.localToWorld(new THREE.Vector3(.22,1.28,-.30)):muzzleWorld;const end=target?targetPoint.clone():origin.clone().add(dir.clone().multiplyScalar(42));worldMuzzleFlash.position.copy(start);worldMuzzleFlash.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,-1),dir);worldMuzzleFlash.visible=true;const bolt=new THREE.Mesh(new THREE.CylinderGeometry(.025,.038,2.4,7),new THREE.MeshBasicMaterial({color:target?0xffc46b:0x9df7ff,transparent:true,opacity:1,depthWrite:false,depthTest:false,toneMapped:false}));bolt.frustumCulled=false;bolt.renderOrder=1001;scene.add(bolt);bullets.push({obj:bolt,life:.18,duration:.18,start,end,tracer:true,beam:true});fpFlash.visible=false;if(player.userData.muzzle)player.userData.muzzle.visible=true;if(player.userData.muzzleCore)player.userData.muzzleCore.visible=true;muzzleLife=.09}
+ scene.updateMatrixWorld(true);const muzzleWorld=weaponRig.userData.muzzleAnchor?weaponRig.userData.muzzleAnchor.getWorldPosition(new THREE.Vector3()):origin.clone().add(dir.clone().multiplyScalar(.65));const start=thirdPerson&&importedSoldier?.userData.thirdPersonWeapon?importedSoldier.userData.thirdPersonWeapon.localToWorld(new THREE.Vector3(0,0,.46)):thirdPerson?player.localToWorld(new THREE.Vector3(.18,1.34,-.24)):muzzleWorld;const end=target?targetPoint.clone():origin.clone().add(dir.clone().multiplyScalar(42));worldMuzzleFlash.position.copy(start);worldMuzzleFlash.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,-1),dir);worldMuzzleFlash.visible=true;const bolt=new THREE.Mesh(new THREE.CylinderGeometry(.025,.038,2.4,7),new THREE.MeshBasicMaterial({color:target?0xffc46b:0x9df7ff,transparent:true,opacity:1,depthWrite:false,depthTest:false,toneMapped:false}));bolt.frustumCulled=false;bolt.renderOrder=1001;scene.add(bolt);bullets.push({obj:bolt,life:.18,duration:.18,start,end,tracer:true,beam:true});fpFlash.visible=false;if(player.userData.muzzle)player.userData.muzzle.visible=true;if(player.userData.muzzleCore)player.userData.muzzleCore.visible=true;muzzleLife=.09}
 function spawnSpark(pos,color){const mesh=new THREE.Mesh(new THREE.SphereGeometry(.028,5,4),new THREE.MeshBasicMaterial({color,toneMapped:false}));mesh.position.copy(pos);scene.add(mesh);sparks.push({obj:mesh,life:.35,vel:new THREE.Vector3((Math.random()-.5)*5,Math.random()*4,(Math.random()-.5)*5)})}
 function enemyShoot(enemy,distance){
  const muzzle=enemy.position.clone().add(new THREE.Vector3(0,1.48,.32).applyAxisAngle(new THREE.Vector3(0,1,0),enemy.rotation.y));
