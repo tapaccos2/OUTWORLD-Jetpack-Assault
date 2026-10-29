@@ -122,3 +122,19 @@ At this point the useful lead is not simply the `00 A0 B9 B7` sequence: it is th
 A cross-offset check produced a stronger relationship: **every one of the 16 `00 A0 B9 B7` occurrences in nine terrain files is exactly 59 bytes before a `fact` tag whose following length value is 4**. The pairings are present in `Q.gry` (2), `a2.gry` (1), `d4.gry` (6), `j1.gry` (1), `o2.gry` (2), `o7.gry` (1), `r1.gry` (1), `r2.gry` (1), and `r6.gry` (1). `o5.gry` has one marker occurrence but no candidate `fact` tag and its 64-byte signature differs from the other files.
 
 This is now a repeatable structural relationship, not just a shared byte sequence. It suggests the marker begins a 59-byte structure that ends at a `fact`/length-4 field. The exact meanings of those 59 bytes and the four-byte payload are still unknown, so the parser does not assign semantics yet. The tag scanner now reports marker offsets and matching marker-to-tag pairs explicitly.
+
+### Provisional byte layout around the paired marker/tag
+
+For the nine files with the common signature, the repeated region can be described by offsets relative to the `00 A0 B9 B7` marker:
+
+| Relative offset | Observed bytes / value | Status |
+|---:|---|---|
+| `+0..+3` | `00 A0 B9 B7` | Repeated marker; meaning unknown |
+| `+4..+7` | `00 00 00 02` | Constant in the nine-file variant; changes to `00 00 00 01` in `o5.gry` |
+| `+8..+11` | `00 02 00 01` | Constant in the nine-file variant; differs in `o5.gry` |
+| `+12..+58` | Shared binary values | Field boundaries and meanings unknown |
+| `+59..+62` | ASCII `fact` | Repeated tag at the same relative position |
+| `+63..+66` | `04 00 00 00` | Little-endian integer 4, consistent with a four-byte payload length |
+| `+67..+70` | Four variable bytes | Payload meaning unknown |
+
+This is an offset map, not a semantic schema. In particular, the four-byte payload is not yet established as a size, checksum, coordinate, or float. The next stage must explain how the post-payload bytes are organized and validate any candidate interpretation against multiple terrain files.
