@@ -145,6 +145,30 @@ jobs:
             byTypeClass: graphResult.byTypeClass
           }));
           if (graphResult.errors.length || graphResult.truncated) throw new Error('DPC graph inspector reported invalid pointers or hit a traversal limit');
+
+          const comparison = spawnSync('node', [
+            'tools/inspect-dpc-graph-compare.mjs',
+            'original-data/structs/rag01.dpc',
+            'original-data/structs/rag02.dpc',
+            'original-data/structs/rag04.dpc',
+            'original-data/structs/anub01.dpc',
+            'original-data/structs/dead01.dpc',
+            'original-data/structs/oasis01.dpc'
+          ], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+          if (comparison.status !== 0) throw new Error('DPC graph comparison failed: ' + (comparison.stderr || comparison.stdout).slice(0, 4000));
+          const comparisonResult = JSON.parse(comparison.stdout);
+          console.log('DPC CAMPAIGN COMPARISON:', JSON.stringify(comparisonResult.files.map(item => ({
+            file: item.file,
+            topLevelCount: item.topLevelCount,
+            walkedNodeCount: item.walkedNodeCount,
+            edgeCount: item.edgeCount,
+            errorCount: item.errorCount,
+            truncated: item.truncated,
+            typeClasses: item.byTypeClass
+          }))));
+          if (comparisonResult.files.some(item => item.error || item.errorCount || item.truncated)) {
+            throw new Error('DPC campaign comparison found a parser failure or traversal limit');
+          }
           })().catch(e => { console.error(e); process.exit(1); });
           EOF
           node smoke-test.cjs
