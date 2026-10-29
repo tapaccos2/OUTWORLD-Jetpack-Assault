@@ -50,24 +50,35 @@ node tools/inspect-original-data.mjs original-data > original-data-inventory.jso
 The script inventories readable strings and raw headers. It is deliberately described as an inventory tool, not a complete decoder.
 
 
-## Follow-up: terrain section boundary probe
+## Follow-up: terrain byte-pattern comparison
 
-A byte scan across the readable `.GRY` files found the four-byte sequence `00 A0 B9 B7` at consistent early offsets in 9 of the 10 files whose binary body was returned by the GitHub file tool:
+A full base64 fetch and byte scan of the ten `.GRY` files whose bodies are accessible found the byte sequence `00 A0 B9 B7` in **all ten**. The first occurrence and total occurrence count differ by file:
 
-| File | Offset of sequence |
-|---|---:|
-| `Q.gry` | 92 |
-| `a2.gry` | 52 |
-| `d4.gry` | 280 |
-| `j1.gry` | 32 |
-| `o2.gry` | 92 |
-| `o5.gry` | 32 |
-| `r1.gry` | 32 |
-| `r2.gry` | 72 |
-| `r6.gry` | 52 |
+| File | First occurrence | Total occurrences |
+|---|---:|---:|
+| `Q.gry` | 92 | 2 |
+| `a2.gry` | 52 | 1 |
+| `d4.gry` | 280 | 6 |
+| `j1.gry` | 32 | 1 |
+| `o2.gry` | 92 | 2 |
+| `o5.gry` | 32 | 1 |
+| `o7.gry` | 86 | 1 |
+| `r1.gry` | 32 | 1 |
+| `r2.gry` | 72 | 1 |
+| `r6.gry` | 52 | 1 |
 
-No match was found in `o7.gry` within the scanned file body. `oc.gry` could not be read through that fetch path, so its contents are unknown here.
+This corrects the earlier note that no match was found in `o7.gry`: that earlier scan missed the occurrence at offset 86. The large `oc.gry` file remains unavailable through the current binary-fetch path, so no conclusion is drawn about it.
 
-Several files have repeating 20-byte blocks between the 12-byte prefix/header and this marker. The blocks contain five little-endian 32-bit values; their meaning has not been established. `d4.gry` has an additional 8 bytes before the marker compared with a simple 20-byte-record count, so a single fixed-count interpretation would be premature.
+### What the bytes establish—and what they do not
 
-A probe utility was added at `tools/inspect-gry-structure.mjs`. It reports the header words, marker offsets, candidate 20-byte blocks, and bytes following the marker. This is the next evidence-gathering step toward identifying the subsequent terrain data sections; it is not yet a terrain mesh decoder.
+The bytes beginning at the first occurrence share a substantial identical prefix across the files, including the sequence `00 A0 B9 B7 00 00 00 02 00 02 00 01 00 22 56 00 00 AB 2B 00`. That repeatability is a stronger clue than the marker alone. However, the sequence also appears again later in `Q.gry`, `o2.gry`, and multiple times in `d4.gry`. Therefore, **it must not be treated as a proven one-time section boundary**. It may be a recurring structure or a pattern that occurs inside a data stream; its role is still unknown.
+
+The bytes before the first occurrence vary in length. Some files contain repeated 20-byte candidate blocks in that region, but the `d4.gry` layout does not fit a simple fixed-count interpretation. Their fields remain uninterpreted.
+
+The tool `tools/inspect-gry-structure.mjs` now reports every occurrence, the common header, candidate pre-marker blocks, and how many bytes match from the first occurrence across the supplied files. Run it with:
+
+```sh
+node tools/inspect-gry-structure.mjs original-data/gry/*.gry
+```
+
+This remains byte-level format investigation—not a terrain decoder. The next useful step is to identify the shared preamble and then validate any proposed fields against file lengths and the terrain/mission resources. No terrain geometry has yet been reconstructed.
