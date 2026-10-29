@@ -629,46 +629,60 @@ if(false && window.GLTFLoader){
 
 
 const player=soldier(false);
-// Purpose-built first-person forearms and gloves. Do not clone full-body arm pivots:
-// their character-space dimensions and pivot origins are unsuitable for a camera viewmodel.
-const fpArmor=new THREE.MeshStandardMaterial({color:0x34413f,metalness:.58,roughness:.48});
-const fpEdge=new THREE.MeshStandardMaterial({color:0x788982,metalness:.62,roughness:.38});
-const fpGlove=new THREE.MeshStandardMaterial({color:0x151b1a,metalness:.12,roughness:.88});
-const fpLight=new THREE.MeshStandardMaterial({color:0x55d9d1,emissive:0x0d514c,emissiveIntensity:.8,metalness:.25,roughness:.35});
-function fpPart(parent,geo,mat,pos,rot){const m=new THREE.Mesh(geo,mat);m.position.set(...pos);if(rot)m.rotation.set(...rot);m.renderOrder=999;m.frustumCulled=false;m.castShadow=false;m.receiveShadow=false;mat.depthTest=false;mat.depthWrite=false;parent.add(m);return m}
-function makeFPArm(side){
- const arm=new THREE.Group();armRig.add(arm);
- // Compact diagonal forearm enters from the lower edge, with layered armour and a visible glove.
- const x=side<0?-.24:.28;
- const sleeve=fpPart(arm,new THREE.CapsuleGeometry(.075,.31,4,8),fpArmor,[x,-.30,-.57],[0,0,side<0?-.34:.27]);
- const plate=fpPart(arm,new THREE.BoxGeometry(.17,.20,.065),fpEdge,[x,-.24,-.57],[0,0,side<0?-.34:.27]);
- fpPart(arm,new THREE.BoxGeometry(.12,.14,.035),fpArmor,[x,-.19,-.60],[0,0,side<0?-.34:.27]);
- fpPart(arm,new THREE.BoxGeometry(.105,.13,.14),fpGlove,[x+(side<0?.07:-.045),-.17,-.76],[.18,0,side<0?-.18:.12]);
- // Knuckle plates and cyan suit status marker make the gloves read clearly against the rifle.
- for(let i=0;i<3;i++)fpPart(arm,new THREE.BoxGeometry(.025,.045,.045),fpEdge,[x+(side<0?.045:-.015)+i*.025,-.145,-.805],[0,0,.08]);
- fpPart(arm,new THREE.BoxGeometry(.045,.018,.07),fpLight,[x,-.15,-.60],[0,0,side<0?-.34:.27]);
- return arm;
+// Imported character and first-person weapon assets only. No procedural soldier or viewmodel geometry.
+const armRig=new THREE.Group();camera.add(armRig);
+armRig.visible=true;
+const fpAssetRig=new THREE.Group();camera.add(fpAssetRig);
+fpAssetRig.position.set(0,-.42,-.72);
+fpAssetRig.scale.setScalar(1);
+const assetLoader=window.GLTFLoader?new window.GLTFLoader():null;
+const externalMixers=[];
+const soldierAssetURL='https://raw.githubusercontent.com/cktang88/3d-fps/main/public/assets/models/characters/soldier_tac.glb';
+const firstPersonAssetURL='https://raw.githubusercontent.com/cktang88/3d-fps/main/public/assets/models/weapons/smg45_rifle_arms.glb';
+let importedSoldier=null,importedFP=null;
+function normalizeGLB(model,targetHeight){
+ model.updateMatrixWorld(true);
+ const box=new THREE.Box3().setFromObject(model),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
+ const height=size.y||Math.max(size.x,size.z)||1;
+ model.scale.multiplyScalar(targetHeight/height);
+ model.updateMatrixWorld(true);
+ const scaledBox=new THREE.Box3().setFromObject(model),scaledCenter=scaledBox.getCenter(new THREE.Vector3());
+ model.position.x-=scaledCenter.x;model.position.z-=scaledCenter.z;model.position.y-=scaledBox.min.y;
+ model.updateMatrixWorld(true);
 }
-const leftArm=makeFPArm(-1),rightArm=makeFPArm(1);
-// Support hand approaches the front handguard; trigger hand sits under the receiver/grip.
-leftArm.scale.setScalar(.62);rightArm.scale.setScalar(.62);
-leftArm.position.set(-.035,-.105,-.22);
-rightArm.position.set(.025,-.12,-.18);
-
-// Third-person rifle mounted to the marine's forward hand; visible only in chase view.
-const marineRifle=new THREE.Group();
-const mrMetal=new THREE.MeshStandardMaterial({color:0x26343a,metalness:.78,roughness:.31});
-const mrEdge=new THREE.MeshStandardMaterial({color:0x82979b,metalness:.7,roughness:.3});
-const mrGlow=new THREE.MeshStandardMaterial({color:0x43e8ff,emissive:0x087da0,emissiveIntensity:1.8,metalness:.2,roughness:.25});
-function mrPart(geo,mat,pos,rot){const m=new THREE.Mesh(geo,mat);m.position.set(...pos);if(rot)m.rotation.set(...rot);m.castShadow=true;marineRifle.add(m);return m}
-mrPart(new THREE.BoxGeometry(.16,.15,.48),mrMetal,[0,0,0]);
-mrPart(new THREE.BoxGeometry(.19,.045,.34),mrEdge,[0,.09,-.03]);
-mrPart(new THREE.CylinderGeometry(.035,.045,.48,10),mrMetal,[0,.015,-.39],[Math.PI/2,0,0]);
-mrPart(new THREE.CylinderGeometry(.05,.05,.055,10),mrEdge,[0,.015,-.64],[Math.PI/2,0,0]);
-mrPart(new THREE.BoxGeometry(.06,.035,.22),mrGlow,[0,.08,-.25]);
-mrPart(new THREE.BoxGeometry(.11,.14,.17),mrMetal,[0,-.12,.12],[.2,0,0]);
-marineRifle.position.set(.30,1.48,.43);marineRifle.scale.set(1.18,1.18,1.18);marineRifle.rotation.set(-.04,0,0);player.add(marineRifle);
-
+if(assetLoader){
+ assetLoader.load(soldierAssetURL,gltf=>{
+  importedSoldier=gltf.scene;
+  normalizeGLB(importedSoldier,2.35);
+  importedSoldier.rotation.y=Math.PI;
+  importedSoldier.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
+  player.add(importedSoldier);
+  // The original blockout is deliberately kept invisible; only the imported character is rendered.
+  player.children.forEach(o=>{if(o!==importedSoldier)o.visible=false});
+  if(gltf.animations&&gltf.animations.length){
+   const mixer=new THREE.AnimationMixer(importedSoldier);externalMixers.push(mixer);
+   const idle=gltf.animations.find(a=>/idle|stand/i.test(a.name))||gltf.animations[0];
+   mixer.clipAction(idle).play();
+  }
+  console.info('OUTWORLD: imported CC BY 4.0 tactical soldier loaded');
+ },undefined,e=>console.error('OUTWORLD soldier asset failed to load; procedural player remains hidden.',e));
+ assetLoader.load(firstPersonAssetURL,gltf=>{
+  importedFP=gltf.scene;
+  normalizeGLB(importedFP,.95);
+  importedFP.traverse(o=>{if(o.isMesh){o.renderOrder=1000;o.frustumCulled=false;if(o.material){o.material.depthTest=false;o.material.depthWrite=false}}});
+  fpAssetRig.add(importedFP);
+  // Hide every procedural weapon mesh; the imported arms asset includes its own weapon.
+  weaponRig.traverse(o=>{if(o.isMesh&&o!==fpFlashOuter&&o!==fpFlashCore)o.visible=false});
+  if(gltf.animations&&gltf.animations.length){
+   const mixer=new THREE.AnimationMixer(importedFP);externalMixers.push(mixer);
+   const idle=gltf.animations.find(a=>/idle/i.test(a.name))||gltf.animations[0];mixer.clipAction(idle).play();
+  }
+  console.info('OUTWORLD: imported first-person arms/weapon asset loaded');
+ },undefined,e=>console.error('OUTWORLD first-person asset failed to load.',e));
+}
+// No homemade arm meshes. These groups remain only as visibility containers.
+const leftArm=new THREE.Group(),rightArm=new THREE.Group();
+armRig.add(leftArm,rightArm);
 // Player jetpack: twin compact nozzles and animated exhaust glow.
 const jetGlowMat=new THREE.MeshBasicMaterial({color:0x54eaff,transparent:true,opacity:.78});
 const jetGlows=[];
@@ -679,7 +693,7 @@ for(const side of [-1,1]){
  glow.rotation.x=Math.PI/2;glow.position.set(side*.20,1.12,-.78);glow.visible=false;player.add(glow);jetGlows.push(glow);
 }
 scene.add(player);player.position.set(0,0,5);
-const externalMixers=[];const enemies=[];const hydranPalettes=[0x78934a,0x9b5b3c,0x526b45,0x77705b,0x465b59];for(let i=0;i<7;i++){const obj=soldier(true);const size=.78+Math.random()*.48;obj.scale.set(size,.82+Math.random()*.42,size);obj.position.set((Math.random()-.5)*34,0,-20-Math.random()*34);obj.rotation.y=Math.PI+(Math.random()-.5)*.5;obj.userData.hp=100+Math.round(Math.random()*50);obj.userData.moveSpeed=3.7+Math.random()*1.7;obj.userData.cooldown=1.4+i*.35;obj.userData.fireCooldown=.9+i*.35;obj.userData.hit=0;obj.userData.walk=Math.random()*6;obj.userData.wanderPhase=Math.random()*Math.PI*2;obj.userData.wanderStrength=.2+Math.random()*.6;const palette=new THREE.Color(hydranPalettes[i%hydranPalettes.length]);obj.traverse(part=>{if(part.isMesh&&part.material&&part.material.map===insectTexture){part.material=part.material.clone();part.material.color.copy(palette);part.material.needsUpdate=true}});scene.add(obj);enemies.push(obj)}
+const enemies=[];const hydranPalettes=[0x78934a,0x9b5b3c,0x526b45,0x77705b,0x465b59];for(let i=0;i<7;i++){const obj=soldier(true);const size=.78+Math.random()*.48;obj.scale.set(size,.82+Math.random()*.42,size);obj.position.set((Math.random()-.5)*34,0,-20-Math.random()*34);obj.rotation.y=Math.PI+(Math.random()-.5)*.5;obj.userData.hp=100+Math.round(Math.random()*50);obj.userData.moveSpeed=3.7+Math.random()*1.7;obj.userData.cooldown=1.4+i*.35;obj.userData.fireCooldown=.9+i*.35;obj.userData.hit=0;obj.userData.walk=Math.random()*6;obj.userData.wanderPhase=Math.random()*Math.PI*2;obj.userData.wanderStrength=.2+Math.random()*.6;const palette=new THREE.Color(hydranPalettes[i%hydranPalettes.length]);obj.traverse(part=>{if(part.isMesh&&part.material&&part.material.map===insectTexture){part.material=part.material.clone();part.material.color.copy(palette);part.material.needsUpdate=true}});scene.add(obj);enemies.push(obj)}
 // Keep the tested full-size procedural Hydran enemies visible. The imported GLB pack
 // currently has inconsistent in-game scale/orientation, so do not hide these meshes.
 if(window.loadEnvironmentAssets)window.loadEnvironmentAssets(THREE,scene,lowPowerDevice).catch(err=>console.warn('Environment GLB assets unavailable; procedural fallback remains active.',err));
@@ -790,7 +804,7 @@ function update(dt){
  if(jumpQueued&&onGround){vy=7.3;onGround=false}jumpQueued=false;vy-=18*dt;player.position.y+=vy*dt;if(player.position.y<=0){player.position.y=0;vy=0;onGround=true}
  player.rotation.y=yaw+Math.PI;player.position.y=Math.max(0,player.position.y);
  const lookDir=new THREE.Vector3(-Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),-Math.cos(yaw)*Math.cos(pitch));if(thirdPerson){const behind=4.9,high=2.45,shoulder=1.45;const desiredCam=new THREE.Vector3(player.position.x+Math.sin(yaw)*behind+Math.cos(yaw)*shoulder,player.position.y+high,player.position.z+Math.cos(yaw)*behind-Math.sin(yaw)*shoulder);camera.position.lerp(desiredCam,1-Math.exp(-dt*8));const aim=player.position.clone().add(new THREE.Vector3(0,1.4,0)).add(lookDir.clone().multiplyScalar(6.2)).add(new THREE.Vector3(Math.cos(yaw)*.85,0,-Math.sin(yaw)*.85));camera.lookAt(aim)}else{camera.position.set(player.position.x,player.position.y+2.15,player.position.z);camera.lookAt(camera.position.clone().add(lookDir.multiplyScalar(25)))}
- weaponRig.visible=!thirdPerson;armRig.visible=!thirdPerson;marineRifle.visible=thirdPerson;
+ weaponRig.visible=!thirdPerson;armRig.visible=false;fpAssetRig.visible=!thirdPerson;marineRifle.visible=false;
  // Prevent the marine's own helmet/visor and armour from clipping across the first-person view.
  player.visible=thirdPerson;
  const moving=Math.abs(fwd)+Math.abs(side)>.1;
