@@ -2,40 +2,69 @@
 
 ## Inventory
 
-The current repository contains 142 files under `original-data/structs/`:
+The repository contains 142 files under `original-data/structs/`:
 
 - 37 `.DPC`
 - 34 `.GPC`
 - 34 `.RPC`
 - 37 `.TPC`
 
-The repository also now contains `original-data/units.ff` (9,468,892 bytes) and `original-data/motion.ff` (935,386 bytes), plus 20 `.FF` files under `original-data/shelldb/`.
+The repository also contains `original-data/units.ff` (9,468,892 bytes), `original-data/motion.ff` (935,386 bytes), and 20 `.FF` files under `original-data/shelldb/`.
 
-## Initial binary signatures
+## Binary signatures and common header bytes
 
-A byte-level inspection of small representative files found these first four bytes:
+Byte-level inspection of representative resources confirms these four-byte type signatures:
 
 | Extension | Example | First four bytes (hex) | ASCII view |
 |---|---|---|---|
-| `.DPC` | `cyball1.dpc` | `44 43 50 4d` | `DCPM` |
+| `.DPC` | `anub01.dpc` | `44 43 50 4d` | `DCPM` |
 | `.GPC` | `anub01.gpc` | `43 50 4d 47` | `CPMG` |
 | `.RPC` | `anub01.rpc` | `43 50 4d 52` | `CPMR` |
 | `.TPC` | `cyball1.tpc` | `54 43 50 4d` | `TCPM` |
 
-The following bytes differ by resource and appear to contain binary metadata. These observations identify repeatable signatures but do **not** yet establish the full file layout, compression method, geometry representation, or texture encoding.
+The `anub01.dpc`, `anub01.gpc`, and `anub01.rpc` examples share the next eight bytes:
 
-## Initial interpretation limits
+`43 00 00 00 BA 30 03 35`
 
-- The `.DPC` and `.TPC` examples contain substantial binary payloads; printable-string extraction alone is not enough to decode them.
-- The `.GPC` and `.RPC` examples also begin with stable type-specific signatures and have different sizes, so they should be parsed separately rather than treated as interchangeable files.
-- The names of the files suggest campaign/level groupings, but filenames alone do not prove how the resources are linked at runtime.
-- `units.ff` and the shell database archives are present in the repository, but their internal directory/table structure has not yet been decoded.
+The four-byte field at offset 12 differs by type: the sampled DPC begins `40 9C 01 80`, while the sampled GPC and RPC have `05 00 00 00`. These are raw observations only; the fields have not been assigned semantic meanings. The sampled `anub02.gpc` has a different value at offset 8, so that field is not a universal constant.
 
-## Next checks
+The GPC and RPC samples have readable, structured-looking little-endian values after their headers, but this alone does not establish their record layout. The larger DPC/TPC payloads have not been decoded into geometry or textures.
 
-1. Compare the first 64–128 bytes of several files per extension to distinguish common headers from per-file fields.
-2. Check whether the apparent 32-bit fields are offsets, lengths, identifiers, or checksums by validating them against actual file sizes and repeated records.
-3. Search decoded binary payloads for references to companion resource names, while treating any inferred relationship as provisional until cross-checked.
-4. Keep terrain decoding separate: the `.GRY` format remains the blocker for reconstructing a real terrain surface.
+## FF archive directory table — new confirmed finding
 
-No model or texture decoder is claimed by this note. It records initial observations to support reproducible format analysis.
+Four binary archives were inspected from their actual bytes: `motion.ff`, `shelldb/library.ff`, `shelldb/graphics.ff`, and `shelldb/briefing.ff`. All four share this directory layout:
+
+1. Offset `0`: a 32-bit little-endian entry count.
+2. Offset `4`: entries of 44 bytes each.
+3. Each entry contains a 32-bit little-endian payload offset followed by a 40-byte NUL-padded filename.
+4. The final entry has an empty filename and an offset equal to the exact file length. It is a sentinel/end boundary, not a named resource.
+5. The first payload offset equals `4 + entryCount * 44`, exactly the end of the directory table. Offsets are monotonic in all four samples.
+6. A named resource's stored size can therefore be derived as its offset to the next entry's offset. This gives archive boundaries without decoding the payload itself.
+
+| Archive | File bytes | Header entry count | Directory end / first payload | Named resources | Sentinel offset |
+|---|---:|---:|---:|---:|---:|
+| `motion.ff` | 935,386 | 61 | 2,688 | 60 | 935,386 |
+| `shelldb/library.ff` | 598,388 | 20 | 884 | 19 | 598,388 |
+| `shelldb/graphics.ff` | 702,401 | 30 | 1,324 | 29 | 702,401 |
+| `shelldb/briefing.ff` | 832,984 | 30 | 1,324 | 29 | 832,984 |
+
+Examples of filenames extracted from `motion.ff` include `fdeath1.mc`, `fglide1.mc`, `frun1.mc`, `fstand1.mc`, `mdeath1.mc`, `mrun1.mc`, `mstand1.mc`, and `mwalk4.mc`. These are motion/animation resources. The archive index proves their names and byte ranges; it does not yet decode the animation payloads.
+
+**Important:** `units.ff` and the other FF archives have not all been validated against this layout. Run the local inspector on them; it reports any mismatch instead of silently assuming the format.
+
+## Tools and next checks
+
+Run from the repository root:
+
+```sh
+node tools/inspect-ff-archives.mjs original-data/motion.ff original-data/units.ff original-data/shelldb/*.ff
+node tools/cross-reference-resources.mjs original-data > original-data-resource-references.json
+```
+
+Next:
+1. Validate the FF directory-table hypothesis against `units.ff` and more shell archives.
+2. Use the extracted FF filenames and offsets to compare archive contents with loose files and mission references.
+3. Compare multiple `.DPC/.GPC/.RPC/.TPC` files by type and campaign to identify header fields and internal record layouts.
+4. Continue linking these assets to `.MIS` placements and `.GRY` terrain data.
+
+No model, texture, animation, terrain, or mission-logic decoder is claimed yet. These notes distinguish confirmed byte layout from fields whose meanings remain unknown.
