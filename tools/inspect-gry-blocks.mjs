@@ -67,7 +67,7 @@ const output = files.map(file => {
       finalTrailerHex: trailer,
       finalTrailerPattern: isFinal ? finalTrailerPattern : null,
       boundaryMatches: compressedHeaderPresent && payloadEnd === expectedEnd,
-      compressedToUncompressedRatio: compressedLength && r.uncompressedLengthCandidate ? +(r.uncompressedLengthCandidate / compressedLength).toFixed(5) : null,
+      uncompressedToCompressedRatio: compressedLength && r.uncompressedLengthCandidate ? +(r.uncompressedLengthCandidate / compressedLength).toFixed(5) : null,
       compressedPayloadPrefixHex: compressedHeaderPresent ? hex(b, payloadOffset, Math.min(payloadOffset + 16, payloadEnd)) : null,
     };
   });
