@@ -108,3 +108,19 @@ The angle itself, the meaning of fields at offsets `+0`, `+2`, and `+4`, and how
 The signed 16-bit triplet at RPC offsets `+10`, `+12`, and `+14` also has a near-constant magnitude. Across all 34 RPC files and **8,005 records**, `sqrt(nx² + ny² + nz²)` is within 2 units of 4095 for every record; the observed range is 4094.27–4095.75. Flat records commonly store `(0, 0, 4095)`, while sloped records use non-zero first/second components and a reduced third component. This is strong evidence that the triplet is a fixed-point surface-normal vector.
 
 The first 16 bytes of each RPC record therefore appear to contain at least: a 2D orientation/direction pair at `+6/+8` and a 3D normal at `+10/+12/+14`, alongside still-unknown fields at `+0/+2/+4`. The native setter directly writes the direction pair and the height/position fields; the normal-vector identification is currently supported by the across-file invariant and flat-versus-slope pattern, but still needs a direct executable use-site to be considered fully confirmed.
+
+## Geometry formula validated against stored normals
+
+The dimension and corner-order interpretation can now be tested geometrically. For each RPC record, let `w = u16(+2)`, `d = u16(+4)`, `s = int16(+6)/4095`, and `c = int16(+8)/4095`. Treat the four signed 32-bit values at `+16/+20/+24/+28` as row-major heights `h00/h01/h10/h11`. The first three corners give local gradients:
+
+- `gxLocal = (h01 - h00) / w`
+- `gyLocal = (h10 - h00) / d`
+
+Rotate those gradients by the negative angle represented by the sine/cosine pair:
+
+- `gxWorld = gxLocal*c + gyLocal*s`
+- `gyWorld = -gxLocal*s + gyLocal*c`
+
+The expected surface normal is `normalize(-gxWorld, -gyWorld, 1)`. Compare it with the signed 16-bit normal at `+10/+12/+14`, normalized. This is not just a plausible fit: across all 8,005 RPC records, **8,003 match with a normalized dot product above 0.999**. The other two are the same flat record in `dead01.rpc` and `dead1m.rpc`: all four heights are 6487, but the stored normal is `(0,0,-4095)` rather than `(0,0,4095)`, so it is exactly inverted. Preserve that sign; do not force all normals upward.
+
+This confirms the working interpretation of `+2/+4` as the two surface dimensions, `+6/+8` as the orientation sine/cosine pair, `+10/+12/+14` as the normal, and `+16/+20/+24/+28` as the ordered corner heights. The remaining geometric uncertainty is the exact meaning of the position at `+32/+36` (most likely the surface center/anchor) and the triangulation convention for the fourth corner when the four heights are not coplanar. The checker now reports the normal-vs-gradient consistency test.
