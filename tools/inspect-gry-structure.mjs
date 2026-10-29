@@ -62,6 +62,18 @@ const records = files.map(file => {
       });
     }
   }
+  if (firstMarker !== null && header[2] >= header[1]) {
+    const start = 12 + header[1] * 20;
+    const count = Math.min(header[2] - header[1], 64);
+    for (let n = 0; n < count && start + (n + 1) * 14 <= firstMarker; n++) {
+      const o = start + n * 14;
+      candidate14ByteBlocks.push({
+        offset: o,
+        wordsU16LE: Array.from({ length: 7 }, (_, j) => u16(b, o + j * 2)),
+        bytesHex: hex(b, o, o + 14),
+      });
+    }
+  }
   return {
     file: path.basename(file),
     bytes: b.length,
@@ -70,6 +82,7 @@ const records = files.map(file => {
     markerOffsets,
     bytesBeforeFirstMarker: firstMarker === null ? null : firstMarker - 12,
     candidate20ByteRecordsBeforeMarker: candidateRecords,
+    candidate14ByteBlocksAfter20ByteRegion: candidate14ByteBlocks,
     complete20ByteBlocksBeforeMarker: firstMarker === null ? null : Math.floor((firstMarker - 12) / 20),
     headerSecondU16Times20: firstMarker === null ? null : header[1] * 20,
     bytesBeyondHeaderSecondU16Times20: firstMarker === null ? null : (firstMarker - 12) - (header[1] * 20),
