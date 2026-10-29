@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * Inspect Outwars .GRY terrain headers and locate the recurring 00 A0 B9 B7
- * marker observed in multiple original files. This is a boundary probe, not
- * a full terrain decoder.
+ * Compare Outwars .GRY headers and repeated byte sequences across terrain files.
+ * The sequence 00 A0 B9 B7 is an observed byte pattern, not a proven section
+ * boundary. This tool reports observations only; it does not decode terrain.
  *
  * Usage:
  *   node tools/inspect-gry-structure.mjs original-data/gry/*.gry
@@ -21,30 +21,39 @@ function u32(b, o) { return (b[o] | (b[o + 1] << 8) | (b[o + 2] << 16) | (b[o + 
 function hex(b, start, end) {
   return b.subarray(start, end).toString('hex').match(/.{1,2}/g)?.join(' ') ?? '';
 }
+function findAll(b, needle) {
+  const hits = [];
+  for (let i = 0; i <= b.length - needle.length; i++) {
+    let same = true;
+    for (let j = 0; j < needle.length; j++) {
+      if (b[i + j] !== needle[j]) { same = false; break; }
+    }
+    if (same) hits.push(i);
+  }
+  return hits;
+}
+function commonPrefix(buffers) {
+  if (!buffers.length) return 0;
+  let n = Math.min(...buffers.map(b => b.length));
+  for (let i = 0; i < n; i++) {
+    const v = buffers[0][i];
+    if (buffers.some(b => b[i] !== v)) return i;
+  }
+  return n;
+}
 
-const result = files.map(file => {
+const records = files.map(file => {
   const b = fs.readFileSync(file);
   if (b.length < 12) {
-    return { file: path.basename(file), bytes: b.length, error: 'File too short or empty' };
+    return { file: path.basename(file), bytes: b.length, error: 'File too short or empty', buffer: b };
   }
-  const magic = hex(b, 0, 4);
-  const header = [u16(b, 4), u16(b, 6), u16(b, 8), u16(b, 10)];
-  const marker = [0x00, 0xa0, 0xb9, 0xb7];
-  const markerOffsets = [];
-  for (let i = 12; i <= b.length - 4; i++) {
-    if (b[i] === marker[0] && b[i + 1] === marker[1] &&
-        b[i + 2] === marker[2] && b[i + 3] === marker[3]) {
-      markerOffsets.push(i);
-    }
-  }
+  const marker = Buffer.from([0x00, 0xa0, 0xb9, 0xb7]);
+  const markerOffsets = findAll(b, marker);
   const firstMarker = markerOffsets[0] ?? null;
+  const header = [u16(b, 4), u16(b, 6), u16(b, 8), u16(b, 10)];
   const candidateRecords = [];
-  // The region after the 12-byte common header shows repeating 20-byte values
-  // in several files. Report them as raw unsigned words, without assigning
-  // semantics or assuming the table always has the same length.
   if (firstMarker !== null && firstMarker >= 12) {
-    const span = firstMarker - 12;
-    const fullRecords = Math.floor(span / 20);
+    const fullRecords = Math.floor((firstMarker - 12) / 20);
     for (let n = 0; n < Math.min(fullRecords, 64); n++) {
       const o = 12 + n * 20;
       candidateRecords.push({
@@ -56,12 +65,30 @@ const result = files.map(file => {
   return {
     file: path.basename(file),
     bytes: b.length,
-    magic,
+    magic: hex(b, 0, 4),
     headerU16LE: header,
     markerOffsets,
     bytesBeforeFirstMarker: firstMarker === null ? null : firstMarker - 12,
     candidate20ByteRecordsBeforeMarker: candidateRecords,
-    bytesAtFirstMarker: firstMarker === null ? null : hex(b, firstMarker, Math.min(firstMarker + 32, b.length)),
+    bytesAtFirstMarker: firstMarker === null ? null : hex(b, firstMarker, Math.min(firstMarker + 64, b.length)),
+    bytesAfterFirstMarkerHex: firstMarker === null ? null : hex(b, firstMarker, Math.min(firstMarker + 32, b.length)),
+    buffer: b,
+    firstMarker,
   };
 });
-process.stdout.write(JSON.stringify(result, null, 2) + '\n');
+
+const valid = records.filter(r => r.buffer && r.firstMarker !== null);
+const commonAfterMarker = valid.length
+  ? commonPrefix(valid.map(r => r.buffer.subarray(r.firstMarker, r.firstMarker + 128)))
+  : 0;
+const output = {
+  summary: {
+    filesInspected: records.length,
+    commonPrefixAtFileStart: commonPrefix(records.filter(r => r.buffer).map(r => r.buffer)),
+    filesWithMarker: valid.length,
+    commonBytesStartingAtFirstMarker: commonAfterMarker,
+    note: 'A repeated sequence or shared byte prefix is evidence of structure, not proof of field meanings or a section boundary.',
+  },
+  files: records.map(({ buffer, firstMarker, ...record }) => record),
+};
+process.stdout.write(JSON.stringify(output, null, 2) + '\n');
