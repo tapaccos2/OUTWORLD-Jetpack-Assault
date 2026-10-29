@@ -98,7 +98,7 @@ for(let i=0;i<(lowPowerDevice?70:170);i++){
 const skyTex=new THREE.CanvasTexture(skyCanvas);skyTex.colorSpace=THREE.SRGBColorSpace;
 const skyDome=new THREE.Mesh(new THREE.SphereGeometry(190,40,24),new THREE.MeshBasicMaterial({map:skyTex,side:THREE.BackSide,depthWrite:false}));skyDome.renderOrder=-10;scene.add(skyDome);
 // Load CC0 glTF environment models asynchronously; procedural terrain remains as fallback.
-window.loadEnvironmentAssets(THREE, scene, lowPowerDevice).catch(error => console.warn('Optional CC0 environment models failed to load; using procedural terrain:', error));
+if (typeof window.loadEnvironmentAssets === 'function') { window.loadEnvironmentAssets(THREE, scene, lowPowerDevice).catch(error => console.warn('Optional CC0 environment models failed to load; using procedural terrain:', error)); } else { console.warn('Optional environment asset loader unavailable; using procedural terrain.'); }
 // Removed the visible development grid for a natural, continuous alien terrain.
 // Distant rugged ridge silhouettes made from real 3D geometry.
 for(let i=0;i<(lowPowerDevice?18:34);i++){
