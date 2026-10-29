@@ -36,6 +36,8 @@ const output = files.map(file => {
       length,
       payloadOffset: offset + 8,
       endOffset: offset + 8 + length,
+      payloadU32LE: length === 4 ? u32le(b, offset + 8) : null,
+      payloadU32BE: length === 4 ? (((b[offset + 8] << 24) | (b[offset + 9] << 16) | (b[offset + 10] << 8) | b[offset + 11]) >>> 0) : null,
       payloadHex: b.subarray(offset + 8, Math.min(offset + 8 + length, offset + 24)).toString('hex').match(/.{1,2}/g)?.join(' ') ?? '',
     });
   }
