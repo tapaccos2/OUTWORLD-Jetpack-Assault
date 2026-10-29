@@ -48,7 +48,7 @@ const missions = missionFiles.map(file => {
   const data = fs.readFileSync(file);
   const strings = printableStrings(data);
   const resources = [...new Set(strings
-    .flatMap(item => item.text.match(/[A-Za-z0-9_ -]+\.(?:dpc|pcx|gry|wav|avi|ff|tpc|gpc|rpc)/gi) ?? [])
+    .flatMap(item => item.text.match(/[A-Za-z0-9_-]+\.(?:dpc|pcx|gry|wav|avi|ff|tpc|gpc|rpc)/gi) ?? [])
     .map(s => s.trim()))];
   return {
     file: path.basename(file),
