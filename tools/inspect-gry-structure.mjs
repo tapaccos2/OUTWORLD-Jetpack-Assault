@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * Compare Outwars .GRY headers and repeated terrain signatures across files.
- * The three-byte suffix A0 B9 B7 recurs with a variable leading byte. This is
- * an observed signature, not a decoded field. This tool does not decode terrain.
+ * Compare Outwars .GRY headers and recurring terrain signatures across files.
+ * The bytes A0 B9 B7 recur at a fixed offset before `fact` tags, with a variable
+ * leading byte. This tool reports observations; it does not decode terrain.
  *
  * Usage:
  *   node tools/inspect-gry-structure.mjs original-data/gry/*.gry
@@ -44,17 +44,16 @@ function commonPrefix(buffers) {
 
 const records = files.map(file => {
   const b = fs.readFileSync(file);
-  if (b.length < 12) {
-    return { file: path.basename(file), bytes: b.length, error: 'File too short or empty', buffer: b };
-  }
-  const signatureSuffix = Buffer.from([0xa0, 0xb9, 0xb7]);
-  const signatureSuffixOffsets = findAll(b, signatureSuffix);
-  const signatureOffsets = signatureSuffixOffsets.filter(offset => offset > 0).map(offset => offset - 1);
+  if (b.length < 12) return { file: path.basename(file), bytes: b.length, error: 'File too short or empty', buffer: b };
+  const suffixOffsets = findAll(b, Buffer.from([0xa0, 0xb9, 0xb7]));
+  // Include the variable byte immediately before the recurring three-byte suffix.
+  const signatureOffsets = suffixOffsets.filter(offset => offset > 0).map(offset => offset - 1);
   const firstSignature = signatureOffsets[0] ?? null;
   const header = [u16(b, 4), u16(b, 6), u16(b, 8), u16(b, 10)];
   const candidateRecords = [];
-  if (firstMarker !== null && firstMarker >= 12) {
-    const fullRecords = Math.min(Math.floor((firstMarker - 12) / 20), header[1]);
+  const candidate14ByteBlocks = [];
+  if (firstSignature !== null && firstSignature >= 12) {
+    const fullRecords = Math.min(Math.floor((firstSignature - 12) / 20), header[1]);
     for (let n = 0; n < Math.min(fullRecords, 64); n++) {
       const o = 12 + n * 20;
       candidateRecords.push({
@@ -63,17 +62,17 @@ const records = files.map(file => {
         wordsU16LE: Array.from({ length: 10 }, (_, j) => u16(b, o + j * 2)),
       });
     }
-  }
-  if (firstMarker !== null && header[2] >= header[1]) {
-    const start = 12 + header[1] * 20;
-    const count = Math.min(header[2] - header[1], 64);
-    for (let n = 0; n < count && start + (n + 1) * 14 <= firstMarker; n++) {
-      const o = start + n * 14;
-      candidate14ByteBlocks.push({
-        offset: o,
-        wordsU16LE: Array.from({ length: 7 }, (_, j) => u16(b, o + j * 2)),
-        bytesHex: hex(b, o, o + 14),
-      });
+    if (header[2] >= header[1]) {
+      const start = 12 + header[1] * 20;
+      const count = Math.min(header[2] - header[1], 64);
+      for (let n = 0; n < count && start + (n + 1) * 14 <= firstSignature; n++) {
+        const o = start + n * 14;
+        candidate14ByteBlocks.push({
+          offset: o,
+          wordsU16LE: Array.from({ length: 7 }, (_, j) => u16(b, o + j * 2)),
+          bytesHex: hex(b, o, o + 14),
+        });
+      }
     }
   }
   return {
@@ -81,43 +80,44 @@ const records = files.map(file => {
     bytes: b.length,
     magic: hex(b, 0, 4),
     headerU16LE: header,
-    markerOffsets,
-    bytesBeforeFirstSignature: firstMarker === null ? null : firstMarker - 12,
-    candidate20ByteRecordsBeforeMarker: candidateRecords,
+    signatureOffsets,
+    signatureCount: signatureOffsets.length,
+    bytesBeforeFirstSignature: firstSignature === null ? null : firstSignature - 12,
+    candidate20ByteRecordsBeforeSignature: candidateRecords,
     candidate14ByteBlocksAfter20ByteRegion: candidate14ByteBlocks,
     candidate20ByteRecordCount: candidateRecords.length,
-    headerSecondU16Times20: firstMarker === null ? null : header[1] * 20,
-    bytesBeyondHeaderSecondU16Times20: firstMarker === null ? null : (firstMarker - 12) - (header[1] * 20),
-    headerThirdMinusSecondTimes14: firstMarker === null ? null : (header[2] - header[1]) * 14,
-    candidatePreMarkerBytes: firstMarker === null ? null : (header[1] * 20) + ((header[2] - header[1]) * 14),
-    candidateRecordModelMatches: firstMarker === null ? null : (firstMarker - 12) === (header[1] * 20) + ((header[2] - header[1]) * 14),
-    bytesAtFirstSignature: firstMarker === null ? null : hex(b, firstMarker, Math.min(firstMarker + 64, b.length)),
-    bytesAfterFirstMarkerHex: firstMarker === null ? null : hex(b, firstMarker, Math.min(firstMarker + 32, b.length)),
+    headerSecondU16Times20: firstSignature === null ? null : header[1] * 20,
+    bytesBeyondHeaderSecondU16Times20: firstSignature === null ? null : (firstSignature - 12) - (header[1] * 20),
+    headerThirdMinusSecondTimes14: firstSignature === null ? null : (header[2] - header[1]) * 14,
+    candidatePreSignatureBytes: firstSignature === null ? null : (header[1] * 20) + ((header[2] - header[1]) * 14),
+    candidateRecordModelMatches: firstSignature === null ? null : (firstSignature - 12) === (header[1] * 20) + ((header[2] - header[1]) * 14),
+    bytesAtFirstSignature: firstSignature === null ? null : hex(b, firstSignature, Math.min(firstSignature + 64, b.length)),
     buffer: b,
-    firstMarker,
+    firstSignature,
   };
 });
 
-const valid = records.filter(r => r.buffer && r.firstMarker !== null);
-const commonAfterMarker = valid.length
-  ? commonPrefix(valid.map(r => r.buffer.subarray(r.firstMarker, r.firstMarker + 128)))
+const valid = records.filter(r => r.buffer && r.firstSignature !== null);
+const commonAfterSignature = valid.length
+  ? commonPrefix(valid.map(r => r.buffer.subarray(r.firstSignature, r.firstSignature + 128)))
   : 0;
-const markerSignatures = new Map();
+const signatureGroups = new Map();
 for (const r of valid) {
-  const signature = hex(r.buffer, r.firstMarker, Math.min(r.firstMarker + 64, r.buffer.length));
-  const group = markerSignatures.get(signature) ?? [];
+  const signature = hex(r.buffer, r.firstSignature, Math.min(r.firstSignature + 64, r.buffer.length));
+  const group = signatureGroups.get(signature) ?? [];
   group.push(r.file);
-  markerSignatures.set(signature, group);
+  signatureGroups.set(signature, group);
 }
 const output = {
   summary: {
     filesInspected: records.length,
     commonPrefixAtFileStart: commonPrefix(records.filter(r => r.buffer).map(r => r.buffer)),
     filesWithSignature: valid.length,
-    commonBytesStartingAtFirstSignature: commonAfterMarker,
-    identical64ByteSignaturesAtFirstSignature: [...markerSignatures.entries()].map(([signatureHex, files]) => ({ files, signatureHex })),
-    note: 'A repeated sequence or shared byte prefix is evidence of structure, not proof of field meanings or a section boundary.',
+    totalSignatureOccurrences: records.reduce((sum, r) => sum + (r.signatureCount ?? 0), 0),
+    commonBytesStartingAtFirstSignature: commonAfterSignature,
+    identical64ByteSignaturesAtFirstOccurrence: [...signatureGroups.entries()].map(([signatureHex, groupedFiles]) => ({ files: groupedFiles, signatureHex })),
+    note: 'The A0 B9 B7 suffix and related byte-count patterns are observations, not decoded field meanings.',
   },
-  files: records.map(({ buffer, firstMarker, ...record }) => record),
+  files: records.map(({ buffer, firstSignature, ...record }) => record),
 };
-process.stdout.write(JSON.stringify(output, null, 2) + '\n');
+process.stdout.write(JSON.stringify(output, null, 2) + '\\n');
