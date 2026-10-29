@@ -98,7 +98,7 @@ The loose `.GPC` and `.RPC` files have the same `CPMG` and `CPMR` signatures, ve
 node tools/inspect-grp-rmp.mjs original-data/structs/rag01.gpc original-data/structs/rag01.rpc
 ```
 
-This validates record boundaries and emits raw words for analysis. It does not yet decode the record fields into terrain coordinates or mesh topology.
+This validates record boundaries and emits raw words for analysis. A follow-up hypothesis checker now tests the candidate spatial fields and GPC-to-RPC bounds, but field meanings, corner order, scale, and mesh topology are not yet confirmed; see section 13.
 
 ## 11. Cross-reference resource names (with binary-texture false-positive control)
 
