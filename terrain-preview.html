@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OUTWORLD — Terrain Reconstruction Preview</title>
+<style>
+:root{color-scheme:dark;font-family:Inter,ui-sans-serif,system-ui,sans-serif;background:#101518;color:#e4ecee}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden}
+#view{display:block;width:100%;height:100%;outline:none}
+#toolbar{position:fixed;z-index:2;top:12px;left:12px;right:12px;display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 12px;border:1px solid #415056;border-radius:10px;background:#10191de8;backdrop-filter:blur(10px)}
+#toolbar strong{font-size:13px;letter-spacing:.12em;margin-right:6px;color:#7fe4d6}
+label,button,select{font:inherit;font-size:12px}
+label{display:flex;align-items:center;gap:5px;color:#d1dcdf}
+select,button{border:1px solid #52656b;border-radius:6px;background:#1d2a30;color:#edf5f6;padding:7px 9px}
+button{cursor:pointer}
+button:hover{background:#2a3c43}
+input[type=checkbox]{accent-color:#6ee7d8}
+#status{position:fixed;z-index:2;left:12px;bottom:12px;max-width:min(760px,calc(100% - 24px));padding:9px 12px;border:1px solid #415056;border-radius:8px;background:#10191de8;color:#c4d3d7;font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap}
+#help{position:fixed;z-index:2;right:12px;bottom:12px;padding:8px 10px;border-radius:8px;background:#10191dbd;color:#b7c7cb;font-size:11px}
+@media(max-width:760px){#toolbar{gap:6px}#toolbar strong{width:100%}label,button,select{font-size:11px;padding:6px}#help{display:none}}
+</style>
+</head>
+<body>
+<canvas id="view"></canvas>
+<div id="toolbar">
+  <strong>OUTWORLD / TERRAIN LAB</strong>
+  <label>Map
+    <select id="map">
+      <option>rag01</option><option>rag02</option><option>rag03</option><option>rag04</option><option>rag05</option><option>rag2m</option><option>rag3m</option><option>rag4m</option>
+      <option>anub01</option><option>anub02</option><option>anub03</option><option>anub04</option><option>anub05</option><option>anub1m</option><option>anub2m</option><option>anub3m</option>
+      <option>oasis01</option><option>oasis02</option><option>oasis03</option><option>oasis04</option><option>oasis05</option><option>oasis06</option><option>oasis1m</option><option>oasis6m</option>
+      <option>dead01</option><option>dead02</option><option>dead03</option><option>dead04</option><option>dead1m</option><option>dead2m</option>
+      <option>jug01</option><option>jug02</option><option>mik01</option><option>mik1m</option>
+    </select>
+  </label>
+  <label>Anchor
+    <select id="anchor"><option value="corner">Corner (best fit)</option><option value="center">Centre (alternate)</option></select>
+  </label>
+  <label>Diagonal
+    <select id="diagonal"><option value="1-2">1–2 (normal match)</option><option value="0-3">0–3 (alternate)</option></select>
+  </label>
+  <label><input id="groupColors" type="checkbox" checked> Colour by GPC group</label>
+  <label><input id="wireframe" type="checkbox"> Wireframe</label>
+  <label><input id="normals" type="checkbox"> Show normals</label>
+  <button id="load" type="button">Load map</button>
+  <button id="reset" type="button">Reset view</button>
+</div>
+<div id="status">Loading terrain preview…</div>
+<div id="help">Drag: orbit · Wheel: zoom · Right-drag: pan</div>
+<script type="module" src="./src/terrain-preview.js"></script>
+</body>
+</html>
