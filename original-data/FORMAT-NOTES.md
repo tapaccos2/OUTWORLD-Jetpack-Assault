@@ -141,3 +141,5 @@ node tools/inspect-gry-blocks.mjs original-data/gry/*.gry
 ```
 
 `o5.gry` has the common five-byte file trailer and one signature start but no paired `fact`/compressed block, so it is a format variant or an unresolved special case.
+
+Boundary validation against the ten available files confirms all **34 of 34** compressed-size fields end at the next record boundary, or exactly five bytes before EOF for the final record. All ten files share the final four-byte suffix `22 75 28 03` with a variable leading trailer byte. This validates the framing independently of the compression algorithm; it does not yet validate the `fact` value as an uncompressed length.
