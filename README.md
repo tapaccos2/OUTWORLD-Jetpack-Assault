@@ -43,4 +43,4 @@ The original mission files and sound-effect audio containers are being analyzed 
 - [Missing asset requirements](original-data/ASSET-REQUIREMENTS.md)
 - [Inspection tools](tools/README.md)
 
-The terrain files are **not yet decoded into actual vertices/heights**. The prototype should not be described as a faithful original-level rebuild until the terrain and mission placement formats have been decoded and validated.
+The original terrain geometry is **not yet decoded into actual vertices/heights**; the `.GRY` files are sound effects, not terrain. The prototype should not be described as a faithful original-level rebuild until the correct terrain asset format and mission placement data have been decoded and validated.
