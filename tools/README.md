@@ -44,4 +44,4 @@ node tools/scan-gry-tags.mjs original-data/gry/*.gry
 
 Searches for four-letter ASCII sequences followed by a plausible little-endian 32-bit length and reports candidate payload bytes plus both integer byte orders. Current scans find repeated `fact`/length-4 candidates in nine of the ten readable terrain files; this is a lead, not a proven chunk specification.
 
-The full current evidence and limitations are documented in `original-data/FORMAT-NOTES.md`.
+The full current evidence and limitations are documented in `original-data/FORMAT-NOTES.md`; per-file measurements are summarized in `original-data/GRY-STRUCTURE-INDEX.md`.
