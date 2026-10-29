@@ -79,11 +79,27 @@ jobs:
               await page.waitForTimeout(5000);
             }
             if (!terrainResponse || !terrainResponse.ok()) throw new Error('Terrain preview returned HTTP ' + (terrainResponse?.status() ?? 'no response'));
-            await page.waitForFunction(() => {
-              const status = document.querySelector('#status')?.innerText || '';
-              const canvas = document.querySelector('#referenceCanvas');
-              return status.includes('MAP RAG01') && canvas && canvas.width === 1660 && canvas.height === 1556;
-            }, null, { timeout: 30000 });
+            try {
+              await page.waitForFunction(() => {
+                const status = document.querySelector('#status')?.innerText || '';
+                const canvas = document.querySelector('#referenceCanvas');
+                return status.includes('MAP RAG01') && canvas && canvas.width === 1660 && canvas.height === 1556;
+              }, null, { timeout: 30000 });
+            } catch (error) {
+              const diagnostic = await page.evaluate(() => ({
+                title: document.title,
+                map: document.querySelector('#map')?.value,
+                status: document.querySelector('#status')?.innerText,
+                referenceTitle: document.querySelector('#referenceTitle')?.innerText,
+                referenceNote: document.querySelector('#referenceNote')?.innerText,
+                referenceSize: [document.querySelector('#referenceCanvas')?.width, document.querySelector('#referenceCanvas')?.height],
+                scripts: [...document.scripts].map(script => script.src).filter(Boolean)
+              }));
+              console.log('TERRAIN PREVIEW DIAGNOSTIC:', JSON.stringify(diagnostic));
+              console.log('TERRAIN PREVIEW BROWSER ERRORS BEFORE ASSERTION:', JSON.stringify(errors));
+              await page.screenshot({ path: 'terrain-preview-debug.png', fullPage: true });
+              throw error;
+            }
             await page.click('#referenceToggle');
             const referenceVisible = await page.evaluate(() => {
               const panel = document.querySelector('#referencePanel');
@@ -112,5 +128,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: outworld-browser-smoke-test
-          path: game-smoke-test.png
+          path: |
+            game-smoke-test.png
+            terrain-preview-smoke-test.png
+            terrain-preview-debug.png
           if-no-files-found: ignore
