@@ -68,3 +68,16 @@ Next:
 4. Continue linking these assets to `.MIS` placements and `.GRY` terrain data.
 
 No model, texture, animation, terrain, or mission-logic decoder is claimed yet. These notes distinguish confirmed byte layout from fields whose meanings remain unknown.
+
+## Validation update: `units.ff`
+
+Validated locally with `tools/inspect-ff-archives.mjs` on 2026-10-29. The reported archive is 9,468,892 bytes and passes every current directory-table check:
+
+- Header entry count: 121 (120 named resources plus the final empty-name EOF sentinel).
+- Directory end / first payload offset: 5,328.
+- Last sentinel offset: 9,468,892, exactly EOF.
+- Monotonic payload offsets; no validation errors.
+
+The index contains paired model/texture resources, including `laborer.dpc/.tpc`, `defenderWmortar.dpc/.tpc`, `flyingAssassin.dpc/.tpc`, `dropship.dpc/.tpc`, `strikecraft.dpc/.tpc`, `turret1.dpc/.tpc`, and `walkingBabyAssassin.dpc/.tpc`. These names directly explain several resources that were absent from the loose `structs/` directory: they are packaged inside `units.ff`. The archive also contains other vehicle/unit pairs and two text resources, `Brad.txt` and `Kirk.txt`.
+
+This validates the archive directory/index, not the internal DPC/TPC decoding. Next, extract the 120 payloads with `tools/extract-ff-resources.mjs`, then compare extracted files against loose `structs/` and mission references before inspecting resource headers and payload layouts.
