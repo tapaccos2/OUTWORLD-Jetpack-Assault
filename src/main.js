@@ -552,81 +552,19 @@ const muzzleCore=new THREE.Mesh(new THREE.SphereGeometry(.06,8,8),new THREE.Mesh
  root.userData={legs,arms,muzzle,muzzleCore,isEnemy,chest,head,helmet,face,pack};return root
 }
 
-// First-person sci-fi assault rifle: layered receiver, heat-shrouded barrel, optic, rails, magazine and grip.
-const weaponRig=new THREE.Group();camera.add(weaponRig);weaponRig.position.set(.24,-.24,-.90);weaponRig.scale.set(.56,.56,.56);weaponRig.rotation.set(-.025,-.035,-.015);
-const gunMetal=new THREE.MeshStandardMaterial({color:0x343a38,metalness:.72,roughness:.38});
-const gunEdge=new THREE.MeshStandardMaterial({color:0x7c8981,metalness:.66,roughness:.36});
-const gunDark=new THREE.MeshStandardMaterial({color:0x111715,metalness:.28,roughness:.62});
-const gunPolymer=new THREE.MeshStandardMaterial({color:0x252d2b,metalness:.12,roughness:.78});
-const gunEnergy=new THREE.MeshStandardMaterial({color:0x65b9b3,emissive:0x174a45,emissiveIntensity:.72,metalness:.28,roughness:.34});
-const gunRubber=new THREE.MeshStandardMaterial({color:0x171b18,roughness:.94});
-function gunPart(geo,material,pos,rot){const m=new THREE.Mesh(geo,material);m.position.set(...pos);if(rot)m.rotation.set(...rot);m.castShadow=false;m.receiveShadow=false;weaponRig.add(m);return m}
-// Receiver and angular upper cover
-gunPart(new THREE.BoxGeometry(.23,.19,.43),gunMetal,[0,0,0]);
-gunPart(new THREE.BoxGeometry(.205,.055,.38),gunEdge,[0,.112,-.015]);
-gunPart(new THREE.BoxGeometry(.18,.055,.20),gunDark,[0,.145,.075]);
-gunPart(new THREE.BoxGeometry(.18,.13,.16),gunPolymer,[0,-.02,.285]);
-gunPart(new THREE.BoxGeometry(.13,.12,.14),gunDark,[0,-.01,.405]);
-// Tapered barrel, muzzle brake and outer heat shroud
-gunPart(new THREE.CylinderGeometry(.035,.046,.43,10),gunDark,[0,.018,-.405],[Math.PI/2,0,0]);
-gunPart(new THREE.CylinderGeometry(.052,.044,.11,10),gunMetal,[0,.018,-.66],[Math.PI/2,0,0]);
-gunPart(new THREE.CylinderGeometry(.026,.026,.05,10),gunDark,[0,.018,-.733],[Math.PI/2,0,0]);
-gunPart(new THREE.CylinderGeometry(.012,.012,.34,8),gunEdge,[0,.072,-.39],[Math.PI/2,0,0]);
-gunPart(new THREE.BoxGeometry(.19,.10,.29),gunPolymer,[0,-.008,-.29]);
-for(let side of [-1,1]){
- gunPart(new THREE.BoxGeometry(.018,.055,.29),gunDark,[side*.105,.015,-.32]);
- for(let j=0;j<7;j++)gunPart(new THREE.BoxGeometry(.012,.018,.026),gunEdge,[side*.116,.018,-.435+j*.038]);
- // Side vents and attachment rails
- for(let j=0;j<4;j++)gunPart(new THREE.BoxGeometry(.009,.024,.026),gunMetal,[side*.119,.018,-.12+j*.047]);
- gunPart(new THREE.BoxGeometry(.055,.07,.12),gunDark,[side*.13,-.01,.015]);
-}
-// Angled magazine, pistol grip and stock
-gunPart(new THREE.BoxGeometry(.135,.22,.16),gunDark,[0,-.18,-.015],[.16,0,0]);
-gunPart(new THREE.BoxGeometry(.105,.17,.13),gunRubber,[0,-.16,.15],[.24,0,0]);
-gunPart(new THREE.BoxGeometry(.14,.16,.22),gunPolymer,[0,-.02,.29]);
-gunPart(new THREE.BoxGeometry(.125,.12,.18),gunDark,[0,-.01,.43]);
-gunPart(new THREE.BoxGeometry(.09,.15,.10),gunRubber,[0,-.12,.06],[.18,0,0]);
-gunPart(new THREE.BoxGeometry(.07,.04,.11),gunDark,[0,.17,.075]);
-// Picatinny top rail, optic housing and front sight
-gunPart(new THREE.BoxGeometry(.15,.025,.31),gunEdge,[0,.135,-.20]);
-for(let j=0;j<8;j++)gunPart(new THREE.BoxGeometry(.025,.014,.018),gunDark,[-.06+j*.017,.153,-.31]);
-gunPart(new THREE.BoxGeometry(.105,.075,.13),gunDark,[0,.205,-.035]);
-gunPart(new THREE.CylinderGeometry(.035,.035,.055,12),gunEnergy,[0,.21,-.035],[Math.PI/2,0,0]);
-gunPart(new THREE.BoxGeometry(.025,.045,.055),gunEdge,[0,.19,-.36]);
-gunPart(new THREE.BoxGeometry(.025,.055,.045),gunEdge,[0,.17,-.55]);
-// Small recessed power cell with restrained cyan status light
-gunPart(new THREE.BoxGeometry(.075,.035,.18),gunDark,[0,.09,-.20]);
-gunPart(new THREE.BoxGeometry(.036,.012,.12),gunEnergy,[0,.112,-.20]);
-weaponRig.traverse(o=>{if(o.isMesh){o.renderOrder=1000;if(o.material){o.material.depthTest=false;o.material.depthWrite=false}}});
-
+// First-person weapon: use the imported GLB asset only. No procedural gun geometry.
+const weaponRig=new THREE.Group();camera.add(weaponRig);
+weaponRig.position.set(.24,-.24,-.90);weaponRig.scale.set(.56,.56,.56);
+const fpFlash=new THREE.Group();
+const fpFlashOuter=new THREE.Mesh(new THREE.ConeGeometry(.038,.18,6),new THREE.MeshBasicMaterial({color:0xffb84d,transparent:true,opacity:.78,depthWrite:false,toneMapped:false}));
+fpFlashOuter.rotation.x=-Math.PI/2;fpFlashOuter.position.set(0,0,0);fpFlash.add(fpFlashOuter);
+const fpFlashCore=new THREE.Mesh(new THREE.SphereGeometry(.025,6,4),new THREE.MeshBasicMaterial({color:0xfff2cf,transparent:true,opacity:.9,depthWrite:false,toneMapped:false}));
+fpFlashCore.position.set(0,0,0);fpFlash.add(fpFlashCore);fpFlash.visible=false;weaponRig.add(fpFlash);
+const armRig=new THREE.Group();camera.add(armRig);
 // The first-person viewmodel uses the marine's actual armour, elbow joints, forearm plates and gloves.
 const armRig=new THREE.Group();camera.add(armRig);
 const fpFlash=new THREE.Group();const fpFlashOuter=new THREE.Mesh(new THREE.ConeGeometry(.038,.18,6),new THREE.MeshBasicMaterial({color:0xffb84d,transparent:true,opacity:.78,depthWrite:false,toneMapped:false}));fpFlashOuter.rotation.x=-Math.PI/2;fpFlashOuter.position.set(0,.015,-.67);fpFlash.add(fpFlashOuter);const fpFlashCore=new THREE.Mesh(new THREE.SphereGeometry(.025,6,4),new THREE.MeshBasicMaterial({color:0xfff2cf,transparent:true,opacity:.9,depthWrite:false,toneMapped:false}));fpFlashCore.position.set(0,.015,-.59);fpFlash.add(fpFlashCore);fpFlash.visible=false;weaponRig.add(fpFlash);
-// Load a CC0 stylized assault-rifle GLB. The procedural rifle remains as a fallback if the asset host is unavailable.
-const fallbackWeaponMeshes=[];
-weaponRig.traverse(o=>{if(o.isMesh&&o!==fpFlashOuter&&o!==fpFlashCore)fallbackWeaponMeshes.push(o)});
-const rifleAssetURL='https://raw.githubusercontent.com/petroulacl/fps-asset-kit/main/weapons/flat_guns_west/Flat%20Guns%20West/GLB/Rifle_Assault_West.glb';
-if(false && window.GLTFLoader){
- const rifleLoader=new window.GLTFLoader();
- rifleLoader.load(rifleAssetURL,gltf=>{
-  const model=gltf.scene;
-  model.updateMatrixWorld(true);
-  const bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
-  const longest=Math.max(size.x,size.y,size.z)||1;
-  // Normalize imported model dimensions, then orient its longest axis down the view direction.
-  model.scale.setScalar(.96/longest);
-  model.position.sub(center.multiplyScalar(.96/longest));
-  // The asset's muzzle axis is local -Z. Keep that axis aligned with camera-forward.
-  model.rotation.set(0,0,0);
-  model.position.set(.02,-.10,-.14);
-  model.traverse(part=>{if(part.isMesh){part.castShadow=false;part.receiveShadow=false;part.renderOrder=1000;if(part.material){part.material.depthTest=false;part.material.depthWrite=false;part.material.needsUpdate=true}}});
-  weaponRig.add(model);
-  fallbackWeaponMeshes.forEach(mesh=>mesh.visible=false);
-  weaponRig.userData.importedRifle=model;
-  console.info('OUTWORLD: CC0 assault rifle model loaded');
- },undefined,error=>console.warn('OUTWORLD rifle model unavailable; procedural rifle retained.',error));
-}
-
+// The dedicated imported first-person GLB below is the only visible weapon asset.
 
 const player=soldier(false);
 // Compatibility handle for the third-person toggle only; contains no procedural weapon geometry.
@@ -730,7 +668,15 @@ if(assetLoader){
   importedFP.updateMatrixWorld(true);
   importedFP.traverse(o=>{if(o.isMesh){o.renderOrder=1000;o.frustumCulled=false;if(o.material){o.material.depthTest=true;o.material.depthWrite=true;o.material.needsUpdate=true}}});
   fpAssetRig.add(importedFP);
-  // Keep the built-in rifle visible as a fallback; the external GLB has not rendered reliably in production.
+  // Attach the muzzle flash to the forward end of the real imported weapon asset.
+  const fpLocalBounds=new THREE.Box3().setFromObject(importedFP);
+  const fpLocalSize=fpLocalBounds.getSize(new THREE.Vector3());
+  const muzzleAnchor=new THREE.Group();
+  muzzleAnchor.position.set(fpLocalBounds.getCenter(new THREE.Vector3()).x,fpLocalBounds.min.y+fpLocalSize.y*.43,fpLocalBounds.min.z-.025);
+  importedFP.add(muzzleAnchor);
+  fpFlash.position.set(0,0,0);
+  muzzleAnchor.add(fpFlash);
+  weaponRig.userData.muzzleAnchor=muzzleAnchor;
   if(gltf.animations&&gltf.animations.length){
    const mixer=new THREE.AnimationMixer(importedFP);externalMixers.push(mixer);
    const idle=gltf.animations.find(a=>/idle/i.test(a.name))||gltf.animations[0];mixer.clipAction(idle).play();
@@ -837,7 +783,7 @@ function shoot(){if(dead||won||!started||shotCooldown>0)return;shotCooldown=.075
   if(along>=0&&along<bestAlong&&along<65){const t=THREE.MathUtils.clamp((axisTo+along*rayAxis)/Math.max(axisLen,1e-6),0,1),rayPoint=origin.clone().addScaledVector(dir,along),bodyPoint=foot.clone().addScaledVector(axis,t),radius=(e.userData.insect?.56:.48)*Math.max(e.scale.x,e.scale.z);if(rayPoint.distanceTo(bodyPoint)<radius){bestAlong=along;target=e;targetPoint=bodyPoint;targetDamage=t<.22?40:(t>.82?70:50)}}
  }
  if(target){target.userData.hp-=targetDamage;target.userData.hit=.2;document.querySelector('.reticle').classList.add('confirmed');hitConfirmTimer=.22;for(let i=0;i<10;i++)spawnSpark(targetPoint.clone().add(new THREE.Vector3((Math.random()-.5)*.42,(Math.random()-.5)*.48,(Math.random()-.5)*.35)),0xffad63);if(target.userData.hp<=0){target.visible=false;target.userData.hp=0;for(let i=0;i<24;i++)spawnSpark(target.position.clone().add(new THREE.Vector3((Math.random()-.5)*.9,1+Math.random()*1.5,(Math.random()-.5)*.9)),i%3===0?0x8caca4:0xff8d4d)}}
- const muzzleLocal=new THREE.Vector3(0.02,-.085,-.67);weaponRig.updateMatrixWorld(true);const muzzleWorld=muzzleLocal.applyMatrix4(weaponRig.matrixWorld);const start=thirdPerson?origin.clone().add(dir.clone().multiplyScalar(.65)):muzzleWorld;const end=target?targetPoint.clone():origin.clone().add(dir.clone().multiplyScalar(42));const bolt=new THREE.Mesh(new THREE.CylinderGeometry(.012,.022,1.25,6),new THREE.MeshBasicMaterial({color:target?0xffc46b:0x9df7ff,transparent:true,opacity:.86,depthWrite:false,toneMapped:false}));bolt.frustumCulled=false;scene.add(bolt);bullets.push({obj:bolt,life:.105,duration:.105,start,end,tracer:true,beam:true});fpFlash.visible=!thirdPerson;if(player.userData.muzzle)player.userData.muzzle.visible=true;if(player.userData.muzzleCore)player.userData.muzzleCore.visible=true;muzzleLife=.045}
+ scene.updateMatrixWorld(true);const muzzleWorld=weaponRig.userData.muzzleAnchor?weaponRig.userData.muzzleAnchor.getWorldPosition(new THREE.Vector3()):origin.clone().add(dir.clone().multiplyScalar(.65));const start=thirdPerson?origin.clone().add(dir.clone().multiplyScalar(.65)):muzzleWorld;const end=target?targetPoint.clone():origin.clone().add(dir.clone().multiplyScalar(42));const bolt=new THREE.Mesh(new THREE.CylinderGeometry(.012,.022,1.25,6),new THREE.MeshBasicMaterial({color:target?0xffc46b:0x9df7ff,transparent:true,opacity:.86,depthWrite:false,toneMapped:false}));bolt.frustumCulled=false;scene.add(bolt);bullets.push({obj:bolt,life:.105,duration:.105,start,end,tracer:true,beam:true});fpFlash.visible=!thirdPerson;if(player.userData.muzzle)player.userData.muzzle.visible=true;if(player.userData.muzzleCore)player.userData.muzzleCore.visible=true;muzzleLife=.045}
 function spawnSpark(pos,color){const mesh=new THREE.Mesh(new THREE.SphereGeometry(.028,5,4),new THREE.MeshBasicMaterial({color,toneMapped:false}));mesh.position.copy(pos);scene.add(mesh);sparks.push({obj:mesh,life:.35,vel:new THREE.Vector3((Math.random()-.5)*5,Math.random()*4,(Math.random()-.5)*5)})}
 function enemyShoot(enemy,distance){
  const muzzle=enemy.position.clone().add(new THREE.Vector3(0,1.48,.32).applyAxisAngle(new THREE.Vector3(0,1,0),enemy.rotation.y));
@@ -879,7 +825,7 @@ function update(dt){
  player.position.y=Math.max(0,player.position.y);
  const lookDir=new THREE.Vector3(-Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),-Math.cos(yaw)*Math.cos(pitch));if(thirdPerson){const behind=4.9,high=2.45,shoulder=1.45;const desiredCam=new THREE.Vector3(player.position.x+Math.sin(yaw)*behind+Math.cos(yaw)*shoulder,player.position.y+high,player.position.z+Math.cos(yaw)*behind-Math.sin(yaw)*shoulder);camera.position.lerp(desiredCam,1-Math.exp(-dt*8));const aim=player.position.clone().add(new THREE.Vector3(0,1.4,0)).add(lookDir.clone().multiplyScalar(6.2)).add(new THREE.Vector3(Math.cos(yaw)*.85,0,-Math.sin(yaw)*.85));camera.lookAt(aim)}else{camera.position.set(player.position.x,player.position.y+2.15,player.position.z);camera.lookAt(camera.position.clone().add(lookDir.multiplyScalar(25)))}
  const moving=Math.abs(fwd)+Math.abs(side)>.1;
- weaponRig.visible=!thirdPerson;armRig.visible=false;fpAssetRig.visible=false;marineRifle.visible=false;
+ weaponRig.visible=false;armRig.visible=false;fpAssetRig.visible=!thirdPerson;marineRifle.visible=false;
  // The imported first-person arms and rifle follow look pitch and locomotion as one authored viewmodel.
  const viewGait=performance.now()*.010;
  fpAssetRig.rotation.set(THREE.MathUtils.clamp(-pitch*.20,-.22,.22),THREE.MathUtils.clamp(-yawDelta*.08,-.08,.08),moving?Math.sin(viewGait)*.012:0);
