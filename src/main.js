@@ -537,7 +537,7 @@ const muzzleCore=new THREE.Mesh(new THREE.SphereGeometry(.06,8,8),new THREE.Mesh
 }
 
 // First-person assault rifle: compact machined-metal silhouette, restrained wear and subdued status light.
-const weaponRig=new THREE.Group();camera.add(weaponRig);weaponRig.position.set(.36,-.31,-.78);weaponRig.scale.set(.92,.92,.92);weaponRig.rotation.set(-.025,-.035,-.015);
+const weaponRig=new THREE.Group();camera.add(weaponRig);weaponRig.position.set(.34,-.30,-.76);weaponRig.scale.set(.76,.76,.76);weaponRig.rotation.set(-.025,-.035,-.015);
 const gunMetal=new THREE.MeshStandardMaterial({color:0x343a38,metalness:.62,roughness:.48});
 const gunEdge=new THREE.MeshStandardMaterial({color:0x626863,metalness:.58,roughness:.43});
 const gunDark=new THREE.MeshStandardMaterial({color:0x171b19,metalness:.18,roughness:.72});
@@ -558,6 +558,11 @@ gunPart(new THREE.BoxGeometry(.13,.16,.22),gunPolymer,[0,-.015,.30]);
 gunPart(new THREE.BoxGeometry(.12,.12,.17),gunDark,[0,-.01,.46]);
 gunPart(new THREE.BoxGeometry(.055,.12,.07),gunPolymer,[0,-.12,.075],[.18,0,0]);
 gunPart(new THREE.BoxGeometry(.055,.04,.11),gunDark,[0,.17,.075]);
+gunPart(new THREE.BoxGeometry(.145,.035,.24),gunEdge,[0,.105,-.19]);
+gunPart(new THREE.BoxGeometry(.06,.018,.30),gunEnergy,[0,.14,-.25]);
+gunPart(new THREE.BoxGeometry(.07,.055,.09),gunMetal,[.11,.015,-.02]);
+gunPart(new THREE.BoxGeometry(.07,.055,.09),gunMetal,[-.11,.015,-.02]);
+gunPart(new THREE.BoxGeometry(.12,.045,.12),gunDark,[0,.16,-.48]);
 gunPart(new THREE.BoxGeometry(.065,.035,.15),gunDark,[0,.16,-.12]);
 gunPart(new THREE.BoxGeometry(.018,.018,.075),gunEnergy,[0,.181,-.13]);
 weaponRig.traverse(o=>{if(o.isMesh){o.renderOrder=1000;if(o.material){o.material.depthTest=false;o.material.depthWrite=false}}});
