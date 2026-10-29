@@ -617,11 +617,14 @@ if(assetLoader){
      const accessoryBounds=new THREE.Box3().setFromObject(o);
      const accessorySize=accessoryBounds.getSize(new THREE.Vector3());
      const accessoryCenter=accessoryBounds.getCenter(new THREE.Vector3());
+     // setFromObject returns world coordinates; convert the center back into soldier-local space
+     // so this works when the player moves anywhere in the level.
+     const soldierLocalCenter=importedSoldier.worldToLocal(accessoryCenter.clone());
      const maxDim=Math.max(accessorySize.x,accessorySize.y,accessorySize.z);
-     const atSideOfHead=accessoryCenter.y>1.62&&accessoryCenter.y<2.36&&Math.abs(accessoryCenter.x)>.105&&Math.abs(accessoryCenter.x)<.62;
+     const atSideOfHead=soldierLocalCenter.y>1.62&&soldierLocalCenter.y<2.36&&Math.abs(soldierLocalCenter.x)>.105&&Math.abs(soldierLocalCenter.x)<.62;
      if(maxDim<.72&&atSideOfHead){
       o.visible=false;
-      console.info('OUTWORLD: removed side-head accessory mesh',o.name,{x:accessoryCenter.x,y:accessoryCenter.y,z:accessoryCenter.z,size:maxDim});
+      console.info('OUTWORLD: removed side-head accessory mesh',o.name,{x:soldierLocalCenter.x,y:soldierLocalCenter.y,z:soldierLocalCenter.z,size:maxDim});
      }
     }
     if(o.isBone){
@@ -663,7 +666,7 @@ if(assetLoader){
    // Preserve the geometry-centering correction; overwriting position here previously discarded it.
    const centerOffset=new THREE.Vector3(-rifleCenter.x,-rifleCenter.y,-rifleCenter.z).multiplyScalar(rifle.scale.x);
    rifle.position.copy(centerOffset);
-   rifle.rotation.set(0,0,0); // The imported M4A1 asset already faces forward; half-turn made it point backwards.
+   rifle.rotation.set(0,Math.PI/2,0); // Rotate the asset's length axis into the character's forward/back axis.
    rifle.updateMatrixWorld(true);
    rifle.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;o.frustumCulled=false;if(o.material){o.material.depthWrite=true;o.material.needsUpdate=true}}});
    // Parent the real rifle to the animated right hand and add grip offset to the centering correction.
@@ -825,7 +828,7 @@ function shoot(){if(dead||won||!started||shotCooldown>0)return;shotCooldown=.075
   if(along>=0&&along<bestAlong&&along<65){const t=THREE.MathUtils.clamp((axisTo+along*rayAxis)/Math.max(axisLen,1e-6),0,1),rayPoint=origin.clone().addScaledVector(dir,along),bodyPoint=foot.clone().addScaledVector(axis,t),radius=(e.userData.insect?.56:.48)*Math.max(e.scale.x,e.scale.z);if(rayPoint.distanceTo(bodyPoint)<radius){bestAlong=along;target=e;targetPoint=bodyPoint;targetDamage=t<.22?40:(t>.82?70:50)}}
  }
  if(target){target.userData.hp-=targetDamage;target.userData.hit=.2;document.querySelector('.reticle').classList.add('confirmed');hitConfirmTimer=.22;for(let i=0;i<10;i++)spawnSpark(targetPoint.clone().add(new THREE.Vector3((Math.random()-.5)*.42,(Math.random()-.5)*.48,(Math.random()-.5)*.35)),0xffad63);if(target.userData.hp<=0){target.visible=false;target.userData.hp=0;for(let i=0;i<24;i++)spawnSpark(target.position.clone().add(new THREE.Vector3((Math.random()-.5)*.9,1+Math.random()*1.5,(Math.random()-.5)*.9)),i%3===0?0x8caca4:0xff8d4d)}}
- scene.updateMatrixWorld(true);const muzzleWorld=weaponRig.userData.muzzleAnchor?weaponRig.userData.muzzleAnchor.getWorldPosition(new THREE.Vector3()):origin.clone().add(dir.clone().multiplyScalar(.65));const start=thirdPerson&&importedSoldier?.userData.thirdPersonWeapon?importedSoldier.userData.thirdPersonWeapon.localToWorld(new THREE.Vector3(0,0,.46)):thirdPerson?player.localToWorld(new THREE.Vector3(.18,1.34,-.24)):muzzleWorld;const end=target?targetPoint.clone():origin.clone().add(dir.clone().multiplyScalar(42));worldMuzzleFlash.position.copy(start);worldMuzzleFlash.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,-1),dir);worldMuzzleFlash.visible=true;const bolt=new THREE.Mesh(new THREE.CylinderGeometry(.025,.038,2.4,7),new THREE.MeshBasicMaterial({color:0x9df7ff,transparent:true,opacity:1,depthWrite:false,depthTest:false,toneMapped:false}));bolt.frustumCulled=false;bolt.renderOrder=1001;scene.add(bolt);bullets.push({obj:bolt,life:.18,duration:.18,start,end,tracer:true,beam:true});fpFlash.visible=false;if(player.userData.muzzle)player.userData.muzzle.visible=true;if(player.userData.muzzleCore)player.userData.muzzleCore.visible=true;muzzleLife=.09}
+ scene.updateMatrixWorld(true);const muzzleWorld=weaponRig.userData.muzzleAnchor?weaponRig.userData.muzzleAnchor.getWorldPosition(new THREE.Vector3()):origin.clone().add(dir.clone().multiplyScalar(.65));const tpRifle=thirdPerson&&importedSoldier?.userData.thirdPersonWeapon?importedSoldier.userData.thirdPersonWeapon:null;let start=muzzleWorld;if(tpRifle){const rb=new THREE.Box3().setFromObject(tpRifle);const lo=rb.min,hi=rb.max;const corners=[new THREE.Vector3(lo.x,lo.y,lo.z),new THREE.Vector3(lo.x,lo.y,hi.z),new THREE.Vector3(lo.x,hi.y,lo.z),new THREE.Vector3(lo.x,hi.y,hi.z),new THREE.Vector3(hi.x,lo.y,lo.z),new THREE.Vector3(hi.x,lo.y,hi.z),new THREE.Vector3(hi.x,hi.y,lo.z),new THREE.Vector3(hi.x,hi.y,hi.z)];start=corners.reduce((best,p)=>p.dot(dir)>best.dot(dir)?p:best,corners[0]).clone();}else if(thirdPerson){start=player.localToWorld(new THREE.Vector3(.18,1.34,-.24));}const end=target?targetPoint.clone():origin.clone().add(dir.clone().multiplyScalar(42));worldMuzzleFlash.position.copy(start);worldMuzzleFlash.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,-1),dir);worldMuzzleFlash.visible=true;const bolt=new THREE.Mesh(new THREE.CylinderGeometry(.025,.038,2.4,7),new THREE.MeshBasicMaterial({color:0x9df7ff,transparent:true,opacity:1,depthWrite:false,depthTest:false,toneMapped:false}));bolt.frustumCulled=false;bolt.renderOrder=1001;scene.add(bolt);bullets.push({obj:bolt,life:.18,duration:.18,start,end,tracer:true,beam:true});fpFlash.visible=false;if(player.userData.muzzle)player.userData.muzzle.visible=true;if(player.userData.muzzleCore)player.userData.muzzleCore.visible=true;muzzleLife=.09}
 function spawnSpark(pos,color){const mesh=new THREE.Mesh(new THREE.SphereGeometry(.028,5,4),new THREE.MeshBasicMaterial({color,toneMapped:false}));mesh.position.copy(pos);scene.add(mesh);sparks.push({obj:mesh,life:.35,vel:new THREE.Vector3((Math.random()-.5)*5,Math.random()*4,(Math.random()-.5)*5)})}
 function enemyShoot(enemy,distance){
  const muzzle=enemy.position.clone().add(new THREE.Vector3(0,1.48,.32).applyAxisAngle(new THREE.Vector3(0,1,0),enemy.rotation.y));
