@@ -116,3 +116,9 @@ node tools/scan-gry-tags.mjs original-data/gry/*.gry
 ```
 
 At this point the useful lead is not simply the `00 A0 B9 B7` sequence: it is the combination of a shared terrain preamble, repeated `fact`/length-4 candidates, and different patterns in `o5.gry`. The next validation should determine whether these candidate offsets form a consistent record sequence and whether the four-byte payload values correlate with the terrain header values or file lengths.
+
+### Correlation between the marker and `fact`
+
+A cross-offset check produced a stronger relationship: **every one of the 16 `00 A0 B9 B7` occurrences in nine terrain files is exactly 59 bytes before a `fact` tag whose following length value is 4**. The pairings are present in `Q.gry` (2), `a2.gry` (1), `d4.gry` (6), `j1.gry` (1), `o2.gry` (2), `o7.gry` (1), `r1.gry` (1), `r2.gry` (1), and `r6.gry` (1). `o5.gry` has one marker occurrence but no candidate `fact` tag and its 64-byte signature differs from the other files.
+
+This is now a repeatable structural relationship, not just a shared byte sequence. It suggests the marker begins a 59-byte structure that ends at a `fact`/length-4 field. The exact meanings of those 59 bytes and the four-byte payload are still unknown, so the parser does not assign semantics yet. The tag scanner now reports marker offsets and matching marker-to-tag pairs explicitly.
