@@ -485,7 +485,7 @@ const chestPanel=new THREE.Mesh(new THREE.BoxGeometry(.18,.26,.055),isEnemy?viso
  const muzzleRing=new THREE.Mesh(new THREE.TorusGeometry(.055,.012,6,16),cyan);muzzleRing.position.set(0,.005,.963);rifle.add(muzzleRing);
  const rifleRail=new THREE.Mesh(new THREE.BoxGeometry(.07,.035,.49),dark);rifleRail.position.set(0,.119,.22);rifle.add(rifleRail);
  for(let n=0;n<5;n++){const notch=new THREE.Mesh(new THREE.BoxGeometry(.078,.018,.035),armorLite);notch.position.set(0,.143,.03+n*.09);rifle.add(notch)}
- const stock=new THREE.Mesh(new THREE.BoxGeometry(.13,.14,.24),dark);stock.position.set(0,-.015,-.25);rifle.add(stock);
+ const rifleStock=new THREE.Mesh(new THREE.BoxGeometry(.13,.14,.24),dark);rifleStock.position.set(0,-.015,-.25);rifle.add(rifleStock);
  const grip=new THREE.Mesh(new THREE.BoxGeometry(.095,.22,.13),black);grip.position.set(0,-.17,.10);grip.rotation.x=-.16;rifle.add(grip);
  const magazine=new THREE.Mesh(new THREE.BoxGeometry(.115,.25,.15),armor);magazine.position.set(0,-.18,.28);magazine.rotation.x=-.12;rifle.add(magazine);
  const powerCell=new THREE.Mesh(new THREE.BoxGeometry(.035,.12,.20),cyan);powerCell.position.set(.095,.01,.20);rifle.add(powerCell);
