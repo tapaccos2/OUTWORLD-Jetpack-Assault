@@ -9,6 +9,11 @@ const diagonalSelect = document.querySelector('#diagonal');
 const groupColorsCheck = document.querySelector('#groupColors');
 const wireframeCheck = document.querySelector('#wireframe');
 const normalsCheck = document.querySelector('#normals');
+const referencePanel = document.querySelector('#referencePanel');
+const referenceCanvas = document.querySelector('#referenceCanvas');
+const referenceTitle = document.querySelector('#referenceTitle');
+const referenceNote = document.querySelector('#referenceNote');
+const referenceToggle = document.querySelector('#referenceToggle');
 
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -48,6 +53,114 @@ let normalLines = null;
 let currentData = null;
 let currentBounds = null;
 let currentScale = 1;
+let referenceRequestId = 0;
+
+// Mission-map images available in original-data/misn. The mapping is explicit
+// because original filenames/capitalisation do not follow one uniform pattern.
+const mapReferences = {
+  rag01: 'rag01m1.PCX', rag02: 'rag02m1.PCX', rag03: 'rag03m1.PCX',
+  rag04: 'rag04m1.PCX', rag05: 'rag05.PCX', rag2m: 'r02mm1.PCX',
+  rag3m: 'r04mm1.PCX',
+  anub01: 'anub01m1.PCX', anub02: 'anub02m1.PCX', anub03: 'anub03m1.PCX',
+  anub04: 'anub04m1.PCX', anub05: 'anub05m1.PCX',
+  anub1m: 'a01mm1.PCX', anub2m: 'a02mm1.PCX', anub3m: 'a03mm1.PCX',
+  oasis01: 'oasis1m1.PCX', oasis02: 'oasis2m1.PCX', oasis03: 'oasis3m1.PCX',
+  oasis04: 'oasis4m1.PCX', oasis05: 'oasis5.PCX', oasis06: 'oasis6m1.PCX',
+  oasis1m: 'o01mm1.PCX',
+  dead01: 'dead01m1.PCX', dead02: 'dead02m1.PCX', dead03: 'dead03m1.PCX',
+  dead04: 'dead04m1.PCX', dead1m: 'd01mm4.PCX',
+  jug01: 'jug01m1.PCX', jug02: 'jug02m1.PCX',
+  mik01: 'mik01m1.PCX', mik1m: 'm01mm1.PCX'
+};
+
+function decodeIndexedPcx(buffer) {
+  const bytes = new Uint8Array(buffer);
+  const view = new DataView(buffer);
+  const u16 = offset => view.getUint16(offset, true);
+  const width = u16(8) - u16(4) + 1;
+  const height = u16(10) - u16(6) + 1;
+  const bits = bytes[3], planes = bytes[65], bytesPerLine = u16(66);
+  if (bytes[0] !== 10 || bytes[1] !== 5 || bytes[2] !== 1 || bits !== 8 || planes !== 1 ||
+      width < 1 || height < 1 || bytesPerLine < width) {
+    throw new Error('Unsupported PCX format; expected version 5, RLE, 8-bit indexed image.');
+  }
+  const paletteStart = bytes.length - 769;
+  if (paletteStart < 128 || bytes[paletteStart] !== 12) throw new Error('PCX palette marker not found.');
+  const expected = height * bytesPerLine;
+  const decoded = new Uint8Array(expected);
+  let input = 128, output = 0;
+  while (output < expected && input < paletteStart) {
+    const value = bytes[input++];
+    if ((value & 0xc0) === 0xc0) {
+      const count = value & 0x3f;
+      if (!count || input >= paletteStart) throw new Error('Invalid PCX RLE run.');
+      const pixel = bytes[input++];
+      decoded.fill(pixel, output, Math.min(output + count, expected));
+      output += count;
+    } else {
+      decoded[output++] = value;
+    }
+  }
+  if (output < expected) throw new Error(`PCX pixel data truncated (${output}/${expected}).`);
+  const canvas = referenceCanvas;
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext('2d', { alpha: false });
+  const image = context.createImageData(width, height);
+  const palette = bytes.subarray(paletteStart + 1, paletteStart + 769);
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const index = decoded[y * bytesPerLine + x] * 3;
+      const out = (y * width + x) * 4;
+      image.data[out] = palette[index];
+      image.data[out + 1] = palette[index + 1];
+      image.data[out + 2] = palette[index + 2];
+      image.data[out + 3] = 255;
+    }
+  }
+  context.putImageData(image, 0, 0);
+  return { width, height };
+}
+
+async function loadMapReference(mapName) {
+  const requestId = ++referenceRequestId;
+  const filename = mapReferences[mapName];
+  referenceCanvas.hidden = true;
+  if (!filename) {
+    referenceTitle.textContent = `${mapName.toUpperCase()} / NO MAPPED REFERENCE`;
+    referenceNote.textContent = 'No matching original mission-map filename is mapped for this resource. The mesh can still be inspected in top-down view.';
+    referenceCanvas.width = 1;
+    referenceCanvas.height = 1;
+    return;
+  }
+  referenceTitle.textContent = `${mapName.toUpperCase()} / ${filename}`;
+  referenceNote.textContent = 'Original mission/briefing map image. Compare the overall arrangement visually; this image is not a terrain texture and is not yet coordinate-aligned to the mesh.';
+  try {
+    const response = await fetch(`./original-data/misn/${filename}`);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const buffer = await response.arrayBuffer();
+    if (requestId !== referenceRequestId) return;
+    const size = decodeIndexedPcx(buffer);
+    referenceCanvas.hidden = false;
+    referenceNote.textContent = `Original mission/briefing image, ${size.width} × ${size.height}. Use Top-down view to compare broad layout. Image is not a texture and has not been coordinate-registered to the mesh.`;
+  } catch (error) {
+    if (requestId !== referenceRequestId) return;
+    referenceTitle.textContent = `${mapName.toUpperCase()} / REFERENCE UNAVAILABLE`;
+    referenceNote.textContent = `Could not load ${filename}: ${error.message}. The 3D mesh remains available for inspection.`;
+    console.warn('Mission reference image could not be loaded', filename, error);
+  }
+}
+
+function setTopDownView() {
+  if (!currentData || !currentBounds) return;
+  camera.up.set(0, 1, 0);
+  controls.target.set(0, 0, currentBounds.targetZ);
+  const distance = Math.max(currentBounds.spanX, currentBounds.spanY) * currentScale * 1.45;
+  camera.position.set(0, 0, Math.max(10, distance));
+  camera.lookAt(0, 0, currentBounds.targetZ);
+  controls.update();
+}
+
 
 function setStatus(message) {
   status.textContent = message;
@@ -270,6 +383,8 @@ function makeMesh() {
   }
 
   const targetZ = (spanZ * currentScale) / 2;
+  currentBounds = { spanX, spanY, spanZ, targetZ };
+  camera.up.set(0, 0, 1);
   controls.target.set(0, 0, targetZ);
   camera.position.set(80, -105, Math.max(45, targetZ + 80));
   camera.far = Math.max(2000, Math.max(spanX, spanY) * currentScale * 20);
@@ -300,6 +415,7 @@ async function loadMap() {
     const [gpcBuffer, rpcBuffer] = await Promise.all([gpcResponse.arrayBuffer(), rpcResponse.arrayBuffer()]);
     currentData = parsePair(gpcBuffer, rpcBuffer, name);
     makeMesh();
+    await loadMapReference(name);
   } catch (error) {
     clearMesh();
     setStatus(`Could not load ${name.toUpperCase()}: ${error.message}\nServe the repository over HTTP(S); binary resource files are fetched from ./original-data/structs/.`);
@@ -308,6 +424,11 @@ async function loadMap() {
 }
 
 document.querySelector('#load').addEventListener('click', loadMap);
+document.querySelector('#topDown').addEventListener('click', setTopDownView);
+referenceToggle.addEventListener('click', () => {
+  referencePanel.hidden = !referencePanel.hidden;
+  referenceToggle.textContent = referencePanel.hidden ? 'Show map reference' : 'Hide map reference';
+});
 document.querySelector('#reset').addEventListener('click', () => { if (currentData) makeMesh(); });
 for (const control of [anchorSelect, diagonalSelect, groupColorsCheck, normalsCheck]) control.addEventListener('change', () => { if (currentData) makeMesh(); });
 wireframeCheck.addEventListener('change', () => { if (terrainMesh) terrainMesh.material.wireframe = wireframeCheck.checked; });
