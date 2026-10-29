@@ -34,12 +34,12 @@
    {file:'Rock002.glb',x:-21,z:-45,s:2.1,r:1.6},{file:'Rock003.glb',x:22,z:-48,s:2.2,r:2.9},
    {file:'Rock001.glb',x:-27,z:-57,s:2.6,r:.2},{file:'Rock002.glb',x:28,z:-60,s:2.6,r:2.4},
    // 3D alien trees at varied heights, placed along both sides of the arena
-   {file:'TreeHigh001.glb',x:-28,z:-22,s:5.3,r:.4},{file:'TreeMed002.glb',x:-18,z:-28,s:4.1,r:1.8},
-   {file:'TreeLow003.glb',x:-34,z:-39,s:3.1,r:2.6},{file:'TreeHigh002.glb',x:30,z:-25,s:5.0,r:2.2},
-   {file:'TreeMed001.glb',x:19,z:-34,s:4.0,r:.7},{file:'TreeLow002.glb',x:35,z:-43,s:3.0,r:1.3},
-   {file:'TreeHigh003.glb',x:-31,z:-54,s:5.2,r:1.1},{file:'TreeMed003.glb',x:-18,z:-62,s:4.0,r:2.7},
-   {file:'TreeLow001.glb',x:32,z:-58,s:3.0,r:.2},{file:'TreeHigh001.glb',x:20,z:-72,s:5.1,r:1.6},
-   {file:'TreeMed002.glb',x:-35,z:-76,s:4.0,r:2.1},
+   {file:'TreeHigh001.glb',x:-17,z:-18,s:8.5,r:.4},{file:'TreeMed002.glb',x:-12,z:-25,s:6.5,r:1.8},
+   {file:'TreeLow003.glb',x:-22,z:-35,s:4.8,r:2.6},{file:'TreeHigh002.glb',x:18,z:-20,s:8.0,r:2.2},
+   {file:'TreeMed001.glb',x:12,z:-30,s:6.4,r:.7},{file:'TreeLow002.glb',x:23,z:-40,s:4.8,r:1.3},
+   {file:'TreeHigh003.glb',x:-20,z:-49,s:8.2,r:1.1},{file:'TreeMed003.glb',x:-13,z:-59,s:6.3,r:2.7},
+   {file:'TreeLow001.glb',x:21,z:-56,s:4.8,r:.2},{file:'TreeHigh001.glb',x:14,z:-70,s:8.0,r:1.6},
+   {file:'TreeMed002.glb',x:-22,z:-76,s:6.2,r:2.1},
    // Bushes and ground cover add detail without creating a wall of foliage
    {file:'Bush001.glb',x:-13,z:-20,s:1.45,r:.2},{file:'Bush002.glb',x:13,z:-22,s:1.4,r:1.5},
    {file:'Bush002.glb',x:-24,z:-31,s:1.55,r:2.5},{file:'Bush001.glb',x:25,z:-34,s:1.5,r:.8},
@@ -59,15 +59,21 @@
   };
   const loaded=await Promise.all(chosen.map(async item=>{try{
    const gltf=await getSource(item.file),model=gltf.scene.clone(true);
+   model.rotation.y=item.r;
    model.updateMatrixWorld(true);
-   const bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3());
-   const maxDim=Math.max(size.x,size.y,size.z)||1;
-   model.scale.setScalar(item.s/maxDim);
+   const originalBounds=new THREE.Box3().setFromObject(model);
+   const originalSize=originalBounds.getSize(new THREE.Vector3());
+   // Tree height, not widest dimension, controls scale. Center X/Z and put the feet on the terrain.
+   const targetHeight=item.s;
+   const scale=targetHeight/Math.max(.001,originalSize.y);
+   model.scale.setScalar(scale);
    model.updateMatrixWorld(true);
    const box=new THREE.Box3().setFromObject(model);
+   const center=box.getCenter(new THREE.Vector3());
+   model.position.x+=item.x-center.x;
+   model.position.z+=item.z-center.z;
    model.position.y-=box.min.y;
-   model.position.x=item.x;model.position.z=item.z;model.rotation.y=item.r;
-   model.traverse(part=>{if(part.isMesh){part.castShadow=!lowPowerDevice;part.receiveShadow=true}});
+   model.traverse(part=>{if(part.isMesh){part.castShadow=!lowPowerDevice;part.receiveShadow=true;part.frustumCulled=false}});
    scene.add(model);
    return item.file;
   }catch(e){console.warn('Environment model failed',item.file,e);return null}}));
