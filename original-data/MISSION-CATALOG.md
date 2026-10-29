@@ -33,8 +33,8 @@ Built from the paired `.txt` mission overview files in `original-data/misn/`. Th
 
 ## Asset relationships found in the binary mission files
 
-Readable strings inside the `.MIS` files contain resource references such as `.DPC` unit/scene resources and `.PCX` briefing/map images. For example, `Anub01.mis` references `anub01.dpc`, several unit `.dpc` files, and `anub01m1.pcx`. This confirms that mission logic depends on assets outside the terrain file alone.
+Readable strings inside the `.MIS` files contain resource references such as `.DPC` unit/scene resources and `.PCX` briefing/map images. For example, `Anub01.mis` references `anub01.dpc`, several unit `.dpc` files, and `anub01m1.pcx`. This confirms that mission logic depends on assets outside the mission file alone.
 
 ## Important limitation
 
-The briefing text is not the same as the mission's actual object placement or terrain. Full reconstruction still requires decoding binary `.MIS` records and identifying the actual terrain asset format. The `.GRY` files are sound-effect audio containers, not terrain data; referenced resources must be matched to their original files. The current inspector script only inventories byte offsets, printable strings, resource references, and initial terrain bytes; it is not yet a full decoder.
+The briefing text is not the same as the mission's actual object placement or terrain. Full reconstruction still requires decoding binary `.MIS` records and identifying the actual terrain asset format. The `.GRY` files are sound-effect audio containers, not terrain data; referenced resources must be matched to their original files. The current inspector script only inventories byte offsets, printable strings, resource references, and initial GRY audio-container bytes; it is not yet a full decoder.
