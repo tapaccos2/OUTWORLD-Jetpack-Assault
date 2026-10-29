@@ -89,14 +89,15 @@ const terrainPos=terrainGeo.attributes.position;
 const roadColors=new Float32Array(terrainPos.count*3);
 for(let i=0;i<terrainPos.count;i++){
  const x=terrainPos.getX(i),z=-terrainPos.getY(i),edge=Math.abs(x);
- const roadEdge=Math.max(0,Math.min(1,(edge-3.1)/.65));
- const shoulder=Math.max(0,Math.min(1,(edge-5.0)/2.2));
- const worn=.97+.018*Math.sin(z*1.7+x*.6)+.014*Math.sin(z*3.1-x*1.3);
- // Distinct compacted road bed, with a clear edge and dusty shoulders.
- const track=1-roadEdge*.68;
- const r=(track*(1-shoulder*.12))*worn;
- const g=(track*(1-shoulder*.18))*worn;
- const b=(track*(1-shoulder*.24))*worn;
+ // Dark asphalt centre, a worn verge, and dusty terrain beyond the road edge.
+  const road=Math.max(0,1-Math.max(0,edge-3.45)/.95);
+  const verge=Math.max(0,1-Math.abs(edge-4.25)/.8);
+  const worn=.94+.025*Math.sin(z*1.7+x*.6)+.018*Math.sin(z*3.1-x*1.3);
+  const asphalt=1-road*.63;
+  const shoulderLift=verge*.13;
+  const r=(asphalt+shoulderLift)*worn;
+  const g=(asphalt+shoulderLift*.9)*worn;
+  const b=(asphalt+shoulderLift*.72)*worn;
  roadColors[i*3]=r;roadColors[i*3+1]=g;roadColors[i*3+2]=b;
 }
 terrainGeo.setAttribute('color',new THREE.BufferAttribute(roadColors,3));
