@@ -57,7 +57,30 @@
    {asset:'boulders',x:13,z:-35,scale:.7,rotation:2.4,kind:'rock',collision:1.5},
    {asset:'boulders',x:-13,z:-51,scale:.7,rotation:.2,kind:'rock',collision:1.5},
    {asset:'canopy',x:-12,z:-31,height:6.3,rotation:1.8,kind:'tree',collision:1.5},
-   {asset:'buttress',x:12,z:-46,height:6.0,rotation:2.2,kind:'tree',collision:1.5}
+   {asset:'buttress',x:12,z:-46,height:6.0,rotation:2.2,kind:'tree',collision:1.5},
+   // Dense combat dressing: cover clusters are deliberately placed along the playable route,
+   // not only on the far outside edges of the ravine.
+   {asset:'boulders',x:-8.5,z:-10,scale:.72,rotation:.8,kind:'rock',collision:1.35},
+   {asset:'crate',x:8.5,z:-12,scale:.56,rotation:1.7,kind:'prop',collision:.8},
+   {asset:'canopy',x:14,z:-13,height:6.5,rotation:2.5,kind:'tree',collision:1.3},
+   {asset:'buttress',x:-15,z:-16,height:6.8,rotation:.4,kind:'tree',collision:1.35},
+   {asset:'boulders',x:5.5,z:-19,scale:.68,rotation:2.3,kind:'rock',collision:1.3},
+   {asset:'crate',x:-5.3,z:-20,scale:.55,rotation:.2,kind:'prop',collision:.8},
+   {asset:'canopy',x:16,z:-25,height:6.4,rotation:1.1,kind:'tree',collision:1.35},
+   {asset:'boulders',x:-15,z:-25,scale:.75,rotation:2.8,kind:'rock',collision:1.4},
+   {asset:'crate',x:4.5,z:-28,scale:.6,rotation:2.1,kind:'prop',collision:.85},
+   {asset:'boulders',x:9.5,z:-30,scale:.72,rotation:.6,kind:'rock',collision:1.35},
+   {asset:'canopy',x:-16,z:-32,height:6.8,rotation:2.1,kind:'tree',collision:1.4},
+   {asset:'crate',x:5.5,z:-34,scale:.56,rotation:1.4,kind:'prop',collision:.8},
+   {asset:'boulders',x:-8.5,z:-35,scale:.7,rotation:1.9,kind:'rock',collision:1.3},
+   {asset:'buttress',x:15,z:-36,height:6.3,rotation:2.7,kind:'tree',collision:1.3},
+   {asset:'crate',x:-5,z:-39,scale:.58,rotation:.9,kind:'prop',collision:.8},
+   {asset:'boulders',x:8.5,z:-42,scale:.72,rotation:2.5,kind:'rock',collision:1.35},
+   {asset:'canopy',x:-14,z:-45,height:6.4,rotation:1.5,kind:'tree',collision:1.35},
+   {asset:'crate',x:5,z:-46,scale:.58,rotation:2.7,kind:'prop',collision:.8},
+   {asset:'boulders',x:-8,z:-48,scale:.7,rotation:.3,kind:'rock',collision:1.3},
+   {asset:'buttress',x:14,z:-52,height:6.7,rotation:1.9,kind:'tree',collision:1.4},
+   {asset:'crate',x:7,z:-54,scale:.56,rotation:.4,kind:'prop',collision:.8}
   ];
   const chosen=lowPowerDevice?specs.filter((item,index)=>item.kind!=='rock'||index%3===0):specs;
   const sourceCache=new Map();
