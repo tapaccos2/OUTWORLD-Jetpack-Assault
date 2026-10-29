@@ -1,0 +1,37 @@
+name: Export candidate terrain meshes
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "tools/export-rpc-mesh.mjs"
+      - "original-data/structs/rag01.gpc"
+      - "original-data/structs/rag01.rpc"
+      - ".github/workflows/export-terrain-meshes.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Export candidate variants
+        run: |
+          mkdir -p out
+          node tools/export-rpc-mesh.mjs original-data/structs/rag01.gpc original-data/structs/rag01.rpc out/rag01-corner-diagonal12.obj
+          node tools/export-rpc-mesh.mjs original-data/structs/rag01.gpc original-data/structs/rag01.rpc out/rag01-center-diagonal12.obj --anchor=center
+          node tools/export-rpc-mesh.mjs original-data/structs/rag01.gpc original-data/structs/rag01.rpc out/rag01-corner-diagonal03.obj --diagonal=0-3
+          node tools/export-rpc-mesh.mjs original-data/structs/rag02.gpc original-data/structs/rag02.rpc out/rag02-corner-diagonal12.obj
+          node tools/export-rpc-mesh.mjs original-data/structs/oasis01.gpc original-data/structs/oasis01.rpc out/oasis01-corner-diagonal12.obj
+      - name: Upload OBJ candidates
+        uses: actions/upload-artifact@v4
+        with:
+          name: outwars-candidate-terrain-meshes
+          path: out/*.obj
+          if-no-files-found: error
+          retention-days: 14
