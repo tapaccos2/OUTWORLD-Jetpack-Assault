@@ -23,9 +23,18 @@ input[type=checkbox]{accent-color:#6ee7d8}
 #referencePanel{position:fixed;z-index:2;top:76px;right:12px;width:min(360px,34vw);max-height:calc(100vh - 152px);overflow:auto;padding:10px;border:1px solid #415056;border-radius:10px;background:#10191de8;backdrop-filter:blur(10px)}
 #referencePanel[hidden]{display:none}
 #referenceTitle{font-size:12px;font-weight:700;letter-spacing:.07em;color:#7fe4d6;margin-bottom:8px}
-#referenceCanvas{display:block;width:100%;height:auto;max-height:calc(100vh - 230px);object-fit:contain;background:#1b292e;border:1px solid #35474d}
+#referenceStack{position:relative;width:100%;line-height:0;background:#1b292e;border:1px solid #35474d}
+#referenceCanvas{display:block;width:100%;height:auto;max-height:calc(100vh - 390px);object-fit:contain;background:#1b292e}
+#overlayCanvas{position:absolute;inset:0;display:block;width:100%;height:100%;pointer-events:none}
+#overlayControls{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px;font-size:10px;line-height:1.25;color:#d5e1e3}
+#overlayControls label{display:flex;flex-direction:column;gap:4px;min-width:0}
+#overlayControls label.overlayEnabled{grid-column:1/-1;flex-direction:row;align-items:center;gap:7px}
+#overlayControls input[type=range]{width:100%;min-width:0;padding:0;accent-color:#74d9c9}
+#overlayControls input[type=checkbox]{accent-color:#74d9c9}
+#overlayControls button{grid-column:1/-1;font-size:10px;padding:6px 8px}
+#overlayControls output{color:#8fdbd1;font-variant-numeric:tabular-nums}
 #referenceNote{margin:8px 0 0;color:#b7c7cb;font-size:11px;line-height:1.45}
-@media(max-width:760px){#toolbar{gap:6px}#toolbar strong{width:100%}label,button,select{font-size:11px;padding:6px}#help{display:none}#referencePanel{top:auto;bottom:54px;left:12px;right:12px;width:auto;max-height:42vh}#referenceCanvas{max-height:30vh}}
+@media(max-width:760px){#toolbar{gap:6px}#toolbar strong{width:100%}label,button,select{font-size:11px;padding:6px}#help{display:none}#referencePanel{top:auto;bottom:54px;left:12px;right:12px;width:auto;max-height:42vh}#referenceCanvas{max-height:30vh}#overlayControls{gap:5px}}
 
 </style>
 </head>
@@ -57,9 +66,21 @@ input[type=checkbox]{accent-color:#6ee7d8}
   <button id="referenceToggle" type="button">Show map reference</button>
 </div>
 <aside id="referencePanel" hidden>
-  <div id="referenceTitle">ORIGINAL MISSION MAP</div>
-  <canvas id="referenceCanvas" aria-label="Original mission map reference"></canvas>
-  <p id="referenceNote">Reference images are the original mission/briefing map graphics, not terrain textures. They are provided for visual comparison; no scale or coordinate registration is implied.</p>
+  <div id="referenceTitle">ORIGINAL MISSION MAP + SURFACE OVERLAY</div>
+  <div id="referenceStack">
+    <canvas id="referenceCanvas" aria-label="Original mission map reference"></canvas>
+    <canvas id="overlayCanvas" aria-label="Unregistered candidate terrain-surface outlines"></canvas>
+  </div>
+  <div id="overlayControls">
+    <label class="overlayEnabled"><input id="overlayEnabled" type="checkbox" checked> Show candidate RPC surface overlay</label>
+    <label>Scale <output id="overlayScaleValue">100%</output><input id="overlayScale" type="range" min="25" max="250" step="5" value="100"></label>
+    <label>Rotation <output id="overlayRotationValue">0°</output><input id="overlayRotation" type="range" min="-180" max="180" step="5" value="0"></label>
+    <label>Horizontal offset <output id="overlayOffsetXValue">0%</output><input id="overlayOffsetX" type="range" min="-50" max="50" step="1" value="0"></label>
+    <label>Vertical offset <output id="overlayOffsetYValue">0%</output><input id="overlayOffsetY" type="range" min="-50" max="50" step="1" value="0"></label>
+    <label>Opacity <output id="overlayOpacityValue">75%</output><input id="overlayOpacity" type="range" min="10" max="100" step="5" value="75"></label>
+    <button id="overlayReset" type="button">Reset overlay alignment</button>
+  </div>
+  <p id="referenceNote">This overlays candidate RPC surface outlines on the original mission/briefing map. Adjust scale, rotation and offsets to compare shape/orientation. These are not ground textures and the overlay is not automatically coordinate-registered.</p>
 </aside>
 <div id="status">Loading terrain preview…</div>
 <div id="help">Drag: orbit · Wheel: zoom · Right-drag: pan</div>
