@@ -34,7 +34,7 @@
    boulders:'https://cdn.3dassets.dev/assets/18142/v1/model.glb',
    crashSite:'https://cdn.3dassets.dev/assets/17375/v1/model.glb',
    crate:'https://cdn.3dassets.dev/assets/27447/v1/model.glb',
-   building:'https://files.innerscene.com/library/low-poly-city-house-building-low-77087adb/6f6efe16b5c2161877b1/low-poly-city-house-building-low.glb'
+   building:'https://cdn.3dassets.dev/assets/36525/v1/model.glb'
   };
   const specs=[
    // Close urban street walls made from imported CC0 building models.
