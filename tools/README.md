@@ -69,3 +69,20 @@ node tools/extract-ff-resources.mjs original-data/motion.ff original-data/shelld
 ```
 
 Try `units.ff` separately as well. The extractor refuses to extract an archive if its count, table boundaries, monotonic offsets, or empty-name EOF sentinel do not match the observed format. A failed validation means this layout has not been established for that archive; it does not mean the archive is corrupt. Extracted files are raw resource payloads and may need further format-specific decoding.
+
+
+## 8. Cross-reference resource names (with binary-texture false-positive control)
+
+Run the scanner:
+
+```sh
+node tools/cross-reference-resources.mjs original-data > resource-audit.json
+```
+
+By default, the scanner excludes `.TPC` texture files because arbitrary texture bytes often contain accidental filename-shaped ASCII sequences. To inspect those binary textures experimentally, opt in explicitly:
+
+```sh
+node tools/cross-reference-resources.mjs original-data --include-tpc > resource-audit-with-tpc.json
+```
+
+Treat unresolved names as candidates for investigation, not proof of missing files. The scan only sees printable filename-like strings and does not decode binary resource references.
