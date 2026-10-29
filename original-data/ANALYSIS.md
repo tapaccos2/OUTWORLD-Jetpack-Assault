@@ -32,6 +32,10 @@ This note records observations from the original files currently present in this
 3. Do not treat extracted strings as a complete map. The mission placement/object records still need to be decoded, and the actual terrain asset format must be identified and validated against the original game.
 4. Preserve original filenames and case. The game references files with mixed-case names.
 
+## New lead: map-named `.DPC` files
+
+Static inspection of `outwars.exe` found a parser that checks for the four-byte `DCPM` identifier followed by `C`. The loose `anub01.dpc` and `flag_blu.dpc` files begin with `DCPMC`, matching that check. The map-named `anub01.dpc` (539,188 bytes) and `rag01.dpc` (348,488 bytes) are now the next candidates to investigate for scene/terrain geometry; their contents include coordinate-like values, but the fields have not been decoded and this is not yet proof that terrain is stored there.
+
 ## Next technical work
 
 - Enumerate all files under `original-data/misn/` and `original-data/gry/`.
