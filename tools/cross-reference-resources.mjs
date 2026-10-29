@@ -52,7 +52,7 @@ for (const file of candidates) {
     for(const match of s.text.matchAll(resourceRegex)) {
       const raw=match[0].trim();
       // De-duplicate a name per source offset.
-      refs.push({source:path.relative(root,file).replaceAll(path.sep,'/'),offset:s.offset,name:raw});
+      refs.push({source:path.relative(root,file).replaceAll(path.sep,'/'),offset:s.offset+match.index,name:raw});
     }
   }
 }
