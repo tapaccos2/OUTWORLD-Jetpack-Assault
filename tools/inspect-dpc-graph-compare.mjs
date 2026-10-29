@@ -1,23 +1,19 @@
 #!/usr/bin/env node
 /**
  * Summarise DPC graph inventories across campaign scene resources.
- *
- * This script invokes inspect-dpc-graph.mjs for each input, validates the JSON
- * emitted by the graph walker, and compares class/type counts without inventing
- * semantic labels. Requires Node.js 18+.
- *
- * Usage:
- *   node tools/inspect-dpc-graph-compare.mjs original-data/structs/rag01.dpc original-data/structs/rag02.dpc
+ * No type/class labels are assigned semantic names.
  */
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const files = process.argv.slice(2).filter(arg => !arg.startsWith('--'));
 if (!files.length) {
   console.error('Usage: node tools/inspect-dpc-graph-compare.mjs <file.dpc> [file.dpc ...]');
   process.exit(2);
 }
-const walker = path.join(path.dirname(new URL(import.meta.url).pathname), 'inspect-dpc-graph.mjs');
+const here = path.dirname(fileURLToPath(import.meta.url));
+const walker = path.join(here, 'inspect-dpc-graph.mjs');
 const results = [];
 let errors = 0;
 for (const file of files) {
@@ -46,5 +42,5 @@ for (const file of files) {
     errors++;
   }
 }
-process.stdout.write(JSON.stringify({ files: results, note: 'Type/class labels are numeric and intentionally semantic-neutral.' }, null, 2) + '\n');
+process.stdout.write(JSON.stringify({ files: results, note: 'Type/class labels are numeric and intentionally semantic-neutral.' }, null, 2) + '\\n');
 if (errors) process.exitCode = 1;
