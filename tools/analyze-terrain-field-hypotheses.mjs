@@ -107,6 +107,33 @@ function inspectPair(gpcPath, rpcPath) {
     normalNorms.push(norm);
     if (Math.abs(norm - 4095) <= 2) normalNormsWithinTwoOf4095++;
   }
+  let normalMatches = 0;
+  let invertedNormals = 0;
+  const absoluteNormalDots = [];
+  for (let i = 0; i < rc; i++) {
+    const ro = 20 + i * 40;
+    const width = R.getUint16(ro + 2, true);
+    const depth = R.getUint16(ro + 4, true);
+    const sin = R.getInt16(ro + 6, true) / 4095;
+    const cos = R.getInt16(ro + 8, true) / 4095;
+    const h00 = R.getInt32(ro + 16, true);
+    const h01 = R.getInt32(ro + 20, true);
+    const h10 = R.getInt32(ro + 24, true);
+    const gxLocal = (h01 - h00) / width;
+    const gyLocal = (h10 - h00) / depth;
+    const gxWorld = gxLocal * cos + gyLocal * sin;
+    const gyWorld = -gxLocal * sin + gyLocal * cos;
+    let px = -gxWorld, py = -gyWorld, pz = 1;
+    const pLen = Math.hypot(px, py, pz);
+    px /= pLen; py /= pLen; pz /= pLen;
+    let nx = R.getInt16(ro + 10, true), ny = R.getInt16(ro + 12, true), nz = R.getInt16(ro + 14, true);
+    const nLen = Math.hypot(nx, ny, nz);
+    nx /= nLen; ny /= nLen; nz /= nLen;
+    const dot = px * nx + py * ny + pz * nz;
+    absoluteNormalDots.push(Math.abs(dot));
+    if (dot < 0) invertedNormals++;
+    if (Math.abs(dot) >= 0.999) normalMatches++;
+  }
   const duplicatePositionGroups = [...positionSignatures.values()].filter(values => values.length > 1);
   const duplicatePositionGroupsSameCorners = duplicatePositionGroups.filter(values => new Set(values).size === 1).length;
   const duplicatePositionGroupsDifferentCorners = duplicatePositionGroups.filter(values => new Set(values).size > 1).length;
@@ -123,6 +150,14 @@ function inspectPair(gpcPath, rpcPath) {
       minimumMagnitude: Math.min(...orientationNorms),
       maximumMagnitude: Math.max(...orientationNorms),
       interpretation: 'Consistent with fixed-point sine/cosine components; confirmed by executable setter calls to the sine/cosine lookup routines.',
+    },
+    normalFromFirstThreeCornerHeights: {
+      recordsWithAbsoluteNormalDotAtLeast0999: normalMatches,
+      totalRecords: rc,
+      invertedNormalRecords: invertedNormals,
+      minimumAbsoluteDot: Math.min(...absoluteNormalDots),
+      formula: 'local gradients from (h01-h00)/width and (h10-h00)/depth, rotated by -angle from the sine/cosine pair; expected normal is normalize(-gx, -gy, 1).',
+      limitation: 'A small number of inverted flat surfaces retain a downward normal; preserve the stored normal sign rather than forcing it upward.',
     },
     normalVectorAtRpcOffsets10To14: {
       recordsWithinTwoOfMagnitude4095: normalNormsWithinTwoOf4095,
