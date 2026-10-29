@@ -1,3 +1,3 @@
 # 3D models
 
-Place optimized glTF 2.0 `.glb` files here. Recommended first targets: player marine, Hydran enemy, rocky outcrops and weapon. Keep model origins at ground level for characters/props where practical; document scale and animation names in this folder's asset manifest.
+Environment assets currently load from the CC0 Gobkit public glTF pack through src/assets.js. For offline builds, download and bundle the same CC0 .glb files into this directory and change loader URLs to local paths. The player marine and Hydran are still procedural placeholders and need dedicated character models.
