@@ -80,7 +80,26 @@
    {asset:'crate',x:5,z:-46,scale:.58,rotation:2.7,kind:'prop',collision:.8},
    {asset:'boulders',x:-8,z:-48,scale:.7,rotation:.3,kind:'rock',collision:1.3},
    {asset:'buttress',x:14,z:-52,height:6.7,rotation:1.9,kind:'tree',collision:1.4},
-   {asset:'crate',x:7,z:-54,scale:.56,rotation:.4,kind:'prop',collision:.8}
+   {asset:'crate',x:7,z:-54,scale:.56,rotation:.4,kind:'prop',collision:.8},
+   // Rear perimeter around the player start (player spawns at z=+5).
+   {asset:'canopy',x:-20,z:7,height:8.2,rotation:.8,kind:'tree',collision:1.5},
+   {asset:'buttress',x:20,z:8,height:7.8,rotation:2.5,kind:'tree',collision:1.5},
+   {asset:'boulders',x:-16,z:10,scale:1.0,rotation:.7,kind:'rock',collision:1.6},
+   {asset:'boulders',x:16,z:10,scale:.95,rotation:2.3,kind:'rock',collision:1.6},
+   {asset:'crate',x:-10,z:9,scale:.62,rotation:.3,kind:'prop',collision:.8},
+   {asset:'crate',x:10,z:10,scale:.62,rotation:2.1,kind:'prop',collision:.8},
+   {asset:'canopy',x:-21,z:1,height:7.6,rotation:2.2,kind:'tree',collision:1.5},
+   {asset:'buttress',x:21,z:2,height:7.4,rotation:.4,kind:'tree',collision:1.5},
+   {asset:'boulders',x:-13,z:2,scale:.9,rotation:1.8,kind:'rock',collision:1.5},
+   {asset:'boulders',x:13,z:1,scale:.92,rotation:.2,kind:'rock',collision:1.5},
+   {asset:'crate',x:-7,z:0,scale:.58,rotation:1.2,kind:'prop',collision:.8},
+   {asset:'crate',x:7,z:0,scale:.58,rotation:2.6,kind:'prop',collision:.8},
+   {asset:'canopy',x:-18,z:-4,height:7.1,rotation:1.4,kind:'tree',collision:1.4},
+   {asset:'buttress',x:18,z:-3,height:7.3,rotation:2.8,kind:'tree',collision:1.4},
+   {asset:'boulders',x:-11,z:6,scale:.8,rotation:2.4,kind:'rock',collision:1.3},
+   {asset:'boulders',x:11,z:6,scale:.8,rotation:.9,kind:'rock',collision:1.3},
+   {asset:'crate',x:-4.8,z:10.5,scale:.54,rotation:.6,kind:'prop',collision:.75},
+   {asset:'crate',x:4.8,z:10.5,scale:.54,rotation:2.4,kind:'prop',collision:.75}
   ];
   const chosen=lowPowerDevice?specs.filter((item,index)=>item.kind!=='rock'||index%3===0):specs;
   // Local fallback scenery keeps the battlefield populated when a model CDN fails.
