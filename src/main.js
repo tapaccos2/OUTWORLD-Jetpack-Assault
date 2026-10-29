@@ -141,8 +141,8 @@ function moveEntityWithCollision(entity,dx,dz,radius,checkActors=false){
   if(x < -24+radius || x > 24-radius || z < -61+radius || z > 12-radius)return false;
   for(const ob of scene.children){
    if(!ob.userData||!ob.userData.blocksEnemy||ob===entity)continue;
-   const sx=ob.scale?Math.max(Math.abs(ob.scale.x),Math.abs(ob.scale.z)):1;
-   const rr=(ob.userData.blockRadius||1.5)*sx+radius,ox=x-ob.position.x,oz=z-ob.position.z;
+   // blockRadius is authored in world units; do not multiply it by a tree's visual scale.
+   const rr=(ob.userData.blockRadius||1.5)+radius,ox=x-ob.position.x,oz=z-ob.position.z;
    if(Math.abs(ox)<rr&&Math.abs(oz)<rr&&ox*ox+oz*oz<rr*rr)return false;
   }
   if(checkActors)for(const other of enemies){if(other===entity||!other.visible||other.userData.hp<=0)continue;const rr=radius+(other.userData.collisionRadius||.62),ox=x-other.position.x,oz=z-other.position.z;if(ox*ox+oz*oz<rr*rr)return false}
