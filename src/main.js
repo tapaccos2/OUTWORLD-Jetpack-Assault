@@ -89,15 +89,14 @@ const terrainPos=terrainGeo.attributes.position;
 const roadColors=new Float32Array(terrainPos.count*3);
 for(let i=0;i<terrainPos.count;i++){
  const x=terrainPos.getX(i),z=-terrainPos.getY(i),edge=Math.abs(x);
- // Dark asphalt centre, a worn verge, and dusty terrain beyond the road edge.
-  const road=Math.max(0,1-Math.max(0,edge-3.45)/.95);
-  const verge=Math.max(0,1-Math.abs(edge-4.25)/.8);
+ // A subtle, irregularly worn alien-soil track, not an asphalt road.
+  const trailX=x-Math.sin(z*.075)*1.25-Math.sin(z*.19)*.32;
+  const trail=Math.max(0,1-Math.abs(trailX)/2.8);
+  const verge=Math.max(0,1-Math.abs(Math.abs(trailX)-3.2)/1.1);
   const worn=.94+.025*Math.sin(z*1.7+x*.6)+.018*Math.sin(z*3.1-x*1.3);
-  const asphalt=1-road*.63;
-  const shoulderLift=verge*.13;
-  const r=(asphalt+shoulderLift)*worn;
-  const g=(asphalt+shoulderLift*.9)*worn;
-  const b=(asphalt+shoulderLift*.72)*worn;
+  const r=(1-trail*.12+verge*.025)*worn;
+  const g=(1-trail*.105+verge*.02)*worn;
+  const b=(1-trail*.085+verge*.012)*worn;
  roadColors[i*3]=r;roadColors[i*3+1]=g;roadColors[i*3+2]=b;
 }
 terrainGeo.setAttribute('color',new THREE.BufferAttribute(roadColors,3));
@@ -114,23 +113,7 @@ for(let i=0;i<terrainPos.count;i++){
 terrainGeo.computeVertexNormals();
 const ground=new THREE.Mesh(terrainGeo,groundMat);ground.rotation.x=-Math.PI/2;ground.position.y=-.12;ground.receiveShadow=true;scene.add(ground);
 
-// Street infrastructure: a distinct asphalt carriageway, raised kerbs, concrete pavements,
-// and broken centre markings. These are road surfaces, not substitute scenery models.
-const asphaltMat=new THREE.MeshStandardMaterial({color:0x343a3c,roughness:.96,metalness:0});
-const concreteMat=new THREE.MeshStandardMaterial({color:0x8a8980,roughness:1});
-const kerbMat=new THREE.MeshStandardMaterial({color:0xb0aca0,roughness:.92});
-const lineMat=new THREE.MeshStandardMaterial({color:0xd8d6c7,roughness:.8});
-const makeRoadStrip=(width,length,material,x,y,z)=>{const mesh=new THREE.Mesh(new THREE.PlaneGeometry(width,length),material);mesh.rotation.x=-Math.PI/2;mesh.position.set(x,y,z);mesh.receiveShadow=true;scene.add(mesh);return mesh;};
-makeRoadStrip(7.25,136,asphaltMat,0,-.045,-22);
-for(const side of [-1,1]){
- makeRoadStrip(1.2,136,concreteMat,side*4.35,-.035,-22);
- const kerb=new THREE.Mesh(new THREE.BoxGeometry(.22,.16,136),kerbMat);
- kerb.position.set(side*3.73,.015,-22);kerb.castShadow=true;kerb.receiveShadow=true;scene.add(kerb);
-}
-for(let z=8;z>-64;z-=5.5)makeRoadStrip(.12,2.25,lineMat,0,-.025,z);
-// Side-street junctions break up the long straight corridor and give the assault flanking angles.
-makeRoadStrip(5.8,4.6,asphaltMat,-5.9,-.04,-17.5);
-makeRoadStrip(5.8,4.6,asphaltMat,5.9,-.04,-34.5);
+// No city road, kerbs or painted lane: this is an open alien-world landing zone.
 // Mission destination: illuminated landing beacon at the end of the ravine.
 const landingZone=new THREE.Group();
 const landingBase=new THREE.Mesh(new THREE.CylinderGeometry(2.35,2.8,.22,32),new THREE.MeshStandardMaterial({color:0x303b3c,metalness:.68,roughness:.42}));
@@ -145,7 +128,7 @@ const beaconLight=new THREE.PointLight(0x49f4e7,4,16,2);beaconLight.position.set
 scene.add(landingZone);
 // Three relay uplinks must be brought online before extraction can be completed.
 const relayObjectives=[];
-const relaySpecs=[{x:0,z:-11},{x:-7,z:-24},{x:7,z:-36}];
+const relaySpecs=[{x:-8,z:-12},{x:10,z:-28},{x:-5,z:-43}];
 for(let i=0;i<relaySpecs.length;i++){
  const spec=relaySpecs[i],relay=new THREE.Group();relay.position.set(spec.x,0,spec.z);
  const base=new THREE.Mesh(new THREE.CylinderGeometry(.8,1.05,.24,12),new THREE.MeshStandardMaterial({color:0x303d42,metalness:.7,roughness:.36}));
@@ -672,7 +655,7 @@ for(let i=0;i<enemySpawns.length;i++){
 // Keep the tested full-size procedural Hydran enemies visible. The imported GLB pack
 // currently has inconsistent in-game scale/orientation, so do not hide these meshes.
 if(window.loadEnvironmentAssets)window.loadEnvironmentAssets(THREE,scene,lowPowerDevice).catch(err=>console.warn('Environment GLB assets unavailable; procedural fallback remains active.',err));
-const bullets=[],sparks=[],clock=new THREE.Clock();let hp=100,fuel=100,yaw=0,pitch=-.05,targetYaw=0,targetPitch=-.05,vy=0,onGround=true,started=false,dead=false,won=false,fireHeld=false,boostHeld=false,jumpQueued=false,shotCooldown=0,damageFlash=0,lookTouch=null,stick={x:0,y:0},pointerLocked=false,lastShot=0,muzzleLife=0,hitConfirmTimer=0,thirdPerson=false,fireRecoil=0;
+const bullets=[],sparks=[],clock=new THREE.Clock();let hp=100,fuel=100,yaw=0,pitch=-.05,targetYaw=0,targetPitch=-.05,vy=0,onGround=true,started=false,dead=false,won=false,fireHeld=false,boostHeld=false,jumpQueued=false,shotCooldown=0,damageFlash=0,lookTouch=null,stick={x:0,y:0},pointerLocked=false,lastShot=0,muzzleLife=0,hitConfirmTimer=0,thirdPerson=true,fireRecoil=0;
 function startGame(){
  started=true;
  if(message) message.style.display='none';
@@ -681,7 +664,7 @@ function startGame(){
 // Start the simulation once the scene has been constructed; the start prompt is only UI.
 message.addEventListener('pointerdown',e=>{e.preventDefault();startGame()});
 message.addEventListener('click',startGame);
-const viewToggle=document.querySelector('#viewToggle');function toggleView(){thirdPerson=!thirdPerson;viewToggle.textContent=thirdPerson?'VIEW: THIRD PERSON':'VIEW: FIRST PERSON'}viewToggle.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();toggleView()});const keys={};addEventListener('keydown',e=>{if(e.code==='KeyV'){toggleView();return}startGame();keys[e.code]=true;if(e.code==='Space'){jumpQueued=true;e.preventDefault()}if(e.code==='KeyR'&&(dead||won))location.reload()});addEventListener('keyup',e=>keys[e.code]=false);
+const viewToggle=document.querySelector('#viewToggle');viewToggle.textContent='VIEW: THIRD PERSON';function toggleView(){thirdPerson=!thirdPerson;viewToggle.textContent=thirdPerson?'VIEW: THIRD PERSON':'VIEW: FIRST PERSON'}viewToggle.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();toggleView()});const keys={};addEventListener('keydown',e=>{if(e.code==='KeyV'){toggleView();return}startGame();keys[e.code]=true;if(e.code==='Space'){jumpQueued=true;e.preventDefault()}if(e.code==='KeyR'&&(dead||won))location.reload()});addEventListener('keyup',e=>keys[e.code]=false);
 canvas.addEventListener('pointerdown',()=>startGame(),{passive:true});
 canvas.addEventListener('mousedown',e=>{if(e.button===0){startGame();fireHeld=true;shoot()}});canvas.addEventListener('click',()=>{startGame();if(innerWidth>700&&canvas.requestPointerLock&&!dead&&!won&&!pointerLocked)canvas.requestPointerLock()});
 addEventListener('mouseup',()=>fireHeld=false);addEventListener('blur',()=>fireHeld=false);document.addEventListener('pointerlockchange',()=>{pointerLocked=document.pointerLockElement===canvas;if((dead||won)&&document.pointerLockElement)document.exitPointerLock()});
