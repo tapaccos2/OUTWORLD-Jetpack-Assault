@@ -477,18 +477,18 @@ const chestPanel=new THREE.Mesh(new THREE.BoxGeometry(.18,.26,.055),isEnemy?viso
  const packTop=new THREE.Mesh(new THREE.BoxGeometry(.30,.10,.08),isEnemy?enemyLite:armorLite);
  packTop.position.set(0,1.88,-.31);root.add(packTop);
  const rifle=new THREE.Group();rifle.position.set(.39,1.30,.36);rifle.scale.setScalar(.76);root.add(rifle);
- const receiver=new THREE.Mesh(new THREE.BoxGeometry(.17,.19,.62),black);receiver.position.set(0,0,.16);receiver.castShadow=true;rifle.add(receiver);
- const receiverShell=new THREE.Mesh(new THREE.BoxGeometry(.178,.105,.37),armor);receiverShell.position.set(0,.055,.13);rifle.add(receiverShell);
- const barrel=new THREE.Mesh(new THREE.CylinderGeometry(.043,.052,.50,12),dark);barrel.rotation.x=Math.PI/2;barrel.position.set(0,.005,.66);rifle.add(barrel);
- const barrelSleeve=new THREE.Mesh(new THREE.CylinderGeometry(.063,.063,.20,12),armorLite);barrelSleeve.rotation.x=Math.PI/2;barrelSleeve.position.set(0,.005,.48);rifle.add(barrelSleeve);
- const muzzle=new THREE.Mesh(new THREE.CylinderGeometry(.072,.072,.095,14),dark);muzzle.rotation.x=Math.PI/2;muzzle.position.set(0,.005,.91);rifle.add(muzzle);
- const muzzleRing=new THREE.Mesh(new THREE.TorusGeometry(.055,.012,6,16),cyan);muzzleRing.position.set(0,.005,.963);rifle.add(muzzleRing);
+ const rifleReceiver=new THREE.Mesh(new THREE.BoxGeometry(.17,.19,.62),black);rifleReceiver.position.set(0,0,.16);rifleReceiver.castShadow=true;rifle.add(rifleReceiver);
+ const rifleReceiverShell=new THREE.Mesh(new THREE.BoxGeometry(.178,.105,.37),armor);rifleReceiverShell.position.set(0,.055,.13);rifle.add(rifleReceiverShell);
+ const rifleBarrel=new THREE.Mesh(new THREE.CylinderGeometry(.043,.052,.50,12),dark);rifleBarrel.rotation.x=Math.PI/2;rifleBarrel.position.set(0,.005,.66);rifle.add(rifleBarrel);
+ const rifleBarrelSleeve=new THREE.Mesh(new THREE.CylinderGeometry(.063,.063,.20,12),armorLite);rifleBarrelSleeve.rotation.x=Math.PI/2;rifleBarrelSleeve.position.set(0,.005,.48);rifle.add(rifleBarrelSleeve);
+ const rifleMuzzle=new THREE.Mesh(new THREE.CylinderGeometry(.072,.072,.095,14),dark);rifleMuzzle.rotation.x=Math.PI/2;rifleMuzzle.position.set(0,.005,.91);rifle.add(rifleMuzzle);
+ const rifleMuzzleRing=new THREE.Mesh(new THREE.TorusGeometry(.055,.012,6,16),cyan);rifleMuzzleRing.position.set(0,.005,.963);rifle.add(rifleMuzzleRing);
  const rifleRail=new THREE.Mesh(new THREE.BoxGeometry(.07,.035,.49),dark);rifleRail.position.set(0,.119,.22);rifle.add(rifleRail);
  for(let n=0;n<5;n++){const notch=new THREE.Mesh(new THREE.BoxGeometry(.078,.018,.035),armorLite);notch.position.set(0,.143,.03+n*.09);rifle.add(notch)}
  const rifleStock=new THREE.Mesh(new THREE.BoxGeometry(.13,.14,.24),dark);rifleStock.position.set(0,-.015,-.25);rifle.add(rifleStock);
- const grip=new THREE.Mesh(new THREE.BoxGeometry(.095,.22,.13),black);grip.position.set(0,-.17,.10);grip.rotation.x=-.16;rifle.add(grip);
- const magazine=new THREE.Mesh(new THREE.BoxGeometry(.115,.25,.15),armor);magazine.position.set(0,-.18,.28);magazine.rotation.x=-.12;rifle.add(magazine);
- const powerCell=new THREE.Mesh(new THREE.BoxGeometry(.035,.12,.20),cyan);powerCell.position.set(.095,.01,.20);rifle.add(powerCell);
+ const rifleGrip=new THREE.Mesh(new THREE.BoxGeometry(.095,.22,.13),black);rifleGrip.position.set(0,-.17,.10);rifleGrip.rotation.x=-.16;rifle.add(rifleGrip);
+ const rifleMagazine=new THREE.Mesh(new THREE.BoxGeometry(.115,.25,.15),armor);rifleMagazine.position.set(0,-.18,.28);rifleMagazine.rotation.x=-.12;rifle.add(rifleMagazine);
+ const riflePowerCell=new THREE.Mesh(new THREE.BoxGeometry(.035,.12,.20),cyan);riflePowerCell.position.set(.095,.01,.20);rifle.add(riflePowerCell);
 
  // Character silhouette pass: collar, segmented shoulder trim, chest harness and side pouches.
  const collar=new THREE.Mesh(new THREE.CylinderGeometry(.19,.24,.12,8),dark);collar.position.set(0,1.99,.015);root.add(collar);
