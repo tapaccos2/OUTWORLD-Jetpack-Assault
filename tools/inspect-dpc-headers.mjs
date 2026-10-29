@@ -19,7 +19,9 @@ if (!files.length) {
   process.exit(2);
 }
 
-const pointerBase = 0x80019c04;
+// The address stored at file offset 12 is the relocation base. Pointers in
+// the record table resolve as fileOffset = pointer - valueAtOffset12.
+
 function u32le(b, o) { return b.readUInt32LE(o); }
 function hex(b, start, end) {
   return b.subarray(start, end).toString('hex').match(/.{1,2}/g)?.join(' ') ?? '';
@@ -30,6 +32,7 @@ for (const file of files) {
   const b = fs.readFileSync(file);
   const magic = b.subarray(0, 4).toString('ascii');
   const tag = b[4];
+  const pointerBase = b.length >= 16 ? u32le(b, 12) : 0;
   const words = [];
   for (let offset = 8; offset + 4 <= Math.min(64, b.length); offset += 4) {
     const value = u32le(b, offset);
