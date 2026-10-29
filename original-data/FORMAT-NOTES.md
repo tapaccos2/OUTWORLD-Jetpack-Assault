@@ -157,3 +157,13 @@ In seven files, the second little-endian 16-bit header value multiplied by 20 ex
 | `r6.gry` | 2 | 40 | 40 | 0 |
 
 The terrain inspector now prints this comparison alongside the raw candidate blocks. The mismatches in `d4.gry` and `o7.gry` are why the code deliberately avoids treating the header value as a confirmed record count.
+
+### A better fit for the pre-marker region
+
+The two exceptions above are not arbitrary: **all ten readable files fit the same byte-count formula exactly**:
+
+`bytes before marker after the 12-byte header = (header value 2 × 20) + ((header value 3 − header value 2) × 14)`
+
+For nine files, the two header values are equal, so the 14-byte contribution is zero. In `o7.gry`, the values are 3 and 4, giving `3 × 20 + 1 × 14 = 74` bytes. In `d4.gry`, they are 12 and 14, giving `12 × 20 + 2 × 14 = 268` bytes. These exactly match the measured distances to the first marker in both files.
+
+This strongly supports a pre-marker region composed of a count of 20-byte units plus a difference-count of 14-byte units. It does **not** yet establish the meaning of either record type or prove that the units are records rather than other fixed-width fields. The inspector now checks this formula for every input file and reports whether it matches.
