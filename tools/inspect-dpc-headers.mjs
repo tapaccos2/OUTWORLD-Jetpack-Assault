@@ -3,7 +3,8 @@
  * Inspect the first 64 bytes of Outwars .DPC database files.
  *
  * Static inspection of outwars.exe shows a parser checking the DCPM signature
- * followed by 'C'. The header contains pointer-like values based at 0x80019c04.
+ * followed by 'C'. The relocation base is the DWORD stored at offset 12 (for
+ * example 0x80019c40); pointers resolve as fileOffset = pointer - relocationBase.
  * This tool reports those values and their candidate file offsets; it does not
  * assign meanings to sections or decode geometry.
  *
@@ -11,7 +12,6 @@
  *   node tools/inspect-dpc-headers.mjs original-data/structs/*.dpc
  */
 import fs from 'node:fs';
-import path from 'node:path';
 
 const files = process.argv.slice(2);
 if (!files.length) {
