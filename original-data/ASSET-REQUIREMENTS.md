@@ -1,20 +1,30 @@
 # Original-data completeness check
 
-The current repository tree contains 310 files under `original-data/`:
-- 27 mission `.MIS` files
+## Repository inventory after the latest asset upload
+
+The repository now contains 828 files under `original-data/`, including:
+
 - 11 terrain `.GRY` files
-- 97 `.PCX` images
-- 170 `.TXT` files
+- 38 mission `.MIS` files across `misn/` and `netmisn/`
+- 320 `.PCX` images
+- 266 `.TXT` files
+- 142 files under `structs/`: 37 `.DPC`, 34 `.GPC`, 34 `.RPC`, and 37 `.TPC`
+- 22 packed `.FF` files, including `units.ff` and `motion.ff`
+- 21 `.SPT` files and one `.FNT` file
 
-The original mission files contain references to `.DPC` resources, including mission-level names (for example `anub02.dpc`) and unit resources (for example `laborer.dpc`, `defenderWmortar.dpc`, and `flyingAssassin.dpc`). Those `.DPC` files are not currently present under `original-data/`.
+The new assets materially improve coverage: mission-level structure resources and their companion graphics/resource tables are now present for multiple campaigns, along with packed game resources and the shell database assets.
 
-The original game distribution also has a `structs/` directory with paired `.DPC`, `.GPC`, `.RPC`, and `.TPC` files, as well as packed resource files such as `units.ff`. The SteamDB depot inventory lists these resource families alongside `gry/` and `misn/`: https://steamdb.info/depot/1431941/
+## Still to verify
 
-## Why this matters
+- Whether the uploaded `structs/` collection contains every structure/unit resource referenced by the mission files. The folder has many campaign-specific sets, but the current inventory alone does not prove completeness.
+- Whether `units.ff` and the other `.FF` archives contain additional unit, model, texture, sound, or other resources needed by the game.
+- Whether the terrain `.GRY` format can be decoded into actual terrain geometry. The format remains under investigation.
+- Whether the `.MIS` binary structures can be parsed into placements, parameters, triggers, and mission logic. The readable names alone do not recover those values.
 
-- `.MIS` data is mission logic and references; it is not itself the full 3D world.
-- `.GRY` files are the terrain source candidates, but their binary layout is not decoded yet.
-- `.PCX` files in the current repository can help identify mission briefing/map images.
-- Missing `.DPC` and companion resources prevent a faithful reconstruction of original objects, structures, and units from the current upload alone.
+## Next analysis steps
 
-This is a factual inventory of what is and is not present in the repository. It is not a request to re-upload files; the existing mission and terrain data is being analyzed first.
+1. Compare every resource reference in both `misn/` and `netmisn/` against the filenames now present in the repository.
+2. Inspect headers and internal references in representative `.DPC`, `.TPC`, `.GPC`, and `.RPC` files, plus `units.ff`.
+3. Continue the `.GRY` and `.MIS` format investigation, validating findings across multiple files before using them to reconstruct a level.
+
+This inventory describes what is currently present. It does not claim that the assets have been fully decoded or that a playable reconstruction is complete.
