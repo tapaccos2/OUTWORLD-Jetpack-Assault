@@ -631,9 +631,10 @@ if(window.GLTFLoader){
 const player=soldier(false);
 // Reuse the player character's own arm meshes in first person instead of separate floating tube geometry.
 if(player.userData.arms&&player.userData.arms.length===2){
- const leftArm=player.userData.arms[0].clone(true);
- const rightArm=player.userData.arms[1].clone(true);
- // Remove world-body shoulder offsets and place the articulated, armoured limbs around the weapon.
+ // Clone the articulated arm meshes only; the original pivot's userData contains an Object3D reference.
+ const cloneArmMeshes=source=>{const arm=new THREE.Group();source.children.forEach(child=>arm.add(child.clone(true)));return arm};
+ const leftArm=cloneArmMeshes(player.userData.arms[0]);
+ const rightArm=cloneArmMeshes(player.userData.arms[1]);
  for(const arm of [leftArm,rightArm]){
   arm.position.set(0,0,0);arm.rotation.set(0,Math.PI,0);arm.scale.setScalar(.72);
   arm.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;o.renderOrder=1000;if(o.material){o.material.depthTest=false;o.material.depthWrite=false}}});
@@ -641,9 +642,9 @@ if(player.userData.arms&&player.userData.arms.length===2){
  }
  leftArm.position.set(-.43,-.22,-.56);leftArm.rotation.z=.52;
  rightArm.position.set(.47,-.23,-.47);rightArm.rotation.z=-.28;
- // Hands angle inward towards the rifle's support point and pistol grip.
- leftArm.userData.elbow.rotation.x=-.20;leftArm.userData.elbow.rotation.z=-.10;
- rightArm.userData.elbow.rotation.x=-.14;rightArm.userData.elbow.rotation.z=.08;
+ const leftElbow=leftArm.children.find(o=>o.isGroup),rightElbow=rightArm.children.find(o=>o.isGroup);
+ if(leftElbow){leftElbow.rotation.x=-.20;leftElbow.rotation.z=-.10}
+ if(rightElbow){rightElbow.rotation.x=-.14;rightElbow.rotation.z=.08}
 }
 
 // Third-person rifle mounted to the marine's forward hand; visible only in chase view.
