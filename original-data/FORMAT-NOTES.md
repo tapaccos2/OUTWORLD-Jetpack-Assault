@@ -138,3 +138,22 @@ For the nine files with the common signature, the repeated region can be describ
 | `+67..+70` | Four variable bytes | Payload meaning unknown |
 
 This is an offset map, not a semantic schema. In particular, the four-byte payload is not yet established as a size, checksum, coordinate, or float. The next stage must explain how the post-payload bytes are organized and validate any candidate interpretation against multiple terrain files.
+
+### Header count versus pre-marker records
+
+In seven files, the second little-endian 16-bit header value multiplied by 20 exactly equals the number of bytes between the 12-byte header and the first marker. That is consistent with—but does not prove—a count of 20-byte records. Two files are exceptions: `o7.gry` has 14 additional bytes beyond that calculation, and `d4.gry` has 28 additional bytes. The relationship is:
+
+| File | Second header value | Bytes before first marker (after byte 12) | Value × 20 | Difference |
+|---|---:|---:|---:|---:|
+| `Q.gry` | 4 | 80 | 80 | 0 |
+| `a2.gry` | 2 | 40 | 40 | 0 |
+| `d4.gry` | 12 | 268 | 240 | 28 |
+| `j1.gry` | 1 | 20 | 20 | 0 |
+| `o2.gry` | 4 | 80 | 80 | 0 |
+| `o5.gry` | 1 | 20 | 20 | 0 |
+| `o7.gry` | 3 | 74 | 60 | 14 |
+| `r1.gry` | 1 | 20 | 20 | 0 |
+| `r2.gry` | 3 | 60 | 60 | 0 |
+| `r6.gry` | 2 | 40 | 40 | 0 |
+
+The terrain inspector now prints this comparison alongside the raw candidate blocks. The mismatches in `d4.gry` and `o7.gry` are why the code deliberately avoids treating the header value as a confirmed record count.
