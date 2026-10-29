@@ -71,7 +71,7 @@ No model, texture, animation, terrain, or mission-logic decoder is claimed yet. 
 
 ## Executable format-signature lead
 
-Static inspection of `outwars.exe` found checks for `DCPM` followed by `C` in the database parser, and `CPMG` / `CPMR` followed by `C` in separate group and ramp parsers. The corresponding loose files begin with `DCPMC`, `CPMGC`, and `CPMRC`. The map-named `.DPC` files are therefore the next assets to inspect for scene data. Their headers contain pointer-like values that map into each file using the candidate base `0x80019c04`; `tools/inspect-dpc-headers.mjs` reports the raw values and candidate offsets without assigning semantic fields.
+Static inspection of `outwars.exe` found checks for `DCPM` followed by `C` in the database parser, and `CPMG` / `CPMR` followed by `C` in separate group and ramp parsers. The corresponding loose files begin with `DCPMC`, `CPMGC`, and `CPMRC`. The map-named `.DPC` files are therefore the next assets to inspect for scene data. The header stores a relocation base at offset 12 (e.g. `0x80019c40`); stored pointers resolve as `file offset = pointer - relocation base`. Static inspection of the executable confirms that the record count is at offset 32 and the pointer table begins at offset 36. `tools/inspect-dpc-records.mjs` lists the resulting record boundaries and raw kind/flag/class fields. This structure is validated across several map and prop DPC files, but it is not yet a geometry decoder.
 
 This is a file-format lead, not a terrain decoder. The actual terrain role of the map-named `.DPC` files still needs validation, and the `.GRY` files are sound-effect audio.
 
