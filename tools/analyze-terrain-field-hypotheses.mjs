@@ -134,6 +134,44 @@ function inspectPair(gpcPath, rpcPath) {
     if (dot < 0) invertedNormals++;
     if (Math.abs(dot) >= 0.999) normalMatches++;
   }
+  function edgeContinuity(anchor) {
+    const edges = new Map();
+    for (let i = 0; i < rc; i++) {
+      const ro = 20 + i * 40;
+      const width = R.getUint16(ro + 2, true);
+      const depth = R.getUint16(ro + 4, true);
+      const sin = R.getInt16(ro + 6, true) / 4095;
+      const cos = R.getInt16(ro + 8, true) / 4095;
+      const x = R.getInt32(ro + 32, true);
+      const y = R.getInt32(ro + 36, true);
+      const heights = [16, 20, 24, 28].map(p => R.getInt32(ro + p, true));
+      const u0 = anchor === 'center' ? -width / 2 : 0;
+      const u1 = anchor === 'center' ? width / 2 : width;
+      const v0 = anchor === 'center' ? -depth / 2 : 0;
+      const v1 = anchor === 'center' ? depth / 2 : depth;
+      const local = [[u0, v0], [u1, v0], [u0, v1], [u1, v1]];
+      const pts = local.map(([u, v], k) => ({
+        x: Math.round(x + u * cos + v * sin),
+        y: Math.round(y - u * sin + v * cos),
+        z: heights[k],
+      }));
+      for (const [a, b] of [[0, 1], [1, 3], [3, 2], [2, 0]]) {
+        const p = pts[a], q = pts[b];
+        const key = [`${p.x},${p.y}`, `${q.x},${q.y}`].sort().join('|');
+        const signature = [`${p.x},${p.y},${p.z}`, `${q.x},${q.y},${q.z}`].sort().join('|');
+        if (!edges.has(key)) edges.set(key, []);
+        edges.get(key).push(signature);
+      }
+    }
+    let sharedEdgeKeys = 0;
+    let sharedEdgesMatchingEndpointHeights = 0;
+    for (const signatures of edges.values()) {
+      if (signatures.length < 2) continue;
+      sharedEdgeKeys++;
+      if (new Set(signatures).size === 1) sharedEdgesMatchingEndpointHeights++;
+    }
+    return { sharedEdgeKeys, sharedEdgesMatchingEndpointHeights };
+  }
   const duplicatePositionGroups = [...positionSignatures.values()].filter(values => values.length > 1);
   const duplicatePositionGroupsSameCorners = duplicatePositionGroups.filter(values => new Set(values).size === 1).length;
   const duplicatePositionGroupsDifferentCorners = duplicatePositionGroups.filter(values => new Set(values).size > 1).length;
@@ -165,6 +203,11 @@ function inspectPair(gpcPath, rpcPath) {
       minimumMagnitude: Math.min(...normalNorms),
       maximumMagnitude: Math.max(...normalNorms),
       interpretation: 'Consistent with a fixed-point 3D unit normal; flat surfaces often use (0, 0, 4095).',
+    },
+    positionAnchorContinuity: {
+      center: edgeContinuity('center'),
+      corner: edgeContinuity('corner'),
+      note: 'Corner anchoring is better supported when it yields more shared edges with matching endpoint heights.',
     },
     duplicatePositionAnalysis: {
       uniquePositions: positionSignatures.size,
