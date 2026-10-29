@@ -42,5 +42,7 @@ The original mission files and sound-effect audio containers are being analyzed 
 - [Mission catalog](original-data/MISSION-CATALOG.md)
 - [Missing asset requirements](original-data/ASSET-REQUIREMENTS.md)
 - [Inspection tools](tools/README.md)
+- [Interactive terrain reconstruction preview](terrain-preview.html)
+- [Candidate mesh exporter](tools/export-rpc-mesh.mjs)
 
 The GPC/RPC terrain-surface layout is now decoded far enough to export candidate vertices and triangles: dimensions, orientation, normals, four corner heights, and the XY corner anchor cross-validate across all 34 resource pairs. Use [the terrain field analysis](original-data/TERRAIN-FIELD-HYPOTHESES.md) and [the candidate mesh exporter](tools/export-rpc-mesh.mjs). The exported geometry has not yet been visually validated against an original in-game map, and terrain textures, exact mission placement, scale, and any additional collision/terrain layers remain unfinished. The prototype should not yet be described as a faithful original-level rebuild.
