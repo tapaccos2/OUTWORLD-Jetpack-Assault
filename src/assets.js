@@ -33,7 +33,7 @@
    buttress:'https://cdn.3dassets.dev/assets/36137/v1/model.glb',
    boulders:'https://cdn.3dassets.dev/assets/18142/v1/model.glb',
    crashSite:'https://cdn.3dassets.dev/assets/17375/v1/model.glb',
-   crate:'https://cdn.3dassets.dev/assets/17350/v1/model.glb'
+   crate:'https://cdn.3dassets.dev/assets/27447/v1/model.glb'
   };
   const specs=[
    // Omit the bundled crash-site scene: its large pale base slab reads as a floating platform.
@@ -124,7 +124,10 @@
     model.rotation.y=item.rotation||0;
     model.updateMatrixWorld(true);
     const before=new THREE.Box3().setFromObject(model),beforeSize=before.getSize(new THREE.Vector3());
-    const scale=item.height?item.height/Math.max(.001,beforeSize.y):(item.scale||1);
+    const maxDim=Math.max(beforeSize.x,beforeSize.y,beforeSize.z,.001);
+    // Normalise GLB authoring units so an asset's source scale cannot turn a crate into a shipping container.
+    const targetSize=item.height?item.height:(item.kind==='rock'?3.0*(item.scale||1):1.45*(item.scale||.58)/.58);
+    const scale=targetSize/(item.height?Math.max(.001,beforeSize.y):maxDim);
     model.scale.setScalar(scale);
     model.updateMatrixWorld(true);
     const bounds=new THREE.Box3().setFromObject(model),center=bounds.getCenter(new THREE.Vector3());
