@@ -1,0 +1,11 @@
+MISSION OVERVIEW
+
+LOCATION: Training Area C
+
+You and your teammate will learn to work together and to use the stealth profile of your suit to sneak up on an experienced instructor. 
+
+Your stealth indicator on your tracker is a moving green blip which spins in a circle representing the radius at which you will be "detectable" by other tracking systems. If an enemy signal lies beyond this green circle, it means you will probably not be detected by his own tracking systems, and he will be unable to lock on to you with homing weapons. This doesn't prevent him from spotting you visually, however.
+
+Your stealth profile depends upon your suit type, speed of movement, and use of the rocket pack and weapons. Try to maintain a minimal profile throughout the exercise. Also, use terrain to your advantage so that he will not detect you visually.
+
+The instructor - your target - is located on the main island somewhere near Nav Alpha. Get a lock on him, and report in. 

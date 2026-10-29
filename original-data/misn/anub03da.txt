@@ -1,0 +1,15 @@
+1. Destroy enemy flyers.
+
+COMPLETE
+
+2. Destroy gun turrets.
+
+COMPLETE
+
+3. Destroy missile-launching defenders.
+
+COMPLETE
+
+4. Wait for strike ship to destroy barrier.
+
+COMPLETE
