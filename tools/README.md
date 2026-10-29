@@ -90,7 +90,17 @@ node tools/find-terrain-resources.mjs original-data > terrain-resource-search.js
 
 The scanner only parses FF archives whose directory layout passes the same structural checks as the existing extractor. Any unrecognized archive layout is reported rather than guessed. Signature matches are candidates for inspection, not proof that terrain geometry is decoded.
 
-## 10. Cross-reference resource names (with binary-texture false-positive control)
+## 10. Inspect CPMG group and CPMR ramp records
+
+The loose `.GPC` and `.RPC` files have the same `CPMG` and `CPMR` signatures, version `0x43`, and header/count structure as the executable's group/ramp loaders. Sample files validate exactly as a 20-byte header followed by 32-byte group records or 40-byte ramp records.
+
+```sh
+node tools/inspect-grp-rmp.mjs original-data/structs/rag01.gpc original-data/structs/rag01.rpc
+```
+
+This validates record boundaries and emits raw words for analysis. It does not yet decode the record fields into terrain coordinates or mesh topology.
+
+## 11. Cross-reference resource names (with binary-texture false-positive control)
 
 Run the scanner:
 
