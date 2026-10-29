@@ -483,7 +483,7 @@ const chestPanel=new THREE.Mesh(new THREE.BoxGeometry(.18,.26,.055),isEnemy?viso
  const barrelSleeve=new THREE.Mesh(new THREE.CylinderGeometry(.063,.063,.20,12),armorLite);barrelSleeve.rotation.x=Math.PI/2;barrelSleeve.position.set(0,.005,.48);rifle.add(barrelSleeve);
  const muzzle=new THREE.Mesh(new THREE.CylinderGeometry(.072,.072,.095,14),dark);muzzle.rotation.x=Math.PI/2;muzzle.position.set(0,.005,.91);rifle.add(muzzle);
  const muzzleRing=new THREE.Mesh(new THREE.TorusGeometry(.055,.012,6,16),cyan);muzzleRing.position.set(0,.005,.963);rifle.add(muzzleRing);
- const rail=new THREE.Mesh(new THREE.BoxGeometry(.07,.035,.49),dark);rail.position.set(0,.119,.22);rifle.add(rail);
+ const rifleRail=new THREE.Mesh(new THREE.BoxGeometry(.07,.035,.49),dark);rifleRail.position.set(0,.119,.22);rifle.add(rifleRail);
  for(let n=0;n<5;n++){const notch=new THREE.Mesh(new THREE.BoxGeometry(.078,.018,.035),armorLite);notch.position.set(0,.143,.03+n*.09);rifle.add(notch)}
  const stock=new THREE.Mesh(new THREE.BoxGeometry(.13,.14,.24),dark);stock.position.set(0,-.015,-.25);rifle.add(stock);
  const grip=new THREE.Mesh(new THREE.BoxGeometry(.095,.22,.13),black);grip.position.set(0,-.17,.10);grip.rotation.x=-.16;rifle.add(grip);
