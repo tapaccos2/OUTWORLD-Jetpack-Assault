@@ -321,11 +321,6 @@ function soldier(isEnemy=false){
    const underPlate=new THREE.MeshStandardMaterial({color:0x303b2b,map:insectBellyTexture,roughness:.76});
    const fangMat=new THREE.MeshStandardMaterial({color:0x222820,roughness:.28,metalness:.12});
    const eyeMat=new THREE.MeshStandardMaterial({color:0xff8a32,emissive:0x7e2105,emissiveIntensity:1.5,roughness:.2});
-   function part(geo,mat,pos,scale,rot){
-     const m=new THREE.Mesh(geo,mat);m.position.set(...pos);
-     if(scale)m.scale.set(...scale);if(rot)m.rotation.set(...rot);
-     m.castShadow=true;m.receiveShadow=true;bug.add(m);return m;
-   }
    // Narrow, elongated rear abdomen with overlapping armoured tergites.
    part(new THREE.CapsuleGeometry(.42,.95,8,18),carapace,[0,1.12,-.52],[1.0,.9,1.22],[Math.PI/2,0,0]);
    part(new THREE.CapsuleGeometry(.30,.82,6,14),underPlate,[0,.83,-.45],[1,.72,1.05],[Math.PI/2,0,0]);
