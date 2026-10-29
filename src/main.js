@@ -5,7 +5,7 @@ if(!window.THREE){message.innerHTML='3D ENGINE NOT LOADED<small>Connect to the i
 const lowPowerDevice=(navigator.hardwareConcurrency||8)<=4||(navigator.deviceMemory||8)<=4||/raspberry|armv7|aarch64/i.test(navigator.userAgent);
 const renderer=new THREE.WebGLRenderer({canvas,antialias:!lowPowerDevice,powerPreference:'high-performance'});
 renderer.setPixelRatio(Math.min(devicePixelRatio||1,lowPowerDevice?1:2));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.92;renderer.setClearColor(0x91b3c2,1);renderer.info.autoReset=true;
-const scene=new THREE.Scene();scene.background=new THREE.Color(0x788a8b);scene.fog=new THREE.FogExp2(0x788a8b,0.0031);
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x7e9695);scene.fog=new THREE.FogExp2(0x7e9695,0.0025);
 const camera=new THREE.PerspectiveCamera(72,innerWidth/innerHeight,.1,250);
 scene.add(camera); // Required for camera-attached first-person weapon meshes to render.
 const hemi=new THREE.HemisphereLight(0xdbe9ef,0x51473a,1.12);scene.add(hemi);
@@ -14,7 +14,7 @@ const sunDisc=new THREE.Mesh(new THREE.SphereGeometry(3.2,20,16),new THREE.MeshB
 const sunHalo=new THREE.Mesh(new THREE.SphereGeometry(5.4,20,16),new THREE.MeshBasicMaterial({color:0xffc875,transparent:true,opacity:.12,depthWrite:false}));sunHalo.position.copy(sunDisc.position);scene.add(sunHalo);
 const mat=(color,roughness=.8,metalness=.05)=>new THREE.MeshStandardMaterial({color,roughness,metalness});
 const groundCanvas=document.createElement('canvas');groundCanvas.width=groundCanvas.height=1024;
- const gc=groundCanvas.getContext('2d');gc.fillStyle='#777365';gc.fillRect(0,0,1024,1024);
+ const gc=groundCanvas.getContext('2d');gc.fillStyle='#77796a';gc.fillRect(0,0,1024,1024);
  // Multi-scale mineral stains, embedded grit, fractures and abrasion create more natural ground breakup.
  for(let i=0;i<230;i++){const x=Math.random()*1024,y=Math.random()*1024,r=18+Math.random()*125;const g=gc.createRadialGradient(x,y,1,x,y,r);const shade=Math.random()>.5?'66,66,56':'151,137,105';g.addColorStop(0,`rgba(${shade},${.035+Math.random()*.075})`);g.addColorStop(1,'rgba(90,83,67,0)');gc.fillStyle=g;gc.beginPath();gc.arc(x,y,r,0,Math.PI*2);gc.fill()}
  for(let i=0;i<(lowPowerDevice?9000:33000);i++){const v=54+Math.random()*125;gc.fillStyle=`rgba(${v|0},${(v*.98)|0},${(v*.85)|0},${.04+Math.random()*.23})`;const r=.25+Math.random()*3.2;gc.beginPath();gc.ellipse(Math.random()*1024,Math.random()*1024,r,r*(.2+Math.random()*.7),Math.random()*3,0,Math.PI*2);gc.fill()}
@@ -23,7 +23,7 @@ const groundCanvas=document.createElement('canvas');groundCanvas.width=groundCan
  for(let i=0;i<110;i++){const x=Math.random()*1024,y=Math.random()*1024;gc.strokeStyle='rgba(38,36,29,.25)';gc.lineWidth=.8+Math.random()*2.3;gc.beginPath();gc.moveTo(x,y);gc.lineTo(x+18+Math.random()*65,y+(Math.random()-.5)*12);gc.stroke()}
  const groundTex=new THREE.CanvasTexture(groundCanvas);groundTex.wrapS=groundTex.wrapT=THREE.RepeatWrapping;groundTex.repeat.set(15,15);groundTex.colorSpace=THREE.SRGBColorSpace;groundTex.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
  const groundBump=new THREE.CanvasTexture(groundCanvas);groundBump.wrapS=groundBump.wrapT=THREE.RepeatWrapping;groundBump.repeat.set(15,15);
- const groundMat=new THREE.MeshStandardMaterial({color:0xaaa18a,map:groundTex,bumpMap:groundBump,bumpScale:.18,roughness:.94});
+ const groundMat=new THREE.MeshStandardMaterial({color:0x8d9380,map:groundTex,bumpMap:groundBump,bumpScale:.24,roughness:.98});
 const rockMat=mat(0x424944,.96,.02), rockLite=mat(0x68695d,.94,.01), dark=mat(0x151a19,.86,.08), armor=mat(0x303a3a,.72,.16), armorLite=mat(0x606a65,.76,.12), cyan=mat(0x7dacae,.55,.12), enemyMat=mat(0x66543b,.78,.04), enemyLite=mat(0x88734d,.72,.06), visor=mat(0xc45d2b,.48,.08), black=mat(0x101413,.82,.08);
 
 // High-frequency procedural surface maps: fine grain, mineral mottling, scratches and worn edges.
@@ -101,20 +101,40 @@ const skyDome=new THREE.Mesh(new THREE.SphereGeometry(190,40,24),new THREE.MeshB
 // Imported nature pack disabled: its current models read as oversized smooth blobs at gameplay scale. Use the handcrafted environment below until suitable game-scale assets are integrated.
 // Removed the visible development grid for a natural, continuous alien terrain.
 // Distant rugged ridge silhouettes made from real 3D geometry.
-for(let i=0;i<(lowPowerDevice?18:30);i++){
- const h=4.5+Math.random()*7,w=3+Math.random()*5.5;
- const geo=new THREE.IcosahedronGeometry(1,2),p=geo.attributes.position;
- for(let j=0;j<p.count;j++){const x=p.getX(j),y=p.getY(j),z=p.getZ(j);const n=.72+Math.sin(x*9+z*5+y*6)*.13+Math.sin(z*13-y*8)*.08+(Math.random()-.5)*.10;const peak=Math.sign(y)*Math.pow(Math.abs(y),.82);p.setXYZ(j,x*n,peak*n*(.82+Math.random()*.28),z*(.78+Math.random()*.18))}
- geo.computeVertexNormals();
- const ridgeMat=new THREE.MeshStandardMaterial({color:i%5===0?0x55584e:(i%3===0?0x66685b:0x777566),map:rockTexture,bumpMap:rockTexture,bumpScale:.24,roughness:1});
- const m=new THREE.Mesh(geo,ridgeMat);m.scale.set(w*.68,h*.42,w*.38);m.position.set((i-15)*6.1,h*.18,-94-Math.random()*24);m.rotation.y=Math.random()*2.4;m.castShadow=true;m.receiveShadow=true;scene.add(m)
+// Distant alien escarpment: one layered, jagged skyline instead of oversized smooth boulders.
+function makeRidgeLayer(zBase, heightScale, color, seed){
+ const verts=[], indices=[], cols=[];
+ const points=54;
+ let heights=[];
+ for(let i=0;i<=points;i++){
+  const x=-118+i*(236/points);
+  const wave=Math.sin(i*.47+seed)*.42+Math.sin(i*1.19+seed*2.1)*.24+Math.sin(i*2.73+seed*.7)*.13;
+  const peak=Math.pow(Math.max(0,Math.sin(i*.31+seed*1.4)),5)*.55;
+  heights.push(3.2+(wave+peak+Math.random()*.12)*heightScale);
+ }
+ for(let i=0;i<=points;i++){
+  const x=-118+i*(236/points), top=heights[i];
+  verts.push(x,0,zBase, x,top,zBase+(Math.sin(i*.77+seed)*1.5));
+  const shade=.72+((Math.sin(i*2.17+seed)+1)*.14);
+  cols.push(shade,shade*.98,shade*.88, shade*.72,shade*.77,shade*.68);
+  if(i<points){const a=i*2;indices.push(a,a+1,a+2,a+1,a+3,a+2)}
+ }
+ const geo=new THREE.BufferGeometry();
+ geo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));
+ geo.setAttribute('color',new THREE.Float32BufferAttribute(cols,3));
+ geo.setIndex(indices);geo.computeVertexNormals();
+ const material=new THREE.MeshStandardMaterial({color,vertexColors:true,roughness:1,flatShading:true,side:THREE.DoubleSide});
+ const ridge=new THREE.Mesh(geo,material);ridge.position.z=0;ridge.receiveShadow=true;scene.add(ridge);
 }
+makeRidgeLayer(-111,12,0x77796c,1.7);
+makeRidgeLayer(-102,8,0x555f57,4.2);
+makeRidgeLayer(-94,5,0x3c4c47,7.1);
 // Small luminous alien mineral outcrops scattered across the landing zone
 const crystalMat=new THREE.MeshStandardMaterial({color:0x777d69,emissive:0x090d08,emissiveIntensity:.12,roughness:.82,metalness:.08});
 for(let i=0;i<7;i++){const group=new THREE.Group();const count=2+Math.floor(Math.random()*2);for(let j=0;j<count;j++){const crystal=new THREE.Mesh(new THREE.ConeGeometry(.10+Math.random()*.12,.25+Math.random()*.48,5),crystalMat);crystal.position.set((Math.random()-.5)*.45,.14+Math.random()*.12,(Math.random()-.5)*.45);crystal.rotation.z=(Math.random()-.5)*.3;group.add(crystal)}group.userData.blocksEnemy=true;group.userData.blockRadius=.55;group.position.set((Math.random()-.5)*88,.03,-12-Math.random()*75);scene.add(group)}
 // Rock clusters
-for(let i=0;i<(lowPowerDevice?38:88);i++){
- const size=lowPowerDevice?.16+Math.random()*.34:.18+Math.random()*.48;
+for(let i=0;i<(lowPowerDevice?28:60);i++){
+ const size=lowPowerDevice?.12+Math.random()*.22:.14+Math.random()*.32;
  const geo=new THREE.IcosahedronGeometry(size,2),p=geo.attributes.position;
  for(let j=0;j<p.count;j++){const n=.58+Math.random()*.82;p.setXYZ(j,p.getX(j)*n,p.getY(j)*(.5+Math.random()*.72),p.getZ(j)*(.62+Math.random()*.76))}
  geo.computeVertexNormals();
