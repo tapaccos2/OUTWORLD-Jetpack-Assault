@@ -28,3 +28,20 @@ The new assets materially improve coverage: mission-level structure resources an
 3. Continue the `.GRY` and `.MIS` format investigation, validating findings across multiple files before using them to reconstruct a level.
 
 This inventory describes what is currently present. It does not claim that the assets have been fully decoded or that a playable reconstruction is complete.
+
+## New cross-reference findings (sampled, not exhaustive)
+
+Readable resource references were checked in `misn/Anub01.mis`, `misn/Anub02.mis`, and `netmisn/anub1m.mis` against the loose `structs/` filenames.
+
+- The two single-player missions reference `anub01.dpc` and `anub02.dpc`, which are present in `structs/`.
+- Those missions also reference unit resources such as `laborer.dpc`, `defenderWmortar.dpc`, `walkingBabyAssassin.dpc`, `Turret1.dpc`, `flyingAssassin.dpc`, `strikecraft.dpc`, and `dropship.dpc`; these names were not present as loose files in `structs/`.
+- The sampled multiplayer mission references `anub1m.dpc`, `flag_red.dpc`, `cyball1.dpc`, and `flag_blu.dpc`, all present in `structs/`.
+
+This does **not** prove the missing single-player unit resources are absent from the game data: they may be stored in `units.ff` or another archive. The next check is to parse and cross-reference the FF archive directory tables and compare their indexed names with mission references. A new local scanner is available:
+
+```sh
+node tools/cross-reference-resources.mjs original-data > original-data-resource-references.json
+node tools/inspect-ff-archives.mjs original-data/units.ff original-data/motion.ff original-data/shelldb/*.ff
+```
+
+The FF directory-table layout is confirmed in `motion.ff`, `shelldb/library.ff`, `shelldb/graphics.ff`, and `shelldb/briefing.ff`; `units.ff` still needs local validation.
