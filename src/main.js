@@ -650,7 +650,7 @@ for(let i=0;i<enemySpawns.length;i++){
 }
 // Keep the tested full-size procedural Hydran enemies visible. The imported GLB pack
 // currently has inconsistent in-game scale/orientation, so do not hide these meshes.
-if(window.loadEnvironmentAssets)window.loadEnvironmentAssets(THREE,scene,lowPowerDevice).catch(err=>console.warn('Environment GLB assets unavailable; imported scenery may be incomplete.',err));
+if(window.loadEnvironmentAssets)window.loadEnvironmentAssets(THREE,scene,lowPowerDevice).catch(err=>console.warn('Environment GLB assets unavailable; procedural fallback remains active.',err));
 const bullets=[],sparks=[],clock=new THREE.Clock();let thirdPersonCameraReady=false,hp=100,fuel=100,yaw=0,pitch=-.05,targetYaw=0,targetPitch=-.05,vy=0,onGround=true,started=false,dead=false,won=false,fireHeld=false,boostHeld=false,jumpQueued=false,shotCooldown=0,damageFlash=0,lookTouch=null,stick={x:0,y:0},pointerLocked=false,lastShot=0,muzzleLife=0,hitConfirmTimer=0,thirdPerson=true,fireRecoil=0;
 function startGame(){
  started=true;
