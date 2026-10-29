@@ -24,6 +24,14 @@ const groundCanvas=document.createElement('canvas');groundCanvas.width=groundCan
  const groundTex=new THREE.CanvasTexture(groundCanvas);groundTex.wrapS=groundTex.wrapT=THREE.RepeatWrapping;groundTex.repeat.set(15,15);groundTex.colorSpace=THREE.SRGBColorSpace;groundTex.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
  const groundBump=new THREE.CanvasTexture(groundCanvas);groundBump.wrapS=groundBump.wrapT=THREE.RepeatWrapping;groundBump.repeat.set(15,15);
  const groundMat=new THREE.MeshStandardMaterial({color:0x8d9380,map:groundTex,bumpMap:groundBump,bumpScale:.24,roughness:.98});
+ // Use a real PBR rock-ground material (albedo, normal and roughness maps) instead of the
+ // generated canvas pattern. Keep the existing maps as a fallback if a CDN request fails.
+ const pbrLoader=new THREE.TextureLoader();
+ const pbrRoot='https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/aerial_rocks_02/aerial_rocks_02_';
+ const setupGroundMap=(texture)=>{texture.wrapS=texture.wrapT=THREE.RepeatWrapping;texture.repeat.set(26,26);texture.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());texture.needsUpdate=true;return texture;};
+ pbrLoader.load(pbrRoot+'diff_1k.jpg',texture=>{groundMat.map=setupGroundMap(texture);groundMat.color.setHex(0xc8b89f);groundMat.needsUpdate=true;},undefined,error=>console.warn('PBR ground albedo unavailable; retaining fallback texture',error));
+ pbrLoader.load(pbrRoot+'nor_gl_1k.jpg',texture=>{groundMat.normalMap=setupGroundMap(texture);groundMat.normalScale.set(.65,.65);groundMat.needsUpdate=true;},undefined,error=>console.warn('PBR ground normal unavailable; retaining fallback normal',error));
+ pbrLoader.load(pbrRoot+'rough_1k.jpg',texture=>{groundMat.roughnessMap=setupGroundMap(texture);groundMat.roughness=.96;groundMat.needsUpdate=true;},undefined,error=>console.warn('PBR ground roughness unavailable; using uniform roughness',error));
 const rockMat=mat(0x424944,.96,.02), rockLite=mat(0x68695d,.94,.01), dark=mat(0x151a19,.86,.08), armor=mat(0x303a3a,.72,.16), armorLite=mat(0x606a65,.76,.12), cyan=mat(0x7dacae,.55,.12), enemyMat=mat(0x66543b,.78,.04), enemyLite=mat(0x88734d,.72,.06), visor=mat(0xc45d2b,.48,.08), black=mat(0x101413,.82,.08);
 
 // High-frequency procedural surface maps: fine grain, mineral mottling, scratches and worn edges.
@@ -97,57 +105,8 @@ for(let i=0;i<(lowPowerDevice?70:170);i++){
 }
 const skyTex=new THREE.CanvasTexture(skyCanvas);skyTex.colorSpace=THREE.SRGBColorSpace;
 const skyDome=new THREE.Mesh(new THREE.SphereGeometry(190,40,24),new THREE.MeshBasicMaterial({map:skyTex,side:THREE.BackSide,depthWrite:false}));skyDome.renderOrder=-10;scene.add(skyDome);
-// Load CC0 glTF environment models asynchronously; procedural terrain remains as fallback.
-// Imported nature pack disabled: its current models read as oversized smooth blobs at gameplay scale. Use the handcrafted environment below until suitable game-scale assets are integrated.
-// Removed the visible development grid for a natural, continuous alien terrain.
-// Distant rugged ridge silhouettes made from real 3D geometry.
-// Distant alien escarpment: one layered, jagged skyline instead of oversized smooth boulders.
-function makeRidgeLayer(zBase, heightScale, color, seed){
- const verts=[], indices=[], cols=[];
- const points=54;
- let heights=[];
- for(let i=0;i<=points;i++){
-  const x=-118+i*(236/points);
-  const wave=Math.sin(i*.47+seed)*.42+Math.sin(i*1.19+seed*2.1)*.24+Math.sin(i*2.73+seed*.7)*.13;
-  const peak=Math.pow(Math.max(0,Math.sin(i*.31+seed*1.4)),5)*.55;
-  heights.push(3.2+(wave+peak+Math.random()*.12)*heightScale);
- }
- for(let i=0;i<=points;i++){
-  const x=-118+i*(236/points), top=heights[i];
-  verts.push(x,0,zBase, x,top,zBase+(Math.sin(i*.77+seed)*1.5));
-  const shade=.72+((Math.sin(i*2.17+seed)+1)*.14);
-  cols.push(shade,shade*.98,shade*.88, shade*.72,shade*.77,shade*.68);
-  if(i<points){const a=i*2;indices.push(a,a+1,a+2,a+1,a+3,a+2)}
- }
- const geo=new THREE.BufferGeometry();
- geo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));
- geo.setAttribute('color',new THREE.Float32BufferAttribute(cols,3));
- geo.setIndex(indices);geo.computeVertexNormals();
- const material=new THREE.MeshStandardMaterial({color,vertexColors:true,roughness:1,flatShading:true,side:THREE.DoubleSide});
- const ridge=new THREE.Mesh(geo,material);ridge.position.z=0;ridge.receiveShadow=true;scene.add(ridge);
-}
-makeRidgeLayer(-111,12,0x77796c,1.7);
-makeRidgeLayer(-102,8,0x555f57,4.2);
-makeRidgeLayer(-94,5,0x3c4c47,7.1);
-// Small luminous alien mineral outcrops scattered across the landing zone
-const crystalMat=new THREE.MeshStandardMaterial({color:0x777d69,emissive:0x090d08,emissiveIntensity:.12,roughness:.82,metalness:.08});
-for(let i=0;i<7;i++){const group=new THREE.Group();const count=2+Math.floor(Math.random()*2);for(let j=0;j<count;j++){const crystal=new THREE.Mesh(new THREE.ConeGeometry(.10+Math.random()*.12,.25+Math.random()*.48,5),crystalMat);crystal.position.set((Math.random()-.5)*.45,.14+Math.random()*.12,(Math.random()-.5)*.45);crystal.rotation.z=(Math.random()-.5)*.3;group.add(crystal)}group.userData.blocksEnemy=true;group.userData.blockRadius=.55;group.position.set((Math.random()-.5)*88,.03,-12-Math.random()*75);scene.add(group)}
-// Rock clusters
-for(let i=0;i<(lowPowerDevice?28:60);i++){
- const size=lowPowerDevice?.12+Math.random()*.22:.14+Math.random()*.32;
- const geo=new THREE.IcosahedronGeometry(size,2),p=geo.attributes.position;
- for(let j=0;j<p.count;j++){const n=.58+Math.random()*.82;p.setXYZ(j,p.getX(j)*n,p.getY(j)*(.5+Math.random()*.72),p.getZ(j)*(.62+Math.random()*.76))}
- geo.computeVertexNormals();
- const r=new THREE.Mesh(geo,Math.random()>.35?rockMat:rockLite);r.userData.blocksEnemy=true;r.userData.blockRadius=size*.78;
- r.position.set((Math.random()-.5)*92,.02+Math.random()*.05,-8-Math.random()*92);
- r.scale.set(.8+Math.random()*.38,.42+Math.random()*.42,.72+Math.random()*.42);r.rotation.set(Math.random()*.18,Math.random()*3,Math.random()*.18);r.castShadow=true;r.receiveShadow=true;scene.add(r)
-}
-// Alien rock spires and weathered landing-zone barricades
-for(let i=0;i<(lowPowerDevice?5:9);i++){const h=1.5+Math.random()*3.2,w=.45+Math.random()*.75;const geo=new THREE.IcosahedronGeometry(1,2),p=geo.attributes.position;for(let j=0;j<p.count;j++){const n=.78+Math.random()*.42;p.setXYZ(j,p.getX(j)*n,p.getY(j),p.getZ(j)*n)}geo.computeVertexNormals();const spire=new THREE.Mesh(geo,mat(i%3?0x343d37:0x4a4d40));spire.scale.set(w,h*.7,w*.8);spire.userData.blocksEnemy=true;spire.userData.blockRadius=w*1.2;spire.position.set((Math.random()-.5)*100,h*.32,-18-Math.random()*82);spire.rotation.set((Math.random()-.5)*.2,Math.random()*3,(Math.random()-.5)*.28);spire.castShadow=true;spire.receiveShadow=true;scene.add(spire)}
-for(let i=0;i<5;i++){const xPos=(i-2)*13;const base=new THREE.Mesh(new THREE.BoxGeometry(3.4,1.3,.7),mat(0x3b4b4b));base.userData.blocksEnemy=true;base.userData.blockRadius=2.2;base.position.set(xPos,.65,-18-(i%3)*9);base.rotation.y=(Math.random()-.5)*.22;base.castShadow=true;base.receiveShadow=true;scene.add(base);const stripe=new THREE.Mesh(new THREE.BoxGeometry(2.4,.09,.74),mat(0xd18b42));stripe.position.set(xPos,.95,-18-(i%3)*9);stripe.rotation.y=base.rotation.y;scene.add(stripe)}
-// Simple industrial debris
-for(let i=0;i<7;i++){let box=new THREE.Mesh(new THREE.BoxGeometry(1.8+Math.random()*2,.4+Math.random(),1+Math.random()*2),dark);box.userData.blocksEnemy=true;box.userData.blockRadius=1.65;box.position.set((Math.random()-.5)*65,.2,-8-Math.random()*70);box.rotation.y=Math.random()*Math.PI;box.castShadow=true;box.receiveShadow=true;scene.add(box)}
-
+// Environment scenery is loaded as textured GLB assets in src/assets.js.
+// No generated ridge silhouettes, primitive rock clusters, barricades or fake outpost meshes here.
 // SOLID WORLD COLLISION: swept horizontal movement with axis sliding.
 function moveEntityWithCollision(entity,dx,dz,radius,checkActors=false){
  const canOccupy=(x,z)=>{
@@ -164,83 +123,7 @@ function moveEntityWithCollision(entity,dx,dz,radius,checkActors=false){
  const steps=Math.max(1,Math.ceil(Math.hypot(dx,dz)/.18)),sx=dx/steps,sz=dz/steps;
  for(let i=0;i<steps;i++){let nx=entity.position.x+sx,nz=entity.position.z;if(canOccupy(nx,nz))entity.position.x=nx;nx=entity.position.x;nz=entity.position.z+sz;if(canOccupy(nx,nz))entity.position.z=nz}
 }
-// GRAPHICS MILESTONE 5 — environmental dressing (low-poly, mobile-conscious).
-// 2. Landing-zone paint: worn perimeter ring and broken hazard markings.
-const paintMat=new THREE.MeshStandardMaterial({color:0x88754f,roughness:1,transparent:true,opacity:.42});
-for(let i=0;i<9;i++){const mark=new THREE.Mesh(new THREE.BoxGeometry(.7+Math.random()*1.1,.012,.055),paintMat);mark.position.set((Math.random()-.5)*26,-.065,-15-Math.random()*18);mark.rotation.y=(Math.random()-.5)*.35;scene.add(mark)}
-// 3. Two industrial landing beacons with emissive lenses and restrained glow.
-const beaconMetal=mat(0x263b40,.55,.42);
-const beaconGlow=new THREE.MeshStandardMaterial({color:0x62e8ff,emissive:0x1b9eae,emissiveIntensity:2.2,roughness:.25});
-for(const x of [-17,17]){const pole=new THREE.Mesh(new THREE.CylinderGeometry(.12,.2,3.6,8),beaconMetal);pole.position.set(x,1.8,-25);pole.castShadow=true;scene.add(pole);const cap=new THREE.Mesh(new THREE.BoxGeometry(.7,.24,.7),dark);cap.position.set(x,3.55,-25);scene.add(cap);const lens=new THREE.Mesh(new THREE.SphereGeometry(.22,10,8),beaconGlow);lens.position.set(x,3.62,-25);scene.add(lens);const baseRing=new THREE.Mesh(new THREE.TorusGeometry(.36,.045,6,18),beaconGlow);baseRing.position.set(x,.12,-25);baseRing.rotation.x=Math.PI/2;scene.add(baseRing)}
-// 4. A damaged drop-pod wreck gives the landing zone a recognisable focal prop.
-const wreck=new THREE.Group();const wreckHull=new THREE.Mesh(new THREE.CylinderGeometry(.75,1.05,2.6,7,1),mat(0x39494b,.8,.25));wreckHull.rotation.z=Math.PI/2;wreckHull.rotation.x=.18;wreckHull.position.set(0,1.15,0);wreck.add(wreckHull);
-const wreckNose=new THREE.Mesh(new THREE.ConeGeometry(.78,.8,7),mat(0x6b7770,.75,.2));wreckNose.rotation.z=-Math.PI/2;wreckNose.position.set(1.65,1.18,0);wreck.add(wreckNose);
-const wreckStripe=new THREE.Mesh(new THREE.BoxGeometry(1.25,.12,1.5),mat(0xb65a3c,.7,.15));wreckStripe.position.set(-.05,1.38,.02);wreck.add(wreckStripe);
-for(let side=-1;side<=1;side+=2){const fin=new THREE.Mesh(new THREE.BoxGeometry(.6,.12,1.25),dark);fin.position.set(side*.35,.35,side*.45);fin.rotation.z=side*.22;wreck.add(fin)}
-wreck.position.set(-10,0,-38);wreck.rotation.y=-.45;wreck.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});scene.add(wreck);
-// 5. Ground-level mineral shards and debris add scale variation near the player.
-const shardMat=new THREE.MeshStandardMaterial({color:0x5a7774,roughness:.75,metalness:.12});
-for(let i=0;i<24;i++){const h=.18+Math.random()*.42;const shard=new THREE.Mesh(new THREE.ConeGeometry(.12+Math.random()*.12,h,5),shardMat);shard.position.set((Math.random()-.5)*76,h*.48,-3-Math.random()*65);shard.rotation.z=(Math.random()-.5)*.7;shard.rotation.x=(Math.random()-.5)*.5;shard.castShadow=true;scene.add(shard)}
-
-
-// MODERN REMAKE VISUAL PASS — monumental outpost silhouettes and atmospheric depth.
-const structureMetal=new THREE.MeshStandardMaterial({color:0x26383c,metalness:.72,roughness:.36});
-const structureEdge=new THREE.MeshStandardMaterial({color:0x82979a,metalness:.68,roughness:.32});
-const structureGlow=new THREE.MeshStandardMaterial({color:0x4ceaff,emissive:0x087b91,emissiveIntensity:2.2,metalness:.25,roughness:.28});
-function addOutpost(x,z,scale=1){
- const g=new THREE.Group();
- const base=new THREE.Mesh(new THREE.CylinderGeometry(3.8*scale,5.2*scale,1.5*scale,10),structureMetal);
- base.position.y=.55*scale;base.castShadow=true;base.receiveShadow=true;g.add(base);
- const tower=new THREE.Mesh(new THREE.BoxGeometry(2.6*scale,10*scale,2.6*scale),structureMetal);
- tower.position.y=5.8*scale;tower.castShadow=true;tower.receiveShadow=true;g.add(tower);
- const crown=new THREE.Mesh(new THREE.CylinderGeometry(1.9*scale,1.5*scale,1.4*scale,8),structureEdge);
- crown.position.y=11.3*scale;crown.castShadow=true;g.add(crown);
- for(let side of [-1,1]){
-  const brace=new THREE.Mesh(new THREE.BoxGeometry(.55*scale,7.8*scale,.65*scale),structureEdge);
-  brace.position.set(side*1.65*scale,5.1*scale,0);brace.rotation.z=side*.12;g.add(brace);
-  const light=new THREE.Mesh(new THREE.BoxGeometry(.12*scale,3.4*scale,.14*scale),structureGlow);
-  light.position.set(side*1.33*scale,5.8*scale,1.34*scale);g.add(light);
- }
- const antenna=new THREE.Mesh(new THREE.CylinderGeometry(.06*scale,.11*scale,3.8*scale,8),structureEdge);
- antenna.position.y=13.7*scale;g.add(antenna);
- const beacon=new THREE.Mesh(new THREE.SphereGeometry(.18*scale,10,8),structureGlow);
- beacon.position.y=15.65*scale;g.add(beacon);
- g.position.set(x,0,z);g.scale.setScalar(scale);g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});scene.add(g);
-}
-addOutpost(-27,-58,1.15);addOutpost(31,-74,.92);addOutpost(18,-38,.62);
-// Broken elevated transit bridge across the far canyon.
-const bridgeMat=new THREE.MeshStandardMaterial({color:0x303f42,metalness:.62,roughness:.48});
-for(let i=0;i<9;i++){
- const span=new THREE.Mesh(new THREE.BoxGeometry(4.2,.32,1.8),bridgeMat);
- span.position.set(-18+i*4.1,5.8,-64+Math.sin(i*.8)*1.8);span.rotation.z=Math.sin(i*.8)*.035;
- span.castShadow=true;span.receiveShadow=true;scene.add(span);
-}
-for(let i=0;i<5;i++){
- const pylon=new THREE.Mesh(new THREE.CylinderGeometry(.22,.38,5.5,7),structureMetal);
- pylon.position.set(-14+i*8,3.0,-64);pylon.castShadow=true;scene.add(pylon);
-}
-// Alien scrub clusters with stems, layered leaves and luminous seed pods.
-const plantStem=new THREE.MeshStandardMaterial({color:0x283e32,roughness:.9});
-const plantLeaf=new THREE.MeshStandardMaterial({color:0x718e48,roughness:.7,side:THREE.DoubleSide});
-const seedGlow=new THREE.MeshStandardMaterial({color:0xb9ed62,emissive:0x3f6512,emissiveIntensity:1.1,roughness:.3});
-for(let i=0;i<(lowPowerDevice?16:78);i++){
- const x=(Math.random()-.5)*100,z=-4-Math.random()*83;
- if(Math.abs(x)<7&&z>-34)continue;
- const clump=new THREE.Group();
- const stems=2+Math.floor(Math.random()*4);
- for(let j=0;j<stems;j++){
-  const h=.35+Math.random()*1.0;
-  const stem=new THREE.Mesh(new THREE.CylinderGeometry(.035,.075,h,5),plantStem);
-  stem.position.set((Math.random()-.5)*.65,h*.5,(Math.random()-.5)*.6);stem.rotation.z=(Math.random()-.5)*.55;clump.add(stem);
-  const leaf=new THREE.Mesh(new THREE.SphereGeometry(.22+Math.random()*.2,8,6),plantLeaf);
-  leaf.scale.set(.65,.34,1.65);leaf.position.copy(stem.position);leaf.position.y+=h*.25;leaf.rotation.z=stem.rotation.z+.5;clump.add(leaf);
- }
- if(Math.random()>.45){
-  const pod=new THREE.Mesh(new THREE.SphereGeometry(.13+Math.random()*.1,10,8),seedGlow);
-  pod.position.set(0,.5+Math.random()*.8,0);clump.add(pod);
- }
- clump.position.set(x,.02,z);clump.rotation.y=Math.random()*Math.PI;clump.traverse(o=>{if(o.isMesh){o.castShadow=true}});scene.add(clump);
-}
+// Hand-built prop geometry removed: real textured GLB scenery is loaded by loadEnvironmentAssets().
 // Suspended dust motes catch the sun; points are subtle and do not obscure aiming.
 const dustCount=lowPowerDevice?40:360,dustPositions=new Float32Array(dustCount*3);
 for(let i=0;i<dustCount;i++){
@@ -252,61 +135,8 @@ const dustGeo=new THREE.BufferGeometry();dustGeo.setAttribute('position',new THR
 const dustMat=new THREE.PointsMaterial({color:0xf3d8a2,size:.075,transparent:true,opacity:.42,depthWrite:false,sizeAttenuation:true});
 const dustField=new THREE.Points(dustGeo,dustMat);scene.add(dustField);
 
-// HYDRAN VALLEY — ravine walls, alien growths, spore vents and nest structures.
-const cliffMat=new THREE.MeshStandardMaterial({color:0x303b36,roughness:.96,metalness:.02});
-const cliffLit=new THREE.MeshStandardMaterial({color:0x4d5a49,roughness:.88});
-const chitinMat=new THREE.MeshStandardMaterial({color:0x293d31,roughness:.48,metalness:.12});
-const sporeMat=new THREE.MeshStandardMaterial({color:0x9ac64c,emissive:0x334f08,emissiveIntensity:.65,roughness:.38});
-const nestMat=new THREE.MeshStandardMaterial({color:0x544b35,roughness:.78});
-// Angular, stratified ravine walls. The old stretched icosahedra made huge smooth blobs.
-function makeStrataRock(side,index){
- const z=-9-index*6.0-Math.random()*2.0;
- const x=side*(16.5+Math.random()*4.2);
- const h=2.4+Math.random()*3.4,w=1.6+Math.random()*2.0,d=2.0+Math.random()*2.6;
- // Broad low-poly boulders with restrained vertex variation; avoid the needle-like shards.
- const geo=new THREE.IcosahedronGeometry(1,1),p=geo.attributes.position;
- for(let k=0;k<p.count;k++){
-  const n=.91+Math.random()*.18;
-  p.setXYZ(k,p.getX(k)*n,p.getY(k)*(.92+Math.random()*.16),p.getZ(k)*(.90+Math.random()*.18));
- }
- geo.computeVertexNormals();
- const rock=new THREE.Mesh(geo,index%4===0?cliffLit:cliffMat);
- rock.scale.set(w,h,d);rock.position.set(x,h*.43,z);
- rock.rotation.set((Math.random()-.5)*.12,Math.random()*Math.PI,side*(Math.random()*.06));
- rock.castShadow=true;rock.receiveShadow=true;scene.add(rock);
- // Low, broken horizontal strata ledges, tucked close to the rock body.
- for(let band=0;band<2;band++){
-  const ledge=new THREE.Mesh(new THREE.BoxGeometry(w*(1.05+Math.random()*.16),.10+Math.random()*.08,d*(.78+Math.random()*.12)),band?cliffMat:cliffLit);
-  ledge.position.set(x+(Math.random()-.5)*.18,h*(.32+band*.30),z+(Math.random()-.5)*.22);
-  ledge.rotation.set(0,rock.rotation.y,(Math.random()-.5)*.07);
-  ledge.castShadow=true;ledge.receiveShadow=true;scene.add(ledge);
- }
-}
-for(const side of [-1,1]){
- for(let i=0;i<9;i++)makeStrataRock(side,i);
- // Sparse growths sit behind the rock line, preserving the open firing lane.
- for(let i=0;i<6;i++){
-  const x=side*(11.5+Math.random()*2.8),z=-8-i*9.2;
-  const spike=new THREE.Mesh(new THREE.ConeGeometry(.24+Math.random()*.24,1.0+Math.random()*1.5,7),chitinMat);
-  spike.position.set(x,spike.geometry.parameters.height*.43,z);spike.rotation.z=side*(Math.random()*.10);spike.castShadow=true;scene.add(spike);
-  if(i%2===0){
-   const pod=new THREE.Mesh(new THREE.SphereGeometry(.11+Math.random()*.07,9,7),sporeMat);
-   pod.position.set(x-side*.2,.55+Math.random()*.65,z-.12);pod.castShadow=true;scene.add(pod);
-  }
- }
-}
-// Cracked alien nest mound at the far end of the valley.
-const nest=new THREE.Mesh(new THREE.IcosahedronGeometry(1,2),nestMat);
-nest.scale.set(5.5,2.8,3.2);nest.position.set(0,2.2,-76);nest.castShadow=true;nest.receiveShadow=true;scene.add(nest);
-for(let i=0;i<7;i++){
-  const rib=new THREE.Mesh(new THREE.TorusGeometry(1.2+i*.24,.10,7,18),chitinMat);
-  rib.scale.set(1.25,1,.72);rib.position.set((i-3)*.8,2.1+(i%2)*.55,-78.5);rib.rotation.y=(i-3)*.10;scene.add(rib);
-}
-for(let i=0;i<5;i++){
-  const egg=new THREE.Mesh(new THREE.SphereGeometry(.45+Math.random()*.25,12,9),sporeMat);
-  egg.scale.y=1.35;egg.position.set(-3.8+i*1.9,.6,-72-Math.random()*3);egg.castShadow=true;scene.add(egg);
-}
-
+// Ravine walls, alien scrub, spore vents and nest primitives removed.
+ // These environmental silhouettes are being replaced by textured, imported GLB models.
 // Landscape-only play: request a real orientation lock where the browser permits it.
 function requestLandscapeLock(){
   try{
