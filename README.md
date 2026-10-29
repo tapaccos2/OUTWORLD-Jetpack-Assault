@@ -43,4 +43,4 @@ The original mission files and sound-effect audio containers are being analyzed 
 - [Missing asset requirements](original-data/ASSET-REQUIREMENTS.md)
 - [Inspection tools](tools/README.md)
 
-The original terrain geometry is **not yet decoded into actual vertices/heights**; the `.GRY` files are sound effects, not terrain. The prototype should not be described as a faithful original-level rebuild until the correct terrain asset format and mission placement data have been decoded and validated.
+The GPC/RPC terrain-surface layout is now decoded far enough to export candidate vertices and triangles: dimensions, orientation, normals, four corner heights, and the XY corner anchor cross-validate across all 34 resource pairs. Use [the terrain field analysis](original-data/TERRAIN-FIELD-HYPOTHESES.md) and [the candidate mesh exporter](tools/export-rpc-mesh.mjs). The exported geometry has not yet been visually validated against an original in-game map, and terrain textures, exact mission placement, scale, and any additional collision/terrain layers remain unfinished. The prototype should not yet be described as a faithful original-level rebuild.
