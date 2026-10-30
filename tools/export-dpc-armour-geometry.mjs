@@ -96,9 +96,11 @@ for (let i = 0; i < owners.length; i++) {
   for (let k = 0; k < 3; k++) if (anchor[k] !== s32(owner + 8 + k * 4)) throw new Error('Part ' + (i + 1) + ': owner/wrapper vector mismatch');
   const meshDescriptor = ptr(ptr(meshNode + 20) + 8);
   const sharedVertexData = ptr(meshDescriptor + 4);
-  const partVertexStart = ptr(meshNode + 28);
-  if (partVertexStart < sharedVertexData || (partVertexStart - sharedVertexData) % 8 !== 0) throw new Error('Part ' + (i + 1) + ': mesh vertex slice is outside/aligned incorrectly to shared pool');
-  meshes.push(decodeMesh('submesh_' + (i + 1), owner, meshNode, transformNode, partVertexStart, ptr(meshNode + 36), 26, anchor));
+  const meshVertexReference = ptr(meshNode + 28);
+  if (meshVertexReference < 0 || meshVertexReference + 4 > b.length) throw new Error('Part ' + (i + 1) + ': invalid mesh vertex reference');
+  // Face indices are global indices into the shared coordinate pool. The +28
+  // pointer is retained as metadata; it is not the base of the XYZ array.
+  const decoded = decodeMesh('submesh_' + (i + 1), owner, meshNode, transformNode, sharedVertexData, ptr(meshNode + 36), 26, anchor);\n  decoded.meshVertexReferenceTarget = meshVertexReference;\n  meshes.push(decoded);
 }
 // Build a self-contained glTF 2.0 binary.
 const binaryParts = [], bufferViews = [], accessors = [], gltfMeshes = [], nodes = [], materials = [];
@@ -124,7 +126,7 @@ for (let i = 0; i < meshes.length; i++) {
   const indexAccessor = accessors.length;
   accessors.push({ bufferView: indexView, componentType: 5125, count: m.indices.length, type: 'SCALAR', min: [Math.min(...m.indices)], max: [Math.max(...m.indices)] });
   materials.push({ name: 'Diagnostic material ' + (i + 1), pbrMetallicRoughness: { baseColorFactor: colors[i], metallicFactor: 0, roughnessFactor: .82 }, doubleSided: true });
-  gltfMeshes.push({ name: m.name, primitives: [{ attributes: { POSITION: posAccessor, NORMAL: normAccessor }, indices: indexAccessor, material: i, mode: 4 }], extras: { sourceOwnerNodeOffset: m.owner, sourceMeshNodeOffset: m.meshNode, sourceTransformNodeOffset: m.transformNode, vertexDataOffset: m.vertexOffset, faceDataOffset: m.faceOffset, sourceFaceRecordCount: m.sourceCount, uniqueQuadCount: m.quadCount, anchorVectorCandidate: m.anchor } });
+  gltfMeshes.push({ name: m.name, primitives: [{ attributes: { POSITION: posAccessor, NORMAL: normAccessor }, indices: indexAccessor, material: i, mode: 4 }], extras: { sourceOwnerNodeOffset: m.owner, sourceMeshNodeOffset: m.meshNode, sourceTransformNodeOffset: m.transformNode, vertexDataOffset: m.vertexOffset, meshVertexReferenceTarget: m.meshVertexReferenceTarget ?? null, faceDataOffset: m.faceOffset, sourceFaceRecordCount: m.sourceCount, uniqueQuadCount: m.quadCount, anchorVectorCandidate: m.anchor } });
   const node = { name: m.name, mesh: i, extras: { anchorVectorCandidate: m.anchor, transformApplied: applyAnchors } };
   if (applyAnchors && m.transformNode !== null) node.translation = m.anchor;
   nodes.push(node);
