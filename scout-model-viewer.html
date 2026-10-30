@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Outwars Scout GLB Inspector</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,Segoe UI,Arial,sans-serif;background:#10151d;color:#e8edf4}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:flex;flex-direction:column}
+header{padding:14px 18px;background:#18212d;border-bottom:1px solid #344253;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+h1{font-size:18px;margin:0;font-weight:650}.sub{font-size:12px;color:#9cabbc;margin-top:3px}
+.controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-left:auto}
+button,.filelabel{border:1px solid #536579;background:#253447;color:#f4f7fb;border-radius:7px;padding:8px 11px;font-size:13px;cursor:pointer}
+button:hover,.filelabel:hover{background:#344a63}button.active{background:#42658b;border-color:#7fa8d7}
+input[type=file]{display:none}
+main{position:relative;flex:1;min-height:460px}
+#view{position:absolute;inset:0}
+#status{position:absolute;left:14px;top:14px;background:#17212ddd;border:1px solid #405166;border-radius:8px;padding:10px 12px;font:12px/1.5 ui-monospace,monospace;white-space:pre-wrap;max-width:min(470px,calc(100% - 28px));pointer-events:none}
+#help{position:absolute;right:14px;bottom:14px;background:#17212ddd;border:1px solid #405166;border-radius:8px;padding:9px 12px;color:#bac7d6;font-size:12px;pointer-events:none}
+footer{padding:8px 14px;background:#18212d;color:#9cabbc;font-size:12px;border-top:1px solid #344253}
+@media(max-width:700px){header{align-items:flex-start}.controls{margin-left:0;width:100%}main{min-height:540px}}
+</style>
+</head>
+<body>
+<header>
+ <div><h1>Outwars Scout — 3D Inspector</h1><div class="sub">Local GLB viewer · nothing is uploaded</div></div>
+ <div class="controls">
+  <label class="filelabel" for="file">Choose GLB file</label><input id="file" type="file" accept=".glb,model/gltf-binary">
+  <button data-view="front" class="active">Front</button><button data-view="side">Side</button><button data-view="back">Back</button><button data-view="top">Top</button>
+  <button id="fit">Fit model</button><button id="wire">Wireframe</button>
+ </div>
+</header>
+<main><div id="view"></div><div id="status">Choose scout-mj-anchor-candidates.glb to inspect the model.</div><div id="help">Drag: orbit · Wheel: zoom · Right-drag: pan</div></main>
+<footer>Diagnostic only. The model's candidate translations are exploratory; rotations and the original parent hierarchy have not yet been decoded.</footer>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+import {OrbitControls} from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js';
+import {GLTFLoader} from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
+
+const host=document.querySelector('#view'),status=document.querySelector('#status'),fileInput=document.querySelector('#file');
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x10151d);
+const camera=new THREE.PerspectiveCamera(42,1,.1,100000);camera.up.set(0,0,1);
+const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.outputColorSpace=THREE.SRGBColorSpace;host.appendChild(renderer.domElement);
+const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.07;controls.target.set(0,0,0);
+scene.add(new THREE.HemisphereLight(0xdceaff,0x263142,2.1));
+const key=new THREE.DirectionalLight(0xffffff,2.3);key.position.set(-3,-5,8);scene.add(key);
+const fill=new THREE.DirectionalLight(0x8fb9ee,1.0);fill.position.set(5,3,3);scene.add(fill);
+const grid=new THREE.GridHelper(5000,50,0x52647a,0x293747);grid.rotation.x=Math.PI/2;grid.position.z=0;scene.add(grid);
+const axes=new THREE.AxesHelper(500);scene.add(axes);
+let model=null,modelBox=null,originalMaterials=[],wire=false;
+function resize(){const w=host.clientWidth,h=host.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}
+new ResizeObserver(resize).observe(host);resize();
+function updateStatus(extra=''){
+ if(!model){status.textContent='Choose a GLB file to inspect.';return}
+ const size=modelBox.getSize(new THREE.Vector3()),center=modelBox.getCenter(new THREE.Vector3());
+ status.textContent=[
+  'Loaded: '+(model.userData.fileName||'GLB'),
+  'Meshes: '+model.userData.meshCount,
+  'Vertices: '+model.userData.vertices.toLocaleString(),
+  'Triangles: '+model.userData.triangles.toLocaleString(),
+  'Bounds: '+size.toArray().map(n=>n.toFixed(1)).join(' × '),
+  'Centre: '+center.toArray().map(n=>n.toFixed(1)).join(', '),
+  extra
+ ].filter(Boolean).join('\n');
+}
+function fit(){
+ if(!model)return;
+ model.updateMatrixWorld(true);modelBox.setFromObject(model);
+ const sphere=modelBox.getBoundingSphere(new THREE.Sphere());
+ const radius=Math.max(sphere.radius,1),distance=radius/Math.sin(THREE.MathUtils.degToRad(camera.fov/2))*1.25;
+ controls.target.copy(sphere.center);camera.position.set(sphere.center.x,sphere.center.y-distance,sphere.center.z+radius*.22);
+ camera.near=Math.max(.01,radius/1000);camera.far=distance*30;camera.updateProjectionMatrix();controls.update();
+}
+function setView(which){
+ if(!model)return;
+ const s=modelBox.getBoundingSphere(new THREE.Sphere()),r=Math.max(s.radius,1),d=r*3.2;
+ const positions={front:[0,-d,0],side:[d,0,0],back:[0,d,0],top:[0,0,d]};
+ const p=positions[which];camera.position.set(s.center.x+p[0],s.center.y+p[1],s.center.z+p[2]);
+ camera.up.set(0,0,1);if(which==='top')camera.up.set(0,1,0);
+ camera.lookAt(s.center);controls.target.copy(s.center);controls.update();
+ document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===which));
+}
+function loadFile(file){
+ if(!file)return;
+ status.textContent='Loading '+file.name+'…';
+ const url=URL.createObjectURL(file),loader=new GLTFLoader();
+ loader.load(url,gltf=>{
+  URL.revokeObjectURL(url);
+  if(model)scene.remove(model);
+  model=gltf.scene;model.userData.fileName=file.name;
+  let meshes=0,vertices=0,triangles=0;
+  originalMaterials=[];
+  model.traverse(o=>{
+   if(!o.isMesh)return;meshes++;
+   const geo=o.geometry;vertices+=geo.attributes.position?.count||0;
+   triangles+=geo.index?geo.index.count/3:(geo.attributes.position?.count||0)/3;
+   const mat=Array.isArray(o.material)?o.material:[o.material];
+   originalMaterials.push({o,mat:mat.map(m=>m.clone())});
+   o.material=mat.map(m=>{const c=m.clone();c.side=THREE.DoubleSide;return c});
+   if(Array.isArray(o.material)===false&&Array.isArray(mat)===false)o.material=o.material;
+  });
+  model.userData.meshCount=meshes;model.userData.vertices=vertices;model.userData.triangles=Math.round(triangles);
+  scene.add(model);modelBox=new THREE.Box3().setFromObject(model);fit();setView('front');
+  updateStatus('Candidate translations applied where present.');
+ },undefined,error=>{URL.revokeObjectURL(url);status.textContent='Could not load GLB: '+error.message;});
+}
+fileInput.addEventListener('change',e=>loadFile(e.target.files[0]));
+document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
+document.querySelector('#fit').addEventListener('click',fit);
+document.querySelector('#wire').addEventListener('click',()=>{
+ wire=!wire;
+ for(const {o} of originalMaterials){const mats=Array.isArray(o.material)?o.material:[o.material];mats.forEach(m=>m.wireframe=wire);}
+ document.querySelector('#wire').classList.toggle('active',wire);
+});
+function animate(){requestAnimationFrame(animate);controls.update();renderer.render(scene,camera)}animate();
+</script>
+</body>
+</html>
