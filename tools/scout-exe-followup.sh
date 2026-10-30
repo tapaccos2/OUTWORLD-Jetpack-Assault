@@ -89,6 +89,14 @@ python3 "$SCRIPT_DIR/scan-scout-exe-strings.py" \
   > "$OUT/51-full-record-relocation-dispatcher.txt" 2>&1
 "$OBJDUMP" -d -Mintel --start-address=0x4dd9c0 --stop-address=0x4dda80 "$EXE" \
   > "$OUT/52-record-relocation-tail-helper.txt" 2>&1
+"$OBJDUMP" -d -Mintel --start-address=0x422260 --stop-address=0x422340 "$EXE" \
+  > "$OUT/53-dpc-runtime-position-and-rotation-setters.txt" 2>&1
+"$OBJDUMP" -d -Mintel --start-address=0x422332 --stop-address=0x422560 "$EXE" \
+  > "$OUT/54-dpc-object-registration-and-linked-records.txt" 2>&1
+"$OBJDUMP" -d -Mintel --start-address=0x437c60 --stop-address=0x437d40 "$EXE" \
+  > "$OUT/55-strided-word-rotation-caller.txt" 2>&1
+"$OBJDUMP" -d -Mintel --start-address=0x433080 --stop-address=0x433170 "$EXE" \
+  > "$OUT/56-record-struct-transform-caller.txt" 2>&1
 "$OBJDUMP" -d -Mintel --start-address=0x4dfca0 --stop-address=0x4dfd90 "$EXE" \
   > "$OUT/41-callee-4dfce4-record-dispatch.txt" 2>&1
 "$OBJDUMP" -d -Mintel --start-address=0x4c5d80 --stop-address=0x4c5e10 "$EXE" \
@@ -329,6 +337,18 @@ python3 "$SCRIPT_DIR/scan-scout-exe-callers.py" \
   echo
   echo "========== RAW POINTER REFERENCES TO TRANSFORM / DPC HANDLERS =========="
   cat "$OUT/50-raw-transform-handler-pointer-xrefs.txt"
+  echo
+  echo "========== DPC RUNTIME POSITION / ROTATION SETTER SIGNATURES =========="
+  cat "$OUT/53-dpc-runtime-position-and-rotation-setters.txt"
+  echo
+  echo "========== DPC OBJECT REGISTRATION / LINKED RECORDS =========="
+  cat "$OUT/54-dpc-object-registration-and-linked-records.txt"
+  echo
+  echo "========== STRIDED-WORD ROTATION CALLER =========="
+  cat "$OUT/55-strided-word-rotation-caller.txt"
+  echo
+  echo "========== RECORD-STRUCT TRANSFORM CALLER =========="
+  cat "$OUT/56-record-struct-transform-caller.txt"
   echo
   echo "========== FILE SIZE / READ HELPER =========="
   cat "$OUT/36-file-size-and-read-helper.txt"
