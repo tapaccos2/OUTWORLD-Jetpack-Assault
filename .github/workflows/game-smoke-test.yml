@@ -28,6 +28,7 @@ jobs:
           node --check tools/inspect-dpc-graph.mjs
           node --check tools/inspect-dpc-graph-compare.mjs
           node --check tools/inspect-dpc-point-lists.mjs
+          node --check tools/inspect-dpc-type8.mjs
       - name: Install Playwright
         run: |
           npm init -y
@@ -254,6 +255,36 @@ jobs:
           if (!pointLists.every(item => item.observedListCount > 0) ||
               JSON.stringify(triples[0][0]) !== JSON.stringify(triples[1][0])) {
             throw new Error('Candidate coordinate triples did not match across rag04 and dead01');
+          }
+
+          const type8Checks = [
+            ['rag02', 57],
+            ['rag04', 175],
+            ['oasis03', 104]
+          ].map(([name, expected]) => {
+            const result = spawnSync('node', [
+              'tools/inspect-dpc-type8.mjs',
+              name === 'oasis03' ? 'oasis03.dpc' : 'original-data/structs/' + name + '.dpc'
+            ], { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 });
+            if (result.status !== 0) throw new Error('DPC type-8 inspector failed for ' + name + ': ' + (result.stderr || result.stdout).slice(0, 4000));
+            const parsed = JSON.parse(result.stdout);
+            console.log('DPC TYPE-8 CHECK:', JSON.stringify({
+              file: parsed.file,
+              reachableType8Count: parsed.reachableType8Count,
+              parentTypes: parsed.parentTypes,
+              slotSummary: parsed.slotSummary
+            }));
+            if (parsed.reachableType8Count !== expected) {
+              throw new Error('Unexpected type-8 count for ' + name + ': expected ' + expected + ', got ' + parsed.reachableType8Count);
+            }
+            return parsed;
+          });
+          if (!type8Checks.every(item => item.slotSummary[0].near4096 === item.reachableType8Count &&
+              item.slotSummary[1].near4096 === item.reachableType8Count &&
+              item.slotSummary[2].near4096 === item.reachableType8Count &&
+              item.slotSummary[4].near4096 === item.reachableType8Count &&
+              item.slotSummary[5].near4096 >= item.reachableType8Count - 2)) {
+            throw new Error('DPC type-8 vector-length pattern changed unexpectedly');
           }
           })().catch(e => { console.error(e); process.exit(1); });
           EOF
