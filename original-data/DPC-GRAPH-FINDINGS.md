@@ -175,3 +175,10 @@ The extracted `motion.ff` animation resources were surveyed directly. In 58 `.MC
 One file, `fstand2.mc`, is an exception: its header reports 17 frames, while its payload is 2,736 bytes—152 bytes more than 17 × 152. The extra 152 bytes are retained as an anomaly rather than discarded or reinterpreted.
 
 This establishes a stable animation frame-container stride, not the internal channel layout. The number and meaning of channels, skeleton mapping, coordinate system, and interpolation rules remain unverified. The reusable inventory tool is `tools/inspect-motion-format.mjs`.
+
+
+### Motion frame payload subdivision
+
+The 152-byte frame payload divides exactly into 19 consecutive 8-byte slots. Treating each slot as four little-endian signed 16-bit values, the fourth value is the same sentinel `-16393` (`0xBFF7`) in every slot of every complete frame inspected: 112,195 slot records across 5,905 frames from the 58 exact-stride files. The first three signed words vary and remain raw numeric channels.
+
+This is a strong structural result: each frame is a fixed array of 19 four-word records, with a constant fourth word. It is not yet proof that the 19 slots map one-to-one to bones, or that the first three values are Euler angles, translations, or another representation. The `fstand2.mc` extra 152-byte block remains an exception and was excluded from the complete-frame tally.
