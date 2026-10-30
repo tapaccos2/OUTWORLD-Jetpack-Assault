@@ -6,7 +6,7 @@
 
 tools/export-dpc-armour-geometry.mjs reads an original DCPMC playable-armour resource and writes a self-contained glTF 2.0 binary (.glb) plus a JSON report.
 
-For units/scout_mj.dpc, the exporter follows the class-102 root record and its class-105 part list. It finds one root mesh and eight additional mesh nodes (the ninth class-105 entry is a container, not another mesh). It reads signed 16-bit XYZ vertex entries from the shared coordinate pool and class-090c face records, deduplicates the paired face records that repeat the same unordered four-index set, and triangulates each unique quad as a two-triangle fan. For submeshes, the shared coordinate-pool base is resolved through type-2 +20 → type-16 +8 → descriptor +4. The type-2 +28 pointer is retained as a separate mesh-reference field; current tests do not establish it as the base of the XYZ array. The face indices resolve against the shared coordinate pool.
+Across the seven available Scout DPC files, the exporter follows class-102/class-105 roots for male variants and class-152/class-155 roots for female/test variants. It finds one root mesh and eight additional mesh nodes (the ninth class-105 entry is a container, not another mesh). It reads signed 16-bit XYZ vertex entries from the shared coordinate pool and class-090c face records, deduplicates the paired face records that repeat the same unordered four-index set, and triangulates each unique quad as a two-triangle fan. For submeshes, the shared coordinate-pool base is resolved through type-2 +20 → type-16 +8 → descriptor +4. The type-2 +28 pointer is retained as a separate mesh-reference field; current tests do not establish it as the base of the XYZ array. The face indices resolve against the shared coordinate pool.
 
 ## Validated extraction counts
 
@@ -16,7 +16,7 @@ For units/scout_mj.dpc, the exporter follows the class-102 root record and its c
 | Each of eight submeshes | 26 | 13 | 26 |
 | **Total** | **230** | **115** | **230** |
 
-The GLB contains nine meshes, 1,976 position entries, 230 triangles, generated vertex normals, and diagnostic materials. It has no external buffer dependencies. The exporter was run against the male Scout scout_mj, scout_ma, and scout_md DPC resources; each produced nine meshes and 230 triangles, and each GLB loaded successfully through trimesh.
+Each GLB contains nine meshes, 390 referenced position entries, 230 triangles, generated vertex normals, and diagnostic materials. It has no external buffer dependencies. The exporter was run against all seven Scout DPC resources (mj, ma, md, fa, fd, fj, test); each produced nine meshes and 230 triangles, and each GLB loaded successfully through trimesh.
 
 ## What is and is not decoded
 
@@ -24,7 +24,7 @@ Decoded: the model root/part-list relationship, eight submesh owner nodes, the m
 
 Not yet decoded: the full attachment/rotation hierarchy, the exact meaning of the linked type-16 records, UV coordinates, TPC pixel records, original material assignments, skin weights, skeleton names, and motion-slot-to-bone mapping. The type-2 wrapper values at +32/+36/+40 match the owning type-1 node's +8/+12/+16 values; they are retained as candidate translation metadata. The --apply-anchor-candidates option is exploratory and must not be mistaken for the game's verified transform behavior.
 
-The current GLB is therefore a verified **raw geometry extraction**, not yet a recognisable, correctly assembled or animated Scout character. The shared coordinate-pool base is validated across all seven Scout DPC resources; type-2 +28 remains separate unresolved metadata. The GLBs export nine meshes, 390 referenced vertices and 230 triangles per variant. This validates the extraction graph and vertex-slice addresses, but the resulting combined surface is still not visually recognisable; attachment transforms / rotations remain the primary blocker. Do not replace the in-game soldier with it until attachment transforms and a visual comparison are solved.
+The current GLB is therefore a verified **raw geometry extraction**, not yet a recognisable, correctly assembled or animated Scout character. The shared coordinate-pool base is validated across all seven Scout DPC resources; type-2 +28 remains separate unresolved metadata. The GLBs export nine meshes, 390 referenced vertices and 230 triangles per variant. This validates the extracted pointer graph and shared coordinate-pool reads, but not the attachment transforms. The resulting combined surfaces are still broad overlapping/fan-like forms rather than a recognisable character; attachment rotations and hierarchy remain the primary blocker. Do not replace the in-game soldier with it until attachment transforms and a visual comparison are solved.
 
 ## Usage
 
