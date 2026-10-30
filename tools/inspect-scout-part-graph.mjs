@@ -325,14 +325,39 @@ function createReader(file) {
     const candidateVector = transformNode === null ? null : [s32(transformNode + 32), s32(transformNode + 36), s32(transformNode + 40)];
     const meshNode = c24?.type === 2 ? child24.targetOffset : null;
     let sharedVertexBase = null;
+    let meshVertexReference = null;
     let faceDataOffset = null;
     let geometry = null;
+    let meshReferenceGeometry = null;
+    let vertexSliceCandidate = null;
     if (meshNode !== null) {
       const wrapper = ptr(meshNode + 20);
       const descriptor = wrapper === null ? null : ptr(wrapper + 8);
       sharedVertexBase = descriptor === null ? null : ptr(descriptor + 4);
+      meshVertexReference = ptr(meshNode + 28);
       faceDataOffset = ptr(meshNode + 36);
-      geometry = meshGeometryDetail(meshNode, sharedVertexBase, faceDataOffset, 26, 'submesh_' + (index + 1));
+      geometry = meshGeometryDetail(meshNode, sharedVertexBase, faceDataOffset, 26, 'submesh_' + (index + 1) + '_shared_base');
+      meshReferenceGeometry = meshGeometryDetail(meshNode, meshVertexReference, faceDataOffset, 26, 'submesh_' + (index + 1) + '_mesh_reference_base');
+      const startIndexRaw = sharedVertexBase === null || meshVertexReference === null
+        ? null : (meshVertexReference - sharedVertexBase) / 8;
+      const aligned = Number.isInteger(startIndexRaw) && startIndexRaw >= 0;
+      const maxLocalIndex = meshReferenceGeometry?.indexMax ?? null;
+      const lastReferencedByte = aligned && maxLocalIndex !== null
+        ? meshVertexReference + maxLocalIndex * 8 + 7 : null;
+      vertexSliceCandidate = {
+        sharedVertexBase,
+        meshVertexReference,
+        startVertexIndexCandidate: aligned ? startIndexRaw : null,
+        byteOffsetDelta: sharedVertexBase === null || meshVertexReference === null
+          ? null : meshVertexReference - sharedVertexBase,
+        eightByteAligned: aligned,
+        maxLocalFaceIndex: maxLocalIndex,
+        effectiveMaxVertexIndexCandidate: aligned && maxLocalIndex !== null ? startIndexRaw + maxLocalIndex : null,
+        lastReferencedByte,
+        withinFileBounds: lastReferencedByte !== null && lastReferencedByte < b.length,
+        sharedBaseReferencedVertexCount: geometry?.referencedVertexCount ?? null,
+        meshReferenceReferencedVertexCount: meshReferenceGeometry?.referencedVertexCount ?? null
+      };
     }
     const pairChecks = {
       child24IsType2: c24?.type === 2,
@@ -345,6 +370,8 @@ function createReader(file) {
       child24, child28,
       pairChecks,
       geometry,
+      meshReferenceGeometry,
+      vertexSliceCandidate,
       child24Detail: c24?.type === 2 ? type2Detail(child24.targetOffset, 'owner+24') : null,
       child28Detail: c28?.type === 2 ? type2Detail(child28.targetOffset, 'owner+28') : null,
       ownerPointerCandidates: candidatePointers(offset, 4, 96),
