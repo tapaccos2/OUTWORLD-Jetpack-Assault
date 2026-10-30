@@ -45,6 +45,7 @@ jobs:
           node tools/export-dpc-armour-geometry.mjs .scout-viewer-test/extracted/units/scout_mj.dpc .scout-viewer-test/scout-mj-raw.glb
           node tools/export-dpc-armour-geometry.mjs .scout-viewer-test/extracted/units/scout_mj.dpc .scout-viewer-test/scout-mj-local-base.glb --use-mesh-vertex-reference
           node tools/export-dpc-armour-geometry.mjs .scout-viewer-test/extracted/units/scout_mj.dpc .scout-viewer-test/scout-mj-planar-pivot-candidate.glb --apply-planar-pivot-candidate
+          node tools/export-dpc-armour-geometry.mjs .scout-viewer-test/extracted/units/scout_mj.dpc .scout-viewer-test/scout-mj-pivot-owner-candidate.glb --apply-pivot-owner-candidate
 
       - name: Load viewer and validate raw GLB plus rotation trial
         run: |
@@ -123,6 +124,19 @@ jobs:
               await page.screenshot({ path: '.scout-viewer-test/planar-pivot-overview.jpg', type: 'jpeg', quality: 78, fullPage: true });
               await page.locator('#galleryToggle').click();
               await page.locator('[data-view="front"]').click();
+              await page.locator('#file').setInputFiles(path.join(root, '.scout-viewer-test/scout-mj-pivot-owner-candidate.glb'));
+              await page.waitForFunction(() => {
+                const s = document.querySelector('#status')?.innerText || '';
+                return s.includes('Loaded: scout-mj-pivot-owner-candidate.glb') && s.includes('Meshes: 9');
+              }, null, { timeout: 30000 });
+              const pivotOwnerLoaded = await page.locator('#status').innerText();
+              await page.screenshot({ path: '.scout-viewer-test/pivot-owner-front.jpg', type: 'jpeg', quality: 78, fullPage: true });
+              await page.locator('[data-view="side"]').click();
+              await page.screenshot({ path: '.scout-viewer-test/pivot-owner-side.jpg', type: 'jpeg', quality: 78, fullPage: true });
+              await page.locator('#galleryToggle').click();
+              await page.screenshot({ path: '.scout-viewer-test/pivot-owner-overview.jpg', type: 'jpeg', quality: 78, fullPage: true });
+              await page.locator('#galleryToggle').click();
+              await page.locator('[data-view="front"]').click();
               await page.locator('#rotationOrder').selectOption('XYZ');
               await page.locator('#rotationTrial').click();
               await page.waitForFunction(() => (document.querySelector('#status')?.innerText || '').includes('4096 units/full turn'));
@@ -145,11 +159,12 @@ jobs:
               await page.locator('#rotationGalleryToggle').click();
               await page.waitForFunction(() => (document.querySelector('#status')?.innerText || '').includes('Back to raw model'));
               await page.screenshot({ path: '.scout-viewer-test/viewer-smoke-test.png', fullPage: true });
-              const result = { title: await page.title(), loaded, localBaseLoaded, pivotLoaded, rotated, reset: await page.locator('#status').innerText(), galleryStatus, errors };
+              const result = { title: await page.title(), loaded, localBaseLoaded, pivotLoaded, pivotOwnerLoaded, rotated, reset: await page.locator('#status').innerText(), galleryStatus, errors };
               console.log('SCOUT VIEWER CHECK:', JSON.stringify(result, null, 2));
               if (!loaded.includes('Meshes: 9')) throw new Error('Shared-base Scout GLB did not load nine meshes');
               if (!localBaseLoaded.includes('Meshes: 9')) throw new Error('Mesh-reference-base Scout GLB did not load nine meshes');
               if (!pivotLoaded.includes('Meshes: 9')) throw new Error('Planar-pivot candidate Scout GLB did not load nine meshes');
+              if (!pivotOwnerLoaded.includes('Meshes: 9')) throw new Error('Pivot-owner candidate Scout GLB did not load nine meshes');
               if (!rotated.includes('8 mesh candidates') && !rotated.includes('9 mesh candidates')) throw new Error('Rotation trial did not apply to mesh candidates');
               if (errors.some(e => /SyntaxError|ReferenceError|TypeError|Failed to resolve module|Failed to fetch dynamically imported module/i.test(e))) {
                 throw new Error('Critical browser errors: ' + JSON.stringify(errors));
@@ -181,6 +196,9 @@ jobs:
             .scout-viewer-test/planar-pivot-front.jpg
             .scout-viewer-test/planar-pivot-side.jpg
             .scout-viewer-test/planar-pivot-overview.jpg
+            .scout-viewer-test/pivot-owner-front.jpg
+            .scout-viewer-test/pivot-owner-side.jpg
+            .scout-viewer-test/pivot-owner-overview.jpg
           if-no-files-found: warn
           retention-days: 14
 
@@ -193,7 +211,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           mkdir -p /tmp/scout-gallery-publish
-          for name in rotation-order-gallery raw-shared-base-front local-base-front local-base-side local-base-overview planar-pivot-front planar-pivot-side planar-pivot-overview; do
+          for name in rotation-order-gallery raw-shared-base-front local-base-front local-base-side local-base-overview planar-pivot-front planar-pivot-side planar-pivot-overview pivot-owner-front pivot-owner-side pivot-owner-overview; do
             file=".scout-viewer-test/${name}.jpg"
             if [ -f "$file" ]; then
               base64 -w0 "$file" > "/tmp/scout-gallery-publish/${name}.jpg.b64"
