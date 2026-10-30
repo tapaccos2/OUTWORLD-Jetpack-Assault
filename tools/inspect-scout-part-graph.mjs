@@ -294,8 +294,13 @@ function createReader(file) {
       },
       wrapper: p20.targetOffset === null ? null : {
         header: wrapper,
-        plus0u32: u32(p20.targetOffset),
-        plus0hex: '0x' + u32(p20.targetOffset).toString(16),
+        headerDword: u32(p20.targetOffset),
+        headerDwordHex: '0x' + u32(p20.targetOffset).toString(16).padStart(8, '0'),
+        plus4: {
+          u32: u32(p20.targetOffset + 4),
+          s32: s32(p20.targetOffset + 4),
+          hex: '0x' + u32(p20.targetOffset + 4).toString(16).padStart(8, '0')
+        },
         plus8: wrapperLink,
         rawFirst32: wordView(p20.targetOffset, 32),
         pointerCandidates: candidatePointers(p20.targetOffset, 4, 32)
@@ -426,7 +431,9 @@ function createReader(file) {
         sourceRole: source.role,
         sourceNodeOffset: source.detail.offset,
         type16WrapperOffset: source.detail.wrapper.header?.offset ?? null,
-        wrapperValue: source.detail.wrapper.plus0u32,
+        wrapperHeader: source.detail.wrapper.header,
+        wrapperHeaderDword: source.detail.wrapper.headerDword,
+        wrapperParameterAt4: source.detail.wrapper.plus4,
         targetOffset,
         matchedRecordFields: matches,
         targetFieldValue: {
