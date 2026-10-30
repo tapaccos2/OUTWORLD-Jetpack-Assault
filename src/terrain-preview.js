@@ -406,29 +406,57 @@ function makeMesh() {
   const centerY = (minY + maxY) / 2;
 
   const heightPalette = new THREE.Color();
+  const vertexLookup = new Map();
+  const normalSums = [];
+  const surfaceVertexIndices = [];
+
+  // Adjacent RPC ramps often share exact XYZ corners. Reuse those vertices so
+  // the rendered terrain is one connected mesh wherever the source data joins.
   for (let i = 0; i < currentData.surfaces.length; i++) {
     const surface = currentData.surfaces[i];
     const corners = rawCorners[i];
     const groupHue = (surface.group * 0.618033988749895) % 1;
+    const vertexIndices = [];
     for (let j = 0; j < 4; j++) {
       const p = corners[j];
-      positions.push((p.x - centerX) * currentScale, (p.y - centerY) * currentScale, (p.z - minZ) * currentScale);
-      normals.push(...surface.normal);
-      if (useGroupColors) {
-        heightPalette.setHSL(groupHue, 0.42, 0.40);
-      } else {
+      if (useGroupColors) heightPalette.setHSL(groupHue, 0.42, 0.40);
+      else {
         const t = (p.z - minZ) / spanZ;
         heightPalette.setHSL(0.095 + t * 0.09, 0.30, 0.24 + t * 0.32);
       }
-      colors.push(heightPalette.r, heightPalette.g, heightPalette.b);
+      const key = [p.x, p.y, p.z].map(value => Math.round(value * 1000)).join(',');
+      let vertexIndex = vertexLookup.get(key);
+      if (vertexIndex === undefined) {
+        vertexIndex = positions.length / 3;
+        vertexLookup.set(key, vertexIndex);
+        positions.push((p.x - centerX) * currentScale, (p.y - centerY) * currentScale, (p.z - minZ) * currentScale);
+        normals.push(0, 0, 0);
+        normalSums.push([0, 0, 0]);
+        colors.push(heightPalette.r, heightPalette.g, heightPalette.b);
+      }
+      normalSums[vertexIndex][0] += surface.normal[0];
+      normalSums[vertexIndex][1] += surface.normal[1];
+      normalSums[vertexIndex][2] += surface.normal[2];
+      vertexIndices.push(vertexIndex);
     }
-    const base = i * 4;
+    surfaceVertexIndices.push(vertexIndices);
+    const [a, b, c, d] = vertexIndices;
     const reverse = surface.normal[2] < 0;
     if (diagonal === '1-2') {
-      indices.push(...(reverse ? [base, base + 2, base + 1, base + 1, base + 2, base + 3] : [base, base + 1, base + 2, base + 1, base + 3, base + 2]));
+      indices.push(...(reverse ? [a, c, b, b, c, d] : [a, b, c, b, d, c]));
     } else {
-      indices.push(...(reverse ? [base, base + 3, base + 1, base, base + 2, base + 3] : [base, base + 1, base + 3, base, base + 3, base + 2]));
+      indices.push(...(reverse ? [a, d, b, a, c, d] : [a, b, d, a, d, c]));
     }
+  }
+
+  // Average the original per-ramp normals at welded vertices. This smooths
+  // joins without inventing terrain across gaps or changing source elevations.
+  for (let i = 0; i < normalSums.length; i++) {
+    const n = normalSums[i];
+    const length = Math.hypot(n[0], n[1], n[2]) || 1;
+    normals[i * 3] = n[0] / length;
+    normals[i * 3 + 1] = n[1] / length;
+    normals[i * 3 + 2] = n[2] / length;
   }
 
   const geometry = new THREE.BufferGeometry();
