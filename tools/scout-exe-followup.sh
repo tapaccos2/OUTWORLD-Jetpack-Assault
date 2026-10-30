@@ -111,7 +111,7 @@ PY
   > "$OUT/25-global-resource-pointer-setter.txt" 2>&1
 
 python3 "$SCRIPT_DIR/inspect-scout-exe-imports.py" "$EXE" \
-  --addresses 0x1410630,0x14106b0,0x14106b8 \
+  --addresses 0x1410630,0x1410638,0x141066c,0x14106b0,0x14106b8,0x14106d0,0x14106dc \
   > "$OUT/26-import-address-resolution.txt"
 "$OBJDUMP" -d -Mintel --start-address=0x4dd380 --stop-address=0x4dd4c0 "$EXE" \
   > "$OUT/18-callee-4dd420.txt" 2>&1
