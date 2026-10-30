@@ -272,6 +272,7 @@ jobs:
               file: parsed.file,
               reachableType8Count: parsed.reachableType8Count,
               parentTypes: parsed.parentTypes,
+              parentFields: parsed.parentFields,
               slotSummary: parsed.slotSummary
             }));
             if (parsed.reachableType8Count !== expected) {
