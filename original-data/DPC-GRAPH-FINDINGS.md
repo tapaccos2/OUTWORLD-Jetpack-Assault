@@ -73,3 +73,17 @@ The graph inspector now follows this specific type-9/class-7012 layout as an obs
 The pointer chain is a much better executable-disassembly target than a bare class number. The next check is to find the code that reads type-13 `+8`, then determine how the type-9 count and child pointers are consumed. If those children resolve to geometry or surface data, their transforms and bounds may explain how the DPC scene connects to the GPC/RPC terrain patches.
 
 Raw values and offsets above are from the committed `rag04.dpc` and `dead01.dpc` resources; no guessed semantic labels are applied.
+
+
+## Candidate coordinate triples in class-7012 child records
+
+A byte-level comparison of the seven type-1 children in the rag04 and dead01 class-7012 lists found a consistent payload pattern:
+
+- Six children in each list contain the same signed 32-bit triple at offsets +4, +8, and +12.
+- The repeated triples are (-192,144,-192), (-191,144,-192), (-208,144,-165), (-209,144,-162), (-351,144,-192), and (-375,144,-192).
+- The seventh child has a zero triple and appears structurally different from the six nonzero entries.
+- Each of the six nonzero records has a 32-bit value at +16, a count-like value of 1 at +20, and a relocated pointer at +24. In both samples that pointer resolves to a nearby type-1 record 32 bytes earlier.
+
+This is evidence for a coordinate-like triple in the payload, not yet proof of a vertex format. Axes, units, transforms, and the purpose of the +16 value remain unknown. The exact repeated triples across two map files make this a strong target for comparison with executable field accesses and other scene records.
+
+The new tools/inspect-dpc-point-lists.mjs script reports these fields for every validated type-9/class-7012 seven-entry list it finds. It labels the triples as candidates and deliberately avoids assigning geometry semantics.
