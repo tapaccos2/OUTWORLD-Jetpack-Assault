@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Outwars Scout GLB Inspector v1.0.4</title>
+<title>Outwars Scout GLB Inspector v1.0.5</title>
 <style>
 :root{color-scheme:dark;font-family:system-ui,Segoe UI,Arial,sans-serif;background:#10151d;color:#e8edf4}
 *{box-sizing:border-box}body{margin:0;min-height:100vh;display:flex;flex-direction:column}
@@ -16,22 +16,30 @@ input[type=file]{display:none}
 main{position:relative;flex:1;min-height:460px}
 #view{position:absolute;inset:0}
 #status{position:absolute;left:14px;top:14px;background:#17212ddd;border:1px solid #405166;border-radius:8px;padding:10px 12px;font:12px/1.5 ui-monospace,monospace;white-space:pre-wrap;max-width:min(470px,calc(100% - 28px));pointer-events:none}
-#help{position:absolute;right:14px;bottom:14px;background:#17212ddd;border:1px solid #405166;border-radius:8px;padding:9px 12px;color:#bac7d6;font-size:12px;pointer-events:none}\n#parts{display:none;position:absolute;right:14px;top:14px;width:190px;max-height:52%;overflow:auto;background:#17212dee;border:1px solid #405166;border-radius:8px;padding:9px 10px;font:12px/1.4 ui-monospace,monospace}\n#parts strong{display:block;margin-bottom:7px;color:#e8edf4}\n#parts .actions{display:flex;gap:6px;margin-bottom:7px}\n#parts button{font-size:11px;padding:4px 7px}\n#parts label{display:flex;gap:7px;align-items:center;padding:3px 0;color:#c6d1de;cursor:pointer}\n#parts input{accent-color:#78a9db}
+#view{z-index:0}
+#status{z-index:10}
+#help{z-index:10;position:absolute;right:14px;bottom:14px;background:#17212ddd;border:1px solid #405166;border-radius:8px;padding:9px 12px;color:#bac7d6;font-size:12px;pointer-events:none}
+#parts{z-index:20}
+#parts strong{display:block;margin-bottom:7px;color:#e8edf4}
+#parts .actions{display:flex;gap:6px;margin-bottom:7px}
+#parts button{font-size:11px;padding:4px 7px}
+#parts label{display:flex;gap:7px;align-items:center;padding:3px 0;color:#c6d1de;cursor:pointer}
+#parts input{accent-color:#78a9db}
 footer{padding:8px 14px;background:#18212d;color:#9cabbc;font-size:12px;border-top:1px solid #344253}
 @media(max-width:700px){header{align-items:flex-start}.controls{margin-left:0;width:100%}main{min-height:540px}}
 </style>
 </head>
 <body>
 <header>
- <div><h1>Outwars Scout — 3D Inspector <span class="version" id="version">v1.0.4</span></h1><div class="sub">Local GLB viewer · nothing is uploaded</div></div>
+ <div><h1>Outwars Scout — 3D Inspector <span class="version" id="version">v1.0.5</span></h1><div class="sub">Local GLB viewer · nothing is uploaded</div></div>
  <div class="controls">
   <label class="filelabel" for="file">Choose GLB file</label><input id="file" type="file" accept=".glb,model/gltf-binary">
   <button data-view="front" class="active">Front</button><button data-view="side">Side</button><button data-view="back">Back</button><button data-view="top">Top</button>
-  <button id="fit">Fit model</button><button id="wire">Wireframe</button>
+  <button id="fit">Fit model</button><button id="wire">Wireframe</button><button id="partsToggle">Meshes</button>
  </div>
 </header>
-<main><div id="view"></div><div id="status">Viewer v1.0.4\nChoose scout-mj-anchor-candidates.glb to inspect the model.</div><div id="parts"><strong>Mesh visibility</strong><div class="actions"><button id="showAll">All</button><button id="hideAll">None</button></div><div id="partList"></div></div><div id="help">Drag: orbit · Wheel: zoom · Right-drag: pan</div></main>
-<footer>Viewer v1.0.4 · Diagnostic only. The model's candidate translations are exploratory; rotations and the original parent hierarchy have not yet been decoded.</footer>
+<main><div id="view"></div><div id="status">Viewer v1.0.5\nChoose scout-mj-anchor-candidates.glb to inspect the model.</div><div id="parts" style="display:none;position:absolute;z-index:20;right:14px;top:14px;width:205px;max-height:58%;overflow:auto;background:#17212df5;color:#f2f6fb;border:2px solid #83a9d4;border-radius:8px;padding:10px;font:12px/1.5 ui-monospace,monospace;box-shadow:0 5px 24px #000a"><strong>Mesh visibility — 9 sections</strong><div class="actions"><button id="showAll">All</button><button id="hideAll">None</button></div><div id="partList"></div></div><div id="help">Drag: orbit · Wheel: zoom · Right-drag: pan</div></main>
+<footer>Viewer v1.0.5 · Diagnostic only. The model's candidate translations are exploratory; rotations and the original parent hierarchy have not yet been decoded.</footer>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
@@ -53,10 +61,10 @@ let model=null,modelBox=null,originalMaterials=[],wire=false;
 function resize(){const w=host.clientWidth,h=host.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}
 new ResizeObserver(resize).observe(host);resize();
 function updateStatus(extra=''){
- if(!model){status.textContent='Viewer v1.0.4\nChoose a GLB file to inspect.';return}
+ if(!model){status.textContent='Viewer v1.0.5\nChoose a GLB file to inspect.';return}
  const size=modelBox.getSize(new THREE.Vector3()),center=modelBox.getCenter(new THREE.Vector3());
  status.textContent=[
-  'Viewer v1.0.4',
+  'Viewer v1.0.5',
   'Loaded: '+(model.userData.fileName||'GLB'),
   'Meshes: '+model.userData.meshCount,
   'Vertices: '+model.userData.vertices.toLocaleString(),
@@ -85,9 +93,12 @@ function setView(which){
 }
 function populatePartControls(){
  const panel=document.querySelector('#parts'),list=document.querySelector('#partList');
+ const toggle=document.querySelector('#partsToggle');
  list.replaceChildren();
  const meshObjects=[];
  model.traverse(o=>{if(o.isMesh)meshObjects.push(o)});
+ const heading=panel.querySelector('strong');
+ heading.textContent='Mesh visibility — '+meshObjects.length+' sections';
  meshObjects.forEach((o,index)=>{
   const label=document.createElement('label');
   const input=document.createElement('input');input.type='checkbox';input.checked=o.visible;
@@ -95,8 +106,11 @@ function populatePartControls(){
   const name=document.createElement('span');name.textContent=o.name||('Mesh '+(index+1));
   label.append(input,name);list.append(label);
  });
- document.querySelector('#showAll').onclick=()=>{meshObjects.forEach((o,i)=>{o.visible=true;list.querySelectorAll('input')[i].checked=true;});};
- document.querySelector('#hideAll').onclick=()=>{meshObjects.forEach((o,i)=>{o.visible=false;list.querySelectorAll('input')[i].checked=false;});};
+ const updateChecks=visible=>{meshObjects.forEach((o,i)=>{o.visible=visible;list.querySelectorAll('input')[i].checked=visible;});};
+ document.querySelector('#showAll').onclick=()=>updateChecks(true);
+ document.querySelector('#hideAll').onclick=()=>updateChecks(false);
+ toggle.textContent='Meshes ('+meshObjects.length+')';
+ toggle.onclick=()=>{panel.style.display=panel.style.display==='none'?'block':'none';};
  panel.style.display=meshObjects.length?'block':'none';
 }
 function loadFile(file){
