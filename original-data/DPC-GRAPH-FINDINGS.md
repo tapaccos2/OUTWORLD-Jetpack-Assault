@@ -223,3 +223,13 @@ This establishes a reproducible pointer path through the playable model:
 `type-9 armour node → six type-1 part records → type-2 records → type-16 data wrapper / type-4 payload`
 
 The path is an observed graph structure, not yet a decoded skin or mesh. In particular, the 10,000 value has not been established as a vertex count, the type-16 target data has not been assigned a vertex format, and the packed type-4 values have not been identified as triangles or material data. No geometry is exported on this evidence alone. The next step is to compare the type-16 target buffers and type-4 payloads across the six parts, then match their field access to the executable renderer.
+
+## Executable cross-check: playable model sub-part links (2026-10-30)
+
+The uploaded original `outwars.exe` was checked directly (PE32/i386, original 1998 build).
+
+A correction to the earlier type-16 note: in the Scout sample, the relocated pointer at type-16 relative offset +8 resolves to another type-2 record, not to a separate untyped data buffer. For example, the type-16 record at file offset 9,228 contains `0x2710` at +0 and its +8 pointer resolves to the type-2 record at 8,072. The 10,000 value must not be described as a vertex count. The type-16 record is therefore a wrapper/link in this observed graph, with its exact runtime role still unknown.
+
+The type-9/class-105 node at file offset 20,464 contains a nine-entry relocated-pointer list at +16. In the Scout sample, eight of those entries resolve to the eight type-1 part nodes at offsets 9,592, 11,144, 12,696, 14,248, 15,800, 17,352, 18,904, and 20,436; the ninth entry is a separate linked record. This corrects the earlier shorthand that described the structure as only a six-entry list. Six of the eight repeated part nodes have matching paired type-2 children; the remaining two are additional nodes and must be accounted for during reconstruction.
+
+These observations are structural only. No vertex/index interpretation is assigned to type-2, type-4, or type-16 payloads until their executable consumers are resolved.
