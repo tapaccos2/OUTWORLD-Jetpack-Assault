@@ -55,6 +55,17 @@ python3 "$SCRIPT_DIR/scan-scout-exe-strings.py" \
 "$OBJDUMP" -d -Mintel --start-address=0x48ce40 --stop-address=0x48d220 "$EXE" \
   > "$OUT/12-generic-dpc-loader-context.txt" 2>&1
 
+"$OBJDUMP" -d -Mintel --start-address=0x48d200 --stop-address=0x48d380 "$EXE" \
+  > "$OUT/13-generic-dpc-loader-tail.txt" 2>&1
+
+python3 "$SCRIPT_DIR/inspect-scout-exe-pointer-table.py" "$EXE" \
+  --start 0x529d60 --count 40 --label "DPC variant/resource pointer table" \
+  > "$OUT/14-dpc-pointer-table.txt"
+
+python3 "$SCRIPT_DIR/scan-scout-exe-callers.py" \
+  "$PROBE/04-full-code-disassembly.txt" \
+  > "$OUT/15-loader-callers.txt"
+
 {
   echo "OUTWARS SCOUT EXECUTABLE FOLLOW-UP"
   echo "Executable: $EXE"
@@ -69,6 +80,15 @@ python3 "$SCRIPT_DIR/scan-scout-exe-strings.py" \
   echo
   echo "========== GENERIC %s.dpc LOADER CONTEXT: 0x48CE40 =========="
   cat "$OUT/12-generic-dpc-loader-context.txt"
+  echo
+  echo "========== GENERIC DPC LOADER TAIL: 0x48D200 =========="
+  cat "$OUT/13-generic-dpc-loader-tail.txt"
+  echo
+  echo "========== DPC VARIANT/RESOURCE POINTER TABLE =========="
+  cat "$OUT/14-dpc-pointer-table.txt"
+  echo
+  echo "========== DIRECT REFERENCES / CALLERS =========="
+  cat "$OUT/15-loader-callers.txt"
 } > "$OUT/REPORT.txt"
 
 echo "Created: $OUT/REPORT.txt"
