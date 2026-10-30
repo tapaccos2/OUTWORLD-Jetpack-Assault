@@ -371,6 +371,51 @@ function createReader(file) {
   const rootMeshVertexBase = ptr(rootNode + 28);
   const rootMeshFaceOffset = ptr(rootNode + 36);
   const rootGeometry = meshGeometryDetail(rootNode, rootMeshVertexBase, rootMeshFaceOffset, 22, 'root_mesh');
+  const type2Nodes = [
+    { role: 'root_mesh', offset: rootNode },
+    ...entries.slice(0, 8).flatMap((entry, i) => [
+      { role: 'submesh_' + (i + 1) + '_mesh_node', offset: entry.detail?.child24?.targetOffset ?? null },
+      { role: 'submesh_' + (i + 1) + '_paired_node', offset: entry.detail?.child28?.targetOffset ?? null }
+    ])
+  ].filter(node => node.offset !== null);
+  const wrapperFieldLinks = entries.slice(0, 8).flatMap((entry, i) => {
+    const sources = [
+      { role: 'submesh_' + (i + 1) + '_mesh_node', detail: entry.detail?.child24Detail },
+      { role: 'submesh_' + (i + 1) + '_paired_node', detail: entry.detail?.child28Detail }
+    ];
+    return sources.filter(source => source.detail?.wrapper?.plus8?.targetOffset !== null &&
+      source.detail?.wrapper?.plus8?.targetOffset !== undefined).map(source => {
+      const targetOffset = source.detail.wrapper.plus8.targetOffset;
+      const matches = type2Nodes.flatMap(target => [24, 56].filter(relativeOffset =>
+        target.offset + relativeOffset === targetOffset).map(relativeOffset => ({
+          targetRole: target.role,
+          targetNodeOffset: target.offset,
+          relativeFieldOffset: relativeOffset
+        })));
+      return {
+        sourceRole: source.role,
+        sourceNodeOffset: source.detail.offset,
+        type16WrapperOffset: source.detail.wrapper.header?.offset ?? null,
+        wrapperValue: source.detail.wrapper.plus0u32,
+        targetOffset,
+        matchedRecordFields: matches
+      };
+    });
+  });
+  const linkPatternSummary = {
+    meshNodeToRootPlus24Count: wrapperFieldLinks.filter(x =>
+      x.sourceRole.endsWith('_mesh_node') && x.matchedRecordFields.some(m =>
+        m.targetRole === 'root_mesh' && m.relativeFieldOffset === 24)).length,
+    pairedNodeToOwnMeshPlus24Count: wrapperFieldLinks.filter(x =>
+      x.sourceRole.endsWith('_paired_node') && x.matchedRecordFields.some(m =>
+        m.targetRole === x.sourceRole.replace('_paired_node', '_mesh_node') && m.relativeFieldOffset === 24)).length,
+    meshNodeToPreviousPairedPlus56Count: wrapperFieldLinks.filter(x => {
+      const part = Number(x.sourceRole.match(/submesh_(\\d+)_mesh_node/)?.[1] || 0);
+      return part > 1 && x.matchedRecordFields.some(m =>
+        m.targetRole === 'submesh_' + (part - 1) + '_paired_node' && m.relativeFieldOffset === 56);
+    }).length,
+    totalWrapperFieldLinks: wrapperFieldLinks.length
+  };
   const rootDetail = {
     rootGeometry,
     rootRecord: header(rootRecord),
@@ -379,7 +424,10 @@ function createReader(file) {
     partList: header(partList),
     partListOffset: partList,
     listCount: u16(partList + 6),
-    entries
+    entries,
+    type2Nodes,
+    wrapperFieldLinks,
+    linkPatternSummary
   };
   const directPartNodes = entries.filter(x => x.detail?.header?.type === 1);
   const extraEntries = entries.filter(x => x.detail?.header?.type !== 1);
@@ -401,6 +449,7 @@ function createReader(file) {
         ownerOffset: x.detail.offset,
         linkedType1Offsets: x.detail.ownerLinkedType1Records.map(p => p.targetOffset)
       })),
+      wrapperFieldLinkPattern: linkPatternSummary,
       warnings: [
         'Type/class and pointer links are structural observations, not semantic labels.',
         'A type-2 node is not automatically a mesh or transform; its runtime consumer still needs confirmation.',
