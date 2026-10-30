@@ -430,6 +430,7 @@ function createReader(file) {
   };
   const rootDetail = {
     rootGeometry,
+    rootNodeType2Detail: type2Detail(rootNode, 'root_mesh'),
     rootRecord: header(rootRecord),
     rootNode: header(rootNode),
     rootNodeOffset: rootNode,
