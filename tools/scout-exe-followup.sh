@@ -77,6 +77,16 @@ python3 "$SCRIPT_DIR/scan-scout-exe-strings.py" \
 # Trace the resource-loader setup/caller and the allocation/data helpers it reaches.
 "$OBJDUMP" -d -Mintel --start-address=0x48c6a8 --stop-address=0x48c890 "$EXE" \
   > "$OUT/30-resource-loader-caller-48c6a8.txt" 2>&1
+"$OBJDUMP" -d -Mintel --start-address=0x48c890 --stop-address=0x48cd40 "$EXE" \
+  > "$OUT/34-resource-loader-record-loops.txt" 2>&1
+"$OBJDUMP" -d -Mintel --start-address=0x4220c0 --stop-address=0x422900 "$EXE" \
+  > "$OUT/35-callee-422170-resource-record-parser.txt" 2>&1
+"$OBJDUMP" -d -Mintel --start-address=0x4ce640 --stop-address=0x4ce780 "$EXE" \
+  > "$OUT/36-file-size-and-read-helper.txt" 2>&1
+"$OBJDUMP" -d -Mintel --start-address=0x4ceec0 --stop-address=0x4cef50 "$EXE" \
+  > "$OUT/37-resource-path-string-helper.txt" 2>&1
+"$OBJDUMP" -d -Mintel --start-address=0x4ce020 --stop-address=0x4ce0a4 "$EXE" \
+  > "$OUT/38-virtual-resource-mode-setup.txt" 2>&1
 "$OBJDUMP" -d -Mintel --start-address=0x420960 --stop-address=0x420a30 "$EXE" \
   > "$OUT/31-callee-4209a0.txt" 2>&1
 "$OBJDUMP" -d -Mintel --start-address=0x4fed80 --stop-address=0x4fee20 "$EXE" \
@@ -132,7 +142,7 @@ python3 "$SCRIPT_DIR/inspect-scout-exe-pointer-table.py" "$EXE" \
 
 python3 "$SCRIPT_DIR/scan-scout-exe-callers.py" \
   "$PROBE/04-full-code-disassembly.txt" \
-  --targets "0x486720,0x48ce71,0x48ce89,0x48cea1,0x48ced4,0x48cfb0,0x4ee38a,0x500ae9,0x4dd420,0x4ce6c8,0x4ce158,0x4cd6cc,0x4cd760,0x455578,0x48d3aa,0x4843d4,0x4209a0,0x4fedb8,0x4ce0a4,0x4cd5e8" \
+  --targets "0x486720,0x48ce71,0x48ce89,0x48cea1,0x48ced4,0x48cfb0,0x4ee38a,0x500ae9,0x4dd420,0x4ce6c8,0x4ce158,0x4cd6cc,0x4cd760,0x455578,0x48d3aa,0x4843d4,0x4209a0,0x4fedb8,0x4ce0a4,0x4cd5e8,0x422170,0x4ce674,0x4ce6c8,0x4ceefb,0x4d3be8,0x4ce044" \
   --context 16 \
   > "$OUT/15-loader-callers.txt"
 
@@ -210,6 +220,21 @@ python3 "$SCRIPT_DIR/scan-scout-exe-callers.py" \
   echo
   echo "========== CALLEE 0x4FEDB8 =========="
   cat "$OUT/32-callee-4fedb8.txt"
+  echo
+  echo "========== RESOURCE LOADER RECORD LOOPS: 0x48C890 =========="
+  cat "$OUT/34-resource-loader-record-loops.txt"
+  echo
+  echo "========== CALLEE 0x422170: RESOURCE RECORD PARSER =========="
+  cat "$OUT/35-callee-422170-resource-record-parser.txt"
+  echo
+  echo "========== FILE SIZE / READ HELPER =========="
+  cat "$OUT/36-file-size-and-read-helper.txt"
+  echo
+  echo "========== RESOURCE PATH STRING HELPER =========="
+  cat "$OUT/37-resource-path-string-helper.txt"
+  echo
+  echo "========== VIRTUAL RESOURCE MODE SETUP =========="
+  cat "$OUT/38-virtual-resource-mode-setup.txt"
   echo
   echo "========== RESOURCE BUFFER / RECORD ARRAY XREFS =========="
   cat "$OUT/33-resource-buffer-xrefs.txt"
