@@ -39,7 +39,7 @@ function refs(offset, type, classId) {
   else if (type === 4) { count = u16(offset + 18) ?? 0; first = offset + 20; }
   else if (type === 9 && classId === 7012) { count = u16(offset + 6) ?? 0; first = offset + 16; }
   else return [];
-  if (count > 256 || first + count * 4 > b.length) return [];
+  if (count > 4096 || first + count * 4 > b.length) return [];
   return Array.from({ length: count }, (_, i) => ({
     fieldOffset: first + i * 4,
     targetOffset: target(u32(first + i * 4)),
