@@ -461,3 +461,10 @@ The existing probe 50 raw-byte pointer scan already includes the setter and call
 The stride-4 caller begins at `0x437C80`. It preserves its incoming EBX pointer in ESI, then reads the low WORD at offsets `+0`, `+4`, and `+8` into the runtime object's three rotation fields before calling `0x4C5DB0`. This is a direct storage-layout match for the three DWORD-aligned candidate values at a Scout type-2 node's `+8/+12/+16`, read as their low 16-bit components. The caller does not itself establish that its ESI pointer is a Scout DPC node.
 
 The pointer-reference scan now includes `0x437C80` and the `0x433080/0x4330A2` transform-struct path, alongside the two DPC setters. The next report should show whether any of these routines are registered through static function-pointer tables. Until that evidence arrives, the type-2 +8 triple remains a rotation-layout candidate rather than a confirmed Scout Euler triplet.
+
+
+## Follow-up report 14: distinguish the guarded stride-4 rotation path
+
+The neighbouring routine at `0x437C51` also reads WORDs at offsets `+8`, `+0xC`, and `+0x10` and adds them to the current rotation. However, it first checks byte `[EDX+1]`; when that byte is nonzero it skips the updates. The audited Scout type-1 owners have flags 7 and the type-2 mesh/paired nodes have flags 6. Therefore, if EDX points at one of those Scout records' base addresses, this guarded path would skip them. It is not evidence that the Scout rotation values are applied through this function.
+
+This is separate from `0x437C80`, which saves its incoming EBX as the source pointer and reads WORDs at source offsets `+0`, `+4`, and `+8`. The pointer-reference scan now includes both routine entry points (`0x437C51` and `0x437C80`) to help identify their registration/call paths.
