@@ -87,6 +87,8 @@ python3 "$SCRIPT_DIR/scan-scout-exe-strings.py" \
   > "$OUT/40-callee-4dd470-record-lookup.txt" 2>&1
 "$OBJDUMP" -d -Mintel --start-address=0x4dfca0 --stop-address=0x4dfd90 "$EXE" \
   > "$OUT/41-callee-4dfce4-record-dispatch.txt" 2>&1
+"$OBJDUMP" -d -Mintel --start-address=0x4c5d80 --stop-address=0x4c5e10 "$EXE" \
+  > "$OUT/44-callee-4c5db0-three-component-helper.txt" 2>&1
 "$OBJDUMP" -d -Mintel --start-address=0x420af0 --stop-address=0x420c50 "$EXE" \
   > "$OUT/42-record-handler-table-region-disassembly.txt" 2>&1
 "$OBJDUMP" -s -j BEGTEXT --start-address=0x420b00 --stop-address=0x420b60 "$EXE" \
@@ -152,7 +154,7 @@ python3 "$SCRIPT_DIR/inspect-scout-exe-pointer-table.py" "$EXE" \
 
 python3 "$SCRIPT_DIR/scan-scout-exe-callers.py" \
   "$PROBE/04-full-code-disassembly.txt" \
-  --targets "0x486720,0x48ce71,0x48ce89,0x48cea1,0x48ced4,0x48cfb0,0x4ee38a,0x500ae9,0x4dd420,0x4ce6c8,0x4ce158,0x4cd6cc,0x4cd760,0x455578,0x48d3aa,0x4843d4,0x4209a0,0x4fedb8,0x4ce0a4,0x4cd5e8,0x422170,0x4ce674,0x4ce6c8,0x4ceefb,0x4d3be8,0x4ce044,0x4df84c,0x4dd470,0x4dfce4,0x420b00,0x4cc988,0x4cc83c,0x435970,0x4cc9d0" \
+  --targets "0x486720,0x48ce71,0x48ce89,0x48cea1,0x48ced4,0x48cfb0,0x4ee38a,0x500ae9,0x4dd420,0x4ce6c8,0x4ce158,0x4cd6cc,0x4cd760,0x455578,0x48d3aa,0x4843d4,0x4209a0,0x4fedb8,0x4ce0a4,0x4cd5e8,0x422170,0x4ce674,0x4ce6c8,0x4ceefb,0x4d3be8,0x4ce044,0x4df84c,0x4dd470,0x4dfce4,0x420b00,0x4cc988,0x4cc83c,0x435970,0x4cc9d0,0x422278,0x4222a8,0x4222f0,0x422300,0x422310,0x422554,0x4225f0,0x422654,0x42269c,0x4226fc,0x422728,0x422754,0x4c5db0" \
   --context 16 \
   > "$OUT/15-loader-callers.txt"
 
@@ -251,6 +253,9 @@ python3 "$SCRIPT_DIR/scan-scout-exe-callers.py" \
   echo
   echo "========== RECORD HANDLER TABLE RAW BYTES: 0x420B00 =========="
   cat "$OUT/43-record-handler-table-raw-bytes.txt"
+  echo
+  echo "========== THREE-COMPONENT FIELD HELPER: 0x4C5DB0 =========="
+  cat "$OUT/44-callee-4c5db0-three-component-helper.txt"
   echo
   echo "========== FILE SIZE / READ HELPER =========="
   cat "$OUT/36-file-size-and-read-helper.txt"
