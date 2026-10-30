@@ -166,3 +166,12 @@ The same extended traversal was applied to additional campaign and multiplayer D
 The endpoint/vector field pattern was spot-checked in anub01, jug02, oasis02 and rag03 as well as rag02, rag04 and oasis03. In all four additional samples, slots 0, 1, 2, 4 and 5 were near length 4096 for every reachable type-8 record; slot 6 was near 4096 for most records. Slots 3 and 7 were coordinate-like values and were not near 4096. This makes the two-block pattern a cross-campaign observation rather than a peculiarity of the three initial files.
 
 The distribution is map-dependent: some maps have hundreds of these records, while others have none or only a handful. That argues against treating type-8 as a universal terrain surface record without checking the owning parent and map context. The working interpretation remains two endpoint-like blocks, each containing three direction-like vectors and one coordinate-like triple; exact runtime semantics are unresolved.
+
+
+## Original motion archive: fixed frame-record stride (2026-10-30)
+
+The extracted `motion.ff` animation resources were surveyed directly. In 58 `.MC` files, the first little-endian 32-bit value is consistent with a frame count, and the remaining payload divides exactly into 152-byte records per frame. The matching files cover male and female stand, walk, run, glide, wait, rock, and death clips.
+
+One file, `fstand2.mc`, is an exception: its header reports 17 frames, while its payload is 2,736 bytes—152 bytes more than 17 × 152. The extra 152 bytes are retained as an anomaly rather than discarded or reinterpreted.
+
+This establishes a stable animation frame-container stride, not the internal channel layout. The number and meaning of channels, skeleton mapping, coordinate system, and interpolation rules remain unverified. The reusable inventory tool is `tools/inspect-motion-format.mjs`.
