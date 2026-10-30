@@ -92,14 +92,25 @@ function loadFile(file){
   model=gltf.scene;model.userData.fileName=file.name;
   let meshes=0,vertices=0,triangles=0;
   originalMaterials=[];
+  const diagnosticColors=[0x9ebbd6,0xc1cad3,0x7f9fbf,0xe2d2b8,0x9cb5a4,0xc5a8a0,0xb6aed0,0x8fb5c2,0xd1c2a3];
   model.traverse(o=>{
    if(!o.isMesh)return;meshes++;
    const geo=o.geometry;vertices+=geo.attributes.position?.count||0;
    triangles+=geo.index?geo.index.count/3:(geo.attributes.position?.count||0)/3;
-   const mat=Array.isArray(o.material)?o.material:[o.material];
-   originalMaterials.push({o,mat:mat.map(m=>m.clone())});
-   o.material=mat.map(m=>{const c=m.clone();c.side=THREE.DoubleSide;return c});
-   if(Array.isArray(o.material)===false&&Array.isArray(mat)===false)o.material=o.material;
+   // Keep the single-material form for ordinary glTF primitives. Assigning
+   // a one-element material array to geometry without groups can suppress
+   // rendering in Three.js.
+   const original=Array.isArray(o.material)?o.material:[o.material];
+   originalMaterials.push({o,wasArray:Array.isArray(o.material),mat:original.map(m=>m?.clone())});
+   const makeMaterial=(index)=>new THREE.MeshNormalMaterial({
+    side:THREE.DoubleSide,wireframe:wire,
+    flatShading:false
+   });
+   if(Array.isArray(o.material)) {
+    o.material=original.map((_,index)=>makeMaterial(index));
+   } else {
+    o.material=makeMaterial(meshes-1);
+   }
   });
   model.userData.meshCount=meshes;model.userData.vertices=vertices;model.userData.triangles=Math.round(triangles);
   scene.add(model);modelBox=new THREE.Box3().setFromObject(model);fit();setView('front');
