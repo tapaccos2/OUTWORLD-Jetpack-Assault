@@ -201,11 +201,13 @@ At `0x4CE158`, the ordinary path calls `CreateFileA` with the generated path, `G
 
 The wrapper at `0x4CE6C8` calls `0x4CE158`, then calls `ReadFile` in the ordinary path and `CloseHandle` for cleanup. In the redirected path, it uses `0x4CD760` to copy from a mapped in-memory resource and `0x4CD6CC` for its close/release operation. The helper checks the requested range against the mapped resource size and advances its current offset when data is copied.
 
-### Important unresolved read-length inconsistency
+### Read-length question resolved: the value 1 is not the byte count
 
-At `0x48D3A8`, the loader builds both a `.DPC` path and a `.TPC` path. The `.TPC` call at `0x48D3F4–0x48D3FE` passes the value 1 as the requested byte count to `0x4CE6C8`, which passes that count through to `ReadFile` in the ordinary path. Immediately afterwards, the code compares a DWORD at the destination against `TCPM` and checks another field against `0x43`.
+The apparent one-byte read was a calling-convention misinterpretation. The call sites push `1` as a stack argument to `0x4CE6C8`, but this value is not passed to `ReadFile` as its byte count.
 
-The corresponding `.DPC` read later in the same routine also passes a count of 1 before calling `0x4209A0`. The report does not explain whether these calls are relying on pre-populated buffers, whether the wrapper has an unusual calling convention/side effect not yet captured, or whether some other setup guarantees the data is present. Do not interpret the four-byte comparison as proof that this particular read fetched a complete header.
+The wrapper at `0x4CE6C8` calls `0x4CE158` with a pointer to a local DWORD. The file-open helper stores the result of `GetFileSize` (IAT `0x141066C`) through that pointer. On return, `0x4CE6C8` loads that local DWORD into `ECX` and passes it as `ReadFile`'s `nNumberOfBytesToRead` argument. The wrapper then returns the number of bytes actually read. This is visible in the consecutive instructions at `0x4CE6D7–0x4CE722` and `0x4CE332–0x4CE345`.
+
+Therefore the `.TPC` call at `0x48D3F4–0x48D3FE` reads the file-size amount into the destination buffer before checking the `TCPM` signature and the following `0x43` field. The later `.DPC` read likewise requests the full size through this wrapper. The earlier interpretation of the pushed `1` as a one-byte read was incorrect.
 
 ### TPC record parsing observations
 
@@ -233,3 +235,48 @@ bash tools/scout-exe-followup.sh
 Then upload the regenerated `/tmp/outwars-scout-exe-followup/REPORT.txt`.
 
 **Current blocker:** the TPC/DPC resource-reading and initial record-processing path is becoming clearer, but this still does not identify the runtime consumer of Scout attachment wrappers or prove the per-part transforms. The mesh assembly remains unresolved.
+
+
+## Follow-up report 5: full-file reads confirmed and DPC record parser boundary found
+
+The new report resolves the apparent read-length inconsistency and reveals a more useful continuation of the model-resource loader.
+
+### File-size/read contract
+
+The call at `0x4CE6DB` passes a pointer to a local DWORD into `0x4CE158`. On the normal Win32 path, the open helper calls `GetFileSize` and writes the returned size through that pointer. Back in `0x4CE6C8`, the wrapper loads this local size into `ECX` and passes it to `ReadFile` as the requested byte count. The wrapper returns the actual bytes-read value.
+
+Consequently, the stack argument `1` at the TPC/DPC call sites is not a one-byte read request. Its precise meaning within the helper's other options is not assigned here, but it is not the `ReadFile` byte count. The `TCPM` header and following `0x43` comparison are performed after the resource contents have been read into memory. This corrects the previous follow-up note.
+
+### Main resource loader continues into record loops
+
+The routine at `0x48C6A8` builds a `.TPC` path and a `.DPC` path, reads resource data, and then continues beyond the originally inspected `0x48C890` boundary.
+
+After its call to `0x4209A0`, the code loads a count from object offset `+0x13C` and a record-list pointer from `+0x144`. It iterates records at a `0x12C` stride. For each record it constructs a resource path, reads that file through `0x4CE6C8`, and calls `0x422170`. A second loop later reads and processes another list whose count is at `+0x140`, again using `0x12C)-byte record spacing and calling `0x422170`.
+
+This is a substantially better lead into the DPC resource/object parser than the TPC colour conversion helper. It is not yet proof that `0x422170` calculates the Scout attachment transforms, nor are the record-list roles or the helper's full structure decoded.
+
+### Texture path kept separate
+
+The TPC processing code builds a 256-entry WORD lookup table and writes three component arrays at `0xF84733`, `0xF84734`, and `0xF84735`. The 16-bit pixel processing extracts masked component fields. This remains texture/pixel decoding evidence and should not be conflated with the type-16 DPC attachment-wrapper hierarchy.
+
+### Next targeted probe
+
+The follow-up script now adds focused disassembly for:
+
+- the continuation of `0x48C6A8` through `0x48CD40`, including both resource-record loops;
+- the callee at `0x422170`, reached for each record;
+- the file-size/read helper at `0x4CE674–0x4CE780`;
+- resource path string handling around `0x4CEEC0–0x4CEF50`;
+- virtual-resource mode setup around `0x4CE020–0x4CE0A4`;
+- callers of `0x422170`, `0x4CE674`, `0x4CE6C8`, and related setup helpers.
+
+The next run reuses the original full disassembly; it does not repeat the expensive whole-file analysis:
+
+```bash
+git pull
+bash tools/scout-exe-followup.sh
+```
+
+Then upload the regenerated `/tmp/outwars-scout-exe-followup/REPORT.txt`.
+
+**Current best lead:** follow `0x422170` and its callees. It is invoked while the loader iterates the DPC-associated resource records, so it may expose the runtime record interpretation needed to connect the extracted DPC graph to part placement. That is a hypothesis to test, not a confirmed transform routine.
