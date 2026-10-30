@@ -373,3 +373,28 @@ bash tools/scout-exe-followup.sh
 The new report sections are numbered 45–49: full `0x4DFCE4`, the `0x420B00` branch-target block, full `0x4C5DB0`, its fixed-point helper, and the `0x490388` validation helper.
 
 **Status:** runtime rotation construction is now strongly evidenced; Scout attachment-to-object mapping and final assembled-model validation remain incomplete.
+
+
+## Follow-up report 8: runtime transform fields and record linking (2026-10-31)
+
+The report's DPC parser disassembly provides a firmer link between the file records and runtime object state:
+
+- At `0x422170`, the parser validates the DCPM magic and version, walks the record-offset table, and examines each record's 16-bit value at `+2`. Values from 1 through 9 enter the record path that calls `0x4DD470` and then invokes callback `0x420B00` through `0x4DFCE4`. The complete callback state setup and its branch handlers are the next probe target; do not equate the callback's numeric selector with a DPC class ID without tracing the data passed to it.
+- At `0x422278`, three 32-bit values from the input record are copied to runtime-object offsets `+0xEC`, `+0xF0`, and `+0xF4`. This is a concrete three-component position/vector setter.
+- At `0x4222A8`, three 16-bit values are copied to `+0xE4`, `+0xE6`, and `+0xE8`; the handler then calls `0x4C5DB0` with the three-word field and destination `+0xB4`. This establishes that those three stored values drive a derived transform basis/matrix. It does not yet establish their units, axis order, or exact mapping to Scout's type-16 wrapper fields.
+- The same position/rotation writes occur in indexed handlers around `0x422654` and `0x42269C`, using a runtime table based at `0x647578`. The table is capped at 32 entries (the code checks against `0x20`); each entry has a 12-byte stride and stores a runtime object pointer at entry `+8`.
+- At `0x422332`, a routine scans a pointer array at `0x647538`, compares each pointed record's 16-bit value at `+2` against the current object's identifier, and stores a matching source-record pointer at runtime-object offset `+0x160`. A related routine at `0x422554` performs a similar identifier match and sets object flags. This is a strong candidate for the runtime record-to-object linking mechanism, but it has not yet been proven to be the consumer of Scout's 16 type-16 links.
+- `0x4C5DB0` reads the three 16-bit components in the order `+4`, `+0`, `+2` for three calls to `0x4C5440`, then performs fixed-point multiply/add operations. The current report truncates the helper before all matrix writes; its complete output and the trig helper are included in the next local probe.
+
+The follow-up probe script now additionally scans raw executable bytes for little-endian references to the transform setters and related handler entry points. This is intended to find static registration/function-pointer tables that a disassembly-only caller scan cannot see.
+
+**Status:** runtime object position and rotation fields are identified; record-ID linking is strongly evidenced. The actual Scout attachment-to-object mapping, matrix coefficient layout, angle units, and final assembled preview remain unverified. Do not change the exporter to apply a guessed transform yet.
+
+Run the focused pass against the same executable build:
+
+```bash
+git pull
+bash tools/scout-exe-followup.sh
+```
+
+The added results are in `50-raw-transform-handler-pointer-xrefs.txt` and the combined `REPORT.txt`. The executable itself remains local; only the generated text report needs to be shared.
