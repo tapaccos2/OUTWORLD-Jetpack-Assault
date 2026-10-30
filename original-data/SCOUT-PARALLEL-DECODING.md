@@ -69,3 +69,9 @@ A new audit follows every type-16 wrapper +8 pointer to the exact embedded recor
 The audit counts 1 root-to-first-mesh, 8 paired-to-own-mesh, and 7 mesh-to-previous-paired links (16 total). Wrapper first dwords are 10,000 on mesh-side links and 2,250,000 on paired-side links. The pointer targets are embedded type-0/class-0 descriptors, with pointers to vertex data, a shared external resource, and face data. Shared pool offset 40 is referenced on mesh-side links; paired-side records reference per-part offsets.
 
 This is a structural hierarchy lead only; the semantic meaning of the wrapper constants and the transform multiplication order are still unknown. Six Euler-order tests with a 4096-unit full-turn assumption did not create a recognisable body; direct translation also worsens the assembly. The next decoding step is to identify the executable consumer and its reads from the type-16 and embedded type-0 descriptors.
+
+## Per-mesh vertex-base candidate tested across all Scout variants (2026-10-30)
+
+The optional exporter mode `--use-mesh-vertex-reference` reads the XYZ pool from each mesh type-2 +28 pointer and applies that as the base for its face indices. Across all seven variants, the test found every +28 offset is eight-byte aligned, every last referenced byte is inside the DPC file, and all eight meshes still decode 13 unique quads / 26 triangles. The offsets are 96 (submesh 1), 712 (submesh 2), and 744 (submeshes 3–8), corresponding to vertex starts 7, 84, and 88 relative to the shared pool at 40. The maximum effective index is 483.
+
+This is a credible per-mesh vertex-base interpretation, but the alternate preview still shows overlapping plate-like surfaces and does not assemble the character. The default shared-base export is retained pending runtime-consumer evidence or another independent validation.
