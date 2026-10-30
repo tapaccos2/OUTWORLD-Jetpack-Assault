@@ -237,6 +237,8 @@ function createReader(file) {
     return {
       label, offset, header: h,
       fields: {
+        signedVectorAt8Candidate: [s32(offset + 8), s32(offset + 12), s32(offset + 16)],
+        signedVectorAt32Candidate: [s32(offset + 32), s32(offset + 36), s32(offset + 40)],
         plus4: pointerField(offset, 4),
         plus8: pointerField(offset, 8),
         plus12: pointerField(offset, 12),
@@ -248,7 +250,10 @@ function createReader(file) {
         plus36: p36,
         plus40: { s32: s32(offset + 40), u32: u32(offset + 40), hex: '0x' + u32(offset + 40).toString(16).padStart(8, '0') },
         plus44: pointerField(offset, 44),
-        plus48: pointerField(offset, 48)
+        plus48: pointerField(offset, 48),
+        plus52: pointerField(offset, 52),
+        plus56: { s32: s32(offset + 56), u32: u32(offset + 56), hex: '0x' + u32(offset + 56).toString(16).padStart(8, '0') },
+        plus60: pointerField(offset, 60)
       },
       wrapper: p20.targetOffset === null ? null : {
         header: wrapper,
