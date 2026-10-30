@@ -106,3 +106,10 @@ The small, complete TPC payloads are now accessible for byte-level comparison (t
 | 36 | `0x00010100` | Identical across all three samples |
 
 The red and blue flag TPCs have identical total byte lengths and identical bytes through offset 39, then diverge in their payloads, consistent with two variants sharing a common header and layout. This is useful evidence for a structured payload, but it does **not** yet establish that the payload is a bitmap, a texture format, or a 3D model. The TPC decoder remains open; no terrain texture has been applied to the RPC mesh on this basis.
+
+
+## Executable cross-check: TPC palette decoding path (2026-10-30)
+
+Static disassembly of the uploaded original `outwars.exe` at VA `0x0048d3a8` and `0x0048d62c` confirms two TPC loading paths. Both validate the `TCPMC` signature and version `0x43`. In the first path, the routine reads 256 consecutive 16-bit entries beginning at the palette data pointer (`record + 0x14`), detects whether the palette contains a zero entry, then extracts 5-bit red, green, and blue components from each word before creating a 256-entry runtime palette. This is direct executable evidence that this TPC path uses a 256-entry, 16-bit RGB palette (RGB555-style channel packing), rather than an ordinary uncompressed RGBA bitmap.
+
+The loader then processes variable-length image records and compressed data; its record/packet loop is not yet fully decoded. This finding narrows the texture work substantially, but does not yet provide a complete TPC-to-PNG converter or verified image dimensions. The two TPC paths should not be assumed identical until their record handling is compared.
