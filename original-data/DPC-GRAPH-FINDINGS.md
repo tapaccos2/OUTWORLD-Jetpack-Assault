@@ -182,3 +182,23 @@ This establishes a stable animation frame-container stride, not the internal cha
 The 152-byte frame payload divides exactly into 19 consecutive 8-byte slots. Treating each slot as four little-endian signed 16-bit values, the fourth value is the same sentinel `-16393` (`0xBFF7`) in every slot of every complete frame inspected: 112,195 slot records across 5,905 frames from the 58 exact-stride files. The first three signed words vary and remain raw numeric channels.
 
 This is a strong structural result: each frame is a fixed array of 19 four-word records, with a constant fourth word. It is not yet proof that the 19 slots map one-to-one to bones, or that the first three values are Euler angles, translations, or another representation. The `fstand2.mc` extra 152-byte block remains an exception and was excluded from the complete-frame tally.
+
+
+## Playable armour model graph: root-to-geometry-class link (2026-10-30)
+
+The extracted `units.ff` armour resources were compared using the DPC relocation base and the observed type-1 pointer array. The type-1 model root points to a type-12 record; in these unit resources, the type-12 record has a relocated pointer at relative offset +8 back into the model's type-1 record network. Following that observed link exposes a second type-1 record whose child pointers reach a type-9 record and a type-5 record.
+
+For the playable armour classes, the reachable type-9 class IDs track the armour class IDs with a consistent +2 offset:
+
+| Armour family | Root type-1 class | Reachable type-9 class |
+|---|---:|---:|
+| Scout | 100 | 102 |
+| Combat | 200 | 202 |
+| Assault | 300 | 302 |
+| Dreadnought | 400 | 402 |
+
+The same pattern recurs across male/female and environment variants. This is stronger evidence that the type-9 record is part of the playable armour model representation than a class-number observation from one file. It does not yet identify the vertex/index layout or prove the precise role of type-5/type-8/type-2 records.
+
+The first model-network type-1 node also exposes two children: a type-9 armour-class record and a type-5 record. In the Scout sample, the type-9 record is at file offset 20,516 and the type-5 record at 37,632. A six-entry relocated-pointer table immediately precedes the type-9 record in that sample. The pointer table and type-9 payload are recorded as candidates for the next geometry-decoding step; no mesh is exported from them yet.
+
+The current graph inspector did not follow this unit-specific type-12 link, so these observations were derived by validating the relocated target headers directly across the extracted model files. Treat the type-12 +8 relationship as observed for this unit-model family, not as a universal DPC rule.
