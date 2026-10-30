@@ -53,6 +53,20 @@ function audit(file, tempFile) {
   }
   return JSON.parse(fs.readFileSync(tempFile, 'utf8'));
 }
+function wrapperVector(wrapper) {
+  const words = wrapper?.rawFirst32?.words32;
+  if (!Array.isArray(words)) return null;
+  return [20, 24, 28].map(offset => words.find(word => word.offset === offset)?.s32 ?? null);
+}
+function wrapperConstants(wrapper) {
+  const words = wrapper?.rawFirst32?.words32;
+  if (!Array.isArray(words)) return null;
+  return {
+    firstDword: words.find(word => word.offset === 0)?.u32 ?? null,
+    secondDword: words.find(word => word.offset === 4)?.u32 ?? null,
+    vectorAt20: wrapperVector(wrapper)
+  };
+}
 function compactPart(entry) {
   const d = entry.detail;
   const mesh = d?.child24Detail;
@@ -64,11 +78,17 @@ function compactPart(entry) {
     meshNodeOffset: mesh?.offset ?? null,
     meshType2VectorAt8Candidate: mesh?.fields?.signedVectorAt8Candidate ?? null,
     meshType2VectorAt32Candidate: mesh?.fields?.signedVectorAt32Candidate ?? null,
+    meshType2VectorAt56Candidate: mesh?.fields ? [
+      mesh.fields.plus56?.s32 ?? null,
+      signedFromHex(mesh.fields.plus60?.rawHex)
+    ] : null,
+    meshType16WrapperFields: wrapperConstants(mesh?.wrapper),
     meshNodePlus28ReferenceOffset: mesh?.fields?.plus28?.targetOffset ?? null,
     faceDataOffsetCandidate: mesh?.fields?.plus36?.targetOffset ?? null,
     pairedType2Offset: paired?.offset ?? null,
     pairedType2VectorAt8Candidate: paired?.fields?.signedVectorAt8Candidate ?? null,
     pairedType2VectorAt32Candidate: paired?.fields?.signedVectorAt32Candidate ?? null,
+    pairedType16WrapperFields: wrapperConstants(paired?.wrapper),
     pairedNodePointerTargets: paired?.alignedPointerCandidates?.map(p => ({
       fieldOffset: p.fieldOffset,
       targetOffset: p.targetOffset,
@@ -139,7 +159,10 @@ try {
     v.parts[i] ? [{
       variant: v.name,
       meshVectorAt8: v.parts[i].meshType2VectorAt8Candidate,
+      meshVectorAt56: v.parts[i].meshType2VectorAt56Candidate,
+      meshWrapperFields: v.parts[i].meshType16WrapperFields,
       pairedVectorAt8: v.parts[i].pairedType2VectorAt8Candidate,
+      pairedWrapperFields: v.parts[i].pairedType16WrapperFields,
       pairedVectorAt32: v.parts[i].pairedType2VectorAt32Candidate,
       ownerVector: v.parts[i].ownerVectorCandidate,
       meshPlus28: v.parts[i].meshNodePlus28ReferenceOffset,
@@ -157,6 +180,29 @@ try {
     rootPartClassPairs: [...new Set(variants.map(v => v.rootClass + '/' + v.partClass))],
     allVariantsHaveEightPartOwnerSlots: variants.every(v => v.parts.length === 8),
     allEightOwnerVectorsMatchPaired32: variants.every(v => v.parts.every(p => p.ownerVectorMatchesPaired32)),
+    allMeshPlus56Plus60MatchPairedPlus8Plus12: variants.every(v => v.parts.every(p =>
+      p.meshType2VectorAt56Candidate?.[0] === p.pairedType2VectorAt8Candidate?.[0] &&
+      p.meshType2VectorAt56Candidate?.[1] === p.pairedType2VectorAt8Candidate?.[1])),
+    allMeshWrapperVectorsMatchMeshType2Plus8: variants.every(v => v.parts.every(p =>
+      Array.isArray(p.meshType16WrapperFields?.vectorAt20) &&
+      p.meshType16WrapperFields.vectorAt20.every((value, k) => value === p.meshType2VectorAt8Candidate?.[k]))),
+    allPairedWrapperVectorsMatchPairedType2Plus8: variants.every(v => v.parts.every(p =>
+      Array.isArray(p.pairedType16WrapperFields?.vectorAt20) &&
+      p.pairedType16WrapperFields.vectorAt20.every((value, k) => value === p.pairedType2VectorAt8Candidate?.[k]))),
+    meshWrapperConstantsByPart: Array.from({length:8},(_,i)=>({
+      part:i+1,
+      values:stableCounts(variants.map(v=>[
+        v.parts[i]?.meshType16WrapperFields?.firstDword ?? null,
+        v.parts[i]?.meshType16WrapperFields?.secondDword ?? null
+      ]))
+    })),
+    pairedWrapperConstantsByPart: Array.from({length:8},(_,i)=>({
+      part:i+1,
+      values:stableCounts(variants.map(v=>[
+        v.parts[i]?.pairedType16WrapperFields?.firstDword ?? null,
+        v.parts[i]?.pairedType16WrapperFields?.secondDword ?? null
+      ]))
+    })),
     allVariantsShareWrapperFieldPattern: variants.every(v =>
       JSON.stringify(v.wrapperFieldLinkPattern) === JSON.stringify(variants[0].wrapperFieldLinkPattern)),
     wrapperFieldLinkPattern: variants[0].wrapperFieldLinkPattern,
