@@ -47,13 +47,15 @@ function refs(offset, type, classId) {
 }
 
 const queue = [];
+let queueHead = 0;
 for (let i = 0; i < topCount; i++) {
   const offset = target(u32(36 + i * 4));
   if (offset !== null) queue.push({ offset, parentOffset: null, parentType: null, parentClass: null, fieldOffset: 36 + i * 4 });
 }
 const nodes = new Map();
-while (queue.length && nodes.size < 10000) {
-  const item = queue.shift();
+const maxNodes = 10000;
+while (queueHead < queue.length && nodes.size < maxNodes) {
+  const item = queue[queueHead++];
   const { offset } = item;
   const type = b[offset], classId = u16(offset + 2);
   let node = nodes.get(offset);
@@ -105,6 +107,9 @@ for (const record of records) for (const parent of record.parents) {
 }
 process.stdout.write(JSON.stringify({
   file, bytes: b.length, topLevelCount: topCount, reachableNodeCount: nodes.size,
+  maxNodes, traversalComplete: queueHead === queue.length,
+  pendingQueueItems: queue.length - queueHead,
+  type8RecordsTruncated: records.filter(x => x.truncated).length,
   reachableType8Count: records.length, parentTypes, slotSummary, records,
   note: 'Triples and parent references are raw observations. No mesh, vertex, normal, or collision semantics are assigned.',
 }, null, 2) + '\n');
