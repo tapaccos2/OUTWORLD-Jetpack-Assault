@@ -97,6 +97,8 @@ function compactPart(entry, bytes) {
   const meshVector56MinusOwner = Array.isArray(meshVector56) && Array.isArray(ownerVector)
     ? meshVector56.map((value, k) => value === null ? null : value - ownerVector[k])
     : null;
+  const pairedVector88 = [88, 92, 96].map(offset =>
+    paired?.rawFirst160?.words32?.find(word => word.offset === offset)?.s32 ?? null);
   return {
     partListIndex: entry.index,
     ownerOffset: d?.offset ?? null,
@@ -117,6 +119,7 @@ function compactPart(entry, bytes) {
     pairedType2RawWords32Through156: paired?.rawFirst160?.words32 ?? [],
     pairedType2ExtendedPointerCandidates: paired?.extendedPointerCandidates ?? [],
     pairedType2VectorAt32Candidate: paired?.fields?.signedVectorAt32Candidate ?? null,
+    pairedType2VectorAt88Candidate: pairedVector88,
     pairedType16WrapperFields: wrapperConstants(paired?.wrapper),
     pairedNodePointerTargets: paired?.alignedPointerCandidates?.map(p => ({
       fieldOffset: p.fieldOffset,
@@ -198,6 +201,7 @@ try {
       meshVector56MinusOwner: v.parts[i].meshType2VectorAt56MinusOwnerCandidate,
       meshWrapperFields: v.parts[i].meshType16WrapperFields,
       pairedVectorAt8: v.parts[i].pairedType2VectorAt8Candidate,
+      pairedVectorAt88: v.parts[i].pairedType2VectorAt88Candidate,
       pairedWrapperFields: v.parts[i].pairedType16WrapperFields,
       pairedVectorAt32: v.parts[i].pairedType2VectorAt32Candidate,
       ownerVector: v.parts[i].ownerVectorCandidate,
@@ -264,6 +268,13 @@ try {
       meshType2VectorAt8Counts: stableCounts(rows.map(r => r.meshVectorAt8)),
       meshType2VectorAt56Counts: stableCounts(rows.map(r => r.meshVectorAt56)),
       meshType2VectorAt56MinusOwnerCounts: stableCounts(rows.map(r => r.meshVector56MinusOwner)),
+      pairedType2VectorAt88Counts: stableCounts(rows.map(r => r.pairedVectorAt88)),
+      pairedType2VectorAt88XYNextMeshAt8XYMatches: stableCounts(rows.map((r, k) => {
+        const next = rows[k + 1]?.meshVectorAt8 ?? null;
+        return Array.isArray(next) && r.pairedVectorAt88?.length === 3
+          ? [r.pairedVectorAt88[0] - next[0], r.pairedVectorAt88[1] - next[1]]
+          : null;
+      })),
       meshPlus28ReferencedVertexCounts: stableCounts(rows.map(r => {
         const v = r.meshNodePlus28ReferencedVertex;
         return v ? [...v.xyz, v.trailingWord] : null;
