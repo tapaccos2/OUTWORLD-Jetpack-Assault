@@ -233,3 +233,9 @@ A correction to the earlier type-16 note: in the Scout sample, the relocated poi
 The type-9/class-105 node at file offset 20,464 contains a nine-entry relocated-pointer list at +16. In the Scout sample, eight of those entries resolve to the eight type-1 part nodes at offsets 9,592, 11,144, 12,696, 14,248, 15,800, 17,352, 18,904, and 20,436; the ninth entry is a separate linked record. This corrects the earlier shorthand that described the structure as only a six-entry list. Six of the eight repeated part nodes have matching paired type-2 children; the remaining two are additional nodes and must be accounted for during reconstruction.
 
 These observations are structural only. No vertex/index interpretation is assigned to type-2, type-4, or type-16 payloads until their executable consumers are resolved.
+
+## Executable cross-check: 19-slot animation frame is a 19-joint array (2026-10-30)
+
+Static disassembly of the uploaded original `outwars.exe` confirms that the 152-byte motion frame is consumed as a fixed 19-entry array. At VA `0x00415c1d` and again at `0x00415d8e`, the runtime sets the associated animation object's element count to `0x13` (19). The loops at `0x00415c60` and `0x00415dd5` advance the source pointer by `0x98` bytes (152) for each frame while adjusting the signed 16-bit value at frame-relative offset +2. The runtime then creates 19 entries with an 8-byte per-entry stride.
+
+This directly links the observed 152-byte frame stride to 19 per-frame channels/entries, rather than merely noting that 152 divides by 8. It is strong evidence that the 19 slots correspond to the runtime's 19 animation elements. The code inspected here does not yet expose the complete hierarchy, names, or the meaning of all four 16-bit words in each 8-byte entry; those remain open. The constant fourth word `0xBFF7` is still recorded as a raw invariant, not assigned a semantic label.
