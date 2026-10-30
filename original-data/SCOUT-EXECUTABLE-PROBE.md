@@ -98,3 +98,44 @@ A second routine around `0x48CFB0–0x48D21D` iterates entity-like records, calc
 ### Current interpretation
 
 We have now located executable code that selects DPC basenames and gathers the required DPC resource names. This is materially closer to the loader path than the earlier spatial helper at `0x477680`. The next analysis should decode the complete pointer table, identify direct callers of the collection routines, and trace the subsequent consumer of the gathered DPC filename list into the actual DPC parser.
+
+
+## Follow-up report 2: complete variant table and next loader boundary
+
+The next uploaded report decoded all 40 DWORD positions around VA `0x529D60`. The first 30 entries are three contiguous ten-entry banks. Each bank is ordered as five unit classes, with male then female names within each class:
+
+| Class index | First bank (base `0x529D60`) | Second bank (base `0x529D88`) | Third bank (base `0x529DB0`) |
+|---:|---|---|---|
+| 0 | `inf_ma / inf_fa` | `inf_ma / inf_fa` | `inf_ma / inf_fa` |
+| 1 | `scout_ma / scout_fa` | `scout_mj / scout_fj` | `scout_md / scout_fd` |
+| 2 | `combat_ma / combat_fa` | `combat_mj / combat_fj` | `combat_md / combat_fd` |
+| 3 | `assault_ma / assault_fa` | `assault_mj / assault_fj` | `assault_md / assault_fd` |
+| 4 | `dread_ma / dread_fa` | `dread_mj / dread_fj` | `dread_md / dread_fd` |
+
+The remaining ten DWORD values after the third bank are not part of this table: they decode as raw bytes from a nearby string, followed by zeroes. The table itself therefore has 30 meaningful entries, not 40. The original 40-entry scan simply ran beyond its end.
+
+The filename-formatting code combines two small indices as `2 * classIndex + sexIndex`, then chooses one of the three banks. Its branches select the second bank for selector value 0, the third bank for selector value 1, and the first bank for other values. This confirms the table's paired ordering and a three-way bank selector. The semantics of the selector values and the suffixes `a`, `j`, and `d` remain unconfirmed; do not name them as armour, jetpack, difficulty, or other guessed meanings.
+
+### Unique-name collection
+
+The routine beginning around `0x48CED4` calls a predicate at `0x455578`, chooses a DPC basename, formats it with `%s.dpc`, and iterates records at `0x12C)-byte spacing. It invokes `0x500AE9` after calculating string lengths, then increments a count and advances to the next record. This structure is consistent with checking whether a generated filename is already present and collecting unique DPC names. That is a strong static interpretation, but the exact compare helper contract and list structure still need confirmation from the callee body.
+
+### New boundary found after name collection
+
+At approximately `0x48D3B0`, the follow-on code formats two additional strings, calls `0x4DD420`, then calls `0x4CE6C8` with a global destination at `0xB8472C`. It reads the first DWORD from that destination and compares it with `0x4D504354` (bytes `54 43 50 4D`, ASCII `TCPM`). This is the strongest lead so far for the hand-off from selected resource names into a file/data reader or parser. It is not yet proven to be the DPC parser: the two callee bodies and the referenced format strings have not yet been decoded.
+
+### Next targeted probe
+
+The enhanced `tools/scout-exe-followup.sh` now reuses the existing full disassembly and adds only focused windows for:
+- the `0x48CED4–0x48D2D8` name-collection routine;
+- the follow-on at `0x48D380–0x48D600`;
+- callees around `0x4DD420`, `0x4CE6C8`, `0x455578`, and `0x500AE9`;
+- exact strings referenced at VAs `0x52334D`, `0x523423`, `0x52342A`, `0x52342E`, `0x523434`, and `0x523438`.
+
+The command now saves the report to `/tmp/outwars-scout-exe-followup/REPORT.txt` without dumping hundreds of kilobytes to the terminal. After `git pull`, run:
+
+```bash
+bash tools/scout-exe-followup.sh
+```
+
+Then upload `/tmp/outwars-scout-exe-followup/REPORT.txt` directly. The original full PE disassembly is reused; the expensive full probe is not repeated.
