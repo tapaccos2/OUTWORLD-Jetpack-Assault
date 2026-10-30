@@ -19,14 +19,21 @@ function ptr(o) {
   return p - base;
 }
 function typed(o, type, cls) { return o >= 0 && o + 4 <= b.length && b[o] === type && u16(o + 2) === cls; }
-let rootRecord = -1, rootNode = -1;
-for (let o = 0; o <= b.length - 4; o++) {
-  if (!typed(o, 9, 102)) continue;
-  try { const n = ptr(o + 16); if (b[n] === 1) { rootRecord = o; rootNode = n; break; } } catch {}
+let rootRecord = -1, rootNode = -1, rootClass = -1, partClass = -1;
+for (const [candidateRoot, candidatePart] of [[102, 105], [152, 155]]) {
+  for (let o = 0; o <= b.length - 4; o++) {
+    if (!typed(o, 9, candidateRoot)) continue;
+    try {
+      const n = ptr(o + 16), list = ptr(o + 20);
+      if (b[n] === 1 && typed(list, 9, candidatePart) && u16(list + 6) === 9) {
+        rootRecord = o; rootNode = n; rootClass = candidateRoot; partClass = candidatePart; break;
+      }
+    } catch {}
+  }
+  if (rootNode >= 0) break;
 }
-if (rootNode < 0) throw new Error('Playable armour class-102 root not found');
+if (rootNode < 0) throw new Error('Playable armour class-102/152 root not found');
 const partList = ptr(rootRecord + 20);
-if (!typed(partList, 9, 105) || u16(partList + 6) !== 9) throw new Error('Expected class-105 nine-entry part list');
 const owners = [];
 for (let i = 0; i < 8; i++) {
   const owner = ptr(partList + 16 + i * 4);
@@ -89,7 +96,9 @@ for (let i = 0; i < owners.length; i++) {
   for (let k = 0; k < 3; k++) if (anchor[k] !== s32(owner + 8 + k * 4)) throw new Error('Part ' + (i + 1) + ': owner/wrapper vector mismatch');
   const meshDescriptor = ptr(ptr(meshNode + 20) + 8);
   const sharedVertexData = ptr(meshDescriptor + 4);
-  meshes.push(decodeMesh('submesh_' + (i + 1), owner, meshNode, transformNode, sharedVertexData, ptr(meshNode + 36), 26, anchor));
+  const partVertexStart = ptr(meshNode + 28);
+  if (partVertexStart < sharedVertexData || (partVertexStart - sharedVertexData) % 8 !== 0) throw new Error('Part ' + (i + 1) + ': mesh vertex slice is outside/aligned incorrectly to shared pool');
+  meshes.push(decodeMesh('submesh_' + (i + 1), owner, meshNode, transformNode, partVertexStart, ptr(meshNode + 36), 26, anchor));
 }
 // Build a self-contained glTF 2.0 binary.
 const binaryParts = [], bufferViews = [], accessors = [], gltfMeshes = [], nodes = [], materials = [];
@@ -132,6 +141,6 @@ const header = Buffer.alloc(12); header.writeUInt32LE(0x46546c67, 0); header.wri
 const jh = Buffer.alloc(8); jh.writeUInt32LE(json.length, 0); jh.writeUInt32LE(0x4e4f534a, 4);
 const bh = Buffer.alloc(8); bh.writeUInt32LE(bin.length, 0); bh.writeUInt32LE(0x004e4942, 4);
 fs.writeFileSync(output, Buffer.concat([header, jh, json, bh, bin]));
-const report = { input, output, anchorCandidatesApplied: applyAnchors, meshCount: meshes.length, totalVertices: meshes.reduce((s, m) => s + m.vertexCount, 0), totalTriangles: meshes.reduce((s, m) => s + m.triangleCount, 0), meshes: meshes.map(m => ({ name: m.name, ownerNodeOffset: m.owner, meshNodeOffset: m.meshNode, transformNodeOffset: m.transformNode, vertexDataOffset: m.vertexOffset, faceDataOffset: m.faceOffset, sourceFaceRecordCount: m.sourceCount, uniqueQuadCount: m.quadCount, triangles: m.triangleCount, vertices: m.vertexCount, bounds: [m.min, m.max], anchorVectorCandidate: m.anchor })), notes: ['XYZ coordinates are preserved as signed int16 values.', 'Four-index face records are deduplicated by unordered vertex set and triangulated as a fan.', 'Normals are generated from exported triangle winding.', 'Attachment transforms, UVs, original texture mapping, skin weights and animation are not included.', 'Wrapper translation candidates are metadata unless --apply-anchor-candidates is supplied.'] };
+const report = { input, output, rootClass, partClass, rootRecordOffset: rootRecord, rootNodeOffset: rootNode, partListOffset: partList, anchorCandidatesApplied: applyAnchors, meshCount: meshes.length, totalVertices: meshes.reduce((s, m) => s + m.vertexCount, 0), totalTriangles: meshes.reduce((s, m) => s + m.triangleCount, 0), meshes: meshes.map(m => ({ name: m.name, ownerNodeOffset: m.owner, meshNodeOffset: m.meshNode, transformNodeOffset: m.transformNode, vertexDataOffset: m.vertexOffset, faceDataOffset: m.faceOffset, sourceFaceRecordCount: m.sourceCount, uniqueQuadCount: m.quadCount, triangles: m.triangleCount, vertices: m.vertexCount, bounds: [m.min, m.max], anchorVectorCandidate: m.anchor })), notes: ['XYZ coordinates are preserved as signed int16 values.', 'Four-index face records are deduplicated by unordered vertex set and triangulated as a fan.', 'Normals are generated from exported triangle winding.', 'Attachment transforms, UVs, original texture mapping, skin weights and animation are not included.', 'Wrapper translation candidates are metadata unless --apply-anchor-candidates is supplied.'] };
 fs.writeFileSync(output.replace(/\.glb$/i, '') + '.json', JSON.stringify(report, null, 2) + '\n');
 console.log(JSON.stringify(report, null, 2));
