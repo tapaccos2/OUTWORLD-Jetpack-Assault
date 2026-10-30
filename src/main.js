@@ -728,9 +728,9 @@ const hydranPalettes=[0x78934a,0x9b5b3c,0x526b45,0x77705b,0x465b59];
 // Three escalating assault waves advance down the street. Enemies spawn in the open
 // carriageway, not inside building footprints, and attack immediately when each wave begins.
 const enemySpawns=[
- {x:-8,z:-18,wave:1},{x:7,z:-21,wave:1},{x:-3,z:-27,wave:1},{x:4,z:-31,wave:1},{x:0,z:-34,wave:1},
- {x:-12,z:-30,wave:2},{x:11,z:-33,wave:2},{x:-6,z:-38,wave:2},{x:8,z:-40,wave:2},{x:-2,z:-44,wave:2},{x:3,z:-46,wave:2},
- {x:-13,z:-42,wave:3},{x:13,z:-44,wave:3},{x:-8,z:-48,wave:3},{x:8,z:-51,wave:3},{x:-3,z:-54,wave:3},{x:3,z:-55,wave:3},{x:0,z:-58,wave:3}
+ {x:-3.1,z:-18,wave:1},{x:3.1,z:-21,wave:1},{x:-1.8,z:-27,wave:1},{x:1.8,z:-31,wave:1},{x:0,z:-34,wave:1},
+ {x:-3.2,z:-30,wave:2},{x:3.2,z:-33,wave:2},{x:-2.4,z:-38,wave:2},{x:2.4,z:-40,wave:2},{x:-1.1,z:-44,wave:2},{x:1.1,z:-46,wave:2},
+ {x:-3.3,z:-42,wave:3},{x:3.3,z:-44,wave:3},{x:-2.6,z:-48,wave:3},{x:2.6,z:-51,wave:3},{x:-1.4,z:-54,wave:3},{x:1.4,z:-55,wave:3},{x:0,z:-58,wave:3}
 ];
 let currentWave=0,waveIntermission=0,waveTransitionPending=false,allWavesComplete=false;
 function activateWave(wave){
