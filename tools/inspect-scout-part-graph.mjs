@@ -410,7 +410,7 @@ function createReader(file) {
       x.sourceRole.endsWith('_paired_node') && x.matchedRecordFields.some(m =>
         m.targetRole === x.sourceRole.replace('_paired_node', '_mesh_node') && m.relativeFieldOffset === 24)).length,
     meshNodeToPreviousPairedPlus56Count: wrapperFieldLinks.filter(x => {
-      const part = Number(x.sourceRole.match(/submesh_(\\d+)_mesh_node/)?.[1] || 0);
+      const part = Number(x.sourceRole.split('_')[1] || 0);
       return part > 1 && x.matchedRecordFields.some(m =>
         m.targetRole === 'submesh_' + (part - 1) + '_paired_node' && m.relativeFieldOffset === 56);
     }).length,
