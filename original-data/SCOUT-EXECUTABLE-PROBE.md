@@ -433,3 +433,24 @@ Therefore the 16 type-16 links are established as **shared geometry-descriptor r
 This narrows the executable task: the runtime position and rotation setters at `0x422278` and `0x4222A8` must be connected to the **type-1 owner and/or paired type-2 records' other fields**, not assumed to consume the type-16 geometry-descriptor chain.
 
 **Status:** geometry-pool references are now explained; attachment hierarchy, parent-child transforms, matrix layout and visual assembly are still unresolved.
+
+
+## Follow-up report 12: setter signatures and the remaining source-pointer test
+
+The executable region immediately following the DPC parser contains two generic runtime-object setters:
+
+- `0x422278`: receives an entry pointer in EAX and a data pointer in EDX. It obtains the runtime object pointer from `[EAX+8]`, then copies three consecutive 32-bit values from `[EDX]`, `[EDX+4]`, and `[EDX+8]` into object offsets `+0xEC`, `+0xF0`, and `+0xF4`.
+- `0x4222A8`: same entry/object convention, but reads three consecutive 16-bit values from `[EDX]`, `[EDX+2]`, and `[EDX+4]`, stores them at `+0xE4`, `+0xE6`, and `+0xE8`, then calls `0x4C5DB0` to derive the matrix at `+0xB4`.
+
+The Scout DPC graph provides a strong *layout candidate* for the position setter: the paired type-2 record's three DWORDs at `+32/+36/+40` exactly equal the owning type-1 record's three DWORDs at `+8/+12/+16`, consistently in all seven variants. Either field range has the exact three-DWORD input shape expected by `0x422278`. This is not yet proof that either address is passed as EDX at runtime.
+
+The same data-shape claim does **not** directly apply to `0x4222A8`: its input is three packed WORDs with 2-byte spacing, whereas Scout type-2 candidate triples at `+8/+12/+16` have 4-byte spacing. A separate runtime caller at `0x437CC1` reads WORDs at `ESI+0`, `ESI+4`, and `ESI+8` and passes them to the same matrix builder; this stride-4 WORD input is a closer structural match to the Scout type-2 triple at `+8/+12/+16`. The caller's source pointer and its relation to Scout records still need to be traced.
+
+The new focused probe adds full disassembly windows for the two setters, the adjacent object-registration/record-link routines, the stride-4 rotation caller, and another position-plus-rotation struct caller:
+
+- `53-dpc-runtime-position-and-rotation-setters.txt`
+- `54-dpc-object-registration-and-linked-records.txt`
+- `55-strided-word-rotation-caller.txt`
+- `56-record-struct-transform-caller.txt`
+
+The existing probe 50 raw-byte pointer scan already includes the setter and caller addresses. Its output is needed to distinguish direct code calls from registered function pointers. Do not apply a transform in the exporter until the data pointer supplied to these setters has been tied to a Scout DPC field.
