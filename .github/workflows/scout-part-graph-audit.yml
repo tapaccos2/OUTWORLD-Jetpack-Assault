@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   scout-part-graph:
@@ -52,3 +52,23 @@ jobs:
             scout-part-graph-audit.log
           if-no-files-found: warn
           retention-days: 14
+
+      - name: Publish plain-text audit results to a dedicated branch
+        if: always()
+        shell: bash
+        run: |
+          set -e
+          branch="scout-audit-results-${GITHUB_RUN_ID}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch --orphan "$branch"
+          mkdir -p diagnostics/scout-part-graph
+          if [ -f scout-part-graph-audit.json ]; then
+            cp scout-part-graph-audit.json diagnostics/scout-part-graph/report.json
+          fi
+          if [ -f scout-part-graph-audit.log ]; then
+            cp scout-part-graph-audit.log diagnostics/scout-part-graph/run.log
+          fi
+          git add diagnostics/scout-part-graph
+          git commit -m "Publish Scout part graph audit results"
+          git push origin "HEAD:refs/heads/$branch"
