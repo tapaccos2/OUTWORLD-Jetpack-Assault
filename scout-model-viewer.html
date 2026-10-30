@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Outwars Scout GLB Inspector v1.0.11</title>
+<title>Outwars Scout GLB Inspector v1.0.12</title>
 <style>
 :root{color-scheme:dark;font-family:system-ui,Segoe UI,Arial,sans-serif;background:#10151d;color:#e8edf4}
 *{box-sizing:border-box}body{margin:0;min-height:100vh;display:flex;flex-direction:column}
@@ -31,15 +31,15 @@ footer{padding:8px 14px;background:#18212d;color:#9cabbc;font-size:12px;border-t
 </head>
 <body>
 <header>
- <div><h1>Outwars Scout — 3D Inspector <span class="version" id="version">v1.0.11</span></h1><div class="sub">Local GLB viewer · nothing is uploaded</div></div>
+ <div><h1>Outwars Scout — 3D Inspector <span class="version" id="version">v1.0.12</span></h1><div class="sub">Local GLB viewer · nothing is uploaded</div></div>
  <div class="controls">
   <label class="filelabel" for="file">Choose GLB file</label><input id="file" type="file" accept=".glb,model/gltf-binary">
   <button data-view="front" class="active">Front</button><button data-view="side">Side</button><button data-view="back">Back</button><button data-view="top">Top</button>
-  <button id="fit">Fit model</button><button id="wire">Wireframe</button><button id="partsToggle">Meshes</button><button id="galleryToggle">9-part overview</button><label class="filelabel" for="rotationOrder">Euler order</label><select id="rotationOrder"><option>XYZ</option><option>XZY</option><option>YXZ</option><option>YZX</option><option>ZXY</option><option>ZYX</option></select><button id="rotationTrial">Test rotation (4096/turn)</button><button id="resetPose">Reset pose</button>
+  <button id="fit">Fit model</button><button id="wire">Wireframe</button><button id="partsToggle">Meshes</button><button id="galleryToggle">9-part overview</button><label class="filelabel" for="rotationOrder">Euler order</label><select id="rotationOrder"><option>XYZ</option><option>XZY</option><option>YXZ</option><option>YZX</option><option>ZXY</option><option>ZYX</option></select><button id="rotationTrial">Test rotation (4096/turn)</button><button id="resetPose">Reset pose</button><button id="rotationGalleryToggle">Compare 6 rotation orders</button>
  </div>
 </header>
-<main><div id="view"></div><div id="status">Viewer v1.0.11\nChoose scout-mj-anchor-candidates.glb to inspect the model.</div><div id="parts" style="display:none;position:absolute;z-index:20;right:14px;top:14px;width:205px;max-height:58%;overflow:auto;background:#17212df5;color:#f2f6fb;border:2px solid #83a9d4;border-radius:8px;padding:10px;font:12px/1.5 ui-monospace,monospace;box-shadow:0 5px 24px #000a"><strong>Mesh visibility — 9 sections</strong><div class="actions"><button id="showAll">All</button><button id="hideAll">None</button></div><div id="partList"></div></div><div id="help">Drag: orbit · Wheel: zoom · Right-drag: pan</div></main>
-<footer>Viewer v1.0.11 · Diagnostic only. The model's candidate translations are exploratory; rotations and the original parent hierarchy have not yet been decoded.</footer>
+<main><div id="view"></div><div id="status">Viewer v1.0.12\nChoose scout-mj-anchor-candidates.glb to inspect the model.</div><div id="parts" style="display:none;position:absolute;z-index:20;right:14px;top:14px;width:205px;max-height:58%;overflow:auto;background:#17212df5;color:#f2f6fb;border:2px solid #83a9d4;border-radius:8px;padding:10px;font:12px/1.5 ui-monospace,monospace;box-shadow:0 5px 24px #000a"><strong>Mesh visibility — 9 sections</strong><div class="actions"><button id="showAll">All</button><button id="hideAll">None</button></div><div id="partList"></div></div><div id="help">Drag: orbit · Wheel: zoom · Right-drag: pan</div></main>
+<footer>Viewer v1.0.12 · Diagnostic only. The model's candidate translations are exploratory; rotations and the original parent hierarchy have not yet been decoded.</footer>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
@@ -57,14 +57,14 @@ const key=new THREE.DirectionalLight(0xffffff,2.3);key.position.set(-3,-5,8);sce
 const fill=new THREE.DirectionalLight(0x8fb9ee,1.0);fill.position.set(5,3,3);scene.add(fill);
 const grid=new THREE.GridHelper(5000,50,0x52647a,0x293747);grid.position.y=0;scene.add(grid);
 const axes=new THREE.AxesHelper(500);scene.add(axes);
-let model=null,modelBox=null,originalMaterials=[],wire=false,galleryGroup=null,galleryMode=false;
+let model=null,modelBox=null,originalMaterials=[],wire=false,galleryGroup=null,galleryMode=false,rotationGalleryGroup=null,rotationGalleryMode=false;
 function resize(){const w=host.clientWidth,h=host.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}
 new ResizeObserver(resize).observe(host);resize();
 function updateStatus(extra=''){
- if(!model){status.textContent='Viewer v1.0.11\nChoose a GLB file to inspect.';return}
+ if(!model){status.textContent='Viewer v1.0.12\nChoose a GLB file to inspect.';return}
  const size=modelBox.getSize(new THREE.Vector3()),center=modelBox.getCenter(new THREE.Vector3());
  status.textContent=[
-  'Viewer v1.0.11',
+  'Viewer v1.0.12',
   'Loaded: '+(model.userData.fileName||'GLB'),
   'Meshes: '+model.userData.meshCount,
   'Vertices: '+model.userData.vertices.toLocaleString(),
@@ -116,6 +116,10 @@ function compactReferencedGeometry(sourceGeometry){
  return {geometry:result,referencedVertexCount:indices.length,triangleCount:sourceGeometry.index?sourceGeometry.index.count/3:Math.floor(indices.length/3)};
 }
 function getVisibleBounds(){
+ if(rotationGalleryMode&&rotationGalleryGroup){
+  rotationGalleryGroup.updateMatrixWorld(true);
+  return new THREE.Box3().setFromObject(rotationGalleryGroup);
+ }
  if(galleryMode&&galleryGroup){
   galleryGroup.updateMatrixWorld(true);
   return new THREE.Box3().setFromObject(galleryGroup);
@@ -153,8 +157,8 @@ function frameVisible(){
  camera.far=Math.max(1000,distance*30);
  camera.updateProjectionMatrix();
  controls.update();
- const visibleCount=galleryMode?galleryGroup.children.filter(o=>o.isMesh&&o.visible).length:(()=>{let n=0;model.traverse(o=>{if(o.isMesh&&o.visible)n++});return n})();
- updateStatus(galleryMode?'Overview: all '+visibleCount+' raw mesh sections, individually centred.':('Showing '+visibleCount+' visible mesh section(s); camera framed to selection.'));
+ const visibleCount=rotationGalleryMode?6:(galleryMode?galleryGroup.children.filter(o=>o.isMesh&&o.visible).length:(()=>{let n=0;model.traverse(o=>{if(o.isMesh&&o.visible)n++});return n})());
+ updateStatus(rotationGalleryMode?'Comparison: six Euler orders, 4096 units/full turn.':(galleryMode?'Overview: all '+visibleCount+' raw mesh sections, individually centred.':('Showing '+visibleCount+' visible mesh section(s); camera framed to selection.')));
 }
 function fit(){
  if(!model)return;
@@ -164,7 +168,7 @@ function fit(){
 }
 function setView(which){
  if(!model)return;
- if(galleryMode&&which!=='front'){
+ if((galleryMode||rotationGalleryMode)&&which!=='front'){
   document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view==='front'));
   updateStatus('The 9-part overview is arranged for Front view. Switch back to Model to orbit each part.');
   return;
@@ -252,7 +256,79 @@ function buildGallery(){
  scene.add(galleryGroup);
  galleryGroup.visible=false;
 }
+function buildRotationGallery(){
+ if(rotationGalleryGroup)scene.remove(rotationGalleryGroup);
+ rotationGalleryGroup=new THREE.Group();
+ const orders=['XYZ','XZY','YXZ','YZX','ZXY','ZYX'];
+ const columns=3,cellX=620,cellY=520,targetSize=330;
+ const radiansPerUnit=(Math.PI*2)/4096;
+ orders.forEach((order,index)=>{
+  const clone=model.clone(true);
+  clone.traverse(o=>{
+   if(!o.isMesh)return;
+   const vector=o.userData.anchorVectorCandidate;
+   o.position.set(0,0,0);
+   o.rotation.order=order;
+   if(Array.isArray(vector)&&vector.length===3){
+    o.rotation.set(vector[0]*radiansPerUnit,vector[1]*radiansPerUnit,vector[2]*radiansPerUnit,order);
+   }else o.rotation.set(0,0,0,order);
+  });
+  clone.updateMatrixWorld(true);
+  let box=new THREE.Box3().setFromObject(clone);
+  const size=box.getSize(new THREE.Vector3());
+  const largest=Math.max(size.x,size.y,size.z,1);
+  const scale=targetSize/largest;
+  const centre=box.getCenter(new THREE.Vector3());
+  clone.scale.setScalar(scale);
+  const column=index%columns,row=Math.floor(index/columns);
+  const cellCentreX=(column-1)*cellX;
+  const cellCentreY=(0.5-row)*cellY;
+  clone.position.set(cellCentreX-centre.x*scale,cellCentreY-centre.y*scale,-centre.z*scale);
+  rotationGalleryGroup.add(clone);
+  const canvas=document.createElement('canvas');
+  canvas.width=512;canvas.height=112;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='rgba(16,24,36,0.94)';ctx.fillRect(4,4,504,104);
+  ctx.strokeStyle='#8fb4dd';ctx.lineWidth=5;ctx.strokeRect(4,4,504,104);
+  ctx.fillStyle='#f2f6fb';ctx.font='bold 48px system-ui,sans-serif';
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(order+' · 4096/turn',256,56,480);
+  const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
+  const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,transparent:true,depthTest:false}));
+  sprite.scale.set(230,50,1);
+  sprite.position.set(cellCentreX,cellCentreY+targetSize*.58,30);
+  rotationGalleryGroup.add(sprite);
+ });
+ scene.add(rotationGalleryGroup);
+ rotationGalleryGroup.visible=false;
+}
+function toggleRotationGallery(){
+ if(!model){status.textContent='Load scout-mj-raw.glb first.';return;}
+ if(galleryMode)toggleGallery();
+ if(!rotationGalleryGroup)buildRotationGallery();
+ rotationGalleryMode=!rotationGalleryMode;
+ const toggle=document.querySelector('#rotationGalleryToggle');
+ if(rotationGalleryMode){
+  model.visible=false;
+  if(galleryGroup)galleryGroup.visible=false;
+  rotationGalleryGroup.visible=true;
+  document.querySelector('#parts').style.display='none';
+  toggle.textContent='Back to model';
+  document.querySelector('#galleryToggle').textContent='9-part overview';
+  document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view==='front'));
+  frameVisible();setView('front');
+  updateStatus('Six 4096-turn Euler order trials. All use the same raw geometry and candidate triples.');
+ }else{
+  rotationGalleryGroup.visible=false;
+  model.visible=true;
+  document.querySelector('#parts').style.display='block';
+  toggle.textContent='Compare 6 rotation orders';
+  frameVisible();setView('front');
+  updateStatus('Back to raw model. Rotation gallery is only a hypothesis test.');
+ }
+}
 function toggleGallery(){
+ if(rotationGalleryMode)toggleRotationGallery();
  if(!model){
   status.textContent='Load the GLB first, then open the 9-part overview.';
   return;
@@ -325,7 +401,9 @@ function loadFile(file){
   URL.revokeObjectURL(url);
   if(model)scene.remove(model);
   if(galleryGroup){scene.remove(galleryGroup);galleryGroup=null;}
-  galleryMode=false;
+  if(rotationGalleryGroup){scene.remove(rotationGalleryGroup);rotationGalleryGroup=null;}
+  galleryMode=false;rotationGalleryMode=false;
+  document.querySelector('#rotationGalleryToggle').textContent='Compare 6 rotation orders';
   document.querySelector('#galleryToggle').textContent='9-part overview';
   model=gltf.scene;model.userData.fileName=file.name;
   document.querySelector('#rotationTrial').classList.remove('active');
@@ -354,6 +432,7 @@ document.querySelector('#fit').addEventListener('click',fit);
 document.querySelector('#galleryToggle').addEventListener('click',toggleGallery);
 document.querySelector('#rotationTrial').addEventListener('click',applyRotationTrial);
 document.querySelector('#resetPose').addEventListener('click',resetModelPose);
+document.querySelector('#rotationGalleryToggle').addEventListener('click',toggleRotationGallery);
 document.querySelector('#wire').addEventListener('click',()=>{
  wire=!wire;
  for(const {o} of originalMaterials){const mats=Array.isArray(o.material)?o.material:[o.material];mats.forEach(m=>m.wireframe=wire);}
