@@ -210,7 +210,16 @@ function createReader(file) {
       })(),
       bounds: { min, max, size: max.map((v, k) => v - min[k]) },
       centroid,
-      coordinateSamples: points.slice(0, 8)
+      coordinateSamples: points.slice(0, 8),
+      coordinateIndexSamples: indices.slice(0, 48).map(index => {
+        const p = vertexBase + index * 8;
+        return {
+          index,
+          xyz: [s16(p), s16(p + 2), s16(p + 4)],
+          trailingWord: u16(p + 6),
+          trailingHex: '0x' + u16(p + 6).toString(16).padStart(4, '0')
+        };
+      })
     };
   }
   function type2Detail(offset, label) {
