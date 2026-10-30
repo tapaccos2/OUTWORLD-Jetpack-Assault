@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "tools/inspect-scout-part-graph.mjs"
+      - "tools/scout-exe-probe.sh"
       - ".github/workflows/scout-part-graph-audit.yml"
       - "original-data/units.ff"
   workflow_dispatch:
