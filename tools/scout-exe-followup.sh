@@ -117,8 +117,8 @@ targets = (
     0x422654, 0x42269C, 0x422754, 0x4C5440, 0x4C5DB0,
 )
 with destination.open("w") as out:
-    out.write("RAW LITTLE-ENDIAN VA OCCURRENCES FOR TRANSFORM / DPC HANDLER ROUTINES\\n")
-    out.write("Executable: {}\\n".format(exe))
+    out.write("RAW LITTLE-ENDIAN VA OCCURRENCES FOR TRANSFORM / DPC HANDLER ROUTINES\n")
+    out.write("Executable: {}\n".format(exe))
     for va in targets:
         needle = struct.pack("<I", va)
         positions = []
@@ -129,10 +129,10 @@ with destination.open("w") as out:
                 break
             positions.append(pos)
             start = pos + 1
-        out.write("\\nVA 0x{:08X}: {} raw occurrence(s)\\n".format(va, len(positions)))
+        out.write("\nVA 0x{:08X}: {} raw occurrence(s)\n".format(va, len(positions)))
         for pos in positions:
             lo, hi = max(0, pos - 8), min(len(data), pos + 12)
-            out.write("  file+0x{:X}: {}\\n".format(pos, data[lo:hi].hex(" ")))
+            out.write("  file+0x{:X}: {}\n".format(pos, data[lo:hi].hex(" ")))
 PY
 "$OBJDUMP" -d -Mintel --start-address=0x420af0 --stop-address=0x420c50 "$EXE" \
   > "$OUT/42-record-handler-table-region-disassembly.txt" 2>&1
