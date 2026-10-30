@@ -422,3 +422,14 @@ The graph JSON exposed an easy-to-misread field: the old `wrapperValue` was the 
 The separate DWORD at wrapper offset `+4` is `0` for the mesh-node wrappers and `10000` for the paired-node wrappers. Its meaning is not established and it must not be treated as a transform angle or scale without runtime confirmation.
 
 The graph inspector now emits `wrapperHeader`, `wrapperHeaderDword`, and `wrapperParameterAt4` separately. This corrects the previous ambiguous `wrapperValue` label without changing any DPC data or exporter transforms. The established pointer targets remain unchanged: each wrapper's `+8` pointer resolves to a specific field at `+24` or `+56` in another type-2 node.
+
+
+## Follow-up report 11: separate geometry-pool links from runtime transforms
+
+The Scout graph audit now resolves the targets of all 16 type-16 wrapper links more precisely. The wrapper +8 pointers land on descriptor fields at type-2-relative +24 or +56, not on type-2 record headers. Each target field begins with `0x0000FF00`; the pointer four bytes later resolves to the shared coordinate-pool base at DPC file offset 40. The same chain is how the geometry exporter obtains the common vertex pool while retaining each mesh node's separate +28 coordinate-reference candidate.
+
+Therefore the 16 type-16 links are established as **shared geometry-descriptor references**. They are not evidence of the Scout's bone/attachment parent hierarchy. The old report's first-DWORD values (10,000 / 2,250,000) were record-header encodings and have been corrected: type-16 headers differ by flags/class (mesh-side: flags `0x27`, class 0; paired-side: flags `0x55`, class 34), while the separate DWORD at wrapper +4 is 0 or 10,000 respectively. The meaning of that +4 value remains unknown.
+
+This narrows the executable task: the runtime position and rotation setters at `0x422278` and `0x4222A8` must be connected to the **type-1 owner and/or paired type-2 records' other fields**, not assumed to consume the type-16 geometry-descriptor chain.
+
+**Status:** geometry-pool references are now explained; attachment hierarchy, parent-child transforms, matrix layout and visual assembly are still unresolved.
