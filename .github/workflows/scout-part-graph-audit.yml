@@ -8,6 +8,8 @@ on:
       - "tools/scout-exe-probe.sh"
       - "tools/scan-scout-exe-strings.py"
       - "tools/scout-exe-followup.sh"
+      - "tools/inspect-scout-exe-pointer-table.py"
+      - "tools/scan-scout-exe-callers.py"
       - ".github/workflows/scout-part-graph-audit.yml"
       - "original-data/units.ff"
   workflow_dispatch:
@@ -36,6 +38,9 @@ jobs:
 
       - name: Syntax-check the executable follow-up probe
         run: bash -n tools/scout-exe-followup.sh
+
+      - name: Syntax-check executable table and caller scanners
+        run: python3 -m py_compile tools/inspect-scout-exe-pointer-table.py tools/scan-scout-exe-callers.py
 
       - name: Audit Scout DPC hierarchy
         id: audit
