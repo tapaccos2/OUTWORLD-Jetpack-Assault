@@ -101,6 +101,39 @@ python3 "$SCRIPT_DIR/scan-scout-exe-strings.py" \
   > "$OUT/48-fixed-point-trig-helper.txt" 2>&1
 "$OBJDUMP" -d -Mintel --start-address=0x490360 --stop-address=0x490430 "$EXE" \
   > "$OUT/49-record-callback-validation-helper.txt" 2>&1
+
+# Find raw PE data/code references to transform setters and their registration targets.
+python3 - "$EXE" "$OUT/50-raw-transform-handler-pointer-xrefs.txt" <<'PY'
+import struct
+import sys
+from pathlib import Path
+
+exe, destination = map(Path, sys.argv[1:3])
+data = exe.read_bytes()
+targets = (
+    0x420B00, 0x420F86, 0x42107B, 0x42140D, 0x42169C, 0x42183C,
+    0x421BAA, 0x4220C0, 0x422170, 0x422278, 0x4222A8, 0x4222F0,
+    0x422300, 0x422310, 0x422332, 0x42237C, 0x42244C, 0x422554,
+    0x422654, 0x42269C, 0x422754, 0x4C5440, 0x4C5DB0,
+)
+with destination.open("w") as out:
+    out.write("RAW LITTLE-ENDIAN VA OCCURRENCES FOR TRANSFORM / DPC HANDLER ROUTINES\\n")
+    out.write("Executable: {}\\n".format(exe))
+    for va in targets:
+        needle = struct.pack("<I", va)
+        positions = []
+        start = 0
+        while True:
+            pos = data.find(needle, start)
+            if pos < 0:
+                break
+            positions.append(pos)
+            start = pos + 1
+        out.write("\\nVA 0x{:08X}: {} raw occurrence(s)\\n".format(va, len(positions)))
+        for pos in positions:
+            lo, hi = max(0, pos - 8), min(len(data), pos + 12)
+            out.write("  file+0x{:X}: {}\\n".format(pos, data[lo:hi].hex(" ")))
+PY
 "$OBJDUMP" -d -Mintel --start-address=0x420af0 --stop-address=0x420c50 "$EXE" \
   > "$OUT/42-record-handler-table-region-disassembly.txt" 2>&1
 "$OBJDUMP" -s -j BEGTEXT --start-address=0x420b00 --stop-address=0x420b60 "$EXE" \
@@ -283,6 +316,9 @@ python3 "$SCRIPT_DIR/scan-scout-exe-callers.py" \
   echo
   echo "========== RECORD-CALLBACK VALIDATION HELPER =========="
   cat "$OUT/49-record-callback-validation-helper.txt"
+  echo
+  echo "========== RAW POINTER REFERENCES TO TRANSFORM / DPC HANDLERS =========="
+  cat "$OUT/50-raw-transform-handler-pointer-xrefs.txt"
   echo
   echo "========== FILE SIZE / READ HELPER =========="
   cat "$OUT/36-file-size-and-read-helper.txt"
