@@ -3,12 +3,28 @@
 # Usage: bash tools/scout-exe-followup.sh [path/to/outwars.exe] [probe-dir] [output-dir]
 set -euo pipefail
 
-EXE="\${1:-$HOME/Outwars-extracted/outwars.exe}"
-PROBE="\${2:-/tmp/outwars-scout-exe-probe}"
-OUT="\${3:-/tmp/outwars-scout-exe-followup}"
+EXE="${1:-}"
+PROBE="${2:-/tmp/outwars-scout-exe-probe}"
+OUT="${3:-/tmp/outwars-scout-exe-followup}"
 
-if [[ ! -f "$EXE" ]]; then
-  echo "Executable not found: $EXE" >&2
+# Match the executable search used by the original probe.
+if [[ -z "$EXE" ]]; then
+  for candidate in \
+    "$PWD/outwars.exe" \
+    "$PWD/../Outwars-extracted/outwars.exe" \
+    "$HOME/Outwars-extracted/outwars.exe" \
+    "$HOME/Documents/Outwars-extracted/outwars.exe" \
+    "$HOME/Downloads/outwars.exe"; do
+    if [[ -f "$candidate" ]]; then EXE="$candidate"; break; fi
+  done
+fi
+
+if [[ -z "$EXE" || ! -f "$EXE" ]]; then
+  echo "Could not find outwars.exe automatically." >&2
+  echo "Pass the path explicitly:" >&2
+  echo '  bash tools/scout-exe-followup.sh "/home/your-user/Outwars-extracted/outwars.exe"' >&2
+  echo 'Or locate it with:' >&2
+  echo '  find "$HOME" -type f -iname outwars.exe -print -quit' >&2
   exit 2
 fi
 if [[ ! -f "$PROBE/04-full-code-disassembly.txt" ]]; then
