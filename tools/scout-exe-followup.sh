@@ -77,7 +77,7 @@ python3 "$SCRIPT_DIR/inspect-scout-exe-va-strings.py" "$EXE" \
   > "$OUT/22-formatted-resource-strings.txt"
 
 python3 "$SCRIPT_DIR/inspect-scout-exe-pointer-table.py" "$EXE" \
-  --start 0x529d60 --count 40 --label "DPC variant/resource pointer table" \
+  --start 0x529d60 --count 30 --label "DPC variant/resource pointer table" \
   > "$OUT/14-dpc-pointer-table.txt"
 
 python3 "$SCRIPT_DIR/scan-scout-exe-callers.py" \
