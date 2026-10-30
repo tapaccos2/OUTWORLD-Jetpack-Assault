@@ -112,7 +112,7 @@ The next uploaded report decoded all 40 DWORD positions around VA `0x529D60`. Th
 | 3 | `assault_ma / assault_fa` | `assault_mj / assault_fj` | `assault_md / assault_fd` |
 | 4 | `dread_ma / dread_fa` | `dread_mj / dread_fj` | `dread_md / dread_fd` |
 
-The remaining ten DWORD values after the third bank are not part of this table: they decode as raw bytes from a nearby string, followed by zeroes. The table itself therefore has 30 meaningful entries, not 40. The original 40-entry scan simply ran beyond its end.
+The remaining ten DWORD positions from the original 40-entry inspection are not part of the table: they do not map to valid strings and are adjacent data. The table itself therefore has 30 meaningful entries, not 40. The follow-up probe now decodes exactly 30 entries.
 
 The filename-formatting code combines two small indices as `2 * classIndex + sexIndex`, then chooses one of the three banks. Its branches select the second bank for selector value 0, the third bank for selector value 1, and the first bank for other values. This confirms the table's paired ordering and a three-way bank selector. The semantics of the selector values and the suffixes `a`, `j`, and `d` remain unconfirmed; do not name them as armour, jetpack, difficulty, or other guessed meanings.
 
