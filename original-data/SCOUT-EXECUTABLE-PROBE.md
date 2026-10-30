@@ -280,3 +280,52 @@ bash tools/scout-exe-followup.sh
 Then upload the regenerated `/tmp/outwars-scout-exe-followup/REPORT.txt`.
 
 **Current best lead:** follow `0x422170` and its callees. It is invoked while the loader iterates the DPC-associated resource records, so it may expose the runtime record interpretation needed to connect the extracted DPC graph to part placement. That is a hypothesis to test, not a confirmed transform routine.
+
+## Follow-up report 6: DPC pointer relocation and typed-record handlers
+
+The latest uploaded report contains the first disassembly of the routine reached from the resource-record loops at `0x48CA20` and `0x48CBE3`.
+
+### What 0x422170 actually does
+
+The routine at `0x422170` is a DPC-format record parser, not a direct Scout attachment-transform calculator.
+
+Its visible operations are:
+
+- It checks the first DWORD against `0x4D504344` (little-endian bytes `44 43 50 4D`, i.e. `DCPM`) and checks the next DWORD against `0x43`.
+- It reads header offsets and calculates the location of a DWORD pointer table.
+- It walks that table, converts file-relative offsets into in-memory addresses based on the resource base, and writes the relocated addresses back into the buffer.
+- For records whose 16-bit type field at `+2` is in the range 1–9, it calls `0x4DD470` and then `0x4DFCE4`, passing a handler-table base at `0x420B00`.
+- Other record-type values take an allocation/initialization path involving `0x4CC988`, `0x4CC83C`, `0x435970`, and `0x4CC9D0`.
+
+This establishes that the loader is resolving a pointer-based typed-record format in memory. It does not establish that the record types correspond to Scout mesh nodes or that the parser itself computes attachment transforms.
+
+### Vector-like object setters found beside the parser
+
+The same disassembly window exposes a cluster of adjacent routines that write three-component values into fields of allocated objects:
+
+- `0x422278` copies three DWORDs into object fields `+0xEC`, `+0xF0`, and `+0xF4`.
+- `0x4222A8` copies three WORDs into `+0xE4`, `+0xE6`, and `+0xE8`, then calls `0x4C5DB0` with those fields and another object vector at `+0xB4`.
+- `0x422654` and `0x42269C` perform related three-component field writes through a global record table.
+- `0x422754` stores three DWORD values and three WORD values into global arrays, then allocates or updates an associated record.
+
+These are credible candidates for typed object-property handlers because they are in the parser's local code region and manipulate three-component fields. The available disassembly does not yet map the `0x420B00` dispatch-table entries to these routines, nor prove that the fields are positions, rotations, or attachment transforms.
+
+### Next targeted probe
+
+The focused follow-up script now adds disassembly for:
+
+- `0x4DF84C`, `0x4DD470`, and `0x4DFCE4`;
+- the handler-table region around `0x420B00`, both as disassembly and raw bytes;
+- `0x4C5DB0`, called by the three-WORD component setter;
+- caller scans for the adjacent setter/record routines and their allocation helpers.
+
+This reuses the existing full disassembly. After pulling the latest script, run:
+
+```bash
+git pull
+bash tools/scout-exe-followup.sh
+```
+
+Then upload the regenerated `/tmp/outwars-scout-exe-followup/REPORT.txt`.
+
+**Current status:** we have moved past the generic resource-loader boundary and identified the typed-record dispatcher plus a cluster of vector-like property handlers. The dispatch mapping is now the next concrete task. The Scout part assembly and actual attachment transforms remain unresolved.
