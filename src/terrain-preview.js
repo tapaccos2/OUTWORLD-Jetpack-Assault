@@ -408,7 +408,6 @@ function makeMesh() {
   const heightPalette = new THREE.Color();
   const vertexLookup = new Map();
   const normalSums = [];
-  const surfaceVertexIndices = [];
 
   // Adjacent RPC ramps often share exact XYZ corners. Reuse those vertices so
   // the rendered terrain is one connected mesh wherever the source data joins.
@@ -439,7 +438,6 @@ function makeMesh() {
       normalSums[vertexIndex][2] += surface.normal[2];
       vertexIndices.push(vertexIndex);
     }
-    surfaceVertexIndices.push(vertexIndices);
     const [a, b, c, d] = vertexIndices;
     const reverse = surface.normal[2] < 0;
     if (diagonal === '1-2') {
@@ -514,7 +512,7 @@ function makeMesh() {
   const centerStats = getSharedEdgeStats(currentData, 'center');
   setStatus(
     `MAP ${currentData.mapName.toUpperCase()} | ${currentData.groups.length} GPC groups | ${currentData.surfaces.length} RPC surfaces\n` +
-    `Anchor: ${anchor} | Diagonal: ${diagonal} | Mesh: ${currentData.surfaces.length * 4} vertices / ${currentData.surfaces.length * 2} triangles\n` +
+    `Anchor: ${anchor} | Diagonal: ${diagonal} | Mesh: ${positions.length / 3} welded vertices / ${currentData.surfaces.length * 2} triangles\n` +
     `Bounds: ${Math.round(spanX)} × ${Math.round(spanY)} × ${Math.round(spanZ)} raw units | display scale ${currentScale.toFixed(5)}\n` +
     `Shared edges (corner): ${cornerStats.shared}, exact height matches: ${cornerStats.exact} | (centre): ${centerStats.shared}, exact: ${centerStats.exact}\n` +
 `Field checks: dimensions + direction + normal + corner heights agree across the resource inventory; visual match to original terrain still pending.`
