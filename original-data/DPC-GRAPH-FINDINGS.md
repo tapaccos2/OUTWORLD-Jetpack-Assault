@@ -261,3 +261,9 @@ This is a verified pointer/layout pattern, not yet proof of the semantic transfo
 A diagnostic applied the owner triples as Euler angles with 4096 units per full turn in all six Euler orders. None produced a recognisable Scout silhouette. Directly applying the same triples as translations also made the combined model spread farther apart. Both simple interpretations are rejected as assembly solutions.
 
 Next target: locate the executable routine that consumes type-16 wrappers and these embedded type-0 descriptors, and establish the transform/matrix access pattern before changing the GLB exporter.
+
+## Alternate local vertex-base test (2026-10-30)
+
+The type-2 +28 target was tested as a per-mesh vertex-data base across all seven Scout DPC variants. All eight mesh references in every variant are 8-byte aligned; all effective referenced vertex indices stay in file bounds; and all eight mesh face streams still decode to 13 unique quads / 26 triangles. The candidate starts are vertex indices 7, 84, and 88 in the shared pool. Submeshes 3–8 share the start at index 88 but use distinct face-index ranges, with the maximum effective index reaching 483.
+
+This passes structural bounds checks and is therefore a real candidate, not a random offset. However, the resulting local-base GLB remains a collection of overlapping plates, so the alternative does not by itself explain the final assembly. The exporter default remains unchanged until the runtime consumer confirms which coordinate-base interpretation is used.
