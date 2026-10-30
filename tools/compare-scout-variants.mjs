@@ -67,43 +67,27 @@ function wrapperConstants(wrapper) {
     vectorAt20: wrapperVector(wrapper)
   };
 }
-function dpcRecordHeader(bytes, offset) {
-  if (!Number.isInteger(offset) || offset < 0 || offset + 4 > bytes.length) return null;
-  return {
-    type: bytes.readUInt8(offset),
-    flags: bytes.readUInt8(offset + 1),
-    classId: bytes.readUInt16LE(offset + 2)
-  };
-}
-function inspectDescriptorTarget(bytes, relocationBase, offset) {
-  if (!Number.isInteger(offset) || offset < 0 || offset + 28 > bytes.length) return null;
-  const header = dpcRecordHeader(bytes, offset);
-  const fields = [4, 8, 12, 16, 20, 24].map(fieldOffset => {
-    const raw = bytes.readUInt32LE(offset + fieldOffset);
-    const targetOffset = raw >= relocationBase && raw - relocationBase + 4 <= bytes.length
-      ? raw - relocationBase : null;
-    return {
-      fieldOffset,
-      rawHex: '0x' + raw.toString(16).padStart(8, '0'),
-      targetOffset,
-      targetHeader: targetOffset === null ? null : dpcRecordHeader(bytes, targetOffset)
-    };
-  });
+function inspectReferencedVertex(bytes, offset) {
+  if (!Number.isInteger(offset) || offset < 0 || offset + 8 > bytes.length) return null;
   return {
     offset,
-    header,
-    rawFirst32Hex: bytes.subarray(offset, offset + 32).toString('hex').match(/.{1,2}/g)?.join(' ') ?? '',
-    fields
+    xyz: [
+      bytes.readInt16LE(offset),
+      bytes.readInt16LE(offset + 2),
+      bytes.readInt16LE(offset + 4)
+    ],
+    trailingWord: bytes.readUInt16LE(offset + 6),
+    rawHex: bytes.subarray(offset, offset + 8).toString('hex').match(/.{1,2}/g)?.join(' ') ?? ''
   };
 }
-function compactPart(entry, bytes, relocationBase) {
+function compactPart(entry, bytes) {
   const d = entry.detail;
   const mesh = d?.child24Detail;
   const paired = d?.child28Detail;
   const meshVector = mesh?.fields?.signedVectorAt8Candidate ?? null;
   const pairedVector = paired?.fields?.signedVectorAt8Candidate ?? null;
   const meshReferenceOffset = mesh?.fields?.plus28?.targetOffset ?? null;
-  const meshReferenceDescriptor = inspectDescriptorTarget(bytes, relocationBase, meshReferenceOffset);
+  const meshReferenceVertex = inspectReferencedVertex(bytes, meshReferenceOffset);
   return {
     partListIndex: entry.index,
     ownerOffset: d?.offset ?? null,
@@ -111,8 +95,7 @@ function compactPart(entry, bytes, relocationBase) {
     meshNodeOffset: mesh?.offset ?? null,
     meshType2VectorAt8Candidate: meshVector,
     pairedType2VectorAt8Candidate: pairedVector,
-    meshNodePlus28TargetDescriptor: meshReferenceDescriptor,
-    meshNodePlus28DescriptorPointerTargets: meshReferenceDescriptor?.fields.map(field => field.targetOffset) ?? null,
+    meshNodePlus28ReferencedVertex: meshReferenceVertex,
     meshType2VectorAt32Candidate: mesh?.fields?.signedVectorAt32Candidate ?? null,
     meshType2VectorAt56Candidate: mesh?.fields ? [
       mesh.fields.plus56?.s32 ?? null,
@@ -187,7 +170,7 @@ try {
         triangles: report.graph.rootGeometry.triangles,
         bounds: report.graph.rootGeometry.bounds
       } : null,
-      parts: report.graph.entries.slice(0, 8).map(entry => compactPart(entry, bytes, bytes.readUInt32LE(12)))
+      parts: report.graph.entries.slice(0, 8).map(entry => compactPart(entry, bytes))
     };
   });
 
@@ -195,8 +178,7 @@ try {
     v.parts[i] ? [{
       variant: v.name,
       meshVectorAt8: v.parts[i].meshType2VectorAt8Candidate,
-      meshNodePlus28TargetDescriptor: v.parts[i].meshNodePlus28TargetDescriptor,
-      meshNodePlus28DescriptorPointerTargets: v.parts[i].meshNodePlus28DescriptorPointerTargets,
+      meshNodePlus28ReferencedVertex: v.parts[i].meshNodePlus28ReferencedVertex,
       meshVectorAt56: v.parts[i].meshType2VectorAt56Candidate,
       meshWrapperFields: v.parts[i].meshType16WrapperFields,
       pairedVectorAt8: v.parts[i].pairedType2VectorAt8Candidate,
@@ -262,10 +244,9 @@ try {
     commonFieldPatternsByPart: partsByIndex.map((rows, i) => ({
       part: i + 1,
       meshType2VectorAt8Counts: stableCounts(rows.map(r => r.meshVectorAt8)),
-      meshPlus28DescriptorPointerTargetCounts: stableCounts(rows.map(r => r.meshNodePlus28DescriptorPointerTargets)),
-      meshPlus28DescriptorHeaderCounts: stableCounts(rows.map(r => {
-        const h = r.meshNodePlus28TargetDescriptor?.header;
-        return h ? [h.type, h.flags, h.classId] : null;
+      meshPlus28ReferencedVertexCounts: stableCounts(rows.map(r => {
+        const v = r.meshNodePlus28ReferencedVertex;
+        return v ? [...v.xyz, v.trailingWord] : null;
       })),
       pairedType2VectorAt8Counts: stableCounts(rows.map(r => r.pairedVectorAt8)),
       pairedType2VectorAt32Counts: stableCounts(rows.map(r => r.pairedVectorAt32)),
@@ -274,7 +255,7 @@ try {
   };
   const output = {
     status: 'COMPLETED',
-    purpose: 'Cross-variant structural comparison; no unverified field is assigned a semantic name.',
+    purpose: 'Cross-variant DPC record comparison; meshNode+28 targets are inspected as raw 8-byte XYZ vertex entries, not presumed descriptors or pivots.',
     inputDirectory: inputDir,
     summary,
     variants,
