@@ -61,8 +61,18 @@ python3 "$SCRIPT_DIR/scan-scout-exe-strings.py" \
 # Focused follow-on: trace the filename collection routine and the functions it calls.
 "$OBJDUMP" -d -Mintel --start-address=0x48ced4 --stop-address=0x48d2d8 "$EXE" \
   > "$OUT/16-dpc-name-collection-routine.txt" 2>&1
-"$OBJDUMP" -d -Mintel --start-address=0x48d380 --stop-address=0x48d600 "$EXE" \
+"$OBJDUMP" -d -Mintel --start-address=0x48d380 --stop-address=0x48d810 "$EXE" \
   > "$OUT/17-dpc-resource-open-follow-on.txt" 2>&1
+"$OBJDUMP" -d -Mintel --start-address=0x4ce100 --stop-address=0x4ce260 "$EXE" \
+  > "$OUT/23-low-level-file-reader-4ce158.txt" 2>&1
+"$OBJDUMP" -d -Mintel --start-address=0x4cd6a0 --stop-address=0x4cd7c0 "$EXE" \
+  > "$OUT/24-io-redirect-helpers.txt" 2>&1
+"$OBJDUMP" -d -Mintel --start-address=0x4dd420 --stop-address=0x4dd440 "$EXE" \
+  > "$OUT/25-global-resource-pointer-setter.txt" 2>&1
+
+python3 "$SCRIPT_DIR/inspect-scout-exe-imports.py" "$EXE" \
+  --addresses 0x1410630,0x14106b0,0x14106b8 \
+  > "$OUT/26-import-address-resolution.txt"
 "$OBJDUMP" -d -Mintel --start-address=0x4dd380 --stop-address=0x4dd4c0 "$EXE" \
   > "$OUT/18-callee-4dd420.txt" 2>&1
 "$OBJDUMP" -d -Mintel --start-address=0x4ce620 --stop-address=0x4ce780 "$EXE" \
@@ -82,7 +92,7 @@ python3 "$SCRIPT_DIR/inspect-scout-exe-pointer-table.py" "$EXE" \
 
 python3 "$SCRIPT_DIR/scan-scout-exe-callers.py" \
   "$PROBE/04-full-code-disassembly.txt" \
-  --targets "0x486720,0x48ce71,0x48ce89,0x48cea1,0x48ced4,0x48cfb0,0x4ee38a,0x500ae9,0x4dd420,0x4ce6c8,0x455578,0x48d3aa" \
+  --targets "0x486720,0x48ce71,0x48ce89,0x48cea1,0x48ced4,0x48cfb0,0x4ee38a,0x500ae9,0x4dd420,0x4ce6c8,0x4ce158,0x4cd6cc,0x4cd760,0x455578,0x48d3aa" \
   --context 16 \
   > "$OUT/15-loader-callers.txt"
 
@@ -130,6 +140,18 @@ python3 "$SCRIPT_DIR/scan-scout-exe-callers.py" \
   echo
   echo "========== FORMATTED RESOURCE STRING ADDRESSES =========="
   cat "$OUT/22-formatted-resource-strings.txt"
+  echo
+  echo "========== LOW-LEVEL FILE READER: 0x4CE158 =========="
+  cat "$OUT/23-low-level-file-reader-4ce158.txt"
+  echo
+  echo "========== IO REDIRECT HELPERS =========="
+  cat "$OUT/24-io-redirect-helpers.txt"
+  echo
+  echo "========== GLOBAL RESOURCE POINTER SETTER =========="
+  cat "$OUT/25-global-resource-pointer-setter.txt"
+  echo
+  echo "========== IMPORT ADDRESS TABLE RESOLUTION =========="
+  cat "$OUT/26-import-address-resolution.txt"
 } > "$OUT/REPORT.txt"
 
 echo "Created: $OUT/REPORT.txt"
