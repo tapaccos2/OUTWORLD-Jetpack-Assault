@@ -25,8 +25,24 @@ function fail(message) {
   console.error(JSON.stringify({ status: 'FAILED', error: message }, null, 2));
   process.exit(1);
 }
+function extractUnitsArchive(archive) {
+  const extractor = path.join(repoRoot, 'tools', 'extract-ff-resources.mjs');
+  if (!fs.existsSync(extractor)) throw new Error('FF extractor not found: ' + extractor);
+  const destination = path.join(os.tmpdir(), 'outwars-scout-graph-' + process.pid);
+  const result = spawnSync(process.execPath, [extractor, archive, '--out', destination], {
+    cwd: repoRoot, encoding: 'utf8', maxBuffer: 8 * 1024 * 1024
+  });
+  if (result.status !== 0) {
+    throw new Error('FF archive extraction did not validate. ' + (result.stderr || result.stdout || 'No extractor output'));
+  }
+  const extracted = path.join(destination, 'units', 'scout_mj.dpc');
+  return fs.existsSync(extracted) ? extracted : null;
+}
 function findInput() {
-  if (requestedInput && fs.existsSync(requestedInput)) return requestedInput;
+  if (requestedInput && fs.existsSync(requestedInput)) {
+    if (path.extname(requestedInput).toLowerCase() === '.ff') return extractUnitsArchive(requestedInput);
+    return requestedInput;
+  }
   if (requestedInput) return null;
   const candidates = [
     'original-data/units/scout_mj.dpc',
@@ -53,18 +69,7 @@ function findInput() {
     }
   }
   const archive = path.join(repoRoot, 'original-data', 'units.ff');
-  const extractor = path.join(repoRoot, 'tools', 'extract-ff-resources.mjs');
-  if (fs.existsSync(archive) && fs.existsSync(extractor)) {
-    const destination = path.join(os.tmpdir(), 'outwars-scout-graph-' + process.pid);
-    const result = spawnSync(process.execPath, [extractor, archive, '--out', destination], {
-      cwd: repoRoot, encoding: 'utf8', maxBuffer: 8 * 1024 * 1024
-    });
-    if (result.status === 0) {
-      const extracted = path.join(destination, 'units', 'scout_mj.dpc');
-      if (fs.existsSync(extracted)) return extracted;
-    }
-    throw new Error('units.ff extraction did not validate. ' + (result.stderr || result.stdout || 'No extractor output'));
-  }
+  if (fs.existsSync(archive)) return extractUnitsArchive(archive);
   return null;
 }
 function hex(buffer, start, length) {
