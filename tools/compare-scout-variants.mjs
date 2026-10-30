@@ -86,12 +86,21 @@ function compactPart(entry, bytes) {
   const paired = d?.child28Detail;
   const meshVector = mesh?.fields?.signedVectorAt8Candidate ?? null;
   const pairedVector = paired?.fields?.signedVectorAt8Candidate ?? null;
+  const ownerVector = d?.ownerVectorCandidate ?? null;
   const meshReferenceOffset = mesh?.fields?.plus28?.targetOffset ?? null;
   const meshReferenceVertex = inspectReferencedVertex(bytes, meshReferenceOffset);
+  const meshVector56 = mesh?.fields ? [
+    mesh.fields.plus56?.s32 ?? null,
+    signedFromHex(mesh.fields.plus60?.rawHex),
+    mesh.rawFirst160?.words32?.find(word => word.offset === 64)?.s32 ?? null
+  ] : null;
+  const meshVector56MinusOwner = Array.isArray(meshVector56) && Array.isArray(ownerVector)
+    ? meshVector56.map((value, k) => value === null ? null : value - ownerVector[k])
+    : null;
   return {
     partListIndex: entry.index,
     ownerOffset: d?.offset ?? null,
-    ownerVectorCandidate: d?.ownerVectorCandidate ?? null,
+    ownerVectorCandidate: ownerVector,
     meshNodeOffset: mesh?.offset ?? null,
     meshType2VectorAt8Candidate: meshVector,
     pairedType2VectorAt8Candidate: pairedVector,
@@ -99,10 +108,8 @@ function compactPart(entry, bytes) {
     meshType2RawWords32Through156: mesh?.rawFirst160?.words32 ?? [],
     meshType2ExtendedPointerCandidates: mesh?.extendedPointerCandidates ?? [],
     meshType2VectorAt32Candidate: mesh?.fields?.signedVectorAt32Candidate ?? null,
-    meshType2VectorAt56Candidate: mesh?.fields ? [
-      mesh.fields.plus56?.s32 ?? null,
-      signedFromHex(mesh.fields.plus60?.rawHex)
-    ] : null,
+    meshType2VectorAt56Candidate: meshVector56,
+    meshType2VectorAt56MinusOwnerCandidate: meshVector56MinusOwner,
     meshType16WrapperFields: wrapperConstants(mesh?.wrapper),
     meshNodePlus28ReferenceOffset: mesh?.fields?.plus28?.targetOffset ?? null,
     faceDataOffsetCandidate: mesh?.fields?.plus36?.targetOffset ?? null,
@@ -188,6 +195,7 @@ try {
       pairedType2RawWords32Through156: v.parts[i].pairedType2RawWords32Through156,
       pairedType2ExtendedPointerCandidates: v.parts[i].pairedType2ExtendedPointerCandidates,
       meshVectorAt56: v.parts[i].meshType2VectorAt56Candidate,
+      meshVector56MinusOwner: v.parts[i].meshType2VectorAt56MinusOwnerCandidate,
       meshWrapperFields: v.parts[i].meshType16WrapperFields,
       pairedVectorAt8: v.parts[i].pairedType2VectorAt8Candidate,
       pairedWrapperFields: v.parts[i].pairedType16WrapperFields,
@@ -208,9 +216,11 @@ try {
     rootPartClassPairs: [...new Set(variants.map(v => v.rootClass + '/' + v.partClass))],
     allVariantsHaveEightPartOwnerSlots: variants.every(v => v.parts.length === 8),
     allEightOwnerVectorsMatchPaired32: variants.every(v => v.parts.every(p => p.ownerVectorMatchesPaired32)),
-    allMeshPlus56Plus60MatchPairedPlus8Plus12: variants.every(v => v.parts.every(p =>
+    allMeshPlus56XYMatchPairedPlus8XY: variants.every(v => v.parts.every(p =>
       p.meshType2VectorAt56Candidate?.[0] === p.pairedType2VectorAt8Candidate?.[0] &&
       p.meshType2VectorAt56Candidate?.[1] === p.pairedType2VectorAt8Candidate?.[1])),
+    allMeshPlus56ZValuesArePresent: variants.every(v => v.parts.every(p =>
+      Number.isInteger(p.meshType2VectorAt56Candidate?.[2]))),
     allMeshWrapperVectorsMatchMeshType2Plus8: variants.every(v => v.parts.every(p =>
       Array.isArray(p.meshType16WrapperFields?.vectorAt20) &&
       p.meshType16WrapperFields.vectorAt20.every((value, k) => value === p.meshType2VectorAt8Candidate?.[k]))),
@@ -252,6 +262,8 @@ try {
     commonFieldPatternsByPart: partsByIndex.map((rows, i) => ({
       part: i + 1,
       meshType2VectorAt8Counts: stableCounts(rows.map(r => r.meshVectorAt8)),
+      meshType2VectorAt56Counts: stableCounts(rows.map(r => r.meshVectorAt56)),
+      meshType2VectorAt56MinusOwnerCounts: stableCounts(rows.map(r => r.meshVector56MinusOwner)),
       meshPlus28ReferencedVertexCounts: stableCounts(rows.map(r => {
         const v = r.meshNodePlus28ReferencedVertex;
         return v ? [...v.xyz, v.trailingWord] : null;
