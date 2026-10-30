@@ -46,21 +46,27 @@ A further caution follows from the exporter: all nine mesh decodes read position
 
 The type-2 values at +8/+12/+16 and the remaining pointer/flag fields are still unlabelled. Do not call them Euler angles or a rotation until an executable read site or a cross-variant pattern establishes that.
 
-## New hierarchy finding: alternating type-16 wrapper links (2026-10-30)
+## Corrected interpretation: alternating type-16 geometry-descriptor links (2026-10-31)
 
-The graph audit now follows the type-16 wrapper +8 pointer to its exact target field. For the eight submeshes it finds this complete chain:
+The graph audit follows each type-16 wrapper's +8 pointer to its exact target field. Across the eight submeshes, the 16 links follow this pattern:
 
-1. submesh_1 mesh node → root mesh type-2 +24;
-2. submesh_1 paired node → submesh_1 mesh type-2 +24;
-3. submesh_2 mesh node → submesh_1 paired type-2 +56;
-4. submesh_2 paired node → submesh_2 mesh type-2 +24;
-5. this pattern repeats through submesh_8.
+1. submesh_1 mesh node → root mesh +24;
+2. submesh_1 paired node → submesh_1 mesh node +24;
+3. submesh_2 mesh node → submesh_1 paired node +56;
+4. submesh_2 paired node → submesh_2 mesh node +24;
+5. the pattern repeats through submesh_8.
 
-Counts: 1 root-to-first-mesh link, 8 paired-node-to-own-mesh links, 7 mesh-to-previous-paired links: **16/16 links accounted for**. The mesh-side type-16 wrappers have first dword 10,000; paired-node wrappers have first dword 2,250,000.
+Counts: one root-to-first-mesh link, eight paired-node-to-own-mesh links, and seven mesh-to-previous-paired links: **16/16 links accounted for**.
 
-The pointer targets are embedded type-0/class-0 descriptor records at type-2-relative +24 or +56, not type-2 record headers. Their sampled 24-byte layout begins `00 ff 00 00`, then includes a vertex-data pointer, the same external resource pointer, and a face-data pointer. Mesh-side descriptor records resolve to shared vertex-pool offset 40; paired-side descriptors resolve to per-part offsets (e.g. 96, 712, 744). Remaining small values are retained without assigning names.
+**Correction to the earlier report:** the displayed first DWORDs 10,000 and 2,250,000 were the little-endian DWORD representation of each 4-byte record header, not numeric transform values. The actual headers are:
+- mesh-side wrappers: type 16, flags 0x27, class ID 0; DWORD at wrapper +4 is 0;
+- paired-node wrappers: type 16, flags 0x55, class ID 34; DWORD at wrapper +4 is 10,000.
 
-The pattern is a concrete parent/descriptor-chain candidate, but its runtime meaning is unconfirmed until the original executable's consumer routine is identified. The 4096-per-turn Euler trial across six Euler orders did not produce a plausible body, and direct anchor translations make the geometry spread farther apart. The exporter must not treat either as the correct transform solution.
+The wrapper +8 pointer does not target a type-2 record header. It targets an embedded descriptor field at +24 or +56 within another node. That field begins with `00 ff 00 00` (DWORD 0x0000FF00), followed by a pointer at descriptor +4. Following that pointer resolves to the common coordinate-pool base at file offset 40. The chain therefore supplies the shared vertex-pool descriptor used by the geometry parser; it is **not evidence of a bone/attachment parent hierarchy**.
+
+The per-mesh coordinate reference remains a distinct field: mesh-node +28 points to offsets 96, 712, and 744 for the Scout parts. The exporter uses the type-16 descriptor chain to recover the shared pool at offset 40, while retaining the +28 target as a separate candidate local/per-mesh reference. The exact interpretation of the latter is still open; see the cross-variant comparison and corrected +28 analysis below.
+
+The 16 links are now accounted for as geometry-pool references. The actual runtime attachment/rotation hierarchy remains unresolved. The earlier Euler-order and direct-anchor-translation trials did not produce a recognisable Scout and remain rejected as transform solutions.
 
 ## Per-mesh vertex-base hypothesis: cross-variant bounds validation (2026-10-30)
 
@@ -89,3 +95,8 @@ The records contain three signed 16-bit XYZ values followed by a zero 16-bit wor
 This confirms that `+28` points at valid coordinate records. It does **not** settle whether the field is a per-mesh vertex-array base, an attachment reference point, or another coordinate-pool reference. Treating it as the start of each mesh's vertex array still produces broad overlapping/fan-like geometry, and using it as a pivot with candidate planar rotations did not produce a recognisable Scout. Neither interpretation is accepted as the runtime transform.
 
 The cross-variant report now includes the full referenced vertex record and offset for each part. The default exporter remains unchanged.
+
+
+## Runtime-transform separation warning (2026-10-31)
+
+The executable analysis identifies runtime object fields at +0xE4/+0xE6/+0xE8 for three 16-bit rotation components, +0xB4 for a derived orientation matrix, and +0xEC/+0xF0/+0xF4 for a three-component position. This is separate evidence from the DPC type-16 geometry-pool links described above. The code paths have not yet been tied to the eight Scout submeshes or to their paired type-2 records. Do not use the type-16 descriptor chain as the transform hierarchy, and do not change the exporter to apply guessed rotations or translations until that runtime data path is connected to the Scout records.
