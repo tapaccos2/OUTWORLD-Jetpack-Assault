@@ -101,15 +101,18 @@ const slotSummary = Array.from({ length: 8 }, (_, slot) => {
   };
 });
 const parentTypes = {};
+const parentFields = {};
 for (const record of records) for (const parent of record.parents) {
-  const key = `type=${parent.type},class=${parent.classId}`;
-  parentTypes[key] = (parentTypes[key] ?? 0) + 1;
+  const typeKey = `type=${parent.type},class=${parent.classId}`;
+  parentTypes[typeKey] = (parentTypes[typeKey] ?? 0) + 1;
+  const fieldKey = `type=${parent.type},class=${parent.classId},fieldOffset=0x${parent.fieldOffset.toString(16)}`;
+  parentFields[fieldKey] = (parentFields[fieldKey] ?? 0) + 1;
 }
 process.stdout.write(JSON.stringify({
   file, bytes: b.length, topLevelCount: topCount, reachableNodeCount: nodes.size,
   maxNodes, traversalComplete: queueHead === queue.length,
   pendingQueueItems: queue.length - queueHead,
   type8RecordsTruncated: records.filter(x => x.truncated).length,
-  reachableType8Count: records.length, parentTypes, slotSummary, records,
+  reachableType8Count: records.length, parentTypes, parentFields, slotSummary, records,
   note: 'Triples and parent references are raw observations. No mesh, vertex, normal, or collision semantics are assigned.',
 }, null, 2) + '\n');
