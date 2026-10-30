@@ -5,11 +5,11 @@ The Scout geometry and hierarchy audits have narrowed the remaining uncertainty 
 From the repository root on Linux:
 
 ```bash
-git pull --ff-only
+git pull
 bash tools/scout-exe-probe.sh
 ```
 
-The script searches common locations including `~/Outwars-extracted/outwars.exe`. To specify a path explicitly:
+The script searches common locations including `~/Outwars-extracted/outwars.exe`. It tests whether the installed `objdump` can read the Windows PE executable, and prefers the 32-bit MinGW PE-aware version when available. If none is installed, it prints the Debian/Ubuntu package command needed (`binutils-mingw-w64-i686`). To specify a path explicitly:
 
 ```bash
 bash tools/scout-exe-probe.sh "/full/path/to/outwars.exe"
