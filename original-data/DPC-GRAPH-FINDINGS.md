@@ -202,3 +202,24 @@ The same pattern recurs across male/female and environment variants. This is str
 The first model-network type-1 node also exposes two children: a type-9 armour-class record and a type-5 record. In the Scout sample, the type-9 record is at file offset 20,516 and the type-5 record at 37,632. A six-entry relocated-pointer table immediately precedes the type-9 record in that sample. The pointer table and type-9 payload are recorded as candidates for the next geometry-decoding step; no mesh is exported from them yet.
 
 The current graph inspector did not follow this unit-specific type-12 link, so these observations were derived by validating the relocated target headers directly across the extracted model files. Treat the type-12 +8 relationship as observed for this unit-model family, not as a universal DPC rule.
+
+
+## Playable armour sub-part and type-16 links (2026-10-30)
+
+A deeper walk of the male Scout model confirms that the six pointers immediately before the type-9/class-102 record resolve to six type-1 records. Each of those type-1 records has two relocated child pointers at relative offsets +24 and +28; both targets begin with type-2 headers. The type-1 part records also contain further relocated references, including a pointer to a type-4 record. This same six-part pointer pattern and the same relative field positions were checked in the male Combat, Assault, and Dreadnought samples.
+
+In the Scout sample:
+
+- The six type-1 part records begin at file offsets 12,696, 14,248, 15,800, 17,352, 18,904, and 20,436.
+- The first five part records each point at two type-2 records; their first child targets begin at 12,344, 13,896, 15,448, 17,000, and 18,552 respectively.
+- The sixth part record has a different nested shape and links into the model's type-9/class-105 subgraph.
+- The type-2 records expose a relocated pointer at +20 to a type-16 record in the inspected examples.
+- Type-16 records begin with a 32-bit value 10,000 (0x2710) in the sampled Scout paths, followed by a relocated pointer at +8. The target of that pointer is a separate data region; it is not itself a record header.
+
+The type-2 records also contain relocated references to type-4 records. In the Scout sample, examples include type-4 records at offsets 12,412 and 13,964. These type-4 payloads contain repeated short-integer groups and other packed values. Their exact interpretation is still unresolved.
+
+This establishes a reproducible pointer path through the playable model:
+
+`type-9 armour node → six type-1 part records → type-2 records → type-16 data wrapper / type-4 payload`
+
+The path is an observed graph structure, not yet a decoded skin or mesh. In particular, the 10,000 value has not been established as a vertex count, the type-16 target data has not been assigned a vertex format, and the packed type-4 values have not been identified as triangles or material data. No geometry is exported on this evidence alone. The next step is to compare the type-16 target buffers and type-4 payloads across the six parts, then match their field access to the executable renderer.
