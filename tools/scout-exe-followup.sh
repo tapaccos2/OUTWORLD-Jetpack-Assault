@@ -89,6 +89,18 @@ python3 "$SCRIPT_DIR/scan-scout-exe-strings.py" \
   > "$OUT/41-callee-4dfce4-record-dispatch.txt" 2>&1
 "$OBJDUMP" -d -Mintel --start-address=0x4c5d80 --stop-address=0x4c5e10 "$EXE" \
   > "$OUT/44-callee-4c5db0-three-component-helper.txt" 2>&1
+# The previous windows cut off the dispatcher and fixed-point rotation helper.
+# Capture the complete callback body, every branch target, and its trig primitive.
+"$OBJDUMP" -d -Mintel --start-address=0x4dfce4 --stop-address=0x4dff80 "$EXE" \
+  > "$OUT/45-callee-4dfce4-record-dispatch-full.txt" 2>&1
+"$OBJDUMP" -d -Mintel --start-address=0x420f00 --stop-address=0x422100 "$EXE" \
+  > "$OUT/46-record-handler-branch-targets.txt" 2>&1
+"$OBJDUMP" -d -Mintel --start-address=0x4c5db0 --stop-address=0x4c5e80 "$EXE" \
+  > "$OUT/47-three-component-rotation-matrix-helper-full.txt" 2>&1
+"$OBJDUMP" -d -Mintel --start-address=0x4c5440 --stop-address=0x4c54c0 "$EXE" \
+  > "$OUT/48-fixed-point-trig-helper.txt" 2>&1
+"$OBJDUMP" -d -Mintel --start-address=0x490360 --stop-address=0x490430 "$EXE" \
+  > "$OUT/49-record-callback-validation-helper.txt" 2>&1
 "$OBJDUMP" -d -Mintel --start-address=0x420af0 --stop-address=0x420c50 "$EXE" \
   > "$OUT/42-record-handler-table-region-disassembly.txt" 2>&1
 "$OBJDUMP" -s -j BEGTEXT --start-address=0x420b00 --stop-address=0x420b60 "$EXE" \
@@ -256,6 +268,21 @@ python3 "$SCRIPT_DIR/scan-scout-exe-callers.py" \
   echo
   echo "========== THREE-COMPONENT FIELD HELPER: 0x4C5DB0 =========="
   cat "$OUT/44-callee-4c5db0-three-component-helper.txt"
+  echo
+  echo "========== FULL RECORD CALLBACK BODY: 0x4DFCE4 =========="
+  cat "$OUT/45-callee-4dfce4-record-dispatch-full.txt"
+  echo
+  echo "========== RECORD CALLBACK BRANCH TARGET ROUTINES =========="
+  cat "$OUT/46-record-handler-branch-targets.txt"
+  echo
+  echo "========== FULL THREE-COMPONENT ROTATION/MATRIX HELPER =========="
+  cat "$OUT/47-three-component-rotation-matrix-helper-full.txt"
+  echo
+  echo "========== FIXED-POINT TRIG HELPER =========="
+  cat "$OUT/48-fixed-point-trig-helper.txt"
+  echo
+  echo "========== RECORD-CALLBACK VALIDATION HELPER =========="
+  cat "$OUT/49-record-callback-validation-helper.txt"
   echo
   echo "========== FILE SIZE / READ HELPER =========="
   cat "$OUT/36-file-size-and-read-helper.txt"
