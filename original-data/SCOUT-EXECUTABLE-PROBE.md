@@ -61,3 +61,40 @@ bash tools/scout-exe-followup.sh
 ```
 
 The command prints one combined report to the terminal and saves it at `/tmp/outwars-scout-exe-followup/REPORT.txt`.
+
+
+## Follow-up report: static DPC names and variant selection path
+
+The follow-up report for the same executable build confirms two separate paths that were previously only suspected.
+
+### Fixed DPC resource-name setup at 0x486720
+
+The code at `0x486720` copies six null-terminated strings from the executable's `DGROUP` string area into fixed runtime buffers. The known entries include:
+
+| Source string | Destination buffer |
+|---|---:|
+| `scout.dpc` | `0xA000C4` |
+| `defenderWmortar.dpc` | `0xA001F0` |
+| `walkingBabyAssassin.dpc` | `0xA0031C` |
+| `laborer.dpc` | `0xA00448` |
+| `flyingAssassin.dpc` | `0xA00574` |
+
+The destination addresses are spaced by `0x12C` bytes. A sixth string is copied from source VA `0x522671` to `0x009FF620`; its name has not yet been identified from this excerpt. The code copies bytes until a null terminator; this is string-table setup, not proof that the DPC files are opened or parsed at this point.
+
+### Generic DPC filename construction and variant pointer table
+
+The code at `0x48CE71` and its neighbouring branches reads pointers from the table based at VA `0x529D60`, then passes a selected basename with the `%s.dpc` format string (VA `0x523423`) to helper `0x4EE38A`. This is consistent with constructing DPC filenames from a selected basename; the exact helper signature has not yet been independently verified.
+
+The three Scout male/female pairs are found at pointer-table indexes 2/3, 12/13, and 22/23 respectively:
+
+- Indexes 2/3: `scout_ma` / `scout_fa`
+- Indexes 12/13: `scout_mj` / `scout_fj`
+- Indexes 22/23: `scout_md` / `scout_fd`
+
+That ten-entry spacing is real. It suggests three parallel sets of ten name pointers, each containing five male/female pairs. The purpose of the three sets and the semantics of suffixes `a`, `j`, and `d` are still unknown.
+
+A second routine around `0x48CFB0–0x48D21D` iterates entity-like records, calculates a table index from packed record bytes, chooses a DPC basename from the pointer table, and stores unique names in records with a `0x12C`-byte stride. This is strong evidence for a data-driven DPC resource-selection/collection stage. It is not yet evidence of the mesh transform or hierarchy traversal.
+
+### Current interpretation
+
+We have now located executable code that selects DPC basenames and gathers the required DPC resource names. This is materially closer to the loader path than the earlier spatial helper at `0x477680`. The next analysis should decode the complete pointer table, identify direct callers of the collection routines, and trace the subsequent consumer of the gathered DPC filename list into the actual DPC parser.
