@@ -55,7 +55,14 @@ jobs:
               await page.waitForTimeout(5000);
             }
             if (!response || !response.ok()) throw new Error('GitHub Pages returned HTTP ' + (response?.status() ?? 'no response'));
-            await page.waitForTimeout(8000);
+            // Wait for Pages to finish deploying this exact build. A successful
+            // HTTP response alone can still serve the previous published version.
+            await page.waitForFunction(
+              () => document.querySelector('.brand small')?.innerText.includes('BUILD 2.9.69'),
+              null,
+              { timeout: 90000 }
+            );
+            await page.waitForTimeout(2000);
             await page.screenshot({ path: 'game-smoke-test.png', fullPage: true });
             const result = await page.evaluate(() => ({
               title: document.title,
