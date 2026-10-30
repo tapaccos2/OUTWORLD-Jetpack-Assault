@@ -18,3 +18,16 @@ bash tools/scout-exe-probe.sh "/full/path/to/outwars.exe"
 It creates `/tmp/outwars-scout-exe-probe.zip`. Attach that ZIP here. It contains the PE section map, import/relocation data, disassembly around `0x477200–0x478200`, direct references to `0x477680`, references to the two DPC wrapper constants, and relevant resource/animation strings. It also records the executable SHA-256 so the analysis is tied to the exact build.
 
 The script is read-only with respect to the executable and does not copy the executable into the repository or upload it.
+
+
+## First executable probe observations
+
+The first successful PE-aware probe read the exact executable build with SHA-256:
+
+`484c7dc19a6f45e81af6a85e617761e01ec64ea784b17c45f8274fccf8f6a4c3`
+
+The file is reported as PE32 / Intel 80386 with six sections. Its string table contains `scout.dpc`, the Scout variant identifiers `scout_ma`, `scout_fa`, `scout_mj`, `scout_fj`, `scout_md`, and `scout_fd`, plus extensive male/female motion `.mc` names (stand, walk, run, glide, death, and wait sequences). This confirms that the executable build contains explicit resource and motion references relevant to the Scout assets.
+
+The disassembly excerpt begins a routine at VA `0x477680`. The visible prologue iterates a pointer-based list, checks record fields at offsets `+0x0c`, `+0x10`, and `+0x160`, then reads fields from the pointed record at offsets `+0x02`, `+0x10`, and `+0x28`. The excerpt supplied so far ends at the comparison against `0x1394`; it is not enough to identify the routine as the DPC hierarchy or mesh-transform consumer. The generated direct-xref report is empty, and the raw executable contains no literal little-endian occurrence of VA `0x477680`; neither result rules out indirect dispatch or relative references.
+
+**Status:** executable loading/disassembly is now working. The runtime transform semantics are still unresolved. Continue by examining the remainder of `03-disassembly-477200-478200.txt` and then following the routine's indirect callers / data structures before assigning meaning to these offsets.
