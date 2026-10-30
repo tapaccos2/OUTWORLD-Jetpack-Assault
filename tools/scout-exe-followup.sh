@@ -85,6 +85,10 @@ python3 "$SCRIPT_DIR/scan-scout-exe-strings.py" \
   > "$OUT/39-callee-4df84c-resource-table-setup.txt" 2>&1
 "$OBJDUMP" -d -Mintel --start-address=0x4dd430 --stop-address=0x4dd540 "$EXE" \
   > "$OUT/40-callee-4dd470-record-lookup.txt" 2>&1
+"$OBJDUMP" -d -Mintel --start-address=0x4dd470 --stop-address=0x4dda80 "$EXE" \
+  > "$OUT/51-full-record-relocation-dispatcher.txt" 2>&1
+"$OBJDUMP" -d -Mintel --start-address=0x4dd9c0 --stop-address=0x4dda80 "$EXE" \
+  > "$OUT/52-record-relocation-tail-helper.txt" 2>&1
 "$OBJDUMP" -d -Mintel --start-address=0x4dfca0 --stop-address=0x4dfd90 "$EXE" \
   > "$OUT/41-callee-4dfce4-record-dispatch.txt" 2>&1
 "$OBJDUMP" -d -Mintel --start-address=0x4c5d80 --stop-address=0x4c5e10 "$EXE" \
@@ -114,7 +118,7 @@ targets = (
     0x420B00, 0x420F86, 0x42107B, 0x42140D, 0x42169C, 0x42183C,
     0x421BAA, 0x4220C0, 0x422170, 0x422278, 0x4222A8, 0x4222F0,
     0x422300, 0x422310, 0x422332, 0x42237C, 0x42244C, 0x422554,
-    0x422654, 0x42269C, 0x422754, 0x4C5440, 0x4C5DB0,
+    0x422654, 0x42269C, 0x422754, 0x4C5440, 0x4C5DB0, 0x4DD470, 0x4DD9C0,
 )
 with destination.open("w") as out:
     out.write("RAW LITTLE-ENDIAN VA OCCURRENCES FOR TRANSFORM / DPC HANDLER ROUTINES\n")
@@ -289,6 +293,12 @@ python3 "$SCRIPT_DIR/scan-scout-exe-callers.py" \
   echo
   echo "========== CALLEE 0x4DD470: RECORD LOOKUP =========="
   cat "$OUT/40-callee-4dd470-record-lookup.txt"
+  echo
+  echo "========== FULL RECORD POINTER-RELOCATION DISPATCHER =========="
+  cat "$OUT/51-full-record-relocation-dispatcher.txt"
+  echo
+  echo "========== RECORD POINTER-RELOCATION TAIL HELPER =========="
+  cat "$OUT/52-record-relocation-tail-helper.txt"
   echo
   echo "========== CALLEE 0x4DFCE4: RECORD DISPATCH =========="
   cat "$OUT/41-callee-4dfce4-record-dispatch.txt"
