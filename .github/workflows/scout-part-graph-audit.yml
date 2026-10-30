@@ -6,6 +6,7 @@ on:
     paths:
       - "tools/inspect-scout-part-graph.mjs"
       - "tools/scout-exe-probe.sh"
+      - "tools/scan-scout-exe-strings.py"
       - ".github/workflows/scout-part-graph-audit.yml"
       - "original-data/units.ff"
   workflow_dispatch:
@@ -28,6 +29,9 @@ jobs:
 
       - name: Syntax-check the audit tool
         run: node --check tools/inspect-scout-part-graph.mjs
+
+      - name: Syntax-check the PE string-reference scanner
+        run: python3 -m py_compile tools/scan-scout-exe-strings.py
 
       - name: Audit Scout DPC hierarchy
         id: audit
