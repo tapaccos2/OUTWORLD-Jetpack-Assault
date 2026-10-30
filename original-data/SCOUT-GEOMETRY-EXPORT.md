@@ -61,3 +61,15 @@ Counts: 1 root-to-first-mesh link, 8 paired-node-to-own-mesh links, 7 mesh-to-pr
 The pointer targets are embedded type-0/class-0 descriptor records at type-2-relative +24 or +56, not type-2 record headers. Their sampled 24-byte layout begins `00 ff 00 00`, then includes a vertex-data pointer, the same external resource pointer, and a face-data pointer. Mesh-side descriptor records resolve to shared vertex-pool offset 40; paired-side descriptors resolve to per-part offsets (e.g. 96, 712, 744). Remaining small values are retained without assigning names.
 
 The pattern is a concrete parent/descriptor-chain candidate, but its runtime meaning is unconfirmed until the original executable's consumer routine is identified. The 4096-per-turn Euler trial across six Euler orders did not produce a plausible body, and direct anchor translations make the geometry spread farther apart. The exporter must not treat either as the correct transform solution.
+
+## Per-mesh vertex-base hypothesis: cross-variant bounds validation (2026-10-30)
+
+The alternate `--use-mesh-vertex-reference` export treats the type-2 +28 pointer as a per-mesh vertex-array base, while face indices are interpreted relative to that base. An automated comparison of all seven Scout DPC variants finds:
+
+- All 8 of 8 offsets are eight-byte aligned in every variant.
+- All effective referenced vertex indices remain within the source DPC file.
+- All 8 of 8 meshes produce the expected 13 unique quads / 26 triangles under this interpretation.
+- The +28 offsets are 96 for submesh 1 (start index 7), 712 for submesh 2 (start index 84), and 744 for submeshes 3–8 (start index 88).
+- The maximum effective vertex index reaches 483 in submesh 8, consistently across all seven variants.
+
+This is strong structural evidence that +28 can be a valid vertex-base candidate. It does not settle whether it is the intended base for every face-index stream: the local-base preview still renders overlapping plate-like geometry rather than a recognisable Scout. The original shared-base interpretation also remains a valid parse of the data. Keep both export modes until the runtime consumer or an independent source-format invariant establishes the correct interpretation. Do not change the default exporter to local-base on bounds checks alone.
