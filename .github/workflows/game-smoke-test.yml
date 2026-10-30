@@ -27,6 +27,7 @@ jobs:
           node --check src/terrain-preview.js
           node --check tools/inspect-dpc-graph.mjs
           node --check tools/inspect-dpc-graph-compare.mjs
+          node --check tools/inspect-dpc-point-lists.mjs
       - name: Install Playwright
         run: |
           npm init -y
@@ -236,6 +237,23 @@ jobs:
           }))));
           if (comparisonResult.files.some(item => item.error || item.errorCount || item.truncated)) {
             throw new Error('DPC campaign comparison found a parser failure or traversal limit');
+          }
+
+          const pointLists = ['rag04', 'dead01'].map(name => {
+            const result = spawnSync('node', [
+              'tools/inspect-dpc-point-lists.mjs',
+              'original-data/structs/' + name + '.dpc'
+            ], { encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 });
+            if (result.status !== 0) throw new Error('DPC point-list inspector failed for ' + name + ': ' + (result.stderr || result.stdout).slice(0, 4000));
+            return JSON.parse(result.stdout);
+          });
+          const triples = pointLists.map(item => item.lists.flatMap(list => list.children.slice(0, 6).map(child => child.candidateTriple)));
+          console.log('DPC CANDIDATE TRIPLES:', JSON.stringify(pointLists.map((item, index) => ({
+            file: item.file, listCount: item.observedListCount, firstListTriples: triples[index][0] ? triples[index] : []
+          }))));
+          if (!pointLists.every(item => item.observedListCount > 0) ||
+              JSON.stringify(triples[0][0]) !== JSON.stringify(triples[1][0])) {
+            throw new Error('Candidate coordinate triples did not match across rag04 and dead01');
           }
           })().catch(e => { console.error(e); process.exit(1); });
           EOF
