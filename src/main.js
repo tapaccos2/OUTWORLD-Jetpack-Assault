@@ -123,8 +123,116 @@ for(let i=0;i<terrainPos.count;i++){
 terrainGeo.computeVertexNormals();
 const ground=new THREE.Mesh(terrainGeo,groundMat);ground.rotation.x=-Math.PI/2;ground.position.y=-.12;ground.receiveShadow=true;scene.add(ground);
 
-// No city road, kerbs or painted lane: this is an open alien-world landing zone.
-// Mission destination: illuminated landing beacon at the end of the ravine.
+// OUTPOST ZERO — readable built-up service street.
+// The playable route is deliberately a street now: asphalt carriageway, kerbs,
+// raised pavements, continuous building frontages, doors, windows and street lamps.
+const streetAsphalt=mat(0x343a3b,.96,.015);
+const sidewalkMat=mat(0x77786f,.94,.02);
+const curbMat=mat(0xaaa596,.88,.02);
+const facadeA=mat(0x77796f,.92,.02),facadeB=mat(0x555e5e,.9,.04);
+const windowMat=new THREE.MeshStandardMaterial({color:0x182d36,metalness:.32,roughness:.28,emissive:0x172c35,emissiveIntensity:.22});
+const litWindowMat=new THREE.MeshStandardMaterial({color:0xc39a62,emissive:0x9b6a36,emissiveIntensity:.48,roughness:.55});
+const road=new THREE.Mesh(new THREE.BoxGeometry(10.4,.16,140),streetAsphalt);
+road.position.set(0,-.025,-1);road.receiveShadow=true;scene.add(road);
+for(const side of [-1,1]){
+ const pavement=new THREE.Mesh(new THREE.BoxGeometry(3.2,.34,140),sidewalkMat);
+ pavement.position.set(side*6.8,.02,-1);pavement.receiveShadow=true;scene.add(pavement);
+ const curb=new THREE.Mesh(new THREE.BoxGeometry(.28,.42,140),curbMat);
+ curb.position.set(side*5.15,.06,-1);curb.castShadow=true;curb.receiveShadow=true;scene.add(curb);
+ // Kerb joints make the raised pavement read at street level.
+ for(let z=-68;z<67;z+=2.2){
+  const joint=new THREE.Mesh(new THREE.BoxGeometry(.3,.43,.045),mat(0x555650,.95));
+  joint.position.set(side*5.15,.06,z);scene.add(joint);
+ }
+}
+// Broken centre markings, lane-edge paint and a proper pedestrian crossing at spawn.
+const roadPaint=new THREE.MeshStandardMaterial({color:0xc6c2ad,roughness:.8});
+for(let z=-66;z<60;z+=8){
+ const dash=new THREE.Mesh(new THREE.BoxGeometry(.12,.018,3.2),roadPaint);
+ dash.position.set(0,.064,z);scene.add(dash);
+}
+for(const x of [-4.85,4.85]){
+ const edgeLine=new THREE.Mesh(new THREE.BoxGeometry(.075,.02,136),roadPaint);
+ edgeLine.position.set(x,.064,-1);scene.add(edgeLine);
+}
+for(let i=0;i<8;i++){
+ const stripe=new THREE.Mesh(new THREE.BoxGeometry(1.05,.025,3.6),roadPaint);
+ stripe.position.set(-3.8+i*1.08,.07,3.2);scene.add(stripe);
+}
+// Repeated street-facing buildings: solid volumes with a consistent pavement line,
+// recessed shopfronts, upper windows, lintels, roof parapets and external service gear.
+function makeStreetBuilding(side,z,width,depth,height,variant){
+ const g=new THREE.Group();
+ const wall=new THREE.Mesh(new THREE.BoxGeometry(width,height,depth),variant%2?facadeA:facadeB);
+ wall.position.y=height/2+.18;wall.castShadow=true;wall.receiveShadow=true;g.add(wall);
+ const innerX=-side*(width/2+.075);
+ // Ground-floor shop/industrial entrance and roller shutter.
+ const door=new THREE.Mesh(new THREE.BoxGeometry(.10,2.35,1.55),mat(0x293436,.78,.22));
+ door.position.set(innerX,.18+1.18,-depth*.12);g.add(door);
+ const sign=new THREE.Mesh(new THREE.BoxGeometry(.16,.42,3.4),mat(variant%2?0x9a754a:0x647d7b,.6,.25));
+ sign.position.set(innerX,.18+3.05,-depth*.12);g.add(sign);
+ // Four upper levels of recessed windows on the street-facing elevation.
+ for(let floor=0;floor<Math.max(2,Math.floor((height-2.8)/2.25));floor++){
+  for(let bay=0;bay<2;bay++){
+   const wz=-depth*.28+bay*depth*.48;
+   const wy=3.9+floor*2.05;
+   const frame=new THREE.Mesh(new THREE.BoxGeometry(.18,1.42,1.52),mat(0x333a39,.82,.18));
+   frame.position.set(innerX,wy,wz);g.add(frame);
+   const glass=new THREE.Mesh(new THREE.BoxGeometry(.205,1.18,1.27),(variant+floor+bay)%5===0?litWindowMat:windowMat);
+   glass.position.set(innerX-side*.105,wy,wz);g.add(glass);
+   const sill=new THREE.Mesh(new THREE.BoxGeometry(.32,.12,1.7),curbMat);
+   sill.position.set(innerX,wy-.78,wz);g.add(sill);
+  }
+ }
+ const roofBand=new THREE.Mesh(new THREE.BoxGeometry(width+.35,.42,depth+.35),mat(0x343c3c,.85,.12));
+ roofBand.position.y=height+.36;g.add(roofBand);
+ // Rooftop HVAC boxes and a short exhaust stack give the skyline real industrial detail.
+ for(let n=0;n<2;n++){
+  const hvac=new THREE.Mesh(new THREE.BoxGeometry(1.25,.8,1.15),mat(0x46504e,.82,.28));
+  hvac.position.set((n-.5)*width*.42,height+.95,-depth*.12);g.add(hvac);
+ }
+ const stack=new THREE.Mesh(new THREE.CylinderGeometry(.18,.22,1.6,10),mat(0x454b48,.9,.12));
+ stack.position.set(side*width*.24,height+1.1,depth*.22);g.add(stack);
+ g.position.set(side*(8.65+width/2),0,z);
+ g.userData.blocksEnemy=true;g.userData.blockRadius=width*.52+1.2;
+ scene.add(g);
+ // External fire escape ladder on the exposed end wall.
+ const ladderX=side*(8.65+width*.82);
+ for(let r=0;r<5;r++){
+  const rung=new THREE.Mesh(new THREE.BoxGeometry(.08,.07,1.1),mat(0x343d3b,.7,.35));
+  rung.position.set(side*(width*.42),1.1+r*1.45,depth*.34);g.add(rung);
+ }
+ return g;
+}
+const streetBlocks=[
+ [-6,7.8,10.5,11.8],[-21,8.5,10,9.6],[-36,7.6,10.5,12.8],
+ [-51,8.7,10,10.4],[-65,7.8,9,8.8]
+];
+for(let i=0;i<streetBlocks.length;i++){
+ const [z,w,d,h]=streetBlocks[i];
+ makeStreetBuilding(-1,z,w,d,h,i);
+ makeStreetBuilding(1,z-5,w*.96,d,h*.88,i+1);
+}
+// Street lamps with curved-looking outreach arms and warm practical lights.
+for(const side of [-1,1]){
+ for(let z=1;z>-65;z-=17){
+  const pole=new THREE.Mesh(new THREE.CylinderGeometry(.085,.12,5.6,10),mat(0x303a3b,.62,.48));
+  pole.position.set(side*4.45,2.8,z);pole.castShadow=true;scene.add(pole);
+  const arm=new THREE.Mesh(new THREE.BoxGeometry(.95,.09,.11),mat(0x303a3b,.62,.48));
+  arm.position.set(side*4.0,5.42,z);scene.add(arm);
+  const lamp=new THREE.Mesh(new THREE.BoxGeometry(.72,.16,.34),mat(0x4c5550,.5,.35));
+  lamp.position.set(side*3.55,5.34,z);scene.add(lamp);
+  const glow=new THREE.PointLight(0xffd39a,1.1,10,2);glow.position.set(side*3.55,5.05,z);scene.add(glow);
+ }
+}
+// Utility cabinets, bins and battered cargo pallets stay on the pavements, not in the road.
+for(const side of [-1,1]){
+ for(let z of [-10,-29,-47]){
+  const cabinet=new THREE.Mesh(new THREE.BoxGeometry(.85,1.55,.72),mat(0x46514e,.85,.16));
+  cabinet.position.set(side*6.1,.9,z);cabinet.castShadow=true;cabinet.userData.blocksEnemy=true;cabinet.userData.blockRadius=.7;scene.add(cabinet);
+ }
+}
+// Mission destination is now a marked street checkpoint rather than a lonely beacon in a ravine.
 const landingZone=new THREE.Group();
 const landingBase=new THREE.Mesh(new THREE.CylinderGeometry(2.35,2.8,.22,32),new THREE.MeshStandardMaterial({color:0x303b3c,metalness:.68,roughness:.42}));
 landingBase.position.set(0,.02,-56.5);landingBase.receiveShadow=true;landingBase.castShadow=true;landingZone.add(landingBase);
@@ -650,7 +758,7 @@ for(let i=0;i<enemySpawns.length;i++){
 }
 // Keep the tested full-size procedural Hydran enemies visible. The imported GLB pack
 // currently has inconsistent in-game scale/orientation, so do not hide these meshes.
-if(window.loadEnvironmentAssets)window.loadEnvironmentAssets(THREE,scene,lowPowerDevice).catch(err=>console.warn('Environment GLB assets unavailable; procedural fallback remains active.',err));
+// Street architecture is authored locally above; do not overlay the previous random ravine props.
 const bullets=[],sparks=[],clock=new THREE.Clock();let thirdPersonCameraReady=false,hp=100,fuel=100,yaw=0,pitch=-.05,targetYaw=0,targetPitch=-.05,vy=0,onGround=true,started=false,dead=false,won=false,fireHeld=false,boostHeld=false,jumpQueued=false,shotCooldown=0,damageFlash=0,lookTouch=null,stick={x:0,y:0},pointerLocked=false,lastShot=0,muzzleLife=0,hitConfirmTimer=0,thirdPerson=true,fireRecoil=0;
 function startGame(){
  started=true;
