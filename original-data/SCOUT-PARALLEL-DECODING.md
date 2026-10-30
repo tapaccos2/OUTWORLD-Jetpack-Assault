@@ -32,9 +32,11 @@ One source anomaly remains explicit: \`fstand2.mc\` declares 17 frames but has 1
 
 ## Geometry: male and female resource graphs differ
 
-The corrected \`tools/export-dpc-armour-geometry.mjs\` has been run against \`scout_mj.dpc\`, \`scout_ma.dpc\`, and \`scout_md.dpc\`. Each produces a GLB with one root mesh and eight submeshes, 390 referenced position entries and 230 triangles. The shared coordinate-pool pointer for all nine sections resolves through type-2 +20 → type-16 +8 → descriptor +4 to file offset \`0x28\`.
+The corrected \`tools/export-dpc-armour-geometry.mjs\` has now been run against all seven Scout DPC resources: \`scout_mj\`, \`scout_ma\`, \`scout_md\`, \`scout_fa\`, \`scout_fd\`, \`scout_fj\`, and \`scout_test\`. Each produces a loadable GLB with one root mesh and eight submeshes, 390 referenced position entries and 230 triangles. Male resources use the type-9 class-102 root / class-9 class-105 part-list pair; female and test resources use class-152 / class-155. The shared coordinate-pool pointer for all nine sections resolves through type-2 +20 → type-16 +8 → descriptor +4 to file offset \`0x28\`.
 
-The female/test DPCs are **not** compatible with the male class-102 root path. Their top-level root is type-1/class-150, and the linked type-12 record points into a different graph. A type-9/class-152 record and type-9/class-155 nine-entry list are present, so this appears to be a parallel graph family worth decoding, not malformed data. The male exporter correctly rejects these resources rather than producing a misleading output.
+The type-2 +28 pointer is a separate mesh-reference field and is **not** currently treated as the XYZ coordinate base: doing that caused systematically expanding bounds across later parts, while the face index values are consistent when resolved against the shared pool at 0x28. It is retained in the JSON export report for further reverse engineering. This corrects the earlier overconfident interpretation of +28 as a per-submesh vertex-slice start.
+
+The GLBs are verified raw geometry extractions, not correctly assembled models. The 230 triangles remain broad overlapping/fan-like surfaces when rendered without the original attachment rotations and hierarchy. Do not treat this as a completed character or replace the in-game soldier with it.
 
 ## Current major blocker
 
