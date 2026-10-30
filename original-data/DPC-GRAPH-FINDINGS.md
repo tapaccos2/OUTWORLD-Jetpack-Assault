@@ -126,3 +126,43 @@ For rag02, all 57 records have near-4096 lengths in slots 0, 1, 2, 4 and 5; slot
 This strongly supports two endpoint-like structures, each carrying three direction-like vectors and one position-like vector. It does not establish whether the direction vectors are face normals, edge normals, a local frame, or another basis. Tests of pairwise orthogonality show they are often not mutually perpendicular, so they must not simply be called XYZ axes. Nor is the endpoint pair proven to be a rendered edge or polygon.
 
 Exact position reuse between type-8 records is uncommon in these samples (rag02: none among 114 endpoint positions; rag04: two shared positions; oasis03: one shared position). This may mean records describe independent edges/segments or use different coordinate precision/transform conventions; more evidence is needed before assembling triangles.
+
+
+### Broader campaign survey of reachable type-8 records
+
+The same extended traversal was applied to additional campaign and multiplayer DPC files. These are reachable type-8 counts, not total occurrences found by an unrestricted byte scan:
+
+| Resource | Reachable type-8 records |
+|---|---:|
+| anub01 | 214 |
+| anub02 | 71 |
+| anub03 | 0 |
+| anub04 | 115 |
+| anub05 | 3 |
+| dead01 | 0 |
+| dead02 | 0 |
+| dead03 | 5 |
+| dead04 | 10 |
+| dead1m | 0 |
+| dead2m | 0 |
+| jug01 | 0 |
+| jug02 | 247 |
+| mik01 | 32 |
+| mik1m | 53 |
+| oasis01 | 7 |
+| oasis02 | 83 |
+| oasis03 | 104 |
+| oasis04 | 0 |
+| oasis05 | 38 |
+| oasis06 | 12 |
+| oasis1m | 57 |
+| oasis6m | 12 |
+| rag01 | 0 |
+| rag02 | 57 |
+| rag03 | 90 |
+| rag04 | 175 |
+| rag05 | 89 |
+
+The endpoint/vector field pattern was spot-checked in anub01, jug02, oasis02 and rag03 as well as rag02, rag04 and oasis03. In all four additional samples, slots 0, 1, 2, 4 and 5 were near length 4096 for every reachable type-8 record; slot 6 was near 4096 for most records. Slots 3 and 7 were coordinate-like values and were not near 4096. This makes the two-block pattern a cross-campaign observation rather than a peculiarity of the three initial files.
+
+The distribution is map-dependent: some maps have hundreds of these records, while others have none or only a handful. That argues against treating type-8 as a universal terrain surface record without checking the owning parent and map context. The working interpretation remains two endpoint-like blocks, each containing three direction-like vectors and one coordinate-like triple; exact runtime semantics are unresolved.
