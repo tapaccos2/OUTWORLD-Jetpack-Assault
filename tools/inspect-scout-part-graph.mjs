@@ -222,6 +222,43 @@ function createReader(file) {
       })
     };
   }
+  function linkedType2Summary(targetOffset) {
+    if (targetOffset === null) return null;
+    const h = header(targetOffset);
+    if (!h || h.type !== 2) return { offset: targetOffset, header: h, note: 'Wrapper target is not a type-2 record' };
+    const p20 = pointerField(targetOffset, 20);
+    const p20Target = p20.targetOffset;
+    const p20Header = p20Target === null ? null : header(p20Target);
+    const p20Link = p20Header?.type === 16 ? pointerField(p20Target, 8) : null;
+    return {
+      offset: targetOffset,
+      header: h,
+      signedVectorAt8Candidate: [s32(targetOffset + 8), s32(targetOffset + 12), s32(targetOffset + 16)],
+      signedVectorAt32Candidate: [s32(targetOffset + 32), s32(targetOffset + 36), s32(targetOffset + 40)],
+      fields: {
+        plus4: pointerField(targetOffset, 4),
+        plus20: p20,
+        plus24: pointerField(targetOffset, 24),
+        plus28: pointerField(targetOffset, 28),
+        plus36: pointerField(targetOffset, 36),
+        plus48: pointerField(targetOffset, 48),
+        plus52: pointerField(targetOffset, 52),
+        plus60: pointerField(targetOffset, 60)
+      },
+      nextWrapper: p20Target === null ? null : {
+        offset: p20Target,
+        header: p20Header,
+        firstDword: u32(p20Target),
+        firstDwordHex: '0x' + u32(p20Target).toString(16).padStart(8, '0'),
+        linkedType2: p20Link?.targetOffset === null || p20Link?.targetOffset === undefined ? null : {
+          offset: p20Link.targetOffset,
+          header: p20Link.targetHeader
+        }
+      },
+      rawFirst96: wordView(targetOffset, 96),
+      pointerCandidates: candidatePointers(targetOffset, 4, 96)
+    };
+  }
   function type2Detail(offset, label) {
     if (offset === null) return null;
     const h = header(offset);
@@ -261,6 +298,8 @@ function createReader(file) {
         plus0hex: '0x' + u32(p20.targetOffset).toString(16),
         plus8: wrapperLink
       },
+      wrapperLinkedType2: wrapperLink?.targetOffset === null || wrapperLink?.targetOffset === undefined
+        ? null : linkedType2Summary(wrapperLink.targetOffset),
       descriptor: descriptor === null ? null : {
         header: header(descriptor),
         plus4CoordinateCandidate: coordinate
