@@ -114,6 +114,8 @@ out.write_text(
 )
 PY
 
+python3 "$(dirname "$0")/scan-scout-exe-strings.py" "$EXE" "$OUT/04-full-code-disassembly.txt" "$OUT/10-resource-string-references.txt"
+
 {
   echo "=== Probe summary ==="
   echo "Executable: $EXE"
@@ -136,6 +138,9 @@ PY
   echo
   echo "=== Raw address byte-pattern hits ==="
   cat "$OUT/09-raw-address-hits.txt"
+  echo
+  echo "=== Scout resource string references ==="
+  sed -n '1,320p' "$OUT/10-resource-string-references.txt"
 } > "$OUT/README-REPORT.txt"
 
 if command -v zip >/dev/null 2>&1; then
