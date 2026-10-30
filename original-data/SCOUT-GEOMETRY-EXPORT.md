@@ -73,3 +73,19 @@ The alternate `--use-mesh-vertex-reference` export treats the type-2 +28 pointer
 - The maximum effective vertex index reaches 483 in submesh 8, consistently across all seven variants.
 
 This is strong structural evidence that +28 can be a valid vertex-base candidate. It does not settle whether it is the intended base for every face-index stream: the local-base preview still renders overlapping plate-like geometry rather than a recognisable Scout. The original shared-base interpretation also remains a valid parse of the data. Keep both export modes until the runtime consumer or an independent source-format invariant establishes the correct interpretation. Do not change the default exporter to local-base on bounds checks alone.
+
+## Corrected interpretation of type-2 +28 targets (2026-10-31)
+
+The seven-variant comparison now reads the eight bytes at each type-2 `+28` target directly. These are **8-byte coordinate-pool entries**, not type-0 descriptor records. The first four bytes can coincidentally resemble a type-0 record header, so the generic record-header heuristic is a false positive at these offsets.
+
+The records contain three signed 16-bit XYZ values followed by a zero 16-bit word. Across all seven Scout variants, the references are identical:
+
+| Parts | File offset | Coordinate-pool index | XYZ | Trailing word |
+|---|---:|---:|---|---:|
+| 1 | 96 | 7 | `[0, -347, 127]` | 0 |
+| 2 | 712 | 84 | `[-409, -285, 732]` | 0 |
+| 3–8 | 744 | 88 | `[-39, -396, 359]` | 0 |
+
+This confirms that `+28` points at valid coordinate records. It does **not** settle whether the field is a per-mesh vertex-array base, an attachment reference point, or another coordinate-pool reference. Treating it as the start of each mesh's vertex array still produces broad overlapping/fan-like geometry, and using it as a pivot with candidate planar rotations did not produce a recognisable Scout. Neither interpretation is accepted as the runtime transform.
+
+The cross-variant report now includes the full referenced vertex record and offset for each part. The default exporter remains unchanged.
