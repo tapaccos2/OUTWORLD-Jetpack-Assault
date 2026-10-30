@@ -102,9 +102,12 @@ jobs:
               await page.locator('#resetPose').click();
               await page.waitForFunction(() => (document.querySelector('#status')?.innerText || '').includes('Raw model pose restored'));
               await page.locator('#rotationGalleryToggle').click();
-              await page.waitForFunction(() => (document.querySelector('#status')?.innerText || '').includes('six 4096-turn Euler order trials'));
+              await page.waitForFunction(() => (document.querySelector('#status')?.innerText || '').toLowerCase().includes('six 4096-turn euler order trials'));
               const galleryStatus = await page.locator('#status').innerText();
               if ((await page.locator('#rotationGalleryToggle').innerText()) !== 'Back to model') throw new Error('Rotation order gallery did not open');
+              await page.screenshot({ path: '.scout-viewer-test/rotation-order-gallery.png', fullPage: true });
+              const canvasMetrics = await page.locator('canvas').evaluate(el => ({ width: el.width, height: el.height }));
+              if (canvasMetrics.width < 100 || canvasMetrics.height < 100) throw new Error('Viewer canvas is not rendered');
               await page.locator('#rotationGalleryToggle').click();
               await page.waitForFunction(() => (document.querySelector('#status')?.innerText || '').includes('Back to raw model'));
               await page.screenshot({ path: '.scout-viewer-test/viewer-smoke-test.png', fullPage: true });
@@ -131,6 +134,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: scout-viewer-browser-test
-          path: .scout-viewer-test/viewer-smoke-test.png
+          path: |
+            .scout-viewer-test/viewer-smoke-test.png
+            .scout-viewer-test/rotation-order-gallery.png
           if-no-files-found: warn
           retention-days: 14
