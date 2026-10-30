@@ -366,4 +366,4 @@ python3 "$SCRIPT_DIR/scan-scout-exe-callers.py" \
 
 echo "Created: $OUT/REPORT.txt"
 echo "The full report was saved to disk; it is not printed to the terminal."
-echo "New focused sections trace the DPC name collector and its downstream file/resource helpers."
+echo "New focused sections 45-56 capture DPC transform setters, rotation-matrix math, record relocation, and handler-pointer references."
