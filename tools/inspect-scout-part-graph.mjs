@@ -152,6 +152,67 @@ function createReader(file) {
       examples
     };
   }
+  function meshGeometryDetail(meshNode, vertexBase, faceOffset, sourceCount, label) {
+    if (meshNode === null || vertexBase === null || faceOffset === null) return null;
+    const sig = Buffer.from([4, 1, 12, 9]);
+    const rawQuads = [];
+    let cursor = faceOffset;
+    for (let i = 0; i < sourceCount; i++) {
+      cursor = b.indexOf(sig, cursor);
+      if (cursor < 0 || cursor + 12 > b.length) {
+        throw new Error(label + ': failed to locate face signature ' + i + '/' + sourceCount);
+      }
+      rawQuads.push([u16(cursor + 4), u16(cursor + 6), u16(cursor + 8), u16(cursor + 10)]);
+      cursor += 4;
+    }
+    const seen = new Set(), quads = [];
+    for (const q of rawQuads) {
+      if (new Set(q).size < 3) continue;
+      const key = q.slice().sort((x, y) => x - y).join(',');
+      if (!seen.has(key)) { seen.add(key); quads.push(q); }
+    }
+    const indices = [...new Set(quads.flat())].sort((x, y) => x - y);
+    if (!indices.length) return null;
+    const min = [Infinity, Infinity, Infinity], max = [-Infinity, -Infinity, -Infinity];
+    const sums = [0, 0, 0], points = [];
+    for (const index of indices) {
+      const p = vertexBase + index * 8;
+      if (p + 6 > b.length) throw new Error(label + ': referenced vertex ' + index + ' is out of range');
+      const xyz = [s16(p), s16(p + 2), s16(p + 4)];
+      points.push(xyz);
+      for (let k = 0; k < 3; k++) {
+        min[k] = Math.min(min[k], xyz[k]);
+        max[k] = Math.max(max[k], xyz[k]);
+        sums[k] += xyz[k];
+      }
+    }
+    const centroid = sums.map(v => v / indices.length);
+    return {
+      label,
+      meshNodeOffset: meshNode,
+      vertexBaseOffset: vertexBase,
+      faceOffset,
+      sourceFaceRecords: rawQuads.length,
+      uniqueQuads: quads.length,
+      triangles: quads.length * 2,
+      referencedVertexCount: indices.length,
+      indexMin: indices[0],
+      indexMax: indices[indices.length - 1],
+      indexRanges: (() => {
+        const ranges = [];
+        let start = indices[0], end = indices[0];
+        for (const value of indices.slice(1)) {
+          if (value === end + 1) end = value;
+          else { ranges.push([start, end]); start = end = value; }
+        }
+        ranges.push([start, end]);
+        return ranges;
+      })(),
+      bounds: { min, max, size: max.map((v, k) => v - min[k]) },
+      centroid,
+      coordinateSamples: points.slice(0, 8)
+    };
+  }
   function type2Detail(offset, label) {
     if (offset === null) return null;
     const h = header(offset);
@@ -207,6 +268,17 @@ function createReader(file) {
     const c28 = child28.targetHeader;
     const transformNode = c28?.type === 2 ? child28.targetOffset : null;
     const candidateVector = transformNode === null ? null : [s32(transformNode + 32), s32(transformNode + 36), s32(transformNode + 40)];
+    const meshNode = c24?.type === 2 ? child24.targetOffset : null;
+    let sharedVertexBase = null;
+    let faceDataOffset = null;
+    let geometry = null;
+    if (meshNode !== null) {
+      const wrapper = ptr(meshNode + 20);
+      const descriptor = wrapper === null ? null : ptr(wrapper + 8);
+      sharedVertexBase = descriptor === null ? null : ptr(descriptor + 4);
+      faceDataOffset = ptr(meshNode + 36);
+      geometry = meshGeometryDetail(meshNode, sharedVertexBase, faceDataOffset, 26, 'submesh_' + (index + 1));
+    }
     const pairChecks = {
       child24IsType2: c24?.type === 2,
       child28IsType2: c28?.type === 2,
@@ -217,6 +289,7 @@ function createReader(file) {
       ownerVectorCandidate: ownerVector,
       child24, child28,
       pairChecks,
+      geometry,
       child24Detail: c24?.type === 2 ? type2Detail(child24.targetOffset, 'owner+24') : null,
       child28Detail: c28?.type === 2 ? type2Detail(child28.targetOffset, 'owner+28') : null,
       ownerPointerCandidates: candidatePointers(offset, 4, 96),
@@ -242,7 +315,11 @@ function createReader(file) {
     const target = ptr(partList + 16 + i * 4);
     entries.push({ index: i, pointer: pointerField(partList + 16 + i * 4, 0), detail: target === null ? null : ownerDetail(target, i) });
   }
+  const rootMeshVertexBase = ptr(rootNode + 28);
+  const rootMeshFaceOffset = ptr(rootNode + 36);
+  const rootGeometry = meshGeometryDetail(rootNode, rootMeshVertexBase, rootMeshFaceOffset, 22, 'root_mesh');
   const rootDetail = {
+    rootGeometry,
     rootRecord: header(rootRecord),
     rootNode: header(rootNode),
     rootNodeOffset: rootNode,
