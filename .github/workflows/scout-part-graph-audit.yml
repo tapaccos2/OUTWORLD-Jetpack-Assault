@@ -10,6 +10,7 @@ on:
       - "tools/scout-exe-followup.sh"
       - "tools/inspect-scout-exe-pointer-table.py"
       - "tools/inspect-scout-exe-va-strings.py"
+      - "tools/inspect-scout-exe-imports.py"
       - "tools/scan-scout-exe-callers.py"
       - ".github/workflows/scout-part-graph-audit.yml"
       - "original-data/units.ff"
@@ -40,8 +41,8 @@ jobs:
       - name: Syntax-check the executable follow-up probe
         run: bash -n tools/scout-exe-followup.sh
 
-      - name: Syntax-check executable table, string, and caller scanners
-        run: python3 -m py_compile tools/inspect-scout-exe-pointer-table.py tools/inspect-scout-exe-va-strings.py tools/scan-scout-exe-callers.py
+      - name: Syntax-check executable table, string, import, and caller scanners
+        run: python3 -m py_compile tools/inspect-scout-exe-pointer-table.py tools/inspect-scout-exe-va-strings.py tools/inspect-scout-exe-imports.py tools/scan-scout-exe-callers.py
 
       - name: Audit Scout DPC hierarchy
         id: audit
