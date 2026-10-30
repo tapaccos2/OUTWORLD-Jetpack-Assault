@@ -5,9 +5,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 const args = process.argv.slice(2);
 const applyAnchors = args.includes('--apply-anchor-candidates');
-const positional = args.filter(x => x !== '--apply-anchor-candidates');
+const useMeshVertexReference = args.includes('--use-mesh-vertex-reference');
+const positional = args.filter(x => x !== '--apply-anchor-candidates' && x !== '--use-mesh-vertex-reference');
 const input = positional[0], output = positional[1] || 'armour-raw-geometry.glb';
-if (!input) throw new Error('Usage: node export-dpc-armour-geometry.mjs <file.dpc> [out.glb] [--apply-anchor-candidates]');
+if (!input) throw new Error('Usage: node export-dpc-armour-geometry.mjs <file.dpc> [out.glb] [--apply-anchor-candidates] [--use-mesh-vertex-reference]');
 const b = fs.readFileSync(input);
 if (b.length < 40 || b.toString('ascii', 0, 4) !== 'DCPM' || b[4] !== 0x43) throw new Error('Expected DCPMC resource');
 const base = b.readUInt32LE(12);
@@ -100,8 +101,11 @@ for (let i = 0; i < owners.length; i++) {
   if (meshVertexReference < 0 || meshVertexReference + 4 > b.length) throw new Error('Part ' + (i + 1) + ': invalid mesh vertex reference');
   // Face indices are global indices into the shared coordinate pool. The +28
   // pointer is retained as metadata; it is not the base of the XYZ array.
-  const decoded = decodeMesh('submesh_' + (i + 1), owner, meshNode, transformNode, sharedVertexData, ptr(meshNode + 36), 26, anchor);
+  const selectedVertexData = useMeshVertexReference ? meshVertexReference : sharedVertexData;
+  const decoded = decodeMesh('submesh_' + (i + 1), owner, meshNode, transformNode, selectedVertexData, ptr(meshNode + 36), 26, anchor);
   decoded.meshVertexReferenceTarget = meshVertexReference;
+  decoded.sharedVertexDataOffset = sharedVertexData;
+  decoded.vertexBaseInterpretation = useMeshVertexReference ? 'meshNode+28 candidate local base' : 'shared pool descriptor base';
   meshes.push(decoded);
 }
 // Build a self-contained glTF 2.0 binary.
@@ -128,13 +132,13 @@ for (let i = 0; i < meshes.length; i++) {
   const indexAccessor = accessors.length;
   accessors.push({ bufferView: indexView, componentType: 5125, count: m.indices.length, type: 'SCALAR', min: [Math.min(...m.indices)], max: [Math.max(...m.indices)] });
   materials.push({ name: 'Diagnostic material ' + (i + 1), pbrMetallicRoughness: { baseColorFactor: colors[i], metallicFactor: 0, roughnessFactor: .82 }, doubleSided: true });
-  gltfMeshes.push({ name: m.name, primitives: [{ attributes: { POSITION: posAccessor, NORMAL: normAccessor }, indices: indexAccessor, material: i, mode: 4 }], extras: { sourceOwnerNodeOffset: m.owner, sourceMeshNodeOffset: m.meshNode, sourceTransformNodeOffset: m.transformNode, vertexDataOffset: m.vertexOffset, meshVertexReferenceTarget: m.meshVertexReferenceTarget ?? null, faceDataOffset: m.faceOffset, sourceFaceRecordCount: m.sourceCount, uniqueQuadCount: m.quadCount, anchorVectorCandidate: m.anchor } });
+  gltfMeshes.push({ name: m.name, primitives: [{ attributes: { POSITION: posAccessor, NORMAL: normAccessor }, indices: indexAccessor, material: i, mode: 4 }], extras: { sourceOwnerNodeOffset: m.owner, sourceMeshNodeOffset: m.meshNode, sourceTransformNodeOffset: m.transformNode, vertexDataOffset: m.vertexOffset, meshVertexReferenceTarget: m.meshVertexReferenceTarget ?? null, sharedVertexDataOffset: m.sharedVertexDataOffset ?? m.vertexOffset, vertexBaseInterpretation: m.vertexBaseInterpretation ?? 'root/shared pool base', faceDataOffset: m.faceOffset, sourceFaceRecordCount: m.sourceCount, uniqueQuadCount: m.quadCount, anchorVectorCandidate: m.anchor } });
   const node = { name: m.name, mesh: i, extras: { anchorVectorCandidate: m.anchor, transformApplied: applyAnchors } };
   if (applyAnchors && m.transformNode !== null) node.translation = m.anchor;
   nodes.push(node);
 }
 const binary = Buffer.concat(binaryParts);
-const gltf = { asset: { version: '2.0', generator: 'Outwars DPC armour geometry exporter' }, scene: 0, scenes: [{ name: 'Scout raw geometry', nodes: nodes.map((_, i) => i), extras: { sourceFile: path.basename(input), coordinateSystem: 'Original axes preserved; up-axis unknown', note: 'Raw extraction; attachment rotations, UVs, textures and skinning are not decoded.' } }], nodes, meshes: gltfMeshes, materials, accessors, bufferViews, buffers: [{ byteLength: binary.length }] };
+const gltf = { asset: { version: '2.0', generator: 'Outwars DPC armour geometry exporter' }, scene: 0, scenes: [{ name: 'Scout raw geometry', nodes: nodes.map((_, i) => i), extras: { sourceFile: path.basename(input), coordinateSystem: 'Original axes preserved; up-axis unknown', vertexBaseInterpretation: useMeshVertexReference ? 'meshNode+28 candidate local base' : 'shared pool descriptor base', note: 'Raw extraction; attachment rotations, UVs, textures and skinning are not decoded.' } }], nodes, meshes: gltfMeshes, materials, accessors, bufferViews, buffers: [{ byteLength: binary.length }] };
 let json = Buffer.from(JSON.stringify(gltf));
 const jsonPad = (4 - json.length % 4) % 4;
 if (jsonPad) json = Buffer.concat([json, Buffer.alloc(jsonPad, 32)]);
@@ -145,6 +149,7 @@ const header = Buffer.alloc(12); header.writeUInt32LE(0x46546c67, 0); header.wri
 const jh = Buffer.alloc(8); jh.writeUInt32LE(json.length, 0); jh.writeUInt32LE(0x4e4f534a, 4);
 const bh = Buffer.alloc(8); bh.writeUInt32LE(bin.length, 0); bh.writeUInt32LE(0x004e4942, 4);
 fs.writeFileSync(output, Buffer.concat([header, jh, json, bh, bin]));
-const report = { input, output, rootClass, partClass, rootRecordOffset: rootRecord, rootNodeOffset: rootNode, partListOffset: partList, anchorCandidatesApplied: applyAnchors, meshCount: meshes.length, totalVertices: meshes.reduce((s, m) => s + m.vertexCount, 0), totalTriangles: meshes.reduce((s, m) => s + m.triangleCount, 0), meshes: meshes.map(m => ({ name: m.name, ownerNodeOffset: m.owner, meshNodeOffset: m.meshNode, transformNodeOffset: m.transformNode, vertexDataOffset: m.vertexOffset, faceDataOffset: m.faceOffset, sourceFaceRecordCount: m.sourceCount, uniqueQuadCount: m.quadCount, triangles: m.triangleCount, vertices: m.vertexCount, bounds: [m.min, m.max], anchorVectorCandidate: m.anchor })), notes: ['XYZ coordinates are preserved as signed int16 values.', 'Four-index face records are deduplicated by unordered vertex set and triangulated as a fan.', 'Normals are generated from exported triangle winding.', 'Attachment transforms, UVs, original texture mapping, skin weights and animation are not included.', 'Wrapper translation candidates are metadata unless --apply-anchor-candidates is supplied.'] };
+const report = { input, output, rootClass, partClass, rootRecordOffset: rootRecord, rootNodeOffset: rootNode, partListOffset: partList, anchorCandidatesApplied: applyAnchors, vertexBaseInterpretation: useMeshVertexReference ? 'meshNode+28 candidate local base' : 'shared pool descriptor base', meshCount: meshes.length, totalVertices: meshes.reduce((s, m) => s + m.vertexCount, 0), totalTriangles: meshes.reduce((s, m) => s + m.triangleCount, 0), meshes: meshes.map(m => ({ name: m.name, ownerNodeOffset: m.owner, meshNodeOffset: m.meshNode, transformNodeOffset: m.transformNode, vertexDataOffset: m.vertexOffset, sharedVertexDataOffset: m.sharedVertexDataOffset ?? m.vertexOffset, meshVertexReferenceTarget: m.meshVertexReferenceTarget ?? null, vertexBaseInterpretation: m.vertexBaseInterpretation ?? 'root/shared pool base', faceDataOffset: m.faceOffset, sourceFaceRecordCount: m.sourceCount, uniqueQuadCount: m.quadCount, triangles: m.triangleCount, vertices: m.vertexCount, bounds: [m.min, m.max], anchorVectorCandidate: m.anchor })), notes: ['XYZ coordinates are preserved as signed int16 values.', 'Four-index face records are deduplicated by unordered vertex set and triangulated as a fan.', 'Normals are generated from exported triangle winding.', 'Attachment transforms, UVs, original texture mapping, skin weights and animation are not included.', 'Wrapper translation candidates are metadata unless --apply-anchor-candidates is supplied.',
+    'The --use-mesh-vertex-reference option treats meshNode+28 as the local vertex-array base for a diagnostic comparison; this interpretation is unverified.'] };
 fs.writeFileSync(output.replace(/\.glb$/i, '') + '.json', JSON.stringify(report, null, 2) + '\n');
 console.log(JSON.stringify(report, null, 2));
