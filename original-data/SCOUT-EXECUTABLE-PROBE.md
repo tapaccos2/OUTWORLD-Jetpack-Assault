@@ -329,3 +329,47 @@ bash tools/scout-exe-followup.sh
 Then upload the regenerated `/tmp/outwars-scout-exe-followup/REPORT.txt`.
 
 **Current status:** we have moved past the generic resource-loader boundary and identified the typed-record dispatcher plus a cluster of vector-like property handlers. The dispatch mapping is now the next concrete task. The Scout part assembly and actual attachment transforms remain unresolved.
+
+
+## Follow-up report 7: executable record handler and rotation-matrix path
+
+The next executable report contains the missing disassembly at `0x420B00` and a more useful interpretation of the three-WORD setter.
+
+### Correction: 0x420B00 is executable handler code, not a data table
+
+The parser at `0x422170` supplies `0x420B00` in `EBX` before calling `0x4DFCE4`. The new disassembly shows that `0x420B00` begins with a normal x86 function prologue (`push esi; push edi; push ebp`), saves its incoming register arguments, calls `0x490388`, and then branches through a decision tree using the incoming `EDI` value. The branch boundaries include `0x834/0x835`, `0xC26`, `0x1019–0x101E`, `0x13C5`, and several ranges around `0x1B64–0x1B89`.
+
+This proves `0x420B00` is code, not an array of function pointers or a raw handler table. The target routines are part of a range-based handler switch. The semantic names of those property IDs and the exact relationship between each branch target and the DPC class IDs are not yet established.
+
+The previous description of `0x420B00` as a handler-table base is therefore withdrawn. It is the address of an executable handler routine passed into the generic processing path. The `0x4DFCE4` excerpt in this report still stops at `0x4DFD90` and does not show the complete routine, so the full callback invocation contract remains open.
+
+### Rotation-matrix construction evidence
+
+The routine at `0x4222A8` copies three 16-bit values from its input into object fields `+0xE4`, `+0xE6`, and `+0xE8`. It then passes the address of that three-WORD block (`object+0xE4`) and the address of another object block (`object+0xB4`) to `0x4C5DB0`.
+
+The disassembly of `0x4C5DB0` shows that it reads the three 16-bit input components separately and calls `0x4C5440` three times, passing each value to the same fixed-point helper. It then performs fixed-point multiply/add operations. Other executable callers use the same `0x4C5DB0` helper after writing three WORDs into a target object's `+0xE4/+0xE6/+0xE8` fields and pass `object+0xB4` as the output block.
+
+This is strong evidence that the three-WORD field is an angle triple and `+0xB4` stores a derived orientation basis/rotation matrix. The final output stores, exact matrix layout, Euler order, and angle units are not present in the truncated `0x4C5DB0` window, so those details must not yet be hard-coded into the exporter.
+
+The adjacent setter at `0x422278` copies three DWORDs into `+0xEC/+0xF0/+0xF4`. These remain a three-component object field; interpreting them as translation is plausible but not independently proven in this report.
+
+### What this changes for Scout reconstruction
+
+We have now identified the executable's fixed-point three-angle-to-orientation-matrix path. That is a genuine transform-system breakthrough, not just another geometry candidate. However, it is not yet proven that the Scout type-16 wrapper values feed `0x4222A8` or that the eight Scout submeshes use this object layout in the same way.
+
+The remaining work is now targeted:
+
+1. Complete the `0x4DFCE4` routine and the `0x4C5DB0` / `0x4C5440` helper bodies.
+2. Disassemble the branch targets selected by `0x420B00` and identify the specific route into the three-angle setter.
+3. Map the DPC type-2/type-16 hierarchy records to the runtime object fields, then reconstruct parent-child matrix composition and validate the resulting Scout visually.
+
+The focused probe script has been extended to emit these exact windows without repeating the full executable disassembly. After `git pull`, run:
+
+```bash
+git pull
+bash tools/scout-exe-followup.sh
+```
+
+The new report sections are numbered 45–49: full `0x4DFCE4`, the `0x420B00` branch-target block, full `0x4C5DB0`, its fixed-point helper, and the `0x490388` validation helper.
+
+**Status:** runtime rotation construction is now strongly evidenced; Scout attachment-to-object mapping and final assembled-model validation remain incomplete.
