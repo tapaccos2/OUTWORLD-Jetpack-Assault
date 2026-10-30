@@ -1,0 +1,54 @@
+name: Scout part graph audit
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "tools/inspect-scout-part-graph.mjs"
+      - ".github/workflows/scout-part-graph-audit.yml"
+      - "original-data/units.ff"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scout-part-graph:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Syntax-check the audit tool
+        run: node --check tools/inspect-scout-part-graph.mjs
+
+      - name: Audit Scout DPC hierarchy
+        id: audit
+        shell: bash
+        run: |
+          set +e
+          node tools/inspect-scout-part-graph.mjs original-data/units.ff scout-part-graph-audit.json > scout-part-graph-audit.log 2>&1
+          code=$?
+          cat scout-part-graph-audit.log
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          if [ "$code" -ne 0 ]; then
+            echo "Audit did not complete; the log will be preserved as an artifact."
+          fi
+          exit 0
+
+      - name: Upload Scout graph audit results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scout-part-graph-audit
+          path: |
+            scout-part-graph-audit.json
+            scout-part-graph-audit.log
+          if-no-files-found: warn
+          retention-days: 14
