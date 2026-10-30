@@ -88,8 +88,23 @@ for target in targets:
             lines.append(f"    {line.rstrip()}")
         lines.append(f"  raw pointer occurrences: {len(ptr_offsets)}")
         for p in ptr_offsets[:50]:
-            owner = next((x[0] for x in sections if x[3] <= p < x[3] + x[4]), "headers/unknown")
-            lines.append(f"    file+0x{p:X} ({owner})")
+            owner_sec = next((x for x in sections if x[3] <= p < x[3] + x[4]), None)
+            owner = owner_sec[0] if owner_sec else "headers/unknown"
+            if owner_sec:
+                owner_name, owner_rva, _owner_vsize, owner_raw, _owner_size = owner_sec
+                slot_va = image_base + owner_rva + p - owner_raw
+                lines.append(f"    file+0x{p:X} ({owner}) -> pointer-slot VA 0x{slot_va:X}")
+                if owner_name == "DGROUP":
+                    slot_hex = f"{slot_va:x}"
+                    slot_rx = re.compile(r"(?i)(?<![0-9a-f])0x0*" + re.escape(slot_hex) + r"(?![0-9a-f])")
+                    slot_refs = [line for line in dis_lines if slot_rx.search(line)]
+                    lines.append(f"      code references to pointer slot: {len(slot_refs)}")
+                    for line in slot_refs[:20]:
+                        lines.append(f"        {line.rstrip()}")
+                left, right = max(0, p - 16), min(len(data), p + 20)
+                lines.append(f"      surrounding bytes [{left:#x}:{right:#x}]: {data[left:right].hex(' ')}")
+            else:
+                lines.append(f"    file+0x{p:X} ({owner})")
         lines.append("")
 
 out_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
