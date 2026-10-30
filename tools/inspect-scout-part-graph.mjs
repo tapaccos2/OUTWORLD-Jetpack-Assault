@@ -255,8 +255,8 @@ function createReader(file) {
           header: p20Link.targetHeader
         }
       },
-      rawFirst96: wordView(targetOffset, 96),
-      pointerCandidates: candidatePointers(targetOffset, 4, 96)
+      rawFirst160: wordView(targetOffset, 160),
+      pointerCandidates: candidatePointers(targetOffset, 4, 156)
     };
   }
   function type2Detail(offset, label) {
@@ -308,7 +308,8 @@ function createReader(file) {
       },
       faceStreamCandidate: possibleFaces === null ? null : faceSignatureStats(possibleFaces, 40),
       alignedPointerCandidates: candidatePointers(offset, 4, 64),
-      rawFirst64: wordView(offset, 64)
+      extendedPointerCandidates: candidatePointers(offset, 64, 156),
+      rawFirst160: wordView(offset, 160)
     };
   }
   function ownerDetail(offset, index) {
