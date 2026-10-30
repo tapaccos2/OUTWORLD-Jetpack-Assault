@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   scout-viewer:
@@ -111,6 +111,7 @@ jobs:
               }
               if (galleryButton !== 'Back to model') throw new Error('Rotation order gallery did not open');
               await page.screenshot({ path: '.scout-viewer-test/rotation-order-gallery.png', fullPage: true });
+              await page.screenshot({ path: '.scout-viewer-test/rotation-order-gallery.jpg', type: 'jpeg', quality: 72, fullPage: true });
               const canvasMetrics = await page.locator('canvas').evaluate(el => ({ width: el.width, height: el.height }));
               if (canvasMetrics.width < 100 || canvasMetrics.height < 100) throw new Error('Viewer canvas is not rendered');
               await page.locator('#rotationGalleryToggle').click();
@@ -142,5 +143,23 @@ jobs:
           path: |
             .scout-viewer-test/viewer-smoke-test.png
             .scout-viewer-test/rotation-order-gallery.png
+            .scout-viewer-test/rotation-order-gallery.jpg
           if-no-files-found: warn
           retention-days: 14
+
+      - name: Publish rotation comparison screenshot for direct inspection
+        if: always() && hashFiles('.scout-viewer-test/rotation-order-gallery.jpg') != ''
+        shell: bash
+        run: |
+          set -e
+          branch="scout-viewer-gallery-"$GITHUB_RUN_ID
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          mkdir -p /tmp/scout-gallery-publish
+          base64 -w0 .scout-viewer-test/rotation-order-gallery.jpg > /tmp/scout-gallery-publish/rotation-order-gallery.jpg.b64
+          git switch --orphan "$branch"
+          mkdir -p diagnostics/scout-viewer
+          cp /tmp/scout-gallery-publish/rotation-order-gallery.jpg.b64 diagnostics/scout-viewer/rotation-order-gallery.jpg.b64
+          git add diagnostics/scout-viewer
+          git commit -m "Publish Scout rotation comparison screenshot"
+          git push origin "HEAD:refs/heads/$branch"
