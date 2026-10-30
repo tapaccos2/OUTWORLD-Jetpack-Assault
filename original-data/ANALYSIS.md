@@ -132,3 +132,10 @@ This is the strongest result so far: the dimension fields, corner ordering, dire
 ### RPC XY pair is best interpreted as a surface corner
 
 Across all 34 RPC files, I generated quad corners under two anchor interpretations and measured exact shared-edge continuity. Treating the XY pair at `+32/+36` as the surface centre produced 445 shared edge keys, of which 175 had matching endpoint heights. Treating it as the local `(0,0)` corner produced 2,297 shared edge keys, of which 1,872 had matching endpoint heights, and was better in 27 of 34 files. This is strong internal evidence for corner anchoring. The mesh exporter now defaults to that interpretation while retaining the centre alternative for validation.
+
+
+### TPC parser cross-check from the original executable (2026-10-30)
+
+The uploaded PE32 executable's TPC loader at VA `0x0048d3a8` validates the `TPCMC` magic and version `0x43`. Its record loop reads a 256-entry palette as 16-bit words from record-relative offset +20. A zero palette word sets a transparency flag. The palette conversion at `0x0048d504` expands three five-bit components into 8-bit channel values: low bits `0x001f`, middle bits `0x03e0`, and high bits `0x7c00`, each scaled by two. This is RGB555-style 5:5:5 packing (not RGB565).
+
+The same routine walks variable-sized texture records and derives per-record dimensions/flags from packed fields; it does not simply treat the bytes after the header as a flat indexed bitmap. In the Scout texture, the first 256-word palette begins at file offset `0x28`, consistent with the executable's record-relative palette pointer. The record/pixel stream and its run/control encoding are still being decoded, so no PNG export or full pixel-format claim is made yet.
