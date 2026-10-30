@@ -65,6 +65,46 @@ python3 "$SCRIPT_DIR/scan-scout-exe-strings.py" \
   > "$OUT/17-dpc-resource-open-follow-on.txt" 2>&1
 "$OBJDUMP" -d -Mintel --start-address=0x4ce100 --stop-address=0x4ce260 "$EXE" \
   > "$OUT/23-low-level-file-reader-4ce158.txt" 2>&1
+
+# Extend the open/redirect paths beyond the previously truncated windows.
+"$OBJDUMP" -d -Mintel --start-address=0x4ce240 --stop-address=0x4ce360 "$EXE" \
+  > "$OUT/27-low-level-file-reader-tail.txt" 2>&1
+"$OBJDUMP" -d -Mintel --start-address=0x4ce080 --stop-address=0x4ce158 "$EXE" \
+  > "$OUT/28-virtual-file-open-helper.txt" 2>&1
+"$OBJDUMP" -d -Mintel --start-address=0x4cd5c0 --stop-address=0x4cd640 "$EXE" \
+  > "$OUT/29-virtual-file-lookup-helper.txt" 2>&1
+
+# Trace the resource-loader setup/caller and the allocation/data helpers it reaches.
+"$OBJDUMP" -d -Mintel --start-address=0x48c6a8 --stop-address=0x48c890 "$EXE" \
+  > "$OUT/30-resource-loader-caller-48c6a8.txt" 2>&1
+"$OBJDUMP" -d -Mintel --start-address=0x420960 --stop-address=0x420a30 "$EXE" \
+  > "$OUT/31-callee-4209a0.txt" 2>&1
+"$OBJDUMP" -d -Mintel --start-address=0x4fed80 --stop-address=0x4fee20 "$EXE" \
+  > "$OUT/32-callee-4fedb8.txt" 2>&1
+
+# Locate all static references to global buffers and arrays used by the DPC/TPC path.
+python3 - "$PROBE/04-full-code-disassembly.txt" "$OUT/33-resource-buffer-xrefs.txt" <<'PY'
+import sys
+from pathlib import Path
+
+source, destination = map(Path, sys.argv[1:3])
+needles = (
+    "0xa0472c", "0xb8472c",
+    "0x12888f8", "0x12888fc", "0x1288900", "0x1288904",
+    "0x1288908", "0x1288918",
+    "0xf84733", "0xf84734", "0xf84735",
+    "0x12b3970",
+)
+lines = source.read_text(errors="replace").splitlines()
+with destination.open("w") as out:
+    out.write("STATIC XREFS TO DPC/TPC GLOBAL BUFFERS AND PARSED RECORD ARRAYS\n")
+    out.write("Source: " + str(source) + "\n")
+    for number, line in enumerate(lines, 1):
+        low = line.lower()
+        found = [needle for needle in needles if needle in low]
+        if found:
+            out.write("{}: [{}] {}\n".format(number, ", ".join(found), line))
+PY
 "$OBJDUMP" -d -Mintel --start-address=0x4cd6a0 --stop-address=0x4cd7c0 "$EXE" \
   > "$OUT/24-io-redirect-helpers.txt" 2>&1
 "$OBJDUMP" -d -Mintel --start-address=0x4dd420 --stop-address=0x4dd440 "$EXE" \
@@ -92,7 +132,7 @@ python3 "$SCRIPT_DIR/inspect-scout-exe-pointer-table.py" "$EXE" \
 
 python3 "$SCRIPT_DIR/scan-scout-exe-callers.py" \
   "$PROBE/04-full-code-disassembly.txt" \
-  --targets "0x486720,0x48ce71,0x48ce89,0x48cea1,0x48ced4,0x48cfb0,0x4ee38a,0x500ae9,0x4dd420,0x4ce6c8,0x4ce158,0x4cd6cc,0x4cd760,0x455578,0x48d3aa" \
+  --targets "0x486720,0x48ce71,0x48ce89,0x48cea1,0x48ced4,0x48cfb0,0x4ee38a,0x500ae9,0x4dd420,0x4ce6c8,0x4ce158,0x4cd6cc,0x4cd760,0x455578,0x48d3aa,0x4843d4,0x4209a0,0x4fedb8,0x4ce0a4,0x4cd5e8" \
   --context 16 \
   > "$OUT/15-loader-callers.txt"
 
@@ -152,6 +192,27 @@ python3 "$SCRIPT_DIR/scan-scout-exe-callers.py" \
   echo
   echo "========== IMPORT ADDRESS TABLE RESOLUTION =========="
   cat "$OUT/26-import-address-resolution.txt"
+  echo
+  echo "========== LOW-LEVEL FILE-READER TAIL: 0x4CE240 =========="
+  cat "$OUT/27-low-level-file-reader-tail.txt"
+  echo
+  echo "========== VIRTUAL-FILE OPEN HELPER: 0x4CE080 =========="
+  cat "$OUT/28-virtual-file-open-helper.txt"
+  echo
+  echo "========== VIRTUAL-FILE LOOKUP HELPER: 0x4CD5C0 =========="
+  cat "$OUT/29-virtual-file-lookup-helper.txt"
+  echo
+  echo "========== RESOURCE LOADER CALLER: 0x48C6A8 =========="
+  cat "$OUT/30-resource-loader-caller-48c6a8.txt"
+  echo
+  echo "========== CALLEE 0x4209A0 =========="
+  cat "$OUT/31-callee-4209a0.txt"
+  echo
+  echo "========== CALLEE 0x4FEDB8 =========="
+  cat "$OUT/32-callee-4fedb8.txt"
+  echo
+  echo "========== RESOURCE BUFFER / RECORD ARRAY XREFS =========="
+  cat "$OUT/33-resource-buffer-xrefs.txt"
 } > "$OUT/REPORT.txt"
 
 echo "Created: $OUT/REPORT.txt"
