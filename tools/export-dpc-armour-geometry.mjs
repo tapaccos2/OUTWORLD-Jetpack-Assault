@@ -87,7 +87,9 @@ for (let i = 0; i < owners.length; i++) {
   if (b[meshNode] !== 2 || b[transformNode] !== 2) throw new Error('Part ' + (i + 1) + ': expected type-2 mesh and transform nodes');
   const anchor = [s32(transformNode + 32), s32(transformNode + 36), s32(transformNode + 40)];
   for (let k = 0; k < 3; k++) if (anchor[k] !== s32(owner + 8 + k * 4)) throw new Error('Part ' + (i + 1) + ': owner/wrapper vector mismatch');
-  meshes.push(decodeMesh('submesh_' + (i + 1), owner, meshNode, transformNode, ptr(meshNode + 28), ptr(meshNode + 36), 26, anchor));
+  const meshDescriptor = ptr(ptr(meshNode + 20) + 8);
+  const sharedVertexData = ptr(meshDescriptor + 4);
+  meshes.push(decodeMesh('submesh_' + (i + 1), owner, meshNode, transformNode, sharedVertexData, ptr(meshNode + 36), 26, anchor));
 }
 // Build a self-contained glTF 2.0 binary.
 const binaryParts = [], bufferViews = [], accessors = [], gltfMeshes = [], nodes = [], materials = [];
