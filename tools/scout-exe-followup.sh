@@ -133,4 +133,5 @@ python3 "$SCRIPT_DIR/scan-scout-exe-callers.py" \
 } > "$OUT/REPORT.txt"
 
 echo "Created: $OUT/REPORT.txt"
-cat "$OUT/REPORT.txt"
+echo "The full report was saved to disk; it is not printed to the terminal."
+echo "New focused sections trace the DPC name collector and its downstream file/resource helpers."
