@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Focused second-pass analysis using the existing full disassembly.
-# Usage: bash tools/scout-exe-followup.sh [path/to/outwars.exe] [probe-dir]
+# Usage: bash tools/scout-exe-followup.sh [path/to/outwars.exe] [probe-dir] [output-dir]
 set -euo pipefail
 
 EXE="\${1:-$HOME/Outwars-extracted/outwars.exe}"
