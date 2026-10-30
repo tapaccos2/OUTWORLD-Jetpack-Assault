@@ -1,0 +1,130 @@
+name: Scout viewer browser test
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scout-model-viewer.html"
+      - "tools/export-dpc-armour-geometry.mjs"
+      - "tools/extract-ff-resources.mjs"
+      - "original-data/units.ff"
+      - ".github/workflows/scout-viewer-smoke-test.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scout-viewer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Parse-check exporter
+        run: |
+          node --check tools/export-dpc-armour-geometry.mjs
+          node --check tools/extract-ff-resources.mjs
+
+      - name: Install Playwright
+        run: |
+          npm init -y
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+
+      - name: Extract Scout and export test GLB
+        run: |
+          mkdir -p .scout-viewer-test
+          node tools/extract-ff-resources.mjs original-data/units.ff --out .scout-viewer-test/extracted
+          node tools/export-dpc-armour-geometry.mjs .scout-viewer-test/extracted/units/scout_mj.dpc .scout-viewer-test/scout-mj-raw.glb
+
+      - name: Load viewer and validate raw GLB plus rotation trial
+        run: |
+          cat > .scout-viewer-test/test.cjs <<'EOF'
+          const { chromium } = require('playwright');
+          const fs = require('fs');
+          const path = require('path');
+          const http = require('http');
+          const root = process.cwd();
+          const mime = {
+            '.html': 'text/html; charset=utf-8',
+            '.js': 'text/javascript; charset=utf-8',
+            '.mjs': 'text/javascript; charset=utf-8',
+            '.glb': 'model/gltf-binary',
+            '.json': 'application/json'
+          };
+          const server = http.createServer((req, res) => {
+            let pathname;
+            try { pathname = decodeURIComponent(new URL(req.url, 'http://127.0.0.1').pathname); }
+            catch { res.writeHead(400); res.end('Bad request'); return; }
+            const file = path.resolve(root, '.' + pathname);
+            if (file !== root && !file.startsWith(root + path.sep)) {
+              res.writeHead(403); res.end('Forbidden'); return;
+            }
+            fs.readFile(file, (err, data) => {
+              if (err) { res.writeHead(404); res.end('Not found'); return; }
+              res.writeHead(200, {
+                'Content-Type': mime[path.extname(file).toLowerCase()] || 'application/octet-stream',
+                'Cache-Control': 'no-store'
+              });
+              res.end(data);
+            });
+          });
+          (async () => {
+            await new Promise((resolve, reject) => {
+              server.once('error', reject);
+              server.listen(4174, '127.0.0.1', resolve);
+            });
+            const browser = await chromium.launch({ headless: true });
+            try {
+              const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+              const errors = [];
+              page.on('pageerror', e => errors.push(e.message));
+              page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+              await page.goto('http://127.0.0.1:4174/scout-model-viewer.html?test=' + Date.now(), { waitUntil: 'domcontentloaded' });
+              await page.waitForSelector('#rotationTrial', { timeout: 30000 });
+              await page.locator('#file').setInputFiles(path.join(root, '.scout-viewer-test/scout-mj-raw.glb'));
+              await page.waitForFunction(() => {
+                const s = document.querySelector('#status')?.innerText || '';
+                return s.includes('Loaded: scout-mj-raw.glb') && s.includes('Meshes: 9');
+              }, null, { timeout: 30000 });
+              const loaded = await page.locator('#status').innerText();
+              await page.locator('#rotationOrder').selectOption('XYZ');
+              await page.locator('#rotationTrial').click();
+              await page.waitForFunction(() => (document.querySelector('#status')?.innerText || '').includes('4096 units/full turn'));
+              const rotated = await page.locator('#status').innerText();
+              await page.locator('#resetPose').click();
+              await page.waitForFunction(() => (document.querySelector('#status')?.innerText || '').includes('Raw model pose restored'));
+              await page.screenshot({ path: '.scout-viewer-test/viewer-smoke-test.png', fullPage: true });
+              const result = { title: await page.title(), loaded, rotated, reset: await page.locator('#status').innerText(), errors };
+              console.log('SCOUT VIEWER CHECK:', JSON.stringify(result, null, 2));
+              if (!loaded.includes('Meshes: 9')) throw new Error('Scout GLB did not load nine meshes');
+              if (!rotated.includes('8 mesh candidates') && !rotated.includes('9 mesh candidates')) throw new Error('Rotation trial did not apply to mesh candidates');
+              if (errors.some(e => /SyntaxError|ReferenceError|TypeError|Failed to resolve module|Failed to fetch dynamically imported module/i.test(e))) {
+                throw new Error('Critical browser errors: ' + JSON.stringify(errors));
+              }
+            } finally {
+              await browser.close();
+              server.close();
+            }
+          })().catch(error => {
+            console.error(error);
+            process.exitCode = 1;
+          });
+          EOF
+          node .scout-viewer-test/test.cjs
+
+      - name: Upload viewer test screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scout-viewer-browser-test
+          path: .scout-viewer-test/viewer-smoke-test.png
+          if-no-files-found: warn
+          retention-days: 14
