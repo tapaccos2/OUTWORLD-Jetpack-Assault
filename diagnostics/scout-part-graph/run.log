@@ -1,0 +1,36 @@
+{
+  "status": "COMPLETED",
+  "source": "/tmp/outwars-scout-graph-2149/units/scout_mj.dpc",
+  "summary": {
+    "listEntryCount": 9,
+    "type1PartNodeCount": 9,
+    "nonType1LinkedEntryCount": 0,
+    "ownerPlus24Type2Count": 9,
+    "ownerPlus28Type2Count": 8,
+    "ownerAndChild28VectorMatchCount": 8,
+    "entriesWithMultipleChildOwnerLinks": [
+      {
+        "listIndex": 8,
+        "ownerOffset": 20436,
+        "linkedType1Offsets": [
+          8040,
+          9592,
+          11144,
+          12696,
+          14248,
+          15800,
+          17352,
+          18904,
+          20436,
+          6496
+        ]
+      }
+    ],
+    "warnings": [
+      "Type/class and pointer links are structural observations, not semantic labels.",
+      "A type-2 node is not automatically a mesh or transform; its runtime consumer still needs confirmation.",
+      "Face signature scans are candidate stream checks and can cross unrelated data; use them as diagnostics, not proof."
+    ]
+  },
+  "output": "/home/runner/work/OUTWORLD-Jetpack-Assault/OUTWORLD-Jetpack-Assault/scout-part-graph-audit.json"
+}
