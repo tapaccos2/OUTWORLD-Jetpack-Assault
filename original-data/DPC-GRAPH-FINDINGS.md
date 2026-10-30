@@ -87,3 +87,28 @@ A byte-level comparison of the seven type-1 children in the rag04 and dead01 cla
 This is evidence for a coordinate-like triple in the payload, not yet proof of a vertex format. Axes, units, transforms, and the purpose of the +16 value remain unknown. The exact repeated triples across two map files make this a strong target for comparison with executable field accesses and other scene records.
 
 The new tools/inspect-dpc-point-lists.mjs script reports these fields for every validated type-9/class-7012 seven-entry list it finds. It labels the triples as candidates and deliberately avoids assigning geometry semantics.
+
+
+## Newly observed type-8 records (2026-10-30)
+
+A separate extended traversal was used to inspect the candidate type-8 records. It follows the currently observed type-1 pointer arrays, the provisional type-4 list layout, and the specific type-9/class-7012 seven-entry list. These counts are therefore **specific to this traversal**, and should not be mixed with the earlier six-map graph comparison above.
+
+| DPC resource | File bytes | Reachable records in extended traversal | Reachable type-8 records |
+|---|---:|---:|---:|
+| `rag01.dpc` | 348,488 | 120 | 0 |
+| `rag02.dpc` | 455,100 | 189 | 57 |
+| `rag04.dpc` | 884,600 | 392 | 175 |
+| `oasis03.dpc` | 245,532 | 419 | 104 |
+
+Every sampled type-8 record is 112 bytes from the next sampled type-8 record in its local run, has numeric class ID 0, and contains eight consecutive signed 32-bit triples beginning at record offset +16 (12-byte stride). This is a repeatable record shape, not yet a decoded mesh format.
+
+The first sampled triples illustrate two distinct numeric patterns:
+
+- Some triples have Euclidean lengths close to 4,096. Examples include (0,0,4096), (-4095,1,0), (0,4095,0), and (0,0,-4096).
+- Other triples have substantially larger lengths, for example (16551,7126,7083) and (6953,6992,-15911).
+
+In `rag02.dpc`, sampled records begin with a 32-bit value 65286 (0x0000FF06); in `rag04.dpc`, sampled records include 65286 and 1286 (0x00000506); `oasis03.dpc` samples include 1030 and 773. The following two 32-bit header fields were zero in these samples. These values are recorded as raw observations only.
+
+The presence of near-4096 triples is consistent with fixed-point unit-vector data, but the larger triples in the same eight-element block mean the block cannot safely be described as eight normals. A plausible working hypothesis is that the record interleaves different vector-like fields (for example, directional and position-like values); this remains unproven. The type-8 records were not reachable in the same traversal of `rag01.dpc`, which is an important negative comparison.
+
+**Next validation:** identify the parent record types and pointer fields that lead to type-8 records; compare their eight-triple blocks with the GPC/RPC surfaces and with other maps; then locate the executable code that consumes this record type. Do not export these triples as geometry until the field roles and coordinate transform are established.
