@@ -139,3 +139,46 @@ bash tools/scout-exe-followup.sh
 ```
 
 Then upload `/tmp/outwars-scout-exe-followup/REPORT.txt` directly. The original full PE disassembly is reused; the expensive full probe is not repeated.
+
+
+## Follow-up report 3: DPC/TPC path construction and file-access wrapper
+
+The latest uploaded report adds useful detail about the hand-off from filename collection to resource reading.
+
+### Exact format strings at the new boundary
+
+The string inspector confirms these literals:
+
+- VA `0x52342A`: `DPC`
+- VA `0x52342E`: `%s.%s`
+- VA `0x523434`: `TPC`
+- VA `0x523438`: `%s.%s`
+
+The code around `0x48D3A8` uses these format strings to construct two extension-qualified paths from the selected base name. Thus this path handles both DPC and TPC resources. The TPC role is likely associated texture data, but its exact format/content has not yet been confirmed.
+
+### Helper classifications corrected
+
+- `0x500AE9` is now identified from its body as a case-insensitive byte-string comparator. It folds ASCII uppercase letters to lowercase before comparing and returns zero when the strings match (or when the compared string terminates together). That confirms the duplicate-name check in the collection routine.
+- `0x4DD420`, when disassembled from its exact entry address, is a tiny global-pointer setter: it stores the incoming EAX value at `0x12B3970` and returns. It is not the file parser.
+- `0x4CE6C8` is a lower-level file-access wrapper. It calls `0x4CE158`, then uses the returned file context/handle and a data buffer in a path that calls an imported API through IAT slot `0x14106B0`. The call setup strongly resembles a Win32 file read, and another IAT slot `0x1410630` is used in the close/cleanup path. These API names are awaiting import-table resolution.
+- The DPC/TPC loader checks the first DWORD of the returned data against `0x4D504354` (bytes `54 43 50 4D`, ASCII bytes `TCPM`) and then checks a further field against `0x43`. This is evidence of binary-header validation, but the full format structure is not yet decoded.
+
+### Next probe now prepared
+
+The follow-up script has been extended (without repeating full disassembly) to:
+- dump the complete loader routine through `0x48D810`, rather than stopping mid-way at `0x48D600`;
+- disassemble the lower-level helper at `0x4CE158`;
+- inspect the adjacent custom-I/O helpers at `0x4CD6CC` and `0x4CD760`;
+- disassemble `0x4DD420` from its actual entry boundary;
+- resolve import-table slots `0x1410630`, `0x14106B0`, and `0x14106B8` to DLL/API names.
+
+The new import inspector is `tools/inspect-scout-exe-imports.py`. The workflow syntax-checks it. To collect the next report, run:
+
+```bash
+git pull
+bash tools/scout-exe-followup.sh
+```
+
+The full result remains saved at `/tmp/outwars-scout-exe-followup/REPORT.txt` and is no longer printed to the terminal.
+
+**Remaining blocker:** this is now a credible path into the DPC/TPC resource reader, but the complete format parser, graph-to-transform conversion, and actual per-part transform semantics are still not proven.
