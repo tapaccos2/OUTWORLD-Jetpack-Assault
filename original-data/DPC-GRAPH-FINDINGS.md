@@ -112,3 +112,17 @@ In `rag02.dpc`, sampled records begin with a 32-bit value 65286 (0x0000FF06); in
 The presence of near-4096 triples is consistent with fixed-point unit-vector data, but the larger triples in the same eight-element block mean the block cannot safely be described as eight normals. A plausible working hypothesis is that the record interleaves different vector-like fields (for example, directional and position-like values); this remains unproven. The type-8 records were not reachable in the same traversal of `rag01.dpc`, which is an important negative comparison.
 
 **Next validation:** identify the parent record types and pointer fields that lead to type-8 records; compare their eight-triple blocks with the GPC/RPC surfaces and with other maps; then locate the executable code that consumes this record type. Do not export these triples as geometry until the field roles and coordinate transform are established.
+
+
+### Type-8 record field pattern: two endpoint positions and six unit-length vectors
+
+A full scan of the reachable type-8 records in rag02, rag04 and oasis03 gives a stronger field pattern. In every sampled record, triples at slots 0, 1, 2, 4 and 5 have lengths close to 4096; slot 6 is usually also close to 4096, with occasional zero values. By contrast, slots 3 and 7 have much larger coordinate-like magnitudes. The natural structural grouping is therefore two four-triple blocks:
+
+- block A: three near-unit-length vector triples, followed by one coordinate-like triple (slot 3)
+- block B: three near-unit-length vector triples, followed by one coordinate-like triple (slot 7)
+
+For rag02, all 57 records have near-4096 lengths in slots 0, 1, 2, 4 and 5; slot 6 does so in 54/57. For rag04, slots 0, 1, 2, 4 and 5 do so in all 175 records; slot 6 does so in 138/175. For oasis03, slots 0, 1, 2 and 4 do so in all 104 records; slot 5 does so in 103/104 and slot 6 in 59/104. The position-like slots are never all-zero in these samples.
+
+This strongly supports two endpoint-like structures, each carrying three direction-like vectors and one position-like vector. It does not establish whether the direction vectors are face normals, edge normals, a local frame, or another basis. Tests of pairwise orthogonality show they are often not mutually perpendicular, so they must not simply be called XYZ axes. Nor is the endpoint pair proven to be a rendered edge or polygon.
+
+Exact position reuse between type-8 records is uncommon in these samples (rag02: none among 114 endpoint positions; rag04: two shared positions; oasis03: one shared position). This may mean records describe independent edges/segments or use different coordinate precision/transform conventions; more evidence is needed before assembling triangles.
