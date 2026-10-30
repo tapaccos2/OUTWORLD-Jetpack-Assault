@@ -6,7 +6,12 @@ import path from 'node:path';
 const args = process.argv.slice(2);
 const applyAnchors = args.includes('--apply-anchor-candidates');
 const useMeshVertexReference = args.includes('--use-mesh-vertex-reference');
-const positional = args.filter(x => x !== '--apply-anchor-candidates' && x !== '--use-mesh-vertex-reference');
+const applyReferencePointMapping = args.includes('--apply-reference-point-mapping');
+const positional = args.filter(x =>
+  x !== '--apply-anchor-candidates' &&
+  x !== '--use-mesh-vertex-reference' &&
+  x !== '--apply-reference-point-mapping'
+);
 const input = positional[0], output = positional[1] || 'armour-raw-geometry.glb';
 if (!input) throw new Error('Usage: node export-dpc-armour-geometry.mjs <file.dpc> [out.glb] [--apply-anchor-candidates] [--use-mesh-vertex-reference]');
 const b = fs.readFileSync(input);
@@ -107,6 +112,29 @@ for (let i = 0; i < owners.length; i++) {
   decoded.meshVertexReferenceTarget = meshVertexReference;
   decoded.sharedVertexDataOffset = sharedVertexData;
   decoded.vertexBaseInterpretation = useMeshVertexReference ? 'meshNode+28 candidate local base' : 'shared pool descriptor base';
+  if (applyReferencePointMapping) {
+    if (useMeshVertexReference) throw new Error('Reference-point mapping must use the shared coordinate-pool base');
+    const referencePoint = [
+      b.readInt16LE(meshVertexReference),
+      b.readInt16LE(meshVertexReference + 2),
+      b.readInt16LE(meshVertexReference + 4)
+    ];
+    const targetPoint = [s32(meshNode + 56), s32(meshNode + 60), s32(meshNode + 64)];
+    const translation = targetPoint.map((value, k) => value - referencePoint[k]);
+    for (let v = 0; v < decoded.vertexCount; v++) {
+      for (let k = 0; k < 3; k++) decoded.positions[v * 3 + k] += translation[k];
+    }
+    decoded.min = [Infinity, Infinity, Infinity];
+    decoded.max = [-Infinity, -Infinity, -Infinity];
+    for (let v = 0; v < decoded.vertexCount; v++) {
+      for (let k = 0; k < 3; k++) {
+        const value = decoded.positions[v * 3 + k];
+        decoded.min[k] = Math.min(decoded.min[k], value);
+        decoded.max[k] = Math.max(decoded.max[k], value);
+      }
+    }
+    decoded.referencePointMappingCandidate = { referencePoint, targetPoint, translation };
+  }
   meshes.push(decoded);
 }
 // Build a self-contained glTF 2.0 binary.
@@ -133,13 +161,13 @@ for (let i = 0; i < meshes.length; i++) {
   const indexAccessor = accessors.length;
   accessors.push({ bufferView: indexView, componentType: 5125, count: m.indices.length, type: 'SCALAR', min: [Math.min(...m.indices)], max: [Math.max(...m.indices)] });
   materials.push({ name: 'Diagnostic material ' + (i + 1), pbrMetallicRoughness: { baseColorFactor: colors[i], metallicFactor: 0, roughnessFactor: .82 }, doubleSided: true });
-  gltfMeshes.push({ name: m.name, primitives: [{ attributes: { POSITION: posAccessor, NORMAL: normAccessor }, indices: indexAccessor, material: i, mode: 4 }], extras: { sourceOwnerNodeOffset: m.owner, sourceMeshNodeOffset: m.meshNode, sourceTransformNodeOffset: m.transformNode, vertexDataOffset: m.vertexOffset, meshVertexReferenceTarget: m.meshVertexReferenceTarget ?? null, sharedVertexDataOffset: m.sharedVertexDataOffset ?? m.vertexOffset, vertexBaseInterpretation: m.vertexBaseInterpretation ?? 'root/shared pool base', faceDataOffset: m.faceOffset, sourceFaceRecordCount: m.sourceCount, uniqueQuadCount: m.quadCount, anchorVectorCandidate: m.anchor } });
+  gltfMeshes.push({ name: m.name, primitives: [{ attributes: { POSITION: posAccessor, NORMAL: normAccessor }, indices: indexAccessor, material: i, mode: 4 }], extras: { sourceOwnerNodeOffset: m.owner, sourceMeshNodeOffset: m.meshNode, sourceTransformNodeOffset: m.transformNode, vertexDataOffset: m.vertexOffset, meshVertexReferenceTarget: m.meshVertexReferenceTarget ?? null, sharedVertexDataOffset: m.sharedVertexDataOffset ?? m.vertexOffset, vertexBaseInterpretation: m.vertexBaseInterpretation ?? 'root/shared pool base', faceDataOffset: m.faceOffset, sourceFaceRecordCount: m.sourceCount, uniqueQuadCount: m.quadCount, anchorVectorCandidate: m.anchor, referencePointMappingCandidate: m.referencePointMappingCandidate ?? null } });
   const node = { name: m.name, mesh: i, extras: { anchorVectorCandidate: m.anchor, transformApplied: applyAnchors } };
   if (applyAnchors && m.transformNode !== null) node.translation = m.anchor;
   nodes.push(node);
 }
 const binary = Buffer.concat(binaryParts);
-const gltf = { asset: { version: '2.0', generator: 'Outwars DPC armour geometry exporter' }, scene: 0, scenes: [{ name: 'Scout raw geometry', nodes: nodes.map((_, i) => i), extras: { sourceFile: path.basename(input), coordinateSystem: 'Original axes preserved; up-axis unknown', vertexBaseInterpretation: useMeshVertexReference ? 'meshNode+28 candidate local base' : 'shared pool descriptor base', note: 'Raw extraction; attachment rotations, UVs, textures and skinning are not decoded.' } }], nodes, meshes: gltfMeshes, materials, accessors, bufferViews, buffers: [{ byteLength: binary.length }] };
+const gltf = { asset: { version: '2.0', generator: 'Outwars DPC armour geometry exporter' }, scene: 0, scenes: [{ name: 'Scout raw geometry', nodes: nodes.map((_, i) => i), extras: { sourceFile: path.basename(input), coordinateSystem: 'Original axes preserved; up-axis unknown', vertexBaseInterpretation: useMeshVertexReference ? 'meshNode+28 candidate local base' : 'shared pool descriptor base', referencePointMappingCandidateApplied: applyReferencePointMapping, note: 'Reference-point mapping is a diagnostic translation hypothesis only; no runtime transform has been decoded.' } }], nodes, meshes: gltfMeshes, materials, accessors, bufferViews, buffers: [{ byteLength: binary.length }] };
 let json = Buffer.from(JSON.stringify(gltf));
 const jsonPad = (4 - json.length % 4) % 4;
 if (jsonPad) json = Buffer.concat([json, Buffer.alloc(jsonPad, 32)]);
@@ -150,7 +178,8 @@ const header = Buffer.alloc(12); header.writeUInt32LE(0x46546c67, 0); header.wri
 const jh = Buffer.alloc(8); jh.writeUInt32LE(json.length, 0); jh.writeUInt32LE(0x4e4f534a, 4);
 const bh = Buffer.alloc(8); bh.writeUInt32LE(bin.length, 0); bh.writeUInt32LE(0x004e4942, 4);
 fs.writeFileSync(output, Buffer.concat([header, jh, json, bh, bin]));
-const report = { input, output, rootClass, partClass, rootRecordOffset: rootRecord, rootNodeOffset: rootNode, partListOffset: partList, anchorCandidatesApplied: applyAnchors, vertexBaseInterpretation: useMeshVertexReference ? 'meshNode+28 candidate local base' : 'shared pool descriptor base', meshCount: meshes.length, totalVertices: meshes.reduce((s, m) => s + m.vertexCount, 0), totalTriangles: meshes.reduce((s, m) => s + m.triangleCount, 0), meshes: meshes.map(m => ({ name: m.name, ownerNodeOffset: m.owner, meshNodeOffset: m.meshNode, transformNodeOffset: m.transformNode, vertexDataOffset: m.vertexOffset, sharedVertexDataOffset: m.sharedVertexDataOffset ?? m.vertexOffset, meshVertexReferenceTarget: m.meshVertexReferenceTarget ?? null, vertexBaseInterpretation: m.vertexBaseInterpretation ?? 'root/shared pool base', faceDataOffset: m.faceOffset, sourceFaceRecordCount: m.sourceCount, uniqueQuadCount: m.quadCount, triangles: m.triangleCount, vertices: m.vertexCount, bounds: [m.min, m.max], anchorVectorCandidate: m.anchor })), notes: ['XYZ coordinates are preserved as signed int16 values.', 'Four-index face records are deduplicated by unordered vertex set and triangulated as a fan.', 'Normals are generated from exported triangle winding.', 'Attachment transforms, UVs, original texture mapping, skin weights and animation are not included.', 'Wrapper translation candidates are metadata unless --apply-anchor-candidates is supplied.',
-    'The --use-mesh-vertex-reference option treats meshNode+28 as the local vertex-array base for a diagnostic comparison; this interpretation is unverified.'] };
+const report = { input, output, rootClass, partClass, rootRecordOffset: rootRecord, rootNodeOffset: rootNode, partListOffset: partList, anchorCandidatesApplied: applyAnchors, vertexBaseInterpretation: useMeshVertexReference ? 'meshNode+28 candidate local base' : 'shared pool descriptor base', referencePointMappingCandidateApplied: applyReferencePointMapping, meshCount: meshes.length, totalVertices: meshes.reduce((s, m) => s + m.vertexCount, 0), totalTriangles: meshes.reduce((s, m) => s + m.triangleCount, 0), meshes: meshes.map(m => ({ name: m.name, ownerNodeOffset: m.owner, meshNodeOffset: m.meshNode, transformNodeOffset: m.transformNode, vertexDataOffset: m.vertexOffset, sharedVertexDataOffset: m.sharedVertexDataOffset ?? m.vertexOffset, meshVertexReferenceTarget: m.meshVertexReferenceTarget ?? null, referencePointMappingCandidate: m.referencePointMappingCandidate ?? null, vertexBaseInterpretation: m.vertexBaseInterpretation ?? 'root/shared pool base', faceDataOffset: m.faceOffset, sourceFaceRecordCount: m.sourceCount, uniqueQuadCount: m.quadCount, triangles: m.triangleCount, vertices: m.vertexCount, bounds: [m.min, m.max], anchorVectorCandidate: m.anchor })), notes: ['XYZ coordinates are preserved as signed int16 values.', 'Four-index face records are deduplicated by unordered vertex set and triangulated as a fan.', 'Normals are generated from exported triangle winding.', 'Attachment transforms, UVs, original texture mapping, skin weights and animation are not included.', 'Wrapper translation candidates are metadata unless --apply-anchor-candidates is supplied.',
+    'The --use-mesh-vertex-reference option treats meshNode+28 as the local vertex-array base for a diagnostic comparison; this interpretation is unverified.',
+    'The --apply-reference-point-mapping option translates each shared-pool submesh so the vertex referenced by meshNode+28 lands at the XYZ value stored at meshNode+56/+60/+64. This is an unverified diagnostic mapping, not a decoded runtime transform.'] };
 fs.writeFileSync(output.replace(/\.glb$/i, '') + '.json', JSON.stringify(report, null, 2) + '\n');
 console.log(JSON.stringify(report, null, 2));
