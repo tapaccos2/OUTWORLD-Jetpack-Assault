@@ -49,3 +49,9 @@ node tools/export-tpc-images.mjs units/scout_mj.tpc /tmp/scout-mj-textures
 node tools/analyze-motion-channels.mjs motion /tmp/motion-profile.json
 node tools/export-dpc-armour-geometry.mjs units/scout_mj.dpc /tmp/scout-mj-raw.glb
 \`\`\`
+
+## Corrected Scout part-list audit (2026-10-30)
+
+The nine class-105 list entries are now fully accounted for. The first eight are the visible mesh-owner candidates, each with a type-2 child at +24 and a paired type-2 child at +28. The ninth type-1 entry (file offset 20,436) is an aggregate node whose later pointer fields link back to the first eight owner records, to itself, and to the model root (offset 6,496); it is not a ninth mesh.
+
+For each of the first eight owners, owner +8/+12/+16 equals the paired type-2 child +32/+36/+40. That validates stored-vector consistency but not runtime transform semantics. Since every mesh uses the shared coordinate pool at 0x28 with global face indices, the vertex positions may already share model space. A raw no-anchor GLB versus candidate-anchor GLB comparison is now the next decisive check; do not assume the candidate vectors should be added as translations.
