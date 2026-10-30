@@ -75,13 +75,27 @@ function compactPart(entry) {
       targetType: p.targetHeader?.type
     })) ?? [],
     ownerVectorMatchesPaired32: d?.pairChecks?.vectorsMatch ?? false,
-    geometry: d?.geometry ? {
+    geometrySharedBase: d?.geometry ? {
+      vertexBaseOffset: d.geometry.vertexBaseOffset,
       referencedVertexCount: d.geometry.referencedVertexCount,
       triangles: d.geometry.triangles,
+      indexMin: d.geometry.indexMin,
+      indexMax: d.geometry.indexMax,
       indexRanges: d.geometry.indexRanges,
       bounds: d.geometry.bounds,
       centroid: d.geometry.centroid
-    } : null
+    } : null,
+    geometryMeshReferenceBase: d?.meshReferenceGeometry ? {
+      vertexBaseOffset: d.meshReferenceGeometry.vertexBaseOffset,
+      referencedVertexCount: d.meshReferenceGeometry.referencedVertexCount,
+      triangles: d.meshReferenceGeometry.triangles,
+      indexMin: d.meshReferenceGeometry.indexMin,
+      indexMax: d.meshReferenceGeometry.indexMax,
+      indexRanges: d.meshReferenceGeometry.indexRanges,
+      bounds: d.meshReferenceGeometry.bounds,
+      centroid: d.meshReferenceGeometry.centroid
+    } : null,
+    vertexSliceCandidate: d?.vertexSliceCandidate ?? null
   };
 }
 try {
@@ -130,8 +144,11 @@ try {
       ownerVector: v.parts[i].ownerVectorCandidate,
       meshPlus28: v.parts[i].meshNodePlus28ReferenceOffset,
       faceOffset: v.parts[i].faceDataOffsetCandidate,
-      indexRanges: v.parts[i].geometry?.indexRanges ?? null,
-      bounds: v.parts[i].geometry?.bounds ?? null
+      indexRangesSharedBase: v.parts[i].geometrySharedBase?.indexRanges ?? null,
+      boundsSharedBase: v.parts[i].geometrySharedBase?.bounds ?? null,
+      indexRangesMeshReferenceBase: v.parts[i].geometryMeshReferenceBase?.indexRanges ?? null,
+      boundsMeshReferenceBase: v.parts[i].geometryMeshReferenceBase?.bounds ?? null,
+      vertexSliceCandidate: v.parts[i].vertexSliceCandidate
     }] : []
   ));
   const summary = {
@@ -143,6 +160,21 @@ try {
     allVariantsShareWrapperFieldPattern: variants.every(v =>
       JSON.stringify(v.wrapperFieldLinkPattern) === JSON.stringify(variants[0].wrapperFieldLinkPattern)),
     wrapperFieldLinkPattern: variants[0].wrapperFieldLinkPattern,
+    allMeshReferenceOffsetsEightByteAligned: variants.every(v =>
+      v.parts.every(p => p.vertexSliceCandidate?.eightByteAligned === true)),
+    allMeshReferenceRangesWithinFile: variants.every(v =>
+      v.parts.every(p => p.vertexSliceCandidate?.withinFileBounds === true)),
+    allMeshReferenceSlicesHaveGeometry: variants.every(v =>
+      v.parts.every(p => (p.geometryMeshReferenceBase?.triangles ?? 0) > 0)),
+    meshReferenceBaseOffsetsPerPart: Array.from({length:8},(_,i)=>({
+      part:i+1,
+      offsets:stableCounts(variants.map(v=>v.parts[i]?.vertexSliceCandidate?.meshVertexReference == null
+        ? null : [v.parts[i].vertexSliceCandidate.meshVertexReference])),
+      startVertexIndices:stableCounts(variants.map(v=>v.parts[i]?.vertexSliceCandidate?.startVertexIndexCandidate == null
+        ? null : [v.parts[i].vertexSliceCandidate.startVertexIndexCandidate])),
+      effectiveMaxVertexIndices:stableCounts(variants.map(v=>v.parts[i]?.vertexSliceCandidate?.effectiveMaxVertexIndexCandidate == null
+        ? null : [v.parts[i].vertexSliceCandidate.effectiveMaxVertexIndexCandidate]))
+    })),
     commonFieldPatternsByPart: partsByIndex.map((rows, i) => ({
       part: i + 1,
       meshType2VectorAt8Counts: stableCounts(rows.map(r => r.meshVectorAt8)),
