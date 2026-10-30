@@ -28,10 +28,21 @@ jobs:
           node tools/export-rpc-mesh.mjs original-data/structs/rag01.gpc original-data/structs/rag01.rpc out/rag01-corner-diagonal03.obj --diagonal=0-3
           node tools/export-rpc-mesh.mjs original-data/structs/rag02.gpc original-data/structs/rag02.rpc out/rag02-corner-diagonal12.obj
           node tools/export-rpc-mesh.mjs original-data/structs/oasis01.gpc original-data/structs/oasis01.rpc out/oasis01-corner-diagonal12.obj
+      - name: Extract original FF archives
+        run: |
+          mkdir -p out/ff-resources
+          node tools/extract-ff-resources.mjs original-data/motion.ff original-data/units.ff original-data/shelldb/*.ff --out out/ff-resources || true
       - name: Upload OBJ candidates
         uses: actions/upload-artifact@v4
         with:
           name: outwars-candidate-terrain-meshes
           path: out/*.obj
           if-no-files-found: error
+          retention-days: 14
+      - name: Upload extracted original game resources
+        uses: actions/upload-artifact@v4
+        with:
+          name: outwars-original-ff-resources
+          path: out/ff-resources/**
+          if-no-files-found: warn
           retention-days: 14
