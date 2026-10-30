@@ -160,8 +160,8 @@ The code around `0x48D3A8` uses these format strings to construct two extension-
 
 - `0x500AE9` is now identified from its body as a case-insensitive byte-string comparator. It folds ASCII uppercase letters to lowercase before comparing and returns zero when the strings match (or when the compared string terminates together). That confirms the duplicate-name check in the collection routine.
 - `0x4DD420`, when disassembled from its exact entry address, is a tiny global-pointer setter: it stores the incoming EAX value at `0x12B3970` and returns. It is not the file parser.
-- `0x4CE6C8` is a lower-level file-access wrapper. It calls `0x4CE158`, then uses the returned file context/handle and a data buffer in a path that calls an imported API through IAT slot `0x14106B0`. The call setup strongly resembles a Win32 file read, and another IAT slot `0x1410630` is used in the close/cleanup path. These API names are awaiting import-table resolution.
-- The DPC/TPC loader checks the first DWORD of the returned data against `0x4D504354` (bytes `54 43 50 4D`, ASCII bytes `TCPM`) and then checks a further field against `0x43`. This is evidence of binary-header validation, but the full format structure is not yet decoded.
+- `0x4CE6C8` is a file-read wrapper. The resolved imports identify IAT slot `0x14106B0` as `KERNEL32.dll!ReadFile` and `0x1410630` as `KERNEL32.dll!CloseHandle`. In the ordinary path, it passes the file handle, destination buffer, byte count, and bytes-read output to `ReadFile`, then closes the handle. When the custom-I/O globals indicate a redirected file, it instead reads through the mapped-file helpers at `0x4CD760` and closes through `0x4CD6CC`.
+- The DPC/TPC loader compares the DWORD at the destination against `0x4D504354` (bytes `54 43 50 4D`, ASCII `TCPM`) and checks the following field against `0x43`. However, the call immediately before this comparison passes a byte count of `1` through `0x4CE6C8` to `ReadFile`. Therefore the code comparison is confirmed, but it is not yet established that this read populated the full four-byte value; it may rely on a previous buffer state or a separate initialization path. Treat this as an unresolved read-length/header inconsistency, not a verified four-byte file-header read.
 
 ### Next probe now prepared
 
@@ -182,3 +182,54 @@ bash tools/scout-exe-followup.sh
 The full result remains saved at `/tmp/outwars-scout-exe-followup/REPORT.txt` and is no longer printed to the terminal.
 
 **Remaining blocker:** this is now a credible path into the DPC/TPC resource reader, but the complete format parser, graph-to-transform conversion, and actual per-part transform semantics are still not proven.
+
+
+## Follow-up report 4: resolved Win32 I/O and a read-length inconsistency
+
+The latest follow-up report resolves the operating-system imports and clarifies the ordinary file path versus the optional redirected-I/O path.
+
+### Ordinary file open/read path
+
+The import-table resolver identifies these IAT entries:
+
+- `0x1410630`: `KERNEL32.dll!CloseHandle`
+- `0x1410638`: `KERNEL32.dll!CreateFileA`
+- `0x14106B0`: `KERNEL32.dll!ReadFile`
+- `0x14106B8`: `KERNEL32.dll!SetFilePointer`
+
+At `0x4CE158`, the ordinary path calls `CreateFileA` with the generated path, `GENERIC_READ` (`0x80000000`), share mode 0, null security/template arguments, `OPEN_EXISTING` (3), and flags `0x10000080`. The function first checks global `0xFA347C`; when that custom-I/O state is present, it attempts a virtual-file lookup before falling through to the ordinary Win32 open path.
+
+The wrapper at `0x4CE6C8` calls `0x4CE158`, then calls `ReadFile` in the ordinary path and `CloseHandle` for cleanup. In the redirected path, it uses `0x4CD760` to copy from a mapped in-memory resource and `0x4CD6CC` for its close/release operation. The helper checks the requested range against the mapped resource size and advances its current offset when data is copied.
+
+### Important unresolved read-length inconsistency
+
+At `0x48D3A8`, the loader builds both a `.DPC` path and a `.TPC` path. The `.TPC` call at `0x48D3F4–0x48D3FE` passes the value 1 as the requested byte count to `0x4CE6C8`, which passes that count through to `ReadFile` in the ordinary path. Immediately afterwards, the code compares a DWORD at the destination against `TCPM` and checks another field against `0x43`.
+
+The corresponding `.DPC` read later in the same routine also passes a count of 1 before calling `0x4209A0`. The report does not explain whether these calls are relying on pre-populated buffers, whether the wrapper has an unusual calling convention/side effect not yet captured, or whether some other setup guarantees the data is present. Do not interpret the four-byte comparison as proof that this particular read fetched a complete header.
+
+### TPC record parsing observations
+
+After the `TCPM` and `0x43` comparisons, the visible routine iterates records and builds a 256-entry WORD lookup sequence, using zero values as a sentinel condition. It then processes a packed 16-bit sequence over a `0x300`-byte region and extracts three masked/shifted byte values into adjacent arrays at `0xF84733`, `0xF84734`, and `0xF84735`. This is consistent with packed texture or colour data processing, but the exact channel order and format semantics are not established.
+
+The repeated parser-like routine at `0x48D62C` performs the same initial magic and field comparisons against a supplied buffer. This suggests the code has both a file-reading entry path and a buffer-processing entry path, but their complete caller relationship still needs to be established.
+
+### Next targeted probe
+
+The follow-up script now adds disassembly windows for:
+
+- the tail of `0x4CE158` (`0x4CE240–0x4CE360`);
+- the custom/virtual-file lookup helpers around `0x4CE080` and `0x4CD5C0`;
+- the loader setup caller at `0x48C6A8`;
+- callees `0x4209A0` and `0x4FEDB8`;
+- static references to the DPC/TPC global buffers, parsed-record fields, and palette/channel arrays.
+
+These are focused additions to the existing report; the full executable disassembly is reused. Run:
+
+```bash
+git pull
+bash tools/scout-exe-followup.sh
+```
+
+Then upload the regenerated `/tmp/outwars-scout-exe-followup/REPORT.txt`.
+
+**Current blocker:** the TPC/DPC resource-reading and initial record-processing path is becoming clearer, but this still does not identify the runtime consumer of Scout attachment wrappers or prove the per-part transforms. The mesh assembly remains unresolved.
