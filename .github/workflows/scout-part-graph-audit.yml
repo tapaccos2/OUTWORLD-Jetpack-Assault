@@ -1,4 +1,4 @@
-name: Scout part graph audit (coordinate and child-link report)
+name: Scout part graph audit (coordinate samples)
 
 on:
   push:
