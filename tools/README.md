@@ -181,3 +181,28 @@ node tools/inspect-dpc-graph-compare.mjs original-data/structs/rag01.dpc origina
 ```
 
 The kind-1 pointer array is based on the existing observed inspector layout. Following kind-4 pointers is tentative; compare results against executable read sites before relying on those nested edges. The inspector also follows the observed type-9/class-7012 seven-pointer list found through type-13/class-7011 records in `rag04.dpc` and `dead01.dpc`; this is sample-validated, not assumed universal. The latest six-campaign summary and unresolved class-ID leads are recorded in [`original-data/DPC-GRAPH-FINDINGS.md`](../original-data/DPC-GRAPH-FINDINGS.md).
+
+## 4. Decode Outwars TPC image records
+
+```sh
+node tools/inspect-tpc-records.mjs original-data/units/scout_mj.tpc
+node tools/decode-tpc-palette-textures.mjs original-data/units/scout_mj.tpc public/assets/outwars/scout-mj
+```
+
+The inspector validates each of the six v0x43 TCPMC record boundaries and decoded image extents. The decoder writes browser-ready indexed PNGs with RGB555 palettes and per-entry transparency. The executable's stored row width is doubled to obtain the actual image width. UV coordinates and material-to-mesh assignments are not included.
+
+## 5. Catalogue motion resources
+
+```sh
+node tools/inspect-motion-catalog.mjs original-data/motion motion-catalog.json
+```
+
+Checks the 152-byte frame stride and inventories the 19 eight-byte entries per frame across available .MC files. The report keeps the one known declared-count mismatch (fstand2.mc) visible. It does not infer bone names or a skeleton hierarchy.
+
+## 6. Export raw playable-armour geometry
+
+```sh
+node tools/export-dpc-armour-geometry.mjs original-data/units/scout_mj.dpc scout-mj-raw.glb
+```
+
+See original-data/SCOUT-GEOMETRY-EXPORT.md for decoded fields, verified counts, and remaining assembly limitations.
