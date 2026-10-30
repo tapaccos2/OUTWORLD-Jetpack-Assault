@@ -102,9 +102,14 @@ jobs:
               await page.locator('#resetPose').click();
               await page.waitForFunction(() => (document.querySelector('#status')?.innerText || '').includes('Raw model pose restored'));
               await page.locator('#rotationGalleryToggle').click();
-              await page.waitForFunction(() => (document.querySelector('#status')?.innerText || '').toLowerCase().includes('six 4096-turn euler order trials'));
+              await page.waitForTimeout(1200);
               const galleryStatus = await page.locator('#status').innerText();
-              if ((await page.locator('#rotationGalleryToggle').innerText()) !== 'Back to model') throw new Error('Rotation order gallery did not open');
+              const galleryButton = await page.locator('#rotationGalleryToggle').innerText();
+              console.log('ROTATION GALLERY DEBUG:', JSON.stringify({ galleryStatus, galleryButton, errors }, null, 2));
+              if (!galleryStatus.toLowerCase().includes('six 4096-turn euler order trials')) {
+                throw new Error('Rotation gallery did not reach ready state. Status: ' + galleryStatus + '; browser errors: ' + JSON.stringify(errors));
+              }
+              if (galleryButton !== 'Back to model') throw new Error('Rotation order gallery did not open');
               await page.screenshot({ path: '.scout-viewer-test/rotation-order-gallery.png', fullPage: true });
               const canvasMetrics = await page.locator('canvas').evaluate(el => ({ width: el.width, height: el.height }));
               if (canvasMetrics.width < 100 || canvasMetrics.height < 100) throw new Error('Viewer canvas is not rendered');
