@@ -69,7 +69,8 @@ while (queue.length && nodes.size < 10000) {
   });
   nodes.set(offset, node);
   for (const ref of refs(offset, type, classId)) queue.push({
-    ...ref, parentOffset: offset, parentType: type, parentClass: classId,
+    offset: ref.targetOffset, parentOffset: offset, parentType: type, parentClass: classId,
+    fieldOffset: ref.fieldOffset,
   });
 }
 const records = [...nodes.values()].filter(x => x.type === 8).map(node => {
