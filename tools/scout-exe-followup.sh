@@ -81,6 +81,16 @@ python3 "$SCRIPT_DIR/scan-scout-exe-strings.py" \
   > "$OUT/34-resource-loader-record-loops.txt" 2>&1
 "$OBJDUMP" -d -Mintel --start-address=0x4220c0 --stop-address=0x422900 "$EXE" \
   > "$OUT/35-callee-422170-resource-record-parser.txt" 2>&1
+"$OBJDUMP" -d -Mintel --start-address=0x4df820 --stop-address=0x4df910 "$EXE" \
+  > "$OUT/39-callee-4df84c-resource-table-setup.txt" 2>&1
+"$OBJDUMP" -d -Mintel --start-address=0x4dd430 --stop-address=0x4dd540 "$EXE" \
+  > "$OUT/40-callee-4dd470-record-lookup.txt" 2>&1
+"$OBJDUMP" -d -Mintel --start-address=0x4dfca0 --stop-address=0x4dfd90 "$EXE" \
+  > "$OUT/41-callee-4dfce4-record-dispatch.txt" 2>&1
+"$OBJDUMP" -d -Mintel --start-address=0x420af0 --stop-address=0x420c50 "$EXE" \
+  > "$OUT/42-record-handler-table-region-disassembly.txt" 2>&1
+"$OBJDUMP" -s -j BEGTEXT --start-address=0x420b00 --stop-address=0x420b60 "$EXE" \
+  > "$OUT/43-record-handler-table-raw-bytes.txt" 2>&1
 "$OBJDUMP" -d -Mintel --start-address=0x4ce640 --stop-address=0x4ce780 "$EXE" \
   > "$OUT/36-file-size-and-read-helper.txt" 2>&1
 "$OBJDUMP" -d -Mintel --start-address=0x4ceec0 --stop-address=0x4cef50 "$EXE" \
@@ -142,7 +152,7 @@ python3 "$SCRIPT_DIR/inspect-scout-exe-pointer-table.py" "$EXE" \
 
 python3 "$SCRIPT_DIR/scan-scout-exe-callers.py" \
   "$PROBE/04-full-code-disassembly.txt" \
-  --targets "0x486720,0x48ce71,0x48ce89,0x48cea1,0x48ced4,0x48cfb0,0x4ee38a,0x500ae9,0x4dd420,0x4ce6c8,0x4ce158,0x4cd6cc,0x4cd760,0x455578,0x48d3aa,0x4843d4,0x4209a0,0x4fedb8,0x4ce0a4,0x4cd5e8,0x422170,0x4ce674,0x4ce6c8,0x4ceefb,0x4d3be8,0x4ce044" \
+  --targets "0x486720,0x48ce71,0x48ce89,0x48cea1,0x48ced4,0x48cfb0,0x4ee38a,0x500ae9,0x4dd420,0x4ce6c8,0x4ce158,0x4cd6cc,0x4cd760,0x455578,0x48d3aa,0x4843d4,0x4209a0,0x4fedb8,0x4ce0a4,0x4cd5e8,0x422170,0x4ce674,0x4ce6c8,0x4ceefb,0x4d3be8,0x4ce044,0x4df84c,0x4dd470,0x4dfce4,0x420b00,0x4cc988,0x4cc83c,0x435970,0x4cc9d0" \
   --context 16 \
   > "$OUT/15-loader-callers.txt"
 
@@ -226,6 +236,21 @@ python3 "$SCRIPT_DIR/scan-scout-exe-callers.py" \
   echo
   echo "========== CALLEE 0x422170: RESOURCE RECORD PARSER =========="
   cat "$OUT/35-callee-422170-resource-record-parser.txt"
+  echo
+  echo "========== CALLEE 0x4DF84C: RESOURCE TABLE SETUP =========="
+  cat "$OUT/39-callee-4df84c-resource-table-setup.txt"
+  echo
+  echo "========== CALLEE 0x4DD470: RECORD LOOKUP =========="
+  cat "$OUT/40-callee-4dd470-record-lookup.txt"
+  echo
+  echo "========== CALLEE 0x4DFCE4: RECORD DISPATCH =========="
+  cat "$OUT/41-callee-4dfce4-record-dispatch.txt"
+  echo
+  echo "========== RECORD HANDLER TABLE REGION: 0x420AF0 =========="
+  cat "$OUT/42-record-handler-table-region-disassembly.txt"
+  echo
+  echo "========== RECORD HANDLER TABLE RAW BYTES: 0x420B00 =========="
+  cat "$OUT/43-record-handler-table-raw-bytes.txt"
   echo
   echo "========== FILE SIZE / READ HELPER =========="
   cat "$OUT/36-file-size-and-read-helper.txt"
