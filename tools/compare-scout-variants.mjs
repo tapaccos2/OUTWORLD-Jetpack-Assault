@@ -67,24 +67,43 @@ function wrapperConstants(wrapper) {
     vectorAt20: wrapperVector(wrapper)
   };
 }
-function planarDirectionDeltaDeg(meshVector, pairedVector) {
-  if (!Array.isArray(meshVector) || !Array.isArray(pairedVector) ||
-      meshVector.length < 2 || pairedVector.length < 2) return null;
-  const cross = pairedVector[0] * meshVector[1] - pairedVector[1] * meshVector[0];
-  const dot = pairedVector[0] * meshVector[0] + pairedVector[1] * meshVector[1];
-  return Number((Math.atan2(cross, dot) * 180 / Math.PI).toFixed(3));
+function dpcRecordHeader(bytes, offset) {
+  if (!Number.isInteger(offset) || offset < 0 || offset + 4 > bytes.length) return null;
+  return {
+    type: bytes.readUInt8(offset),
+    flags: bytes.readUInt8(offset + 1),
+    classId: bytes.readUInt16LE(offset + 2)
+  };
 }
-function compactPart(entry, bytes) {
+function inspectDescriptorTarget(bytes, relocationBase, offset) {
+  if (!Number.isInteger(offset) || offset < 0 || offset + 28 > bytes.length) return null;
+  const header = dpcRecordHeader(bytes, offset);
+  const fields = [4, 8, 12, 16, 20, 24].map(fieldOffset => {
+    const raw = bytes.readUInt32LE(offset + fieldOffset);
+    const targetOffset = raw >= relocationBase && raw - relocationBase + 4 <= bytes.length
+      ? raw - relocationBase : null;
+    return {
+      fieldOffset,
+      rawHex: '0x' + raw.toString(16).padStart(8, '0'),
+      targetOffset,
+      targetHeader: targetOffset === null ? null : dpcRecordHeader(bytes, targetOffset)
+    };
+  });
+  return {
+    offset,
+    header,
+    rawFirst32Hex: bytes.subarray(offset, offset + 32).toString('hex').match(/.{1,2}/g)?.join(' ') ?? '',
+    fields
+  };
+}
+function compactPart(entry, bytes, relocationBase) {
   const d = entry.detail;
   const mesh = d?.child24Detail;
   const paired = d?.child28Detail;
   const meshVector = mesh?.fields?.signedVectorAt8Candidate ?? null;
   const pairedVector = paired?.fields?.signedVectorAt8Candidate ?? null;
   const meshReferenceOffset = mesh?.fields?.plus28?.targetOffset ?? null;
-  const meshReferencePointCandidate = Number.isInteger(meshReferenceOffset) &&
-    meshReferenceOffset >= 0 && meshReferenceOffset + 8 <= bytes.length
-    ? [bytes.readInt16LE(meshReferenceOffset), bytes.readInt16LE(meshReferenceOffset + 2), bytes.readInt16LE(meshReferenceOffset + 4)]
-    : null;
+  const meshReferenceDescriptor = inspectDescriptorTarget(bytes, relocationBase, meshReferenceOffset);
   return {
     partListIndex: entry.index,
     ownerOffset: d?.offset ?? null,
@@ -92,8 +111,8 @@ function compactPart(entry, bytes) {
     meshNodeOffset: mesh?.offset ?? null,
     meshType2VectorAt8Candidate: meshVector,
     pairedType2VectorAt8Candidate: pairedVector,
-    meshVectorVsPairedVectorPlanarDeltaDegCandidate: planarDirectionDeltaDeg(meshVector, pairedVector),
-    meshReferencePointXYZCandidate: meshReferencePointCandidate,
+    meshNodePlus28TargetDescriptor: meshReferenceDescriptor,
+    meshNodePlus28DescriptorPointerTargets: meshReferenceDescriptor?.fields.map(field => field.targetOffset) ?? null,
     meshType2VectorAt32Candidate: mesh?.fields?.signedVectorAt32Candidate ?? null,
     meshType2VectorAt56Candidate: mesh?.fields ? [
       mesh.fields.plus56?.s32 ?? null,
@@ -168,7 +187,7 @@ try {
         triangles: report.graph.rootGeometry.triangles,
         bounds: report.graph.rootGeometry.bounds
       } : null,
-      parts: report.graph.entries.slice(0, 8).map(entry => compactPart(entry, bytes))
+      parts: report.graph.entries.slice(0, 8).map(entry => compactPart(entry, bytes, bytes.readUInt32LE(12)))
     };
   });
 
@@ -176,8 +195,8 @@ try {
     v.parts[i] ? [{
       variant: v.name,
       meshVectorAt8: v.parts[i].meshType2VectorAt8Candidate,
-      meshVectorVsPairedVectorPlanarDeltaDegCandidate: v.parts[i].meshVectorVsPairedVectorPlanarDeltaDegCandidate,
-      meshReferencePointXYZCandidate: v.parts[i].meshReferencePointXYZCandidate,
+      meshNodePlus28TargetDescriptor: v.parts[i].meshNodePlus28TargetDescriptor,
+      meshNodePlus28DescriptorPointerTargets: v.parts[i].meshNodePlus28DescriptorPointerTargets,
       meshVectorAt56: v.parts[i].meshType2VectorAt56Candidate,
       meshWrapperFields: v.parts[i].meshType16WrapperFields,
       pairedVectorAt8: v.parts[i].pairedType2VectorAt8Candidate,
@@ -243,10 +262,11 @@ try {
     commonFieldPatternsByPart: partsByIndex.map((rows, i) => ({
       part: i + 1,
       meshType2VectorAt8Counts: stableCounts(rows.map(r => r.meshVectorAt8)),
-      meshReferencePointXYZCounts: stableCounts(rows.map(r => r.meshReferencePointXYZCandidate)),
-      planarDirectionDeltaDegCandidateCounts: stableCounts(rows.map(r =>
-        r.meshVectorVsPairedVectorPlanarDeltaDegCandidate == null
-          ? null : [r.meshVectorVsPairedVectorPlanarDeltaDegCandidate])),
+      meshPlus28DescriptorPointerTargetCounts: stableCounts(rows.map(r => r.meshNodePlus28DescriptorPointerTargets)),
+      meshPlus28DescriptorHeaderCounts: stableCounts(rows.map(r => {
+        const h = r.meshNodePlus28TargetDescriptor?.header;
+        return h ? [h.type, h.flags, h.classId] : null;
+      })),
       pairedType2VectorAt8Counts: stableCounts(rows.map(r => r.pairedVectorAt8)),
       pairedType2VectorAt32Counts: stableCounts(rows.map(r => r.pairedVectorAt32)),
       ownerVectorCounts: stableCounts(rows.map(r => r.ownerVector))
