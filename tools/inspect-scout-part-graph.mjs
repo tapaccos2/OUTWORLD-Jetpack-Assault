@@ -296,7 +296,9 @@ function createReader(file) {
         header: wrapper,
         plus0u32: u32(p20.targetOffset),
         plus0hex: '0x' + u32(p20.targetOffset).toString(16),
-        plus8: wrapperLink
+        plus8: wrapperLink,
+        rawFirst32: wordView(p20.targetOffset, 32),
+        pointerCandidates: candidatePointers(p20.targetOffset, 4, 32)
       },
       wrapperLinkedType2: wrapperLink?.targetOffset === null || wrapperLink?.targetOffset === undefined
         ? null : linkedType2Summary(wrapperLink.targetOffset),
@@ -398,7 +400,17 @@ function createReader(file) {
         type16WrapperOffset: source.detail.wrapper.header?.offset ?? null,
         wrapperValue: source.detail.wrapper.plus0u32,
         targetOffset,
-        matchedRecordFields: matches
+        matchedRecordFields: matches,
+        targetFieldValue: {
+          u32: u32(targetOffset),
+          s32: s32(targetOffset),
+          hex: '0x' + u32(targetOffset).toString(16).padStart(8, '0')
+        },
+        targetFieldPointerTarget: (() => {
+          const linked = ptr(targetOffset);
+          return linked === null ? null : { offset: linked, header: header(linked) };
+        })(),
+        targetFieldBytesHex: hex(b, targetOffset, 24)
       };
     });
   });
