@@ -454,3 +454,10 @@ The new focused probe adds full disassembly windows for the two setters, the adj
 - `56-record-struct-transform-caller.txt`
 
 The existing probe 50 raw-byte pointer scan already includes the setter and caller addresses. Its output is needed to distinguish direct code calls from registered function pointers. Do not apply a transform in the exporter until the data pointer supplied to these setters has been tied to a Scout DPC field.
+
+
+## Follow-up report 13: include the stride-4 rotation caller in pointer registration scan
+
+The stride-4 caller begins at `0x437C80`. It preserves its incoming EBX pointer in ESI, then reads the low WORD at offsets `+0`, `+4`, and `+8` into the runtime object's three rotation fields before calling `0x4C5DB0`. This is a direct storage-layout match for the three DWORD-aligned candidate values at a Scout type-2 node's `+8/+12/+16`, read as their low 16-bit components. The caller does not itself establish that its ESI pointer is a Scout DPC node.
+
+The pointer-reference scan now includes `0x437C80` and the `0x433080/0x4330A2` transform-struct path, alongside the two DPC setters. The next report should show whether any of these routines are registered through static function-pointer tables. Until that evidence arrives, the type-2 +8 triple remains a rotation-layout candidate rather than a confirmed Scout Euler triplet.
