@@ -277,6 +277,12 @@ jobs:
             if (parsed.reachableType8Count !== expected) {
               throw new Error('Unexpected type-8 count for ' + name + ': expected ' + expected + ', got ' + parsed.reachableType8Count);
             }
+            if (!parsed.traversalComplete || parsed.pendingQueueItems !== 0) {
+              throw new Error('DPC type-8 traversal was incomplete for ' + name + ': ' + parsed.pendingQueueItems + ' queued records remain');
+            }
+            if (parsed.type8RecordsTruncated !== 0) {
+              throw new Error('DPC type-8 records were truncated for ' + name + ': ' + parsed.type8RecordsTruncated);
+            }
             return parsed;
           });
           if (!type8Checks.every(item => item.slotSummary[0].near4096 === item.reachableType8Count &&
