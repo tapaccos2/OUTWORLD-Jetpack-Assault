@@ -24,13 +24,32 @@ if [[ -z "$EXE" || ! -f "$EXE" ]]; then
   exit 2
 fi
 
-for tool in file sha256sum objdump strings python3; do
+for tool in file sha256sum strings python3; do
   command -v "$tool" >/dev/null 2>&1 || {
     echo "Required tool missing: $tool"
     echo "On Debian/Ubuntu install binutils (objdump, strings) and file."
     exit 3
   }
 done
+
+# Select a GNU objdump that actually understands this Windows PE executable.
+# The host's generic objdump may have been built without PE/COFF support.
+OBJDUMP=""
+for candidate in i686-w64-mingw32-objdump x86_64-w64-mingw32-objdump objdump; do
+  if command -v "$candidate" >/dev/null 2>&1 &&
+     "$candidate" -f "$EXE" >/dev/null 2>&1; then
+    OBJDUMP="$(command -v "$candidate")"
+    break
+  fi
+done
+if [[ -z "$OBJDUMP" ]]; then
+  echo "No installed objdump can read this PE32 executable."
+  echo "On Debian/Ubuntu, install the 32-bit MinGW binutils:"
+  echo "  sudo apt-get update && sudo apt-get install -y binutils-mingw-w64-i686"
+  echo "Then rerun this script."
+  exit 4
+fi
+echo "Using PE-capable disassembler: $OBJDUMP"
 
 mkdir -p "$OUT"
 EXE="$(realpath "$EXE")"
@@ -44,21 +63,21 @@ EXE="$(realpath "$EXE")"
   sha256sum "$EXE"
   echo
   echo "=== PE file format ==="
-  objdump -f "$EXE"
+  "$OBJDUMP" -f "$EXE"
   echo
   echo "=== PE sections / virtual-to-file mapping ==="
-  objdump -h "$EXE"
+  "$OBJDUMP" -h "$EXE"
 } > "$OUT/00-file-and-sections.txt" 2>&1
 
-objdump -x "$EXE" > "$OUT/01-pe-headers-imports.txt" 2>&1
-objdump -r "$EXE" > "$OUT/02-relocations.txt" 2>&1 || true
+"$OBJDUMP" -x "$EXE" > "$OUT/01-pe-headers-imports.txt" 2>&1
+"$OBJDUMP" -r "$EXE" > "$OUT/02-relocations.txt" 2>&1 || true
 
 # Include the previously investigated address, with surrounding code.
-objdump -d -Mintel --start-address=0x477200 --stop-address=0x478200 "$EXE" \
+"$OBJDUMP" -d -Mintel --start-address=0x477200 --stop-address=0x478200 "$EXE" \
   > "$OUT/03-disassembly-477200-478200.txt" 2>&1 || true
 
 # Full code-section disassembly for caller references and constants.
-objdump -d -Mintel "$EXE" > "$OUT/04-full-code-disassembly.txt" 2>&1
+"$OBJDUMP" -d -Mintel "$EXE" > "$OUT/04-full-code-disassembly.txt" 2>&1
 
 grep -n -B 8 -A 8 -E '(^|[^[:xdigit:]])0x0*477680([^[:xdigit:]]|$)|call[[:space:]]+0x0*477680|jmp[[:space:]]+0x0*477680' \
   "$OUT/04-full-code-disassembly.txt" > "$OUT/05-xrefs-to-477680.txt" || true
