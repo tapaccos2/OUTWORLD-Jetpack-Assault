@@ -112,7 +112,7 @@ function frameVisible(){
  camera.far=Math.max(1000,distance*30);
  camera.updateProjectionMatrix();
  controls.update();
- const visibleCount=galleryMode?galleryGroup.children.length:(()=>{let n=0;model.traverse(o=>{if(o.isMesh&&o.visible)n++});return n})();
+ const visibleCount=galleryMode?galleryGroup.children.filter(o=>o.isMesh&&o.visible).length:(()=>{let n=0;model.traverse(o=>{if(o.isMesh&&o.visible)n++});return n})();
  updateStatus(galleryMode?'Overview: all '+visibleCount+' raw mesh sections, individually centred.':('Showing '+visibleCount+' visible mesh section(s); camera framed to selection.'));
 }
 function fit(){
