@@ -87,3 +87,22 @@ Validated locally with `tools/inspect-ff-archives.mjs` on 2026-10-29. The report
 The index contains paired model/texture resources, including `laborer.dpc/.tpc`, `defenderWmortar.dpc/.tpc`, `flyingAssassin.dpc/.tpc`, `dropship.dpc/.tpc`, `strikecraft.dpc/.tpc`, `turret1.dpc/.tpc`, and `walkingBabyAssassin.dpc/.tpc`. These names directly explain several resources that were absent from the loose `structs/` directory: they are packaged inside `units.ff`. The archive also contains other vehicle/unit pairs and two text resources, `Brad.txt` and `Kirk.txt`.
 
 This validates the archive directory/index, not the internal DPC/TPC decoding. Next, extract the 120 payloads with `tools/extract-ff-resources.mjs`, then compare extracted files against loose `structs/` and mission references before inspecting model/texture payload layouts.
+
+## TPC header comparison — small paired samples
+
+The small, complete TPC payloads are now accessible for byte-level comparison (the multi-megabyte map TPCs are too large for the text-file retrieval route). Three paired samples were inspected: `cyball1.tpc` (4,660 bytes), `flag_blu.tpc` (26,812 bytes), and `flag_red.tpc` (26,812 bytes). All begin with `TCPMC` and share this 40-byte prefix layout:
+
+| Offset | Observed value | Notes |
+|---:|---|---|
+| 0 | `TCPM` | TPC signature |
+| 4 | `0x43` | Same version byte/word as the other resource types |
+| 8 | sample-specific 32-bit value | Differs between paired assets; semantics unknown |
+| 12 | `1` for cyball1; `5` for both flags | Sample-specific field; not yet interpreted |
+| 16 | `0x1220` (4,640) | Identical across all three samples |
+| 20 | `16` | Identical across all three samples |
+| 24 | `57` | Identical across all three samples |
+| 28 | `524` | Identical across all three samples |
+| 32 | `0` | Identical across all three samples |
+| 36 | `0x00010100` | Identical across all three samples |
+
+The red and blue flag TPCs have identical total byte lengths and identical bytes through offset 39, then diverge in their payloads, consistent with two variants sharing a common header and layout. This is useful evidence for a structured payload, but it does **not** yet establish that the payload is a bitmap, a texture format, or a 3D model. The TPC decoder remains open; no terrain texture has been applied to the RPC mesh on this basis.
