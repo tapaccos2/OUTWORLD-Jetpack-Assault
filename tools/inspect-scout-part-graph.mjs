@@ -219,8 +219,9 @@ function createReader(file) {
       pairChecks,
       child24Detail: c24?.type === 2 ? type2Detail(child24.targetOffset, 'owner+24') : null,
       child28Detail: c28?.type === 2 ? type2Detail(child28.targetOffset, 'owner+28') : null,
-      ownerPointerCandidates: candidatePointers(offset, 4, 48),
-      rawFirst64: wordView(offset, 64)
+      ownerPointerCandidates: candidatePointers(offset, 4, 96),
+      ownerLinkedType1Records: candidatePointers(offset, 44, 96).filter(p => p.targetHeader.type === 1),
+      rawFirst96: wordView(offset, 96)
     };
   }
   let rootRecord = null, rootNode = null, rootClass = null, partClass = null;
@@ -265,6 +266,11 @@ function createReader(file) {
       ownerPlus24Type2Count: directPartNodes.filter(x => x.detail.pairChecks.child24IsType2).length,
       ownerPlus28Type2Count: directPartNodes.filter(x => x.detail.pairChecks.child28IsType2).length,
       ownerAndChild28VectorMatchCount: directPartNodes.filter(x => x.detail.pairChecks.vectorsMatch).length,
+      entriesWithMultipleChildOwnerLinks: directPartNodes.filter(x => (x.detail.ownerLinkedType1Records || []).length >= 2).map(x => ({
+        listIndex: x.index,
+        ownerOffset: x.detail.offset,
+        linkedType1Offsets: x.detail.ownerLinkedType1Records.map(p => p.targetOffset)
+      })),
       warnings: [
         'Type/class and pointer links are structural observations, not semantic labels.',
         'A type-2 node is not automatically a mesh or transform; its runtime consumer still needs confirmation.',
