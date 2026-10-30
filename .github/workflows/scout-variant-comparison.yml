@@ -1,0 +1,70 @@
+name: Scout cross-variant transform audit
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "tools/inspect-scout-part-graph.mjs"
+      - "tools/compare-scout-variants.mjs"
+      - "tools/extract-ff-resources.mjs"
+      - "original-data/units.ff"
+      - ".github/workflows/scout-variant-comparison.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  compare-scout-variants:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Syntax-check audit tools
+        run: |
+          node --check tools/inspect-scout-part-graph.mjs
+          node --check tools/compare-scout-variants.mjs
+          node --check tools/extract-ff-resources.mjs
+
+      - name: Extract all unit resources
+        run: |
+          node tools/extract-ff-resources.mjs original-data/units.ff --out .scout-variant-extracted
+
+      - name: Compare all Scout DPC variants
+        run: |
+          node tools/compare-scout-variants.mjs .scout-variant-extracted/units scout-variant-comparison.json
+          test -s scout-variant-comparison.json
+          node -e "const r=require('./scout-variant-comparison.json'); if(r.summary.variantCount<2) process.exit(1); console.log('Compared variants:', r.summary.variantNames.join(', ')); console.log('All paired owner vectors consistent:', r.summary.allEightOwnerVectorsMatchPaired32);"
+
+      - name: Upload JSON comparison
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scout-variant-comparison
+          path: scout-variant-comparison.json
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Publish readable results to a dedicated branch
+        if: always()
+        shell: bash
+        run: |
+          set -e
+          branch="scout-variant-results-\${GITHUB_RUN_ID}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch --orphan "$branch"
+          mkdir -p diagnostics/scout-variant-comparison
+          if [ -f scout-variant-comparison.json ]; then
+            cp scout-variant-comparison.json diagnostics/scout-variant-comparison/report.json
+          fi
+          git add diagnostics/scout-variant-comparison
+          git commit -m "Publish Scout cross-variant comparison"
+          git push origin "HEAD:refs/heads/$branch"
