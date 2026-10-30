@@ -147,6 +147,7 @@ try {
   const variants = files.map(file => {
     const reportFile = path.join(tempDir, path.basename(file) + '.json');
     const report = audit(file, reportFile);
+    const bytes = fs.readFileSync(file);
     return {
       name: path.basename(file, '.dpc'),
       rootClass: report.rootClass,
@@ -167,7 +168,7 @@ try {
         triangles: report.graph.rootGeometry.triangles,
         bounds: report.graph.rootGeometry.bounds
       } : null,
-      parts: report.graph.entries.slice(0, 8).map(entry => compactPart(entry, fs.readFileSync(file)))
+      parts: report.graph.entries.slice(0, 8).map(entry => compactPart(entry, bytes))
     };
   });
 
