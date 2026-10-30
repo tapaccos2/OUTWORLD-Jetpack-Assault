@@ -204,25 +204,19 @@ The first model-network type-1 node also exposes two children: a type-9 armour-c
 The current graph inspector did not follow this unit-specific type-12 link, so these observations were derived by validating the relocated target headers directly across the extracted model files. Treat the type-12 +8 relationship as observed for this unit-model family, not as a universal DPC rule.
 
 
-## Playable armour sub-part and type-16 links (2026-10-30)
+## Playable armour sub-part graph (2026-10-30)
 
-A deeper walk of the male Scout model confirms that the six pointers immediately before the type-9/class-102 record resolve to six type-1 records. Each of those type-1 records has two relocated child pointers at relative offsets +24 and +28; both targets begin with type-2 headers. The type-1 part records also contain further relocated references, including a pointer to a type-4 record. This same six-part pointer pattern and the same relative field positions were checked in the male Combat, Assault, and Dreadnought samples.
+A first-pass inspection of the male Scout model was too narrow: it described only six type-1 part nodes and missed the earlier two nodes in the type-9/class-105 pointer list. The complete observed list contains eight type-1 nodes, plus a ninth list entry that resolves to a separate linked record. The eight type-1 nodes begin at file offsets 9,592, 11,144, 12,696, 14,248, 15,800, 17,352, 18,904, and 20,436.
 
-In the Scout sample:
+The type-9/class-105 node at offset 20,464 has a count of nine at +6 and its pointer list begins at +16. The eight type-1 entries are not all equivalent: the first seven show the repeated paired-child pattern, while the final node has a different nested shape. These are graph nodes, not yet eight proven visible mesh parts.
 
-- The six type-1 part records begin at file offsets 12,696, 14,248, 15,800, 17,352, 18,904, and 20,436.
-- The first five part records each point at two type-2 records; their first child targets begin at 12,344, 13,896, 15,448, 17,000, and 18,552 respectively.
-- The sixth part record has a different nested shape and links into the model's type-9/class-105 subgraph.
-- The type-2 records expose a relocated pointer at +20 to a type-16 record in the inspected examples.
-- Type-16 records begin with a 32-bit value 10,000 (0x2710) in the sampled Scout paths, followed by a relocated pointer at +8. The target of that pointer is a separate data region; it is not itself a record header.
+Examples of the paired child structure include type-1 node 9,592 linking to type-2 nodes at 9,240 and 9,568; node 11,144 links to 10,792 and 11,120; node 12,696 links to 12,344 and 12,672. The remaining nodes must be treated individually rather than extrapolated from a six-part assumption.
 
-The type-2 records also contain relocated references to type-4 records. In the Scout sample, examples include type-4 records at offsets 12,412 and 13,964. These type-4 payloads contain repeated short-integer groups and other packed values. Their exact interpretation is still unresolved.
+Type-2 records expose a relocated pointer at +20 to a type-16 record. Type-16 records begin with the value 10,000 (0x2710) in the sampled Scout paths. The relocated pointer at type-16 +8 resolves to another type-2 record header (for example, type-16 at 9,228 links to type-2 at 8,072); it is not a raw vertex buffer. The meaning of 10,000 is unknown and must not be labelled a vertex count.
 
-This establishes a reproducible pointer path through the playable model:
+Type-2 records also link to type-4 records. Examples include offsets 9,308, 9,668, 10,860 and 11,220. Their payloads contain packed short values, but their meaning (geometry, indices, materials, or another structure) is not established.
 
-`type-9 armour node → six type-1 part records → type-2 records → type-16 data wrapper / type-4 payload`
-
-The path is an observed graph structure, not yet a decoded skin or mesh. In particular, the 10,000 value has not been established as a vertex count, the type-16 target data has not been assigned a vertex format, and the packed type-4 values have not been identified as triangles or material data. No geometry is exported on this evidence alone. The next step is to compare the type-16 target buffers and type-4 payloads across the six parts, then match their field access to the executable renderer.
+The root chain remains observed as: root type-1/class-100 → type-12 → type-1 → type-9/class-102, which links into the type-9/class-105 subgraph. These observations establish a graph shape only. They do not yet establish vertex positions, triangle indices, skinning, or the number of rendered sub-meshes.
 
 ## Executable cross-check: playable model sub-part links (2026-10-30)
 
@@ -234,8 +228,8 @@ The type-9/class-105 node at file offset 20,464 contains a nine-entry relocated-
 
 These observations are structural only. No vertex/index interpretation is assigned to type-2, type-4, or type-16 payloads until their executable consumers are resolved.
 
-## Executable cross-check: 19-slot animation frame is a 19-joint array (2026-10-30)
+## Executable cross-check: 19-slot animation frame array (2026-10-30)
 
 Static disassembly of the uploaded original `outwars.exe` confirms that the 152-byte motion frame is consumed as a fixed 19-entry array. At VA `0x00415c1d` and again at `0x00415d8e`, the runtime sets the associated animation object's element count to `0x13` (19). The loops at `0x00415c60` and `0x00415dd5` advance the source pointer by `0x98` bytes (152) for each frame while adjusting the signed 16-bit value at frame-relative offset +2. The runtime then creates 19 entries with an 8-byte per-entry stride.
 
-This directly links the observed 152-byte frame stride to 19 per-frame channels/entries, rather than merely noting that 152 divides by 8. It is strong evidence that the 19 slots correspond to the runtime's 19 animation elements. The code inspected here does not yet expose the complete hierarchy, names, or the meaning of all four 16-bit words in each 8-byte entry; those remain open. The constant fourth word `0xBFF7` is still recorded as a raw invariant, not assigned a semantic label.
+This directly links the observed 152-byte frame stride to 19 per-frame channels/entries, rather than merely noting that 152 divides by 8. It confirms a 19-element runtime animation array; it does not yet prove that each element maps one-to-one to a named skeleton bone. The code inspected here does not yet expose the complete hierarchy, names, or the meaning of all four 16-bit words in each 8-byte entry; those remain open. The constant fourth word `0xBFF7` is still recorded as a raw invariant, not assigned a semantic label.
