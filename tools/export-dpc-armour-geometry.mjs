@@ -99,8 +99,9 @@ for (let i = 0; i < owners.length; i++) {
   const sharedVertexData = ptr(meshDescriptor + 4);
   const meshVertexReference = ptr(meshNode + 28);
   if (meshVertexReference < 0 || meshVertexReference + 4 > b.length) throw new Error('Part ' + (i + 1) + ': invalid mesh vertex reference');
-  // Face indices are global indices into the shared coordinate pool. The +28
-  // pointer is retained as metadata; it is not the base of the XYZ array.
+  // Default mode preserves the shared-pool interpretation. The optional
+  // --use-mesh-vertex-reference mode tests whether face indices are local to
+  // the per-mesh start referenced by type-2 +28.
   const selectedVertexData = useMeshVertexReference ? meshVertexReference : sharedVertexData;
   const decoded = decodeMesh('submesh_' + (i + 1), owner, meshNode, transformNode, selectedVertexData, ptr(meshNode + 36), 26, anchor);
   decoded.meshVertexReferenceTarget = meshVertexReference;
