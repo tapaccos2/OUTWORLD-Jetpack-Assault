@@ -40,3 +40,24 @@ The extended disassembly supplied from `0x477680` shows that this is a 3D proxim
 Do not use this routine to infer DPC wrapper or transform semantics.
 
 The next probe stage uses `tools/scan-scout-exe-strings.py` to parse the PE section table, map the file offsets of `scout.dpc`, the `scout_*` variants, and related animation strings to virtual addresses, then search both the full disassembly and raw executable for references to those addresses. This is intended to locate the resource-loading/animation setup path instead of continuing down the spatial-query path.
+
+
+## Resource-name reference scan: first result
+
+On the executable with SHA-256 `484c7dc19a6f45e81af6a85e617761e01ec64ea784b17c45f8274fccf8f6a4c3`, the scanner maps the resource strings into PE image memory:
+
+- `scout.dpc` is at VA `0x522677`; the full disassembly contains one immediate code reference at `0x48679D`.
+- The generic format string `%s.dpc` is at VA `0x523423`; it is pushed at five code locations: `0x48CE78`, `0x48CE90`, `0x48CEC0`, `0x48CFE2`, and `0x48D172`.
+- The six variant-name strings are in `DGROUP` and each has one raw pointer occurrence in `DGROUP`, with no direct disassembly immediate reference. Their pointer slots form three male/female pairs: `scout_ma/scout_fa` at file offsets `0x117B68/0x117B6C`, `scout_mj/scout_fj` at `0x117B90/0x117B94`, and `scout_md/scout_fd` at `0x117BB8/0x117BBC`. The three pairs are each `0x28` bytes apart. This is consistent with a data-driven variant table (possibly three fixed records with adjacent male/female name pointers), but the record meaning and consumers are not proven yet.
+- The scan also finds the generic DPC filename format string at five code sites. This is a stronger path for locating filename construction than searching for each variant name as an immediate instruction operand.
+
+These are reference locations, not yet proof of the function calls that open or parse the DPC file. The next inspection captures the disassembly around `0x486700–0x486900` and `0x48CE40–0x48D220`, while the updated scanner also searches for code references to the six variant pointer slots themselves.
+
+For a focused second pass (reuses the existing full disassembly and does not repeat the expensive whole-file disassembly), run:
+
+```bash
+git pull
+bash tools/scout-exe-followup.sh
+```
+
+The command prints one combined report to the terminal and saves it at `/tmp/outwars-scout-exe-followup/REPORT.txt`.
