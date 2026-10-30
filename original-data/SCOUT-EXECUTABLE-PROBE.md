@@ -398,3 +398,15 @@ bash tools/scout-exe-followup.sh
 ```
 
 The added results are in `50-raw-transform-handler-pointer-xrefs.txt` and the combined `REPORT.txt`. The executable itself remains local; only the generated text report needs to be shared.
+
+
+## Follow-up report 9: complete record relocation dispatcher
+
+The earlier `0x4DD470` window only captured the beginning of the record relocation routine. It switches on the record's first byte (validating it is no greater than 15), reads pointer-like fields at fixed offsets, and rewrites their values relative to a relocated resource base. This is distinct from the parser's use of the 16-bit field at record +2. Its complete set of cases is needed before deciding how the DPC type-16 wrapper pointers are fixed up.
+
+The focused executable probe now captures the full `0x4DD470–0x4DDA80` region and the `0x4DD9C0` tail helper separately, and includes both routine addresses in the raw pointer-reference scan. The output files are:
+
+- `51-full-record-relocation-dispatcher.txt`
+- `52-record-relocation-tail-helper.txt`
+
+This is a targeted addition to the existing focused pass; it does not rerun the full executable disassembly. No meaning is assigned to the record's first byte beyond what the disassembly proves, and this must not be confused with the class/type-16 wrapper graph already decoded from Scout DPC files.
