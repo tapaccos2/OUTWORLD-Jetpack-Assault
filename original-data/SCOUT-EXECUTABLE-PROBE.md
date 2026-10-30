@@ -15,7 +15,7 @@ The script searches common locations including `~/Outwars-extracted/outwars.exe`
 bash tools/scout-exe-probe.sh "/full/path/to/outwars.exe"
 ```
 
-It creates `/tmp/outwars-scout-exe-probe.zip`. Attach that ZIP here. It contains the PE section map, import/relocation data, disassembly around `0x477200–0x478200`, direct references to `0x477680`, references to the two DPC wrapper constants, and relevant resource/animation strings. It also records the executable SHA-256 so the analysis is tied to the exact build.
+It creates `/tmp/outwars-scout-exe-probe.zip`. Attach that ZIP here. It contains the PE section map, import/relocation data, disassembly around `0x477200–0x478200`, direct references to `0x477680`, references to the two DPC wrapper constants, relevant resource/animation strings, and a PE-aware scan mapping Scout resource strings to virtual addresses and locating code/data references to them. It also records the executable SHA-256 so the analysis is tied to the exact build.
 
 The script is read-only with respect to the executable and does not copy the executable into the repository or upload it.
 
@@ -31,3 +31,12 @@ The file is reported as PE32 / Intel 80386 with six sections. Its string table c
 The disassembly excerpt begins a routine at VA `0x477680`. The visible prologue iterates a pointer-based list, checks record fields at offsets `+0x0c`, `+0x10`, and `+0x160`, then reads fields from the pointed record at offsets `+0x02`, `+0x10`, and `+0x28`. The excerpt supplied so far ends at the comparison against `0x1394`; it is not enough to identify the routine as the DPC hierarchy or mesh-transform consumer. The generated direct-xref report is empty, and the raw executable contains no literal little-endian occurrence of VA `0x477680`; neither result rules out indirect dispatch or relative references.
 
 **Status:** executable loading/disassembly is now working. The runtime transform semantics are still unresolved. Continue by examining the remainder of `03-disassembly-477200-478200.txt` and then following the routine's indirect callers / data structures before assigning meaning to these offsets.
+
+
+## Reassessment of address 0x477680
+
+The extended disassembly supplied from `0x477680` shows that this is a 3D proximity/intersection helper, not the Scout part-transform routine. It scans candidate records, validates fields, reads candidate centres from offsets `+0xEC/+0xF0/+0xF4`, performs absolute component/range checks, compares squared distances against a squared radius, and calculates a point/segment projection. A neighbouring routine at `0x4778C0` uses a similar pattern over records with a `0x2C` stride. These operations are consistent with collision, hit-testing, or spatial candidate selection; the exact caller/purpose is not yet proven.
+
+Do not use this routine to infer DPC wrapper or transform semantics.
+
+The next probe stage uses `tools/scan-scout-exe-strings.py` to parse the PE section table, map the file offsets of `scout.dpc`, the `scout_*` variants, and related animation strings to virtual addresses, then search both the full disassembly and raw executable for references to those addresses. This is intended to locate the resource-loading/animation setup path instead of continuing down the spatial-query path.
