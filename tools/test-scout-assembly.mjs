@@ -56,9 +56,9 @@ function findScoutDpc() {
   }
   const roots = ['original-data', 'extracted-ff', 'units'];
   for (const root of roots) {
-    const start = path.join(repoRoot, root);
-    if (!fs.existsSync(start)) continue;
-    const stack = [start];
+    const startDir = path.join(repoRoot, root);
+    if (!fs.existsSync(startDir)) continue;
+    const stack = [startDir];
     while (stack.length) {
       const dir = stack.pop();
       for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -66,6 +66,21 @@ function findScoutDpc() {
         if (entry.isDirectory()) stack.push(full);
         else if (entry.isFile() && entry.name.toLowerCase() === 'scout_mj.dpc') return full;
       }
+    }
+  }
+  // Some checkouts keep the extracted units in the original FF archive only.
+  const archives = ['original-data/units.ff', 'units.ff'];
+  const extractor = path.join(repoRoot, 'tools', 'extract-ff-resources.mjs');
+  for (const archive of archives) {
+    const fullArchive = path.join(repoRoot, archive);
+    if (!fs.existsSync(fullArchive) || !fs.existsSync(extractor)) continue;
+    const destination = path.join(os.tmpdir(), 'outwars-scout-units-' + process.pid);
+    try {
+      runNode(extractor, [fullArchive, '--out', destination]);
+      const extracted = path.join(destination, 'units', 'scout_mj.dpc');
+      if (fs.existsSync(extracted)) return extracted;
+    } catch (error) {
+      console.error('Automatic units.ff extraction was not usable: ' + error.message);
     }
   }
   return null;
