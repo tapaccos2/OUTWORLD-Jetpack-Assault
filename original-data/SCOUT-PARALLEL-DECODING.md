@@ -55,3 +55,17 @@ node tools/export-dpc-armour-geometry.mjs units/scout_mj.dpc /tmp/scout-mj-raw.g
 The nine class-105 list entries are now fully accounted for. The first eight are the visible mesh-owner candidates, each with a type-2 child at +24 and a paired type-2 child at +28. The ninth type-1 entry (file offset 20,436) is an aggregate node whose later pointer fields link back to the first eight owner records, to itself, and to the model root (offset 6,496); it is not a ninth mesh.
 
 For each of the first eight owners, owner +8/+12/+16 equals the paired type-2 child +32/+36/+40. That validates stored-vector consistency but not runtime transform semantics. Since every mesh uses the shared coordinate pool at 0x28 with global face indices, the vertex positions may already share model space. A raw no-anchor GLB versus candidate-anchor GLB comparison is now the next decisive check; do not assume the candidate vectors should be added as translations.
+
+## Scout transform hierarchy: wrapper links mapped (2026-10-30)
+
+A new audit follows every type-16 wrapper +8 pointer to the exact embedded record field. The eight mesh/paired-node pairs form a stable alternating chain:
+
+- mesh node 1 links to root node +24;
+- paired node 1 links to mesh node 1 +24;
+- mesh node 2 links to paired node 1 +56;
+- paired node 2 links to mesh node 2 +24;
+- the pattern repeats through pair 8.
+
+The audit counts 1 root-to-first-mesh, 8 paired-to-own-mesh, and 7 mesh-to-previous-paired links (16 total). Wrapper first dwords are 10,000 on mesh-side links and 2,250,000 on paired-side links. The pointer targets are embedded type-0/class-0 descriptors, with pointers to vertex data, a shared external resource, and face data. Shared pool offset 40 is referenced on mesh-side links; paired-side records reference per-part offsets.
+
+This is a structural hierarchy lead only; the semantic meaning of the wrapper constants and the transform multiplication order are still unknown. Six Euler-order tests with a 4096-unit full-turn assumption did not create a recognisable body; direct translation also worsens the assembly. The next decoding step is to identify the executable consumer and its reads from the type-16 and embedded type-0 descriptors.
