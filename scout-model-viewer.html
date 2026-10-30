@@ -53,7 +53,7 @@ let model=null,modelBox=null,originalMaterials=[],wire=false;
 function resize(){const w=host.clientWidth,h=host.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}
 new ResizeObserver(resize).observe(host);resize();
 function updateStatus(extra=''){
- if(!model){status.textContent='Viewer v1.0.3\\nChoose a GLB file to inspect.';return}
+ if(!model){status.textContent='Viewer v1.0.3\nChoose a GLB file to inspect.';return}
  const size=modelBox.getSize(new THREE.Vector3()),center=modelBox.getCenter(new THREE.Vector3());
  status.textContent=[
   'Viewer v1.0.3',
