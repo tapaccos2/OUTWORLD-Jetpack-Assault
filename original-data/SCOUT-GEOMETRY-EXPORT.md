@@ -45,3 +45,19 @@ The automated graph audit of `scout_mj.dpc` corrects the earlier count/role shor
 A further caution follows from the exporter: all nine mesh decodes read positions from the same shared coordinate pool (base file offset `0x28`), and the face indices are global indices into that pool. Consequently the extracted vertex positions may already be expressed in a common model-space frame. Applying the stored owner vectors on top could duplicate a placement rather than assemble a local-space mesh. The raw no-anchor GLB must be compared with the candidate-anchor GLB before deciding which transform interpretation is correct.
 
 The type-2 values at +8/+12/+16 and the remaining pointer/flag fields are still unlabelled. Do not call them Euler angles or a rotation until an executable read site or a cross-variant pattern establishes that.
+
+## New hierarchy finding: alternating type-16 wrapper links (2026-10-30)
+
+The graph audit now follows the type-16 wrapper +8 pointer to its exact target field. For the eight submeshes it finds this complete chain:
+
+1. submesh_1 mesh node → root mesh type-2 +24;
+2. submesh_1 paired node → submesh_1 mesh type-2 +24;
+3. submesh_2 mesh node → submesh_1 paired type-2 +56;
+4. submesh_2 paired node → submesh_2 mesh type-2 +24;
+5. this pattern repeats through submesh_8.
+
+Counts: 1 root-to-first-mesh link, 8 paired-node-to-own-mesh links, 7 mesh-to-previous-paired links: **16/16 links accounted for**. The mesh-side type-16 wrappers have first dword 10,000; paired-node wrappers have first dword 2,250,000.
+
+The pointer targets are embedded type-0/class-0 descriptor records at type-2-relative +24 or +56, not type-2 record headers. Their sampled 24-byte layout begins `00 ff 00 00`, then includes a vertex-data pointer, the same external resource pointer, and a face-data pointer. Mesh-side descriptor records resolve to shared vertex-pool offset 40; paired-side descriptors resolve to per-part offsets (e.g. 96, 712, 744). Remaining small values are retained without assigning names.
+
+The pattern is a concrete parent/descriptor-chain candidate, but its runtime meaning is unconfirmed until the original executable's consumer routine is identified. The 4096-per-turn Euler trial across six Euler orders did not produce a plausible body, and direct anchor translations make the geometry spread farther apart. The exporter must not treat either as the correct transform solution.
