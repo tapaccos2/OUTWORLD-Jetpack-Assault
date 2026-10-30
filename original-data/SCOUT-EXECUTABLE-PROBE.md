@@ -410,3 +410,15 @@ The focused executable probe now captures the full `0x4DD470–0x4DDA80` region 
 - `52-record-relocation-tail-helper.txt`
 
 This is a targeted addition to the existing focused pass; it does not rerun the full executable disassembly. No meaning is assigned to the record's first byte beyond what the disassembly proves, and this must not be confused with the class/type-16 wrapper graph already decoded from Scout DPC files.
+
+
+## Follow-up report 10: clarify type-16 wrapper header vs data
+
+The graph JSON exposed an easy-to-misread field: the old `wrapperValue` was the first DWORD at the wrapper's start. That DWORD contains the complete 4-byte record header, not a numeric transform value. The apparent values were:
+
+- `0x00002710`: type 16, flags `0x27`, class ID `0` (mesh-node link wrapper).
+- `0x00225510`: type 16, flags `0x55`, class ID `34` (paired-node link wrapper).
+
+The separate DWORD at wrapper offset `+4` is `0` for the mesh-node wrappers and `10000` for the paired-node wrappers. Its meaning is not established and it must not be treated as a transform angle or scale without runtime confirmation.
+
+The graph inspector now emits `wrapperHeader`, `wrapperHeaderDword`, and `wrapperParameterAt4` separately. This corrects the previous ambiguous `wrapperValue` label without changing any DPC data or exporter transforms. The established pointer targets remain unchanged: each wrapper's `+8` pointer resolves to a specific field at `+24` or `+56` in another type-2 node.
