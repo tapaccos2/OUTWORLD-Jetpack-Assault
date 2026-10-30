@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Outwars Scout GLB Inspector v1.0.5</title>
+<title>Outwars Scout GLB Inspector v1.0.6</title>
 <style>
 :root{color-scheme:dark;font-family:system-ui,Segoe UI,Arial,sans-serif;background:#10151d;color:#e8edf4}
 *{box-sizing:border-box}body{margin:0;min-height:100vh;display:flex;flex-direction:column}
@@ -31,15 +31,15 @@ footer{padding:8px 14px;background:#18212d;color:#9cabbc;font-size:12px;border-t
 </head>
 <body>
 <header>
- <div><h1>Outwars Scout — 3D Inspector <span class="version" id="version">v1.0.5</span></h1><div class="sub">Local GLB viewer · nothing is uploaded</div></div>
+ <div><h1>Outwars Scout — 3D Inspector <span class="version" id="version">v1.0.6</span></h1><div class="sub">Local GLB viewer · nothing is uploaded</div></div>
  <div class="controls">
   <label class="filelabel" for="file">Choose GLB file</label><input id="file" type="file" accept=".glb,model/gltf-binary">
   <button data-view="front" class="active">Front</button><button data-view="side">Side</button><button data-view="back">Back</button><button data-view="top">Top</button>
   <button id="fit">Fit model</button><button id="wire">Wireframe</button><button id="partsToggle">Meshes</button>
  </div>
 </header>
-<main><div id="view"></div><div id="status">Viewer v1.0.5\nChoose scout-mj-anchor-candidates.glb to inspect the model.</div><div id="parts" style="display:none;position:absolute;z-index:20;right:14px;top:14px;width:205px;max-height:58%;overflow:auto;background:#17212df5;color:#f2f6fb;border:2px solid #83a9d4;border-radius:8px;padding:10px;font:12px/1.5 ui-monospace,monospace;box-shadow:0 5px 24px #000a"><strong>Mesh visibility — 9 sections</strong><div class="actions"><button id="showAll">All</button><button id="hideAll">None</button></div><div id="partList"></div></div><div id="help">Drag: orbit · Wheel: zoom · Right-drag: pan</div></main>
-<footer>Viewer v1.0.5 · Diagnostic only. The model's candidate translations are exploratory; rotations and the original parent hierarchy have not yet been decoded.</footer>
+<main><div id="view"></div><div id="status">Viewer v1.0.6\nChoose scout-mj-anchor-candidates.glb to inspect the model.</div><div id="parts" style="display:none;position:absolute;z-index:20;right:14px;top:14px;width:205px;max-height:58%;overflow:auto;background:#17212df5;color:#f2f6fb;border:2px solid #83a9d4;border-radius:8px;padding:10px;font:12px/1.5 ui-monospace,monospace;box-shadow:0 5px 24px #000a"><strong>Mesh visibility — 9 sections</strong><div class="actions"><button id="showAll">All</button><button id="hideAll">None</button></div><div id="partList"></div></div><div id="help">Drag: orbit · Wheel: zoom · Right-drag: pan</div></main>
+<footer>Viewer v1.0.6 · Diagnostic only. The model's candidate translations are exploratory; rotations and the original parent hierarchy have not yet been decoded.</footer>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
@@ -61,10 +61,10 @@ let model=null,modelBox=null,originalMaterials=[],wire=false;
 function resize(){const w=host.clientWidth,h=host.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}
 new ResizeObserver(resize).observe(host);resize();
 function updateStatus(extra=''){
- if(!model){status.textContent='Viewer v1.0.5\nChoose a GLB file to inspect.';return}
+ if(!model){status.textContent='Viewer v1.0.6\nChoose a GLB file to inspect.';return}
  const size=modelBox.getSize(new THREE.Vector3()),center=modelBox.getCenter(new THREE.Vector3());
  status.textContent=[
-  'Viewer v1.0.5',
+  'Viewer v1.0.6',
   'Loaded: '+(model.userData.fileName||'GLB'),
   'Meshes: '+model.userData.meshCount,
   'Vertices: '+model.userData.vertices.toLocaleString(),
@@ -74,21 +74,61 @@ function updateStatus(extra=''){
   extra
  ].filter(Boolean).join('\n');
 }
+function getVisibleBounds(){
+ if(!model)return new THREE.Box3();
+ model.updateMatrixWorld(true);
+ const box=new THREE.Box3();
+ model.traverse(o=>{
+  if(!o.isMesh||!o.visible)return;
+  if(!o.geometry.boundingBox)o.geometry.computeBoundingBox();
+  if(o.geometry.boundingBox){
+   const part=o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld);
+   box.union(part);
+  }
+ });
+ return box;
+}
+function frameVisible(){
+ if(!model)return;
+ const visibleBox=getVisibleBounds();
+ if(visibleBox.isEmpty()){
+  updateStatus('All mesh sections are hidden. Tick a mesh to inspect it.');
+  return;
+ }
+ modelBox=visibleBox;
+ const sphere=modelBox.getBoundingSphere(new THREE.Sphere());
+ const radius=Math.max(sphere.radius,1);
+ const direction=camera.position.clone().sub(controls.target);
+ if(direction.lengthSq()<1e-8)direction.set(0,-1,0);
+ direction.normalize();
+ const distance=radius/Math.sin(THREE.MathUtils.degToRad(camera.fov/2))*1.25;
+ controls.target.copy(sphere.center);
+ camera.position.copy(sphere.center).addScaledVector(direction,distance);
+ camera.near=Math.max(.01,radius/1000);
+ camera.far=Math.max(1000,distance*30);
+ camera.updateProjectionMatrix();
+ controls.update();
+ const visibleCount=(()=>{let n=0;model.traverse(o=>{if(o.isMesh&&o.visible)n++});return n})();
+ updateStatus('Showing '+visibleCount+' visible mesh section(s); camera framed to selection.');
+}
 function fit(){
  if(!model)return;
- model.updateMatrixWorld(true);modelBox.setFromObject(model);
- const sphere=modelBox.getBoundingSphere(new THREE.Sphere());
- const radius=Math.max(sphere.radius,1),distance=radius/Math.sin(THREE.MathUtils.degToRad(camera.fov/2))*1.25;
- controls.target.copy(sphere.center);camera.position.set(sphere.center.x,sphere.center.y-distance,sphere.center.z+radius*.22);
- camera.near=Math.max(.01,radius/1000);camera.far=distance*30;camera.updateProjectionMatrix();controls.update();
+ const previous=modelBox;
+ frameVisible();
+ if(!modelBox||modelBox.isEmpty())modelBox=previous;
 }
 function setView(which){
  if(!model)return;
+ const visibleBox=getVisibleBounds();
+ if(visibleBox.isEmpty())return;
+ modelBox=visibleBox;
  const s=modelBox.getBoundingSphere(new THREE.Sphere()),r=Math.max(s.radius,1),d=r*3.2;
  const positions={front:[0,0,d],side:[d,0,0],back:[0,0,-d],top:[0,d,0]};
  const p=positions[which];camera.position.set(s.center.x+p[0],s.center.y+p[1],s.center.z+p[2]);
  camera.up.set(0,1,0);if(which==='top')camera.up.set(0,0,-1);
- camera.lookAt(s.center);controls.target.copy(s.center);controls.update();
+ camera.lookAt(s.center);controls.target.copy(s.center);
+ camera.near=Math.max(.01,r/1000);camera.far=Math.max(1000,d*20);camera.updateProjectionMatrix();
+ controls.update();
  document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===which));
 }
 function populatePartControls(){
@@ -102,11 +142,11 @@ function populatePartControls(){
  meshObjects.forEach((o,index)=>{
   const label=document.createElement('label');
   const input=document.createElement('input');input.type='checkbox';input.checked=o.visible;
-  input.addEventListener('change',()=>{o.visible=input.checked;});
+  input.addEventListener('change',()=>{o.visible=input.checked;frameVisible();});
   const name=document.createElement('span');name.textContent=o.name||('Mesh '+(index+1));
   label.append(input,name);list.append(label);
  });
- const updateChecks=visible=>{meshObjects.forEach((o,i)=>{o.visible=visible;list.querySelectorAll('input')[i].checked=visible;});};
+ const updateChecks=visible=>{meshObjects.forEach((o,i)=>{o.visible=visible;list.querySelectorAll('input')[i].checked=visible;});frameVisible();};
  document.querySelector('#showAll').onclick=()=>updateChecks(true);
  document.querySelector('#hideAll').onclick=()=>updateChecks(false);
  toggle.textContent='Meshes ('+meshObjects.length+')';
