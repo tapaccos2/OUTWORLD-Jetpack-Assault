@@ -100,7 +100,9 @@ for (let i = 0; i < owners.length; i++) {
   if (meshVertexReference < 0 || meshVertexReference + 4 > b.length) throw new Error('Part ' + (i + 1) + ': invalid mesh vertex reference');
   // Face indices are global indices into the shared coordinate pool. The +28
   // pointer is retained as metadata; it is not the base of the XYZ array.
-  const decoded = decodeMesh('submesh_' + (i + 1), owner, meshNode, transformNode, sharedVertexData, ptr(meshNode + 36), 26, anchor);\n  decoded.meshVertexReferenceTarget = meshVertexReference;\n  meshes.push(decoded);
+  const decoded = decodeMesh('submesh_' + (i + 1), owner, meshNode, transformNode, sharedVertexData, ptr(meshNode + 36), 26, anchor);
+  decoded.meshVertexReferenceTarget = meshVertexReference;
+  meshes.push(decoded);
 }
 // Build a self-contained glTF 2.0 binary.
 const binaryParts = [], bufferViews = [], accessors = [], gltfMeshes = [], nodes = [], materials = [];
