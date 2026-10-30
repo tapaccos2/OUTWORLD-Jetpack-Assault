@@ -32,3 +32,16 @@ The current GLB is therefore a verified **raw geometry extraction**, not yet a r
     node tools/export-dpc-armour-geometry.mjs units/scout_mj.dpc scout-mj-anchor-test.glb --apply-anchor-candidates
 
 The exporter also writes a .json report next to each GLB. The first command is the source-faithful default; the second applies candidate translations for investigation only.
+
+## Corrected part-list audit (2026-10-30)
+
+The automated graph audit of `scout_mj.dpc` corrects the earlier count/role shorthand:
+
+- The class-105 list has **nine type-1 entries**.
+- The **first eight entries** are the eight mesh-owner records at offsets 8,040; 9,592; 11,144; 12,696; 14,248; 15,800; 17,352; and 18,904. Each has a child type-2 node at owner +24 and a second type-2 node at owner +28.
+- For all eight, the second child node's signed values at +32/+36/+40 exactly match the owner's +8/+12/+16 vector. This confirms the stored values agree between the two records; it does **not** prove that directly applying the vector as a glTF node translation matches the runtime transform.
+- The **ninth entry**, at offset 20,436, is structurally different. It has no type-2 child at owner +28. Its later fields contain links to the first eight owners, to itself, and to the model root at offset 6,496. Treat it as an aggregate/grouping node, not a ninth renderable mesh.
+
+A further caution follows from the exporter: all nine mesh decodes read positions from the same shared coordinate pool (base file offset `0x28`), and the face indices are global indices into that pool. Consequently the extracted vertex positions may already be expressed in a common model-space frame. Applying the stored owner vectors on top could duplicate a placement rather than assemble a local-space mesh. The raw no-anchor GLB must be compared with the candidate-anchor GLB before deciding which transform interpretation is correct.
+
+The type-2 values at +8/+12/+16 and the remaining pointer/flag fields are still unlabelled. Do not call them Euler angles or a rotation until an executable read site or a cross-variant pattern establishes that.
