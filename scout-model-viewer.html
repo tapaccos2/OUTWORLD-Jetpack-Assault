@@ -40,14 +40,14 @@ import {GLTFLoader} from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js
 
 const host=document.querySelector('#view'),status=document.querySelector('#status'),fileInput=document.querySelector('#file');
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x10151d);
-const camera=new THREE.PerspectiveCamera(42,1,.1,100000);camera.up.set(0,0,1);
+const camera=new THREE.PerspectiveCamera(42,1,.1,100000);camera.up.set(0,1,0);
 const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.outputColorSpace=THREE.SRGBColorSpace;host.appendChild(renderer.domElement);
 const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.07;controls.target.set(0,0,0);
 scene.add(new THREE.HemisphereLight(0xdceaff,0x263142,2.1));
 const key=new THREE.DirectionalLight(0xffffff,2.3);key.position.set(-3,-5,8);scene.add(key);
 const fill=new THREE.DirectionalLight(0x8fb9ee,1.0);fill.position.set(5,3,3);scene.add(fill);
-const grid=new THREE.GridHelper(5000,50,0x52647a,0x293747);grid.rotation.x=Math.PI/2;grid.position.z=0;scene.add(grid);
+const grid=new THREE.GridHelper(5000,50,0x52647a,0x293747);grid.position.y=0;scene.add(grid);
 const axes=new THREE.AxesHelper(500);scene.add(axes);
 let model=null,modelBox=null,originalMaterials=[],wire=false;
 function resize(){const w=host.clientWidth,h=host.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}
@@ -76,9 +76,9 @@ function fit(){
 function setView(which){
  if(!model)return;
  const s=modelBox.getBoundingSphere(new THREE.Sphere()),r=Math.max(s.radius,1),d=r*3.2;
- const positions={front:[0,-d,0],side:[d,0,0],back:[0,d,0],top:[0,0,d]};
+ const positions={front:[0,0,d],side:[d,0,0],back:[0,0,-d],top:[0,d,0]};
  const p=positions[which];camera.position.set(s.center.x+p[0],s.center.y+p[1],s.center.z+p[2]);
- camera.up.set(0,0,1);if(which==='top')camera.up.set(0,1,0);
+ camera.up.set(0,1,0);if(which==='top')camera.up.set(0,0,-1);
  camera.lookAt(s.center);controls.target.copy(s.center);controls.update();
  document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===which));
 }
