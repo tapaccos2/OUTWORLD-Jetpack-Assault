@@ -51,3 +51,25 @@ The graph also repeatedly contains type-0 records with class IDs such as 2000, 2
 1. Inspect the type-13 class 5700/5703/5601/5709/7011/7017 payloads across maps and match their field access patterns to executable code.
 2. Check whether those records refer to `.TPC` texture data or geometry data, without assigning meaning from class IDs alone.
 3. Keep the GPC/RPC terrain-surface mesh separate from the DPC scene graph until their spatial relationship is established.
+
+
+## New pointer-chain finding: type-13 to type-9/class-7012
+
+A direct byte-level follow-up on the reachable type-13 records found a repeatable relocated pointer at record-relative offset `+8`:
+
+- In `rag04.dpc`, the type-13/class-7011 records at offsets 882,856 through 884,344 (124-byte spacing) all contain `0x80097e64` at `+8`. Subtracting the DPC relocation base `0x80019c40` resolves to file offset 516,644, which begins a type-9/class-7012 record.
+- In `dead01.dpc`, the type-13/class-7011 records at offsets 608,508 through 610,120 (124-byte spacing) all contain `0x80061aac` at `+8`. With the same relocation base, this resolves to file offset 294,508, also a type-9/class-7012 record.
+- Both target records have the same observed header pattern: type 9, flags 5, class 7012, a 16-bit value of 7 at `+6`, and seven relocated pointers beginning at `+16`.
+- All seven pointers in each sample resolve to type-1 records. The target offsets are distinct across the two DPC files but the seven-entry pattern is consistent.
+
+This establishes a concrete chain in these two samples:
+
+`type-13/class-7011 (+8 pointer) → type-9/class-7012 (7-entry list at +16) → seven type-1 records`
+
+The graph inspector now follows this specific type-9/class-7012 layout as an observed candidate. It does **not** yet assign meaning to the seven child records, nor does it prove that all type-13 records or all maps use the same layout. The type-4 traversal remains a separate tentative hypothesis.
+
+### Why this matters
+
+The pointer chain is a much better executable-disassembly target than a bare class number. The next check is to find the code that reads type-13 `+8`, then determine how the type-9 count and child pointers are consumed. If those children resolve to geometry or surface data, their transforms and bounds may explain how the DPC scene connects to the GPC/RPC terrain patches.
+
+Raw values and offsets above are from the committed `rag04.dpc` and `dead01.dpc` resources; no guessed semantic labels are applied.
