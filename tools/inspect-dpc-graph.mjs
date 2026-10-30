@@ -4,8 +4,9 @@
  *
  * The top-level pointer table and kind-1 records are documented by the existing
  * inspect-dpc-records.mjs tool. This exploratory graph walker follows pointers
- * found in kind-1 records (u8 count at +20, u32 pointers from +24) and kind-4
- * records (observed u16 count at +18, u32 pointers from +20). It preserves
+ * found in kind-1 records (u8 count at +20, u32 pointers from +24), kind-4
+ * records (observed u16 count at +18, u32 pointers from +20), and the specific
+ * type-9/class-7012 list (observed u16 count at +6, pointers from +16). It preserves
  * unrecognised records as raw typed nodes and reports path/edge information;
  * it does NOT assign semantic meanings to unknown class IDs.
  *
@@ -50,8 +51,13 @@ function refsFor(offset, kind, maxRecords=256) {
   let count = 0, first = 0;
   if (kind === 1) { count = b[offset + 20] ?? 0; first = offset + 24; }
   else if (kind === 4) { count = u16(offset + 18) ?? 0; first = offset + 20; }
+  else if (kind === 9 && u16(offset + 2) === 7012) {
+    // Observed in rag04/dead01: u16 count at +6, seven relocated pointers from +16.
+    count = u16(offset + 6) ?? 0;
+    first = offset + 16;
+  }
   // Unknown record type/oversized count is retained but not followed using a guessed layout.
-  if (![1, 4].includes(kind) || count > maxRecords || first + count * 4 > b.length) return { count, refs: [], layoutFollowed: false };
+  if (![1, 4].includes(kind) && !(kind === 9 && u16(offset + 2) === 7012) || count > maxRecords || first + count * 4 > b.length) return { count, refs: [], layoutFollowed: false };
   const refs = [];
   for (let i=0; i<count; i++) {
     const ref = targetAt(first + i * 4);
