@@ -96,6 +96,8 @@ function compactPart(entry, bytes) {
     meshType2VectorAt8Candidate: meshVector,
     pairedType2VectorAt8Candidate: pairedVector,
     meshNodePlus28ReferencedVertex: meshReferenceVertex,
+    meshType2RawWords32Through156: mesh?.rawFirst160?.words32 ?? [],
+    meshType2ExtendedPointerCandidates: mesh?.extendedPointerCandidates ?? [],
     meshType2VectorAt32Candidate: mesh?.fields?.signedVectorAt32Candidate ?? null,
     meshType2VectorAt56Candidate: mesh?.fields ? [
       mesh.fields.plus56?.s32 ?? null,
@@ -105,6 +107,8 @@ function compactPart(entry, bytes) {
     meshNodePlus28ReferenceOffset: mesh?.fields?.plus28?.targetOffset ?? null,
     faceDataOffsetCandidate: mesh?.fields?.plus36?.targetOffset ?? null,
     pairedType2Offset: paired?.offset ?? null,
+    pairedType2RawWords32Through156: paired?.rawFirst160?.words32 ?? [],
+    pairedType2ExtendedPointerCandidates: paired?.extendedPointerCandidates ?? [],
     pairedType2VectorAt32Candidate: paired?.fields?.signedVectorAt32Candidate ?? null,
     pairedType16WrapperFields: wrapperConstants(paired?.wrapper),
     pairedNodePointerTargets: paired?.alignedPointerCandidates?.map(p => ({
@@ -179,6 +183,10 @@ try {
       variant: v.name,
       meshVectorAt8: v.parts[i].meshType2VectorAt8Candidate,
       meshNodePlus28ReferencedVertex: v.parts[i].meshNodePlus28ReferencedVertex,
+      meshType2RawWords32Through156: v.parts[i].meshType2RawWords32Through156,
+      meshType2ExtendedPointerCandidates: v.parts[i].meshType2ExtendedPointerCandidates,
+      pairedType2RawWords32Through156: v.parts[i].pairedType2RawWords32Through156,
+      pairedType2ExtendedPointerCandidates: v.parts[i].pairedType2ExtendedPointerCandidates,
       meshVectorAt56: v.parts[i].meshType2VectorAt56Candidate,
       meshWrapperFields: v.parts[i].meshType16WrapperFields,
       pairedVectorAt8: v.parts[i].pairedType2VectorAt8Candidate,
