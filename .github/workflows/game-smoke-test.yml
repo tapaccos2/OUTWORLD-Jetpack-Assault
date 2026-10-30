@@ -58,7 +58,7 @@ jobs:
             // Wait for Pages to finish deploying this exact build. A successful
             // HTTP response alone can still serve the previous published version.
             await page.waitForFunction(
-              () => document.querySelector('.brand small')?.innerText.includes('BUILD 2.9.69'),
+              () => document.querySelector('.brand small')?.innerText.includes('BUILD 2.9.70'),
               null,
               { timeout: 90000 }
             );
