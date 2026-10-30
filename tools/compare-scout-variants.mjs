@@ -67,16 +67,33 @@ function wrapperConstants(wrapper) {
     vectorAt20: wrapperVector(wrapper)
   };
 }
-function compactPart(entry) {
+function planarDirectionDeltaDeg(meshVector, pairedVector) {
+  if (!Array.isArray(meshVector) || !Array.isArray(pairedVector) ||
+      meshVector.length < 2 || pairedVector.length < 2) return null;
+  const cross = pairedVector[0] * meshVector[1] - pairedVector[1] * meshVector[0];
+  const dot = pairedVector[0] * meshVector[0] + pairedVector[1] * meshVector[1];
+  return Number((Math.atan2(cross, dot) * 180 / Math.PI).toFixed(3));
+}
+function compactPart(entry, bytes) {
   const d = entry.detail;
   const mesh = d?.child24Detail;
   const paired = d?.child28Detail;
+  const meshVector = mesh?.fields?.signedVectorAt8Candidate ?? null;
+  const pairedVector = paired?.fields?.signedVectorAt8Candidate ?? null;
+  const meshReferenceOffset = mesh?.fields?.plus28?.targetOffset ?? null;
+  const meshReferencePointCandidate = Number.isInteger(meshReferenceOffset) &&
+    meshReferenceOffset >= 0 && meshReferenceOffset + 8 <= bytes.length
+    ? [bytes.readInt16LE(meshReferenceOffset), bytes.readInt16LE(meshReferenceOffset + 2), bytes.readInt16LE(meshReferenceOffset + 4)]
+    : null;
   return {
     partListIndex: entry.index,
     ownerOffset: d?.offset ?? null,
     ownerVectorCandidate: d?.ownerVectorCandidate ?? null,
     meshNodeOffset: mesh?.offset ?? null,
-    meshType2VectorAt8Candidate: mesh?.fields?.signedVectorAt8Candidate ?? null,
+    meshType2VectorAt8Candidate: meshVector,
+    pairedType2VectorAt8Candidate: pairedVector,
+    meshVectorVsPairedVectorPlanarDeltaDegCandidate: planarDirectionDeltaDeg(meshVector, pairedVector),
+    meshReferencePointXYZCandidate: meshReferencePointCandidate,
     meshType2VectorAt32Candidate: mesh?.fields?.signedVectorAt32Candidate ?? null,
     meshType2VectorAt56Candidate: mesh?.fields ? [
       mesh.fields.plus56?.s32 ?? null,
@@ -86,7 +103,6 @@ function compactPart(entry) {
     meshNodePlus28ReferenceOffset: mesh?.fields?.plus28?.targetOffset ?? null,
     faceDataOffsetCandidate: mesh?.fields?.plus36?.targetOffset ?? null,
     pairedType2Offset: paired?.offset ?? null,
-    pairedType2VectorAt8Candidate: paired?.fields?.signedVectorAt8Candidate ?? null,
     pairedType2VectorAt32Candidate: paired?.fields?.signedVectorAt32Candidate ?? null,
     pairedType16WrapperFields: wrapperConstants(paired?.wrapper),
     pairedNodePointerTargets: paired?.alignedPointerCandidates?.map(p => ({
@@ -151,7 +167,7 @@ try {
         triangles: report.graph.rootGeometry.triangles,
         bounds: report.graph.rootGeometry.bounds
       } : null,
-      parts: report.graph.entries.slice(0, 8).map(compactPart)
+      parts: report.graph.entries.slice(0, 8).map(entry => compactPart(entry, fs.readFileSync(file)))
     };
   });
 
@@ -159,6 +175,8 @@ try {
     v.parts[i] ? [{
       variant: v.name,
       meshVectorAt8: v.parts[i].meshType2VectorAt8Candidate,
+      meshVectorVsPairedVectorPlanarDeltaDegCandidate: v.parts[i].meshVectorVsPairedVectorPlanarDeltaDegCandidate,
+      meshReferencePointXYZCandidate: v.parts[i].meshReferencePointXYZCandidate,
       meshVectorAt56: v.parts[i].meshType2VectorAt56Candidate,
       meshWrapperFields: v.parts[i].meshType16WrapperFields,
       pairedVectorAt8: v.parts[i].pairedType2VectorAt8Candidate,
@@ -224,6 +242,10 @@ try {
     commonFieldPatternsByPart: partsByIndex.map((rows, i) => ({
       part: i + 1,
       meshType2VectorAt8Counts: stableCounts(rows.map(r => r.meshVectorAt8)),
+      meshReferencePointXYZCounts: stableCounts(rows.map(r => r.meshReferencePointXYZCandidate)),
+      planarDirectionDeltaDegCandidateCounts: stableCounts(rows.map(r =>
+        r.meshVectorVsPairedVectorPlanarDeltaDegCandidate == null
+          ? null : [r.meshVectorVsPairedVectorPlanarDeltaDegCandidate])),
       pairedType2VectorAt8Counts: stableCounts(rows.map(r => r.pairedVectorAt8)),
       pairedType2VectorAt32Counts: stableCounts(rows.map(r => r.pairedVectorAt32)),
       ownerVectorCounts: stableCounts(rows.map(r => r.ownerVector))
