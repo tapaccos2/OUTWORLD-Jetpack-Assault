@@ -102,6 +102,16 @@ try {
       rootClass: report.rootClass,
       partClass: report.partClass,
       summary: report.summary,
+      wrapperFieldLinkPattern: report.graph.linkPatternSummary ?? null,
+      wrapperFieldLinks: (report.graph.wrapperFieldLinks ?? []).map(link => ({
+        sourceRole: link.sourceRole,
+        sourceNodeOffset: link.sourceNodeOffset,
+        wrapperValue: link.wrapperValue,
+        targetOffset: link.targetOffset,
+        targetField: link.matchedRecordFields?.[0] ?? null,
+        targetFieldValue: link.targetFieldValue ?? null,
+        targetFieldBytesHex: link.targetFieldBytesHex ?? null
+      })),
       rootGeometry: report.graph.rootGeometry ? {
         referencedVertexCount: report.graph.rootGeometry.referencedVertexCount,
         triangles: report.graph.rootGeometry.triangles,
@@ -130,6 +140,9 @@ try {
     rootPartClassPairs: [...new Set(variants.map(v => v.rootClass + '/' + v.partClass))],
     allVariantsHaveEightPartOwnerSlots: variants.every(v => v.parts.length === 8),
     allEightOwnerVectorsMatchPaired32: variants.every(v => v.parts.every(p => p.ownerVectorMatchesPaired32)),
+    allVariantsShareWrapperFieldPattern: variants.every(v =>
+      JSON.stringify(v.wrapperFieldLinkPattern) === JSON.stringify(variants[0].wrapperFieldLinkPattern)),
+    wrapperFieldLinkPattern: variants[0].wrapperFieldLinkPattern,
     commonFieldPatternsByPart: partsByIndex.map((rows, i) => ({
       part: i + 1,
       meshType2VectorAt8Counts: stableCounts(rows.map(r => r.meshVectorAt8)),
