@@ -101,8 +101,14 @@ jobs:
               const rotated = await page.locator('#status').innerText();
               await page.locator('#resetPose').click();
               await page.waitForFunction(() => (document.querySelector('#status')?.innerText || '').includes('Raw model pose restored'));
+              await page.locator('#rotationGalleryToggle').click();
+              await page.waitForFunction(() => (document.querySelector('#status')?.innerText || '').includes('six 4096-turn Euler order trials'));
+              const galleryStatus = await page.locator('#status').innerText();
+              if ((await page.locator('#rotationGalleryToggle').innerText()) !== 'Back to model') throw new Error('Rotation order gallery did not open');
+              await page.locator('#rotationGalleryToggle').click();
+              await page.waitForFunction(() => (document.querySelector('#status')?.innerText || '').includes('Back to raw model'));
               await page.screenshot({ path: '.scout-viewer-test/viewer-smoke-test.png', fullPage: true });
-              const result = { title: await page.title(), loaded, rotated, reset: await page.locator('#status').innerText(), errors };
+              const result = { title: await page.title(), loaded, rotated, reset: await page.locator('#status').innerText(), galleryStatus, errors };
               console.log('SCOUT VIEWER CHECK:', JSON.stringify(result, null, 2));
               if (!loaded.includes('Meshes: 9')) throw new Error('Scout GLB did not load nine meshes');
               if (!rotated.includes('8 mesh candidates') && !rotated.includes('9 mesh candidates')) throw new Error('Rotation trial did not apply to mesh candidates');
