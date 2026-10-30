@@ -245,3 +245,19 @@ An automated audit of the complete nine-entry class-105 list in `scout_mj.dpc` r
 The paired-node equality is a verified structural consistency check only. The semantic role of the two type-2 nodes and their other fields remains unresolved. In particular, the repeated values at their +8/+12/+16 fields have not been proven to be rotations.
 
 The geometry exporter also reads all submesh vertices from the shared coordinate pool at file offset `0x28`, with global face indices. This raises a concrete alternative to the existing translation-only preview: the vertices may already be in a common model coordinate frame, in which case adding the owner triple again would over-translate them. Compare raw and translated exports before interpreting the result as a missing rotation problem.
+
+## Scout type-16 wrapper chain and embedded descriptors (2026-10-30)
+
+A byte-level link audit of the eight Scout mesh/paired-node pairs identifies a repeatable alternating chain. The type-16 wrapper's +8 pointer does not land on the start of another type-2 record; it lands on an embedded type-0/class-0 descriptor at a field inside an existing type-2 record:
+
+- submesh 1 mesh-side wrapper (value 10,000) → root type-2 node +24;
+- each paired-node wrapper (value 2,250,000) → its own mesh type-2 node +24;
+- each subsequent mesh-side wrapper (value 10,000) → the previous paired type-2 node +56.
+
+This yields 1 root-to-first-mesh link, 8 paired-to-own-mesh links, and 7 mesh-to-previous-paired links: all 16 expected links are accounted for in the sample. The embedded descriptors begin with bytes `00 ff 00 00`; the next fields include pointers to vertex data, a common external resource reference, and face data, followed by small count/flag-like values. In the sampled model, mesh-side descriptors point to shared vertex base offset 40, while paired-side descriptors point to part-specific offsets such as 96, 712, and 744.
+
+This is a verified pointer/layout pattern, not yet proof of the semantic transform equation. The +24/+56 targets are embedded descriptors; do not call them rotation matrices until their executable consumer is identified. The two wrapper constants (10,000 and 2,250,000) are retained as raw values.
+
+A diagnostic applied the owner triples as Euler angles with 4096 units per full turn in all six Euler orders. None produced a recognisable Scout silhouette. Directly applying the same triples as translations also made the combined model spread farther apart. Both simple interpretations are rejected as assembly solutions.
+
+Next target: locate the executable routine that consumes type-16 wrappers and these embedded type-0 descriptors, and establish the transform/matrix access pattern before changing the GLB exporter.
