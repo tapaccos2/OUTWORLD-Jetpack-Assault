@@ -6,14 +6,7 @@ import path from 'node:path';
 const args = process.argv.slice(2);
 const applyAnchors = args.includes('--apply-anchor-candidates');
 const useMeshVertexReference = args.includes('--use-mesh-vertex-reference');
-const applyPlanarPivotCandidate = args.includes('--apply-planar-pivot-candidate');
-const applyPivotOwnerCandidate = args.includes('--apply-pivot-owner-candidate');
-const positional = args.filter(x =>
-  x !== '--apply-anchor-candidates' &&
-  x !== '--use-mesh-vertex-reference' &&
-  x !== '--apply-planar-pivot-candidate' &&
-  x !== '--apply-pivot-owner-candidate'
-);
+const positional = args.filter(x => x !== '--apply-anchor-candidates' && x !== '--use-mesh-vertex-reference');
 const input = positional[0], output = positional[1] || 'armour-raw-geometry.glb';
 if (!input) throw new Error('Usage: node export-dpc-armour-geometry.mjs <file.dpc> [out.glb] [--apply-anchor-candidates] [--use-mesh-vertex-reference]');
 const b = fs.readFileSync(input);
@@ -66,35 +59,6 @@ function readQuads(start, sourceCount, label) {
   }
   return unique;
 }
-function planarAngleFromCandidateVectors(meshVector, pairedVector) {
-  const cross = pairedVector[0] * meshVector[1] - pairedVector[1] * meshVector[0];
-  const dot = pairedVector[0] * meshVector[0] + pairedVector[1] * meshVector[1];
-  return Math.atan2(cross, dot);
-}
-function applyPlanarPivotTransform(mesh, pivot, angle, translation) {
-  const cosine = Math.cos(angle), sine = Math.sin(angle);
-  for (let i = 0; i < mesh.vertexCount; i++) {
-    const offset = i * 3;
-    const x = mesh.positions[offset] - pivot[0];
-    const y = mesh.positions[offset + 1] - pivot[1];
-    const z = mesh.positions[offset + 2] - pivot[2];
-    mesh.positions[offset] = translation[0] + cosine * x - sine * y;
-    mesh.positions[offset + 1] = translation[1] + sine * x + cosine * y;
-    mesh.positions[offset + 2] = translation[2] + z;
-    const nx = mesh.normals[offset], ny = mesh.normals[offset + 1];
-    mesh.normals[offset] = cosine * nx - sine * ny;
-    mesh.normals[offset + 1] = sine * nx + cosine * ny;
-  }
-  mesh.min = [Infinity, Infinity, Infinity];
-  mesh.max = [-Infinity, -Infinity, -Infinity];
-  for (let i = 0; i < mesh.vertexCount; i++) {
-    for (let k = 0; k < 3; k++) {
-      const value = mesh.positions[i * 3 + k];
-      mesh.min[k] = Math.min(mesh.min[k], value);
-      mesh.max[k] = Math.max(mesh.max[k], value);
-    }
-  }
-}
 function decodeMesh(name, owner, meshNode, transformNode, vertexOffset, faceOffset, sourceCount, anchor) {
   const quads = readQuads(faceOffset, sourceCount, name);
   if (!quads.length) throw new Error(name + ': no quads decoded');
@@ -142,35 +106,6 @@ for (let i = 0; i < owners.length; i++) {
   const decoded = decodeMesh('submesh_' + (i + 1), owner, meshNode, transformNode, selectedVertexData, ptr(meshNode + 36), 26, anchor);
   decoded.meshVertexReferenceTarget = meshVertexReference;
   decoded.sharedVertexDataOffset = sharedVertexData;
-  if (applyPlanarPivotCandidate || applyPivotOwnerCandidate) {
-    const meshVector = [s32(meshNode + 8), s32(meshNode + 12)];
-    const pairedVector = [s32(transformNode + 8), s32(transformNode + 12)];
-    const pivot = [
-      b.readInt16LE(meshVertexReference),
-      b.readInt16LE(meshVertexReference + 2),
-      b.readInt16LE(meshVertexReference + 4)
-    ];
-    const angle = planarAngleFromCandidateVectors(meshVector, pairedVector);
-    const translation = [s32(owner + 8), s32(owner + 12), s32(owner + 16)];
-    if (applyPivotOwnerCandidate) {
-      applyPlanarPivotTransform(decoded, pivot, angle, translation);
-    } else {
-      applyPlanarPivotTransform(decoded, pivot, angle, pivot);
-    }
-    decoded.planarPivotCandidate = {
-      pivot,
-      meshVector,
-      pairedVector,
-      translation: applyPivotOwnerCandidate ? translation : pivot,
-      angleRadians: angle,
-      angleDegrees: angle * 180 / Math.PI,
-      rotationAxis: 'Z',
-      transformKind: applyPivotOwnerCandidate
-        ? 'pivot-relative rotation plus owner-vector translation'
-        : 'rotation around referenced pivot only',
-      interpretation: 'XY direction difference used as a diagnostic rotation only'
-    };
-  }
   decoded.vertexBaseInterpretation = useMeshVertexReference ? 'meshNode+28 candidate local base' : 'shared pool descriptor base';
   meshes.push(decoded);
 }
@@ -198,13 +133,13 @@ for (let i = 0; i < meshes.length; i++) {
   const indexAccessor = accessors.length;
   accessors.push({ bufferView: indexView, componentType: 5125, count: m.indices.length, type: 'SCALAR', min: [Math.min(...m.indices)], max: [Math.max(...m.indices)] });
   materials.push({ name: 'Diagnostic material ' + (i + 1), pbrMetallicRoughness: { baseColorFactor: colors[i], metallicFactor: 0, roughnessFactor: .82 }, doubleSided: true });
-  gltfMeshes.push({ name: m.name, primitives: [{ attributes: { POSITION: posAccessor, NORMAL: normAccessor }, indices: indexAccessor, material: i, mode: 4 }], extras: { sourceOwnerNodeOffset: m.owner, sourceMeshNodeOffset: m.meshNode, sourceTransformNodeOffset: m.transformNode, vertexDataOffset: m.vertexOffset, meshVertexReferenceTarget: m.meshVertexReferenceTarget ?? null, sharedVertexDataOffset: m.sharedVertexDataOffset ?? m.vertexOffset, vertexBaseInterpretation: m.vertexBaseInterpretation ?? 'root/shared pool base', faceDataOffset: m.faceOffset, sourceFaceRecordCount: m.sourceCount, uniqueQuadCount: m.quadCount, anchorVectorCandidate: m.anchor, planarPivotCandidate: m.planarPivotCandidate ?? null } });
-  const node = { name: m.name, mesh: i, extras: { anchorVectorCandidate: m.anchor, transformApplied: applyAnchors, planarPivotCandidate: m.planarPivotCandidate ?? null } };
+  gltfMeshes.push({ name: m.name, primitives: [{ attributes: { POSITION: posAccessor, NORMAL: normAccessor }, indices: indexAccessor, material: i, mode: 4 }], extras: { sourceOwnerNodeOffset: m.owner, sourceMeshNodeOffset: m.meshNode, sourceTransformNodeOffset: m.transformNode, vertexDataOffset: m.vertexOffset, meshVertexReferenceTarget: m.meshVertexReferenceTarget ?? null, sharedVertexDataOffset: m.sharedVertexDataOffset ?? m.vertexOffset, vertexBaseInterpretation: m.vertexBaseInterpretation ?? 'root/shared pool base', faceDataOffset: m.faceOffset, sourceFaceRecordCount: m.sourceCount, uniqueQuadCount: m.quadCount, anchorVectorCandidate: m.anchor } });
+  const node = { name: m.name, mesh: i, extras: { anchorVectorCandidate: m.anchor, transformApplied: applyAnchors } };
   if (applyAnchors && m.transformNode !== null) node.translation = m.anchor;
   nodes.push(node);
 }
 const binary = Buffer.concat(binaryParts);
-const gltf = { asset: { version: '2.0', generator: 'Outwars DPC armour geometry exporter' }, scene: 0, scenes: [{ name: 'Scout raw geometry', nodes: nodes.map((_, i) => i), extras: { sourceFile: path.basename(input), coordinateSystem: 'Original axes preserved; up-axis unknown', vertexBaseInterpretation: useMeshVertexReference ? 'meshNode+28 candidate local base' : 'shared pool descriptor base', planarPivotCandidateApplied: applyPlanarPivotCandidate, pivotOwnerCandidateApplied: applyPivotOwnerCandidate, note: 'Planar pivot and pivot-owner modes are unverified diagnostic hypotheses; no default transform has been changed.' } }], nodes, meshes: gltfMeshes, materials, accessors, bufferViews, buffers: [{ byteLength: binary.length }] };
+const gltf = { asset: { version: '2.0', generator: 'Outwars DPC armour geometry exporter' }, scene: 0, scenes: [{ name: 'Scout raw geometry', nodes: nodes.map((_, i) => i), extras: { sourceFile: path.basename(input), coordinateSystem: 'Original axes preserved; up-axis unknown', vertexBaseInterpretation: useMeshVertexReference ? 'meshNode+28 candidate local base' : 'shared pool descriptor base', note: 'Raw extraction; attachment rotations, UVs, textures and skinning are not decoded.' } }], nodes, meshes: gltfMeshes, materials, accessors, bufferViews, buffers: [{ byteLength: binary.length }] };
 let json = Buffer.from(JSON.stringify(gltf));
 const jsonPad = (4 - json.length % 4) % 4;
 if (jsonPad) json = Buffer.concat([json, Buffer.alloc(jsonPad, 32)]);
@@ -215,9 +150,7 @@ const header = Buffer.alloc(12); header.writeUInt32LE(0x46546c67, 0); header.wri
 const jh = Buffer.alloc(8); jh.writeUInt32LE(json.length, 0); jh.writeUInt32LE(0x4e4f534a, 4);
 const bh = Buffer.alloc(8); bh.writeUInt32LE(bin.length, 0); bh.writeUInt32LE(0x004e4942, 4);
 fs.writeFileSync(output, Buffer.concat([header, jh, json, bh, bin]));
-const report = { input, output, rootClass, partClass, rootRecordOffset: rootRecord, rootNodeOffset: rootNode, partListOffset: partList, anchorCandidatesApplied: applyAnchors, vertexBaseInterpretation: useMeshVertexReference ? 'meshNode+28 candidate local base' : 'shared pool descriptor base', planarPivotCandidateApplied: applyPlanarPivotCandidate, pivotOwnerCandidateApplied: applyPivotOwnerCandidate, meshCount: meshes.length, totalVertices: meshes.reduce((s, m) => s + m.vertexCount, 0), totalTriangles: meshes.reduce((s, m) => s + m.triangleCount, 0), meshes: meshes.map(m => ({ name: m.name, ownerNodeOffset: m.owner, meshNodeOffset: m.meshNode, transformNodeOffset: m.transformNode, vertexDataOffset: m.vertexOffset, sharedVertexDataOffset: m.sharedVertexDataOffset ?? m.vertexOffset, meshVertexReferenceTarget: m.meshVertexReferenceTarget ?? null, vertexBaseInterpretation: m.vertexBaseInterpretation ?? 'root/shared pool base', faceDataOffset: m.faceOffset, sourceFaceRecordCount: m.sourceCount, uniqueQuadCount: m.quadCount, triangles: m.triangleCount, vertices: m.vertexCount, bounds: [m.min, m.max], anchorVectorCandidate: m.anchor, planarPivotCandidate: m.planarPivotCandidate ?? null })), notes: ['XYZ coordinates are preserved as signed int16 values.', 'Four-index face records are deduplicated by unordered vertex set and triangulated as a fan.', 'Normals are generated from exported triangle winding.', 'Attachment transforms, UVs, original texture mapping, skin weights and animation are not included.', 'Wrapper translation candidates are metadata unless --apply-anchor-candidates is supplied.',
-    'The --use-mesh-vertex-reference option treats meshNode+28 as the local vertex-array base for a diagnostic comparison; this interpretation is unverified.',
-    'The --apply-planar-pivot-candidate option rotates each submesh around the XYZ point referenced by meshNode+28, using the XY angle between the mesh and paired type-2 candidate vectors. This is an unverified visual hypothesis, not a decoded runtime transform.',
-    'The --apply-pivot-owner-candidate option tests qWorld = ownerVector + Rz(angle) * (qLocal - pivot), using the owner vector and meshNode+28 referenced point. This is an unverified diagnostic hypothesis; the default export remains unchanged.'] };
+const report = { input, output, rootClass, partClass, rootRecordOffset: rootRecord, rootNodeOffset: rootNode, partListOffset: partList, anchorCandidatesApplied: applyAnchors, vertexBaseInterpretation: useMeshVertexReference ? 'meshNode+28 candidate local base' : 'shared pool descriptor base', meshCount: meshes.length, totalVertices: meshes.reduce((s, m) => s + m.vertexCount, 0), totalTriangles: meshes.reduce((s, m) => s + m.triangleCount, 0), meshes: meshes.map(m => ({ name: m.name, ownerNodeOffset: m.owner, meshNodeOffset: m.meshNode, transformNodeOffset: m.transformNode, vertexDataOffset: m.vertexOffset, sharedVertexDataOffset: m.sharedVertexDataOffset ?? m.vertexOffset, meshVertexReferenceTarget: m.meshVertexReferenceTarget ?? null, vertexBaseInterpretation: m.vertexBaseInterpretation ?? 'root/shared pool base', faceDataOffset: m.faceOffset, sourceFaceRecordCount: m.sourceCount, uniqueQuadCount: m.quadCount, triangles: m.triangleCount, vertices: m.vertexCount, bounds: [m.min, m.max], anchorVectorCandidate: m.anchor })), notes: ['XYZ coordinates are preserved as signed int16 values.', 'Four-index face records are deduplicated by unordered vertex set and triangulated as a fan.', 'Normals are generated from exported triangle winding.', 'Attachment transforms, UVs, original texture mapping, skin weights and animation are not included.', 'Wrapper translation candidates are metadata unless --apply-anchor-candidates is supplied.',
+    'The --use-mesh-vertex-reference option treats meshNode+28 as the local vertex-array base for a diagnostic comparison; this interpretation is unverified.'] };
 fs.writeFileSync(output.replace(/\.glb$/i, '') + '.json', JSON.stringify(report, null, 2) + '\n');
 console.log(JSON.stringify(report, null, 2));
