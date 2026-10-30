@@ -233,3 +233,15 @@ These observations are structural only. No vertex/index interpretation is assign
 Static disassembly of the uploaded original `outwars.exe` confirms that the 152-byte motion frame is consumed as a fixed 19-entry array. At VA `0x00415c1d` and again at `0x00415d8e`, the runtime sets the associated animation object's element count to `0x13` (19). The loops at `0x00415c60` and `0x00415dd5` advance the source pointer by `0x98` bytes (152) for each frame while adjusting the signed 16-bit value at frame-relative offset +2. The runtime then creates 19 entries with an 8-byte per-entry stride.
 
 This directly links the observed 152-byte frame stride to 19 per-frame channels/entries, rather than merely noting that 152 divides by 8. It confirms a 19-element runtime animation array; it does not yet prove that each element maps one-to-one to a named skeleton bone. The code inspected here does not yet expose the complete hierarchy, names, or the meaning of all four 16-bit words in each 8-byte entry; those remain open. The constant fourth word `0xBFF7` is still recorded as a raw invariant, not assigned a semantic label.
+
+## Corrected playable-armour list interpretation (2026-10-30)
+
+An automated audit of the complete nine-entry class-105 list in `scout_mj.dpc` resolves an earlier ambiguity:
+
+- Entries 0–7 resolve to type-1 owner records at offsets 8,040 through 18,904 (1,552-byte spacing). Each has two type-2 children at +24 and +28.
+- Entry 8 resolves to type-1 record 20,436. It is an aggregate node: its pointer list at +44 through +76 links to the first eight owner records and to itself; its pointer at +96 links to the model root (type-1 record at 6,496). It is not an additional rendered armour mesh.
+- Across the eight owner records, the signed triple at owner +8/+12/+16 matches the signed triple at the paired owner+28 type-2 child +32/+36/+40 in every case.
+
+The paired-node equality is a verified structural consistency check only. The semantic role of the two type-2 nodes and their other fields remains unresolved. In particular, the repeated values at their +8/+12/+16 fields have not been proven to be rotations.
+
+The geometry exporter also reads all submesh vertices from the shared coordinate pool at file offset `0x28`, with global face indices. This raises a concrete alternative to the existing translation-only preview: the vertices may already be in a common model coordinate frame, in which case adding the owner triple again would over-translate them. Compare raw and translated exports before interpreting the result as a missing rotation problem.
