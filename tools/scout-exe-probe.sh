@@ -79,6 +79,13 @@ EXE="$(realpath "$EXE")"
 # Full code-section disassembly for caller references and constants.
 "$OBJDUMP" -d -Mintel "$EXE" > "$OUT/04-full-code-disassembly.txt" 2>&1
 
+# Focused disassembly of the direct scout.dpc loader reference and generic
+# "%s.dpc" resource-name call sites found by the string-reference scan.
+"$OBJDUMP" -d -Mintel --start-address=0x486700 --stop-address=0x486900 "$EXE" \
+  > "$OUT/11-scout-dpc-loader-context.txt" 2>&1
+"$OBJDUMP" -d -Mintel --start-address=0x48ce40 --stop-address=0x48d220 "$EXE" \
+  > "$OUT/12-generic-dpc-loader-context.txt" 2>&1
+
 grep -n -B 8 -A 8 -E '(^|[^[:xdigit:]])0x0*477680([^[:xdigit:]]|$)|call[[:space:]]+0x0*477680|jmp[[:space:]]+0x0*477680' \
   "$OUT/04-full-code-disassembly.txt" > "$OUT/05-xrefs-to-477680.txt" || true
 
@@ -140,7 +147,13 @@ python3 "$(dirname "$0")/scan-scout-exe-strings.py" "$EXE" "$OUT/04-full-code-di
   cat "$OUT/09-raw-address-hits.txt"
   echo
   echo "=== Scout resource string references ==="
-  sed -n '1,320p' "$OUT/10-resource-string-references.txt"
+  sed -n '1,420p' "$OUT/10-resource-string-references.txt"
+  echo
+  echo "=== scout.dpc loader context (0x486700) ==="
+  cat "$OUT/11-scout-dpc-loader-context.txt"
+  echo
+  echo "=== generic DPC loader context (0x48CE40) ==="
+  cat "$OUT/12-generic-dpc-loader-context.txt"
 } > "$OUT/README-REPORT.txt"
 
 if command -v zip >/dev/null 2>&1; then
