@@ -100,7 +100,7 @@ function readOp5(o){
   return{offset:o,header:head(o),matrixRawQ20_12:raw,matrixQ20_12:fixed,matrixTransposeQ20_12:transpose3(fixed),matrixQuality:matrixQuality(fixed),positionRaw:[S32(o+0x28),S32(o+0x2c),S32(o+0x30)],childCount:n,children};
 }
 const transforms=[];
-for(let o=0;o+0x38<=b.length;o+=4)if(validOp5(o))transforms.push(readOp5(o));
+for(let o=0;o+0x38<=b.length;o++)if(validOp5(o))transforms.push(readOp5(o));
 const transformByOffset=new Map(transforms.map(x=>[x.offset,x]));
 const parentMap=new Map(transforms.map(x=>[x.offset,[]]));
 for(const t of transforms)for(const c of t.children)if(transformByOffset.has(c.target))parentMap.get(c.target).push(t.offset);
