@@ -67,17 +67,25 @@ function readQuads(start, sourceCount, label) {
 function decodeMesh(name, owner, meshNode, transformNode, vertexOffset, faceOffset, sourceCount, anchor) {
   const quads = readQuads(faceOffset, sourceCount, name);
   if (!quads.length) throw new Error(name + ': no quads decoded');
-  const vertexCount = Math.max(...quads.flat()) + 1;
-  if (vertexOffset + vertexCount * 8 > b.length) throw new Error(name + ': truncated vertex block');
+  // Face indices address the shared coordinate pool. Export only vertices
+  // actually referenced by this mesh, remapping source indices to a compact
+  // local index buffer. Using max(index)+1 here incorrectly included every
+  // preceding pool entry in each successive submesh and inflated its bounds.
+  const sourceVertexIndices = [...new Set(quads.flat())].sort((a, b) => a - b);
+  const vertexCount = sourceVertexIndices.length;
+  if (sourceVertexIndices.some(i => vertexOffset + i * 8 + 8 > b.length)) throw new Error(name + ': truncated vertex block');
+  const indexMap = new Map(sourceVertexIndices.map((sourceIndex, localIndex) => [sourceIndex, localIndex]));
   const positions = new Float32Array(vertexCount * 3);
   const min = [Infinity, Infinity, Infinity], max = [-Infinity, -Infinity, -Infinity];
   for (let i = 0; i < vertexCount; i++) {
-    const v = [b.readInt16LE(vertexOffset + i * 8), b.readInt16LE(vertexOffset + i * 8 + 2), b.readInt16LE(vertexOffset + i * 8 + 4)];
+    const sourceIndex = sourceVertexIndices[i];
+    const p = vertexOffset + sourceIndex * 8;
+    const v = [b.readInt16LE(p), b.readInt16LE(p + 2), b.readInt16LE(p + 4)];
     positions.set(v, i * 3);
     for (let k = 0; k < 3; k++) { min[k] = Math.min(min[k], v[k]); max[k] = Math.max(max[k], v[k]); }
   }
   const indices = [];
-  for (const q of quads) indices.push(q[0], q[1], q[2], q[0], q[2], q[3]);
+  for (const q of quads) indices.push(indexMap.get(q[0]), indexMap.get(q[1]), indexMap.get(q[2]), indexMap.get(q[0]), indexMap.get(q[2]), indexMap.get(q[3]));
   const sums = new Float64Array(vertexCount * 3);
   for (let i = 0; i < indices.length; i += 3) {
     const ia = indices[i], ib = indices[i + 1], ic = indices[i + 2];
@@ -91,7 +99,7 @@ function decodeMesh(name, owner, meshNode, transformNode, vertexOffset, faceOffs
     const v = [sums[i * 3], sums[i * 3 + 1], sums[i * 3 + 2]], len = Math.hypot(...v);
     if (len > 1e-12) normals.set(v.map(x => x / len), i * 3);
   }
-  return { name, owner, meshNode, transformNode, vertexOffset, faceOffset, sourceCount, quadCount: quads.length, vertexCount, triangleCount: indices.length / 3, positions, normals, indices: new Uint32Array(indices), min, max, anchor };
+  return { name, owner, meshNode, transformNode, vertexOffset, faceOffset, sourceCount, quadCount: quads.length, vertexCount, sourceVertexIndices, triangleCount: indices.length / 3, positions, normals, indices: new Uint32Array(indices), min, max, anchor };
 }
 const meshes = [];
 meshes.push(decodeMesh('root_mesh', rootNode, rootNode, null, ptr(rootNode + 28), ptr(rootNode + 36), 22, [0, 0, 0]));
@@ -161,7 +169,7 @@ for (let i = 0; i < meshes.length; i++) {
   const indexAccessor = accessors.length;
   accessors.push({ bufferView: indexView, componentType: 5125, count: m.indices.length, type: 'SCALAR', min: [Math.min(...m.indices)], max: [Math.max(...m.indices)] });
   materials.push({ name: 'Diagnostic material ' + (i + 1), pbrMetallicRoughness: { baseColorFactor: colors[i], metallicFactor: 0, roughnessFactor: .82 }, doubleSided: true });
-  gltfMeshes.push({ name: m.name, primitives: [{ attributes: { POSITION: posAccessor, NORMAL: normAccessor }, indices: indexAccessor, material: i, mode: 4 }], extras: { sourceOwnerNodeOffset: m.owner, sourceMeshNodeOffset: m.meshNode, sourceTransformNodeOffset: m.transformNode, vertexDataOffset: m.vertexOffset, meshVertexReferenceTarget: m.meshVertexReferenceTarget ?? null, sharedVertexDataOffset: m.sharedVertexDataOffset ?? m.vertexOffset, vertexBaseInterpretation: m.vertexBaseInterpretation ?? 'root/shared pool base', faceDataOffset: m.faceOffset, sourceFaceRecordCount: m.sourceCount, uniqueQuadCount: m.quadCount, anchorVectorCandidate: m.anchor, referencePointMappingCandidate: m.referencePointMappingCandidate ?? null } });
+  gltfMeshes.push({ name: m.name, primitives: [{ attributes: { POSITION: posAccessor, NORMAL: normAccessor }, indices: indexAccessor, material: i, mode: 4 }], extras: { sourceOwnerNodeOffset: m.owner, sourceMeshNodeOffset: m.meshNode, sourceTransformNodeOffset: m.transformNode, vertexDataOffset: m.vertexOffset, sourceVertexIndices: m.sourceVertexIndices, meshVertexReferenceTarget: m.meshVertexReferenceTarget ?? null, sharedVertexDataOffset: m.sharedVertexDataOffset ?? m.vertexOffset, vertexBaseInterpretation: m.vertexBaseInterpretation ?? 'root/shared pool base', faceDataOffset: m.faceOffset, sourceFaceRecordCount: m.sourceCount, uniqueQuadCount: m.quadCount, anchorVectorCandidate: m.anchor, referencePointMappingCandidate: m.referencePointMappingCandidate ?? null } });
   const node = { name: m.name, mesh: i, extras: { anchorVectorCandidate: m.anchor, transformApplied: applyAnchors } };
   if (applyAnchors && m.transformNode !== null) node.translation = m.anchor;
   nodes.push(node);
@@ -178,7 +186,7 @@ const header = Buffer.alloc(12); header.writeUInt32LE(0x46546c67, 0); header.wri
 const jh = Buffer.alloc(8); jh.writeUInt32LE(json.length, 0); jh.writeUInt32LE(0x4e4f534a, 4);
 const bh = Buffer.alloc(8); bh.writeUInt32LE(bin.length, 0); bh.writeUInt32LE(0x004e4942, 4);
 fs.writeFileSync(output, Buffer.concat([header, jh, json, bh, bin]));
-const report = { input, output, rootClass, partClass, rootRecordOffset: rootRecord, rootNodeOffset: rootNode, partListOffset: partList, anchorCandidatesApplied: applyAnchors, vertexBaseInterpretation: useMeshVertexReference ? 'meshNode+28 candidate local base' : 'shared pool descriptor base', referencePointMappingCandidateApplied: applyReferencePointMapping, meshCount: meshes.length, totalVertices: meshes.reduce((s, m) => s + m.vertexCount, 0), totalTriangles: meshes.reduce((s, m) => s + m.triangleCount, 0), meshes: meshes.map(m => ({ name: m.name, ownerNodeOffset: m.owner, meshNodeOffset: m.meshNode, transformNodeOffset: m.transformNode, vertexDataOffset: m.vertexOffset, sharedVertexDataOffset: m.sharedVertexDataOffset ?? m.vertexOffset, meshVertexReferenceTarget: m.meshVertexReferenceTarget ?? null, referencePointMappingCandidate: m.referencePointMappingCandidate ?? null, vertexBaseInterpretation: m.vertexBaseInterpretation ?? 'root/shared pool base', faceDataOffset: m.faceOffset, sourceFaceRecordCount: m.sourceCount, uniqueQuadCount: m.quadCount, triangles: m.triangleCount, vertices: m.vertexCount, bounds: [m.min, m.max], anchorVectorCandidate: m.anchor })), notes: ['XYZ coordinates are preserved as signed int16 values.', 'Four-index face records are deduplicated by unordered vertex set and triangulated as a fan.', 'Normals are generated from exported triangle winding.', 'Attachment transforms, UVs, original texture mapping, skin weights and animation are not included.', 'Wrapper translation candidates are metadata unless --apply-anchor-candidates is supplied.',
+const report = { input, output, rootClass, partClass, rootRecordOffset: rootRecord, rootNodeOffset: rootNode, partListOffset: partList, anchorCandidatesApplied: applyAnchors, vertexBaseInterpretation: useMeshVertexReference ? 'meshNode+28 candidate local base' : 'shared pool descriptor base', referencePointMappingCandidateApplied: applyReferencePointMapping, meshCount: meshes.length, totalVertices: meshes.reduce((s, m) => s + m.vertexCount, 0), totalTriangles: meshes.reduce((s, m) => s + m.triangleCount, 0), meshes: meshes.map(m => ({ name: m.name, ownerNodeOffset: m.owner, meshNodeOffset: m.meshNode, transformNodeOffset: m.transformNode, vertexDataOffset: m.vertexOffset, sourceVertexIndices: m.sourceVertexIndices, sharedVertexDataOffset: m.sharedVertexDataOffset ?? m.vertexOffset, meshVertexReferenceTarget: m.meshVertexReferenceTarget ?? null, referencePointMappingCandidate: m.referencePointMappingCandidate ?? null, vertexBaseInterpretation: m.vertexBaseInterpretation ?? 'root/shared pool base', faceDataOffset: m.faceOffset, sourceFaceRecordCount: m.sourceCount, uniqueQuadCount: m.quadCount, triangles: m.triangleCount, vertices: m.vertexCount, bounds: [m.min, m.max], anchorVectorCandidate: m.anchor })), notes: ['XYZ coordinates are preserved as signed int16 values.', 'Four-index face records are deduplicated by unordered vertex set and triangulated as a fan.', 'Normals are generated from exported triangle winding.', 'Attachment transforms, UVs, original texture mapping, skin weights and animation are not included.', 'Wrapper translation candidates are metadata unless --apply-anchor-candidates is supplied.',
     'The --use-mesh-vertex-reference option treats meshNode+28 as the local vertex-array base for a diagnostic comparison; this interpretation is unverified.',
     'The --apply-reference-point-mapping option translates each shared-pool submesh so the vertex referenced by meshNode+28 lands at the XYZ value stored at meshNode+56/+60/+64. This is an unverified diagnostic mapping, not a decoded runtime transform.'] };
 fs.writeFileSync(output.replace(/\.glb$/i, '') + '.json', JSON.stringify(report, null, 2) + '\n');
