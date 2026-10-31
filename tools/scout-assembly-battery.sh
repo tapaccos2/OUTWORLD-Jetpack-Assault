@@ -48,6 +48,27 @@ run_test() {
   fi
 }
 
+# For machine-readable JSON reports, keep stdout in the report file and
+# append only stderr to the diagnostic log.
+run_json_test() {
+  local label="$1"
+  local output_file="$2"
+  shift 2
+  echo
+  echo "------------------------------------------------------------"
+  echo "TEST: $label"
+  echo "------------------------------------------------------------"
+  if "$@" >"$output_file" 2>>"$LOG"; then
+    echo "PASS: $label"
+    PASSED=$((PASSED + 1))
+  else
+    local code=$?
+    echo "FAIL: $label (exit code $code)"
+    echo "See $LOG"
+    FAILED=$((FAILED + 1))
+  fi
+}
+
 echo "OUTWARS SCOUT ASSEMBLY TEST BATTERY"
 echo "Started: $(date)"
 echo "Repository: $ROOT"
