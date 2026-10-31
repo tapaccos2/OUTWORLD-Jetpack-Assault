@@ -146,6 +146,65 @@ for(const a of attachments)for(const s of a.slots||[])if(s.looksOpcode4&&!opcode
   opcode4Map.set(s.payloadTarget,parseOp4(s.payloadTarget,{attachment:a.offset,descriptor:s.descriptor,slot:s.slot}));
 const opcode4s=[...opcode4Map.values()].filter(Boolean);
 
+// Generic callback-recursion pass. Starting from every structurally validated
+// opcode-5 record, recursively dispatch any reachable opcode-5, opcode-2 or
+// opcode-4/class-0x090c child. Opcode-4 child DWORDs are tried under each
+// address model; a node is accepted only when its own callback layout validates.
+const deepNodes=new Map(),deepQueue=[];
+function registerCallbackTarget(target,mode,via,depth){
+  if(!inside(target))return;
+  const opcode=b[target];
+  let parsed=null,kind=null;
+  if(opcode===5&&validOp5(target)){parsed=readOp5(target);kind='opcode5-transform';}
+  else if(opcode===2){parsed=parseOp2(target,{via,mode,depth});if(parsed&&parsed.count>0&&parsed.slots?.some(x=>x.valid))kind='opcode2-descriptor-list';}
+  else if(opcode===4&&U16(target+2)===0x090c){parsed=parseOp4(target,{via,mode,depth});if(parsed)kind='opcode4-child-list';}
+  if(!kind)return;
+  if(!deepNodes.has(target)){
+    const node={offset:target,kind,opcode,parsed,depth,discoveredVia:[],edges:[]};
+    deepNodes.set(target,node);deepQueue.push(target);
+  }
+  const node=deepNodes.get(target);
+  node.discoveredVia.push({mode,via,depth});
+}
+for(const t of transforms)registerCallbackTarget(t.offset,'known-opcode5-root',null,0);
+let deepQueueCursor=0;
+while(deepQueueCursor<deepQueue.length&&deepQueueCursor<20000){
+  const offset=deepQueue[deepQueueCursor++],node=deepNodes.get(offset);
+  if(node.depth>=16)continue;
+  const targets=[];
+  if(node.kind==='opcode5-transform'){
+    for(const child of node.parsed.children)targets.push({target:child.target,mode:'relocated-base',field:child.pointerField});
+  }else if(node.kind==='opcode2-descriptor-list'){
+    for(const slot of node.parsed.slots||[]){
+      for(const key of ['coordinateTarget','sharedTarget','payloadTarget']){
+        const target=slot[key];if(Number.isInteger(target))targets.push({target,mode:'relocated-base',field:slot.descriptor});
+      }
+    }
+  }else if(node.kind==='opcode4-child-list'){
+    for(const entry of node.parsed.entries)for(const mode of pointerModes){
+      const target=entry.resolutions[mode]?.target;
+      if(Number.isInteger(target))targets.push({target,mode,field:entry.field});
+    }
+  }
+  for(const edge of targets){
+    const before=deepNodes.has(edge.target);
+    registerCallbackTarget(edge.target,edge.mode,offset,node.depth+1);
+    if(deepNodes.has(edge.target)){
+      node.edges.push({target:edge.target,mode:edge.mode,field:edge.field,kind:deepNodes.get(edge.target).kind});
+    }else if(!before&&inside(edge.target)){
+      // Preserve targets that do not match one of the three verified layouts.
+      const h=head(edge.target);
+      if(h&&h.opcode<=13)node.edges.push({target:edge.target,mode:edge.mode,field:edge.field,kind:'unclassified-callback-or-data-target',header:h});
+    }
+  }
+}
+const deepCallbackGraph={
+  nodeCount:deepNodes.size,queueProcessed:deepQueueCursor,queueTruncated:deepQueueCursor<deepQueue.length,
+  nodes:[...deepNodes.values()],unclassifiedTargets:[]
+};
+for(const node of deepNodes.values())for(const edge of node.edges)
+  if(edge.kind==='unclassified-callback-or-data-target')deepCallbackGraph.unclassifiedTargets.push({from:node.offset,...edge});
+
 // Follow all opcode-4 child entries through every plausible pointer encoding.
 // The interpretations remain separate and are never silently conflated.
 const recursiveTargets=new Map();
@@ -295,7 +354,7 @@ const report={
     opcode2:{recordByte:2,count:'+0x10 DWORD',slots:'+0x14 DWORD pointer slots; wrapper+8 -> descriptor',attachments},
     opcode4:{recordByte:4,classWord:'0x090c',translation:'+0x04/+0x08/+0x0c DWORD',count:'+0x12 BYTE',children:'+0x14 DWORD entries',records:opcode4s}
   },
-  graph:{transformRoots:roots.map(t=>t.offset),transformEdges,reverseReferences:references,recursiveOpcode4EntryTargets:recursiveTargetRows},
+  graph:{transformRoots:roots.map(t=>t.offset),transformEdges,deepCallbackGraph,reverseReferences:references,recursiveOpcode4EntryTargets:recursiveTargetRows},
   pointerTests:{modes:pointerModes,opcode4EntryResolutionCounts:pointerSummary,opcode4EntryRows},
   transformMathTests:transformHypotheses,
   payloadTests:{testedPayloadCentres:centres.length,coordinateCandidatesTested:coordinateCandidates.length,topCoordinateCandidates:topCoordinates,indexCandidatesTested:indexCandidates.length,topIndexCandidates:topIndices},
@@ -321,7 +380,7 @@ const md=[
   '- Opcode-5 records: '+transforms.length,'- Transform roots: '+roots.map(x=>hex(x.offset)).join(', '),
   '- Transform edges: '+transformEdges.length,'- Opcode-2 attachments: '+attachments.length,
   '- Descriptor slots: '+attachments.reduce((n,a)=>n+(a.slots?.length||0),0),
-  '- Opcode-4 payload records: '+opcode4s.length,'- Opcode-4 child entries: '+opcode4EntryRows.length,
+  '- Opcode-4 payload records: '+opcode4s.length,'- Opcode-4 child entries: '+opcode4EntryRows.length,'- Recursively validated callback nodes: '+deepCallbackGraph.nodeCount,
   '- Payload centres tested: '+centres.length,'- Coordinate candidates: '+coordinateCandidates.length,'- Index candidates: '+indexCandidates.length,
   '','## Highest-ranked findings','',
   ...hypotheses.slice(0,30).map(h=>'- **'+h.score.toFixed(1)+'/100 — '+h.name+'** ('+h.verdict+'). Evidence: '+JSON.stringify(h.evidence)),
