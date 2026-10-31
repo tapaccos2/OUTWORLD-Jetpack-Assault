@@ -34,7 +34,7 @@ import { spawnSync } from 'node:child_process';
 const here=path.dirname(fileURLToPath(import.meta.url));
 const repoRoot=path.resolve(here,'..');
 const args=process.argv.slice(2);
-let input=null,outArg=null,exePath=null,initialScaleOverride=null,maxWork=50000,alsoTransformRoots=false;
+let input=null,outArg=null,exePath=null,initialScaleOverride=0,maxWork=50000,alsoTransformRoots=false;
 for(let i=0;i<args.length;i++){
   const a=args[i];
   if(a==='--exe'){if(!args[i+1])throw new Error('--exe requires a path');exePath=path.resolve(args[++i]);}
@@ -73,7 +73,7 @@ const u16=o=>o>=0&&o+2<=b.length?b.readUInt16LE(o):null;
 const s16=o=>o>=0&&o+2<=b.length?b.readInt16LE(o):null;
 const u32=o=>o>=0&&o+4<=b.length?b.readUInt32LE(o):null;
 const s32=o=>o>=0&&o+4<=b.length?b.readInt32LE(o):null;
-const initialScale=initialScaleOverride??(u32(16)??0);
+const initialScale=initialScaleOverride;
 const inRange=(o,n=4)=>Number.isInteger(o)&&o>=0&&o+n<=b.length;
 const hex=n=>'0x'+Number(n).toString(16);
 function relocatedTarget(raw){
@@ -184,9 +184,10 @@ function contextArrayAddress(newY,count){
   // [newY+0x14+4*i]. The pointer arithmetic is done in the loaded DPC address
   // space. In the file image, test the relocated-base and direct-file-offset
   // views of that already-updated address. Do NOT add record+8 a second time.
+  const address=newY>>>0;
   const candidates=[
-    {mode:'relocated-base',base:newY-base},
-    {mode:'direct-file-offset',base:newY}
+    {mode:'relocated-base',base:address-base},
+    {mode:'direct-file-offset',base:address}
   ];
   const scored=candidates.map(c=>{
     const first=c.base+0x14,valid=inRange(first,Math.max(0,count)*4);
@@ -199,7 +200,7 @@ function contextArrayAddress(newY,count){
         if(op<=13)callbackHits++;
       }
     }
-    return{...c,firstField:first,valid,pointerHits,callbackHits,targets};
+    return{...c,sourceAddress:hex(address),firstField:first,valid,pointerHits,callbackHits,targets};
   }).sort((a,c)=>c.callbackHits-a.callbackHits||c.pointerHits-a.pointerHits);
   return scored[0]||null;
 }
@@ -321,7 +322,12 @@ for(const seed of seedOffsets){
     const matrixId=nextMatrixId++;
     matrices.set(matrixId,world);
     event.matrix={localQ20_12:local,parentMatrixId:entry.parentMatrix,worldMatrixCandidate:world,determinant:det3(world),matrixId};
-    event.positionAfter=transformed;
+    // The executable stores the translated vector at [esp+0x68..0x70] and
+    // passes that vector to each child work entry. 4C6610 also computes a
+    // local-matrix product into a separate temporary [esp+0x78..0x80]; retain
+    // that product as evidence, but do not substitute it for the child state.
+    event.positionAfter=translated;
+    event.matrix.transformedTranslationCandidate=transformed;
     const n=u8(record+0x36)??0;
     event.list={count:n,base:record+0x38,layout:'relocated DWORD child pointers at +0x38'};
     for(let i=0;i<n;i++){
@@ -329,11 +335,11 @@ for(const seed of seedOffsets){
       if(child!==null){enqueue(child,matrixId,transformed,entry.scale,record,i);event.children.push(child);}
     }
     childCount=event.children.length;
-  }else if(opcode===7){
-    const n=u8(record+6)??0;
-    event.list={count:n,base:record+0x10,layout:'relocated DWORD child pointers at +0x10'};
-    event.children=pushListChildren(record,record+0x10,n,entry,opcode);
-    childCount=event.children.length;
+  }else if(opcode===6||opcode===7){
+    // Table entries 6 and 7 point to 0x4e0494 and 0x4e04a2.
+    // Both explicitly clear the working class state and push no children.
+    event.classStateAfter=0;
+    event.opaqueHandler=false;
   }else if(opcode===9||opcode===13){
     if(u8(record+0x0a)===1)b[record+0x0d]=1;
     const n=u8(record+0x0b)??0;
@@ -506,7 +512,7 @@ function buildGlb(file,convention){
   const gltf={asset:{version:'2.0',generator:'Outwars Scout runtime callback reconstruction'},
     scene:0,scenes:[{name:'Scout runtime callback rebuild candidate',nodes:nodes.map((_,i)=>i),extras:{
       source:path.basename(input),rootNode:hex(rootNode),convention:convention.name,
-      initialScale,initialMatrixSource:initialMatrixInfo.status,
+      initialScale,initialScaleSource:initialScaleOverride===0?'default 0 (runtime caller parameter not decoded)':'CLI override',initialMatrixSource:initialMatrixInfo.status,
       warning:'Transform assignment follows executed callback entries. Compare this candidate visually before declaring final.'
     }}],nodes,meshes:gltfMeshes,materials,accessors,bufferViews,buffers:[{byteLength:bin.length}]};
   let json=Buffer.from(JSON.stringify(gltf));const jPad=(4-json.length%4)%4;if(jPad)json=Buffer.concat([json,Buffer.alloc(jPad,32)]);
@@ -524,7 +530,7 @@ const report={
   title:'OUTWARS SCOUT RUNTIME CALLBACK REBUILD',
   generatedAt:new Date().toISOString(),input,sourceArchive,autoExtractDirectory,
   fileBytes:b.length,relocationBase:hex(base),root:{record:hex(rootRecord),recordClass:rootClass,partClass,callbackStart:hex(rootNode)},
-  executable:{path:exePath,initialMatrix:initialMatrixInfo},
+  executable:{path:exePath,initialMatrix:initialMatrixInfo,initialScale:{value:initialScale,source:initialScaleOverride===0?'default 0; loader caller context remains a runtime parameter, override with --initial-scale':'command-line override'}},
   dispatchTable:callbackTargets.map((address,opcode)=>({opcode,handler:hex(address),name:callbackNames[opcode]})),
   callbackRun:{topLevelTableCount:tableCount,topLevelRecordsUsed:seedOffsets.length,parserContextWord:initialScale,initialStateVector:[0,0,0],seedRuns,processed,remaining:work.length,truncated,callbackCounts,uniqueRecordStates:visitedCounts.size,
     totalQueueEdges:edgeRows.length,leafCount:leafRecords.length,unresolvedCount:unresolved.length,
