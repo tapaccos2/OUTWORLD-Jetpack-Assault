@@ -468,3 +468,20 @@ The pointer-reference scan now includes `0x437C80` and the `0x433080/0x4330A2` t
 The neighbouring routine at `0x437C51` also reads WORDs at offsets `+8`, `+0xC`, and `+0x10` and adds them to the current rotation. However, it first checks byte `[EDX+1]`; when that byte is nonzero it skips the updates. The audited Scout type-1 owners have flags 7 and the type-2 mesh/paired nodes have flags 6. Therefore, if EDX points at one of those Scout records' base addresses, this guarded path would skip them. It is not evidence that the Scout rotation values are applied through this function.
 
 This is separate from `0x437C80`, which saves its incoming EBX as the source pointer and reads WORDs at source offsets `+0`, `+4`, and `+8`. The pointer-reference scan now includes both routine entry points (`0x437C51` and `0x437C80`) to help identify their registration/call paths.
+
+
+## Follow-up report 15: separate the combined actor transform from the Scout DPC path
+
+The new executable report exposes a second combined transform routine at `0x433090`. It takes a structure in EAX and a runtime object pointer from `[EAX+4]`. When that pointer is non-null, it:
+
+- copies WORD rotation components from structure offsets `+0x30`, `+0x32`, and `+0x34` into runtime-object offsets `+0xE4`, `+0xE6`, and `+0xE8`;
+- calls `0x4C5DB0` to build the matrix at runtime-object `+0xB4`;
+- copies DWORD position components from structure offsets `+0x24`, `+0x28`, and `+0x2C` into runtime-object offsets `+0xEC`, `+0xF0`, and `+0xF4`.
+
+This confirms a real combined position/rotation structure layout in the executable. However, the only direct caller located in this report is `0x41CD7D`; the evidence does **not** connect that structure or caller to Scout's type-1/type-2 DPC records. Treat it as a runtime transform-layout reference, not as the Scout attachment transform source.
+
+The DPC resource loop is now clearer: `0x420A5D` calls `0x4DD470` to relocate a record, then `0x420A70` calls `0x4DFCE4` with `0x420B00` as its handler entry. `0x420B00` is executable dispatch code, not a pointer table; it branches on the incoming record/property identifier (EDI) to handlers in the `0x420Fxx–0x4220xx` range. This is the path to follow for mapping Scout record fields to runtime updates.
+
+The adjacent helpers `0x422278` and `0x4222A8` still have clear position and rotation setter signatures, but the report's raw/direct-reference scan finds no direct code references to them. Their use through any runtime registration remains unproven. Likewise, `0x42244C` uses a separate 32-entry table rooted at `0x647578` and writes position/rotation fields into allocated runtime objects, but the report does not establish that this table contains Scout part objects.
+
+**Next target:** trace the DPC property identifiers emitted for the Scout type-1/type-2 nodes through the `0x420B00` handler branches, then identify which branch populates or links the runtime object table. No exporter transform should be changed yet.
