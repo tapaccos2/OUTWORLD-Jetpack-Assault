@@ -146,3 +146,21 @@ It still does not prove that the eight Scout submesh owner/paired-node records a
 ### Next focused probe
 
 The next pass should dump the DPC property dispatcher and all handler branches from 0x420B00–0x4222D0, plus the linked-record walker at 0x4DF86C–0x4DFC80. The bridge script has been extended for those ranges as v1.2.0. Keep the exporter unchanged until a Scout-specific property-to-object mapping is demonstrated.
+
+
+## Follow-up report 19: two eight-slot DPC property handlers (2026-10-31)
+
+The v1.2.0 bridge report identifies two additional property-handler branches inside the dispatcher at 0x420B00. These are selected by DPC property identifiers 0x6D and 0x6E (the dispatcher selector is distinct from the 16-bit record class at record +2):
+
+- Property 0x6D iterates indices 0 through 7, calls the helper at 0x46E4C0 for each index, and writes the supplied value to the returned runtime object at +0x104.
+- Property 0x6E follows the same eight-index loop and writes the supplied value at runtime-object +0x108.
+
+This is the first direct evidence in this investigation of **two separate eight-slot relationships stored on runtime objects**. The count matches the eight Scout submeshes, making these handlers a strong candidate bridge between DPC part records and runtime object state.
+
+### Evidence boundary
+
+The report does not include the implementation of 0x46E4C0, so it does not yet establish which runtime object each index resolves to, whether the +0x104/+0x108 fields are pointers or other values, or whether either property is used by the Scout DPC resources. The eight-slot count alone is not proof of a Scout attachment hierarchy. The transform exporter remains unchanged.
+
+### Next focused probe
+
+Bridge v1.3.0 adds a disassembly capture for 0x46E4C0–0x46E620 and includes direct-call references to 0x46E4C0. The next check is to identify the helper's indexed object table, then compare the resulting object indices and property values against the eight Scout owner/paired-node records and the existing +0x160 record-ID transform link. Only after that match is demonstrated should the exporter consume these relationships.
