@@ -123,3 +123,26 @@ node tools/export-dpc-armour-geometry.mjs \
 ```
 
 This still does **not** prove that owner vectors are the game's runtime translations. The eight vectors match their paired-node fields, but their transform semantics and the opcode-5 matrix hierarchy remain unresolved. The shared-pool candidate is the next visual test, not a final assembly.
+
+## Follow-up report 18: linked-record transform consumer and opcode-5 matrix path (2026-10-31)
+
+The uploaded v1.1.0 executable report now closes an important gap from follow-up 17. It includes the callback tail, the opcode-5 branch, the full transform-record consumer, and the object-link registration/finalization routines.
+
+### Confirmed executable relationships
+
+- The parser's property callback dispatches through the handler at 0x420B00. Its record-property branches are distinct from the DPC record's 16-bit class identifier at +2; do not conflate the two selectors.
+- The opcode-5 callback branch at 0x4E0130 reads the record's 16-bit identifier at +2, adds three DWORD components at +0x28/+0x2C/+0x30 to the current accumulated position, and composes matrix data using 0x4C6610 and 0x4C5AA0. It then iterates the byte count at +0x36 and emits 24-byte entries into a runtime transform stack. This establishes the arithmetic and stack shape for this callback branch, but not yet which Scout graph records invoke it.
+- The matrix multiply helper at 0x4C6610 multiplies 3×3 signed integer components and arithmetic-shifts each accumulated result by 12 bits. The 0x4C5AA0 helper composes another matrix against global matrix components using the same fixed-point scale.
+- The full consumer beginning at 0x4E32A2 reads the current runtime object, checks its linked-record pointer at object +0x160, and passes through the record-processing routine at 0x4DF86C. It builds output entries with a 28-byte stride at the buffer rooted at 0x52D28C.
+- The object-link routine at 0x422332 scans the runtime record-pointer array at 0x647538, compares each pointed record's WORD at +2 with the current object's identifier, and stores the matching record pointer at object +0x160. This is now directly consistent with the consumer's read of that same field at 0x4E32C1.
+- The finalization path at 0x422554 repeats the record-ID matching and sets runtime flags. It is part of the same object-table lifecycle, not evidence that the type-16 geometry-descriptor links encode a bone hierarchy.
+
+### What this proves — and what it does not
+
+The executable contains a concrete record-ID → runtime-object link at +0x160, and a concrete transform consumer that follows that link. The opcode-5 branch has a concrete position-plus-matrix composition path. This is stronger than the previous adjacency-only evidence.
+
+It still does not prove that the eight Scout submesh owner/paired-node records are the records linked to the eight intended runtime objects, nor does it identify the exact property-handler branch and source field for each Scout transform. The 16 type-16 wrappers remain geometry-descriptor references to the shared coordinate pool, not an established attachment hierarchy.
+
+### Next focused probe
+
+The next pass should dump the DPC property dispatcher and all handler branches from 0x420B00–0x4222D0, plus the linked-record walker at 0x4DF86C–0x4DFC80. The bridge script has been extended for those ranges as v1.2.0. Keep the exporter unchanged until a Scout-specific property-to-object mapping is demonstrated.
