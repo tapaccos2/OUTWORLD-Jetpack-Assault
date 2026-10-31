@@ -48,3 +48,10 @@ The original mission files and sound-effect audio containers are being analyzed 
 The GPC/RPC terrain-surface layout is now decoded far enough to export candidate vertices and triangles: dimensions, orientation, normals, four corner heights, and the XY corner anchor cross-validate across all 34 resource pairs. Use [the terrain field analysis](original-data/TERRAIN-FIELD-HYPOTHESES.md) and [the candidate mesh exporter](tools/export-rpc-mesh.mjs). The exported geometry has not yet been visually validated against an original in-game map, and terrain textures, exact mission placement, absolute world scale, and any additional collision/terrain layers remain unfinished. The prototype should not yet be described as a faithful original-level rebuild.
 
 The terrain preview is a separate diagnostic page, so it does not alter the playable prototype. Open it through a static HTTP(S) server, select a map, and compare corner/centre anchoring and the two triangle diagonals; wireframe, GPC-group colours, and stored normals can be toggled while orbiting the model.
+
+
+## Scout DPC browser inspector
+
+Use [Scout DPC Inspector](./scout-inspector.html) to inspect `extracted-ff/units/scout_mj.dpc` directly in a browser. It parses the selected file locally (no upload or server processing), lists transform roots and attachment descriptors, and renders selectable coordinate samples as a 3D point cloud. The inspector shows transform matrices and opcode-4 child payloads but deliberately does not infer triangles or export a GLB: mesh topology and the exact coordinate-block boundaries still need to be established from the runtime data.
+
+Open the page through the same static HTTP(S) server used for the game, choose `scout_mj.dpc`, then select a transform root and attachment descriptor. The coordinate start and sample-count controls are diagnostic views only; they do not claim a final vertex count or byte layout.
