@@ -98,13 +98,16 @@ function parse(buffer,name){
  const ptr=field=>{const raw=u32(field),off=raw-base;return raw>=base&&off>=0&&off+4<=length?off:null};
  const header=o=>o===null?null:{opcode:u8(o),flags:u8(o+1),classWord:u16(o+2)};
  const candidateTransforms=[];
- for(let o=16;o+0x3c<=length;o+=4){
+ // Match the executable-guided audit: opcode-5 records are byte-aligned
+ // only by their own structure, not guaranteed to start on a 4-byte boundary.
+ // Do not filter child opcodes here; the callback dispatcher accepts generic
+ // child records, and rejecting unfamiliar opcodes drops real transforms.
+ for(let o=16;o+0x3c<=length;o++){
   if(u8(o)!==5)continue;
   const h=header(o),n=u8(o+0x36);
-  if(!(h.classWord===100||h.classWord===0)||n<1||n>32)continue;
+  if(n<1||n>32)continue;
   const children=Array.from({length:n},(_,i)=>ptr(o+0x38+i*4));
   if(children.some(x=>x===null))continue;
-  if(children.some(x=>![2,5,8,9].includes(header(x)?.opcode)))continue;
   candidateTransforms.push({offset:o,header:h,matrix:Array.from({length:9},(_,i)=>s32(o+4+i*4)),position:[s32(o+0x28),s32(o+0x2c),s32(o+0x30)],children});
  }
  const byOffset=new Map(candidateTransforms.map(t=>[t.offset,t]));
