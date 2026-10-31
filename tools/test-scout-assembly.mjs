@@ -185,16 +185,20 @@ try {
     const base=extras.vertexDataOffset;
     if(Number.isInteger(base)) {
       for(const vertexIndex of new Set(indices)) {
-        const key=base+':'+vertexIndex;
+        // The exporter compacts each mesh's referenced shared-pool vertices.
+        // Resolve the compact local index back to its original DPC pool index
+        // before sampling the source record's trailing word.
+        const sourceVertexIndex=extras.sourceVertexIndices?.[vertexIndex] ?? vertexIndex;
+        const key=base+':'+sourceVertexIndex;
         if(seenSourceVertices.has(key)) continue;
         seenSourceVertices.add(key);
-        const p=base+vertexIndex*8;
+        const p=base+sourceVertexIndex*8;
         if(p+8>dpcBytes.length) continue;
         const word=dpcBytes.readUInt16LE(p+6);
         wordValues.set(word,(wordValues.get(word)||0)+1);
         if(vertexWordSamples.length<32) {
           vertexWordSamples.push({
-            mesh:mesh.name,vertexIndex,
+            mesh:mesh.name,vertexIndex,sourceVertexIndex,
             xyz:[dpcBytes.readInt16LE(p),dpcBytes.readInt16LE(p+2),dpcBytes.readInt16LE(p+4)],
             trailingWord:word,hex:'0x'+word.toString(16).padStart(4,'0')
           });
