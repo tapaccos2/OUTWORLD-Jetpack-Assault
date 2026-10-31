@@ -500,3 +500,20 @@ A small targeted script, `tools/scout-exe-transform-tail.sh`, now captures only 
 - raw pointer occurrences for the relevant handler and setter addresses.
 
 This avoids rerunning the earlier broad probe. It uses the same local executable and PE-capable objdump, and writes `/tmp/outwars-scout-transform-tail/REPORT.txt`. The next investigation depends on this callback tail and the object-registration tail; until then, the `0x433090` combined actor transform remains unconnected to Scout, and the raw-geometry exporter remains unchanged.
+
+
+## Follow-up report 17: transform helpers and DPC parser boundary (REPORT(7))
+
+The uploaded report identifies the executable by the expected SHA-256, `484c7dc19a6f45e81af6a85e617761e01ec64ea784b17c45f8274fccf8f6a4c3`. It is a broad executable follow-up report, not the focused report emitted by `scout-exe-transform-tail.sh` (that script's report header is `OUTWARS SCOUT TRANSFORM-TAIL FOLLOW-UP`). Consequently it does not provide the requested new callback-tail and registration-tail evidence.
+
+It nevertheless adds useful confirmation of the DPC parser boundary:
+
+- `0x422172` is the DPCM parser. It checks the `DCPM` magic (`0x4D504344`) and version marker `0x43`, calls `0x4DF84C` for record relocation, then iterates the record list.
+- In the record loop it calls `0x4DD470` to resolve/relocate the current record and then calls `0x4DFCE4`, passing `0x420B00` as the property-handler callback. This confirms the parser-to-callback path, but not yet a call from that path to the transform helpers below.
+- `0x422278` copies three DWORDs from its data pointer into runtime-object position fields `+0xEC/+0xF0/+0xF4`.
+- `0x4222A8` copies three WORDs into rotation fields `+0xE4/+0xE6/+0xE8` and calls `0x4C5DB0` to build the matrix at `+0xB4`.
+- `0x422332` scans the runtime-object table and, on a matching 16-bit record identifier, stores the matching record pointer at runtime-object `+0x160`. This is a concrete record-to-runtime-object association; its exact meaning (parent, owner, or another back-reference) is not established.
+- `0x42244C` allocates a runtime object-table entry and initializes its position and rotation from separate data pointers. `0x422754` has a related initializer with a selector restricted to 0 or 1, and also copies position and rotation into the runtime object before generating its matrix.
+- The raw pointer scan reports zero absolute-address occurrences for `0x422278`, `0x4222A8`, `0x422332`, `0x42244C`, `0x422654`, `0x42269C`, and `0x422754`. Their use from the DPC callback therefore remains unproven; do not infer a call relationship from adjacency alone.
+
+**Next step:** obtain the focused transform-tail report (the `OUTWARS SCOUT TRANSFORM-TAIL FOLLOW-UP` output). It is deliberately small and captures the missing callback tail plus the object-table registration tail. Keep the geometry exporter unchanged until the actual Scout record-to-object path is demonstrated.
