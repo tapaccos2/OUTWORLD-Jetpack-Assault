@@ -162,6 +162,31 @@ function readExeInitialMatrix(file){
 function inRangeExe(e,o,n){return o>=0&&o+n<=e.length;}
 const initialMatrixInfo=readExeInitialMatrix(exePath);
 
+// Run the executable bridge in the same invocation. Besides disassembling the
+// callback handlers it now captures the DPC loader context helper and both
+// Scout loader call sites, which are needed to resolve the initial EDX scale.
+let executableBridge={status:'not-requested'};
+if(exePath){
+  const bridge=path.join(here,'scout-exe-transform-bridge.sh');
+  if(!fs.existsSync(exePath))executableBridge={status:'failed',reason:'Executable not found: '+exePath};
+  else if(!fs.existsSync(bridge))executableBridge={status:'skipped',reason:'scout-exe-transform-bridge.sh not found'};
+  else{
+    const bridgeOut=path.join(outDir,'executable-analysis');
+    fs.mkdirSync(bridgeOut,{recursive:true});
+    const r=spawnSync('bash',[bridge,exePath,bridgeOut],{
+      cwd:repoRoot,encoding:'utf8',maxBuffer:128*1024*1024
+    });
+    executableBridge={
+      status:r.status===0?'completed':'failed',
+      outputDirectory:bridgeOut,
+      reportPath:path.join(bridgeOut,'REPORT.txt'),
+      exitCode:r.status,
+      stdout:r.stdout||'',
+      stderr:r.stderr||''
+    };
+  }
+}
+
 // Callback work-stack entry format is the six DWORDs written by 0x4dfce4:
 // record, parent/matrix index, state X, state Y, state Z, scale/context.
 const work=[],events=[],matrices=new Map([[0,initialMatrixInfo.matrix]]),matrixPositions=new Map([[0,[0,0,0]]]);
@@ -579,7 +604,9 @@ const md=[
   '- Leaf callback entries: '+leafRecords.length,'- Unresolved edges: '+unresolved.length,'- Unemulated helper calls: '+helperCalls.length,
   '- Geometry sections: '+meshes.length,'- Callback-linked sections: '+geometryLinks.filter(x=>x.transformSource!=='no callback match').length,
   '- Owner/paired translation invariants: '+meshes.filter(m=>m.transformNode!==null).length+'/'+(meshes.length-1)+' matched',
+  '- Executable disassembly bridge: '+executableBridge.status,
   '',
+  '## Executable disassembly bridge','',JSON.stringify(executableBridge,null,2),'',
   '## Callback opcodes executed','',
   '| Opcode | Handler | Calls |','|---:|---|---:|',
   ...Array.from({length:14},(_,i)=>'| '+i+' | '+callbackNames[i]+' ('+hex(callbackTargets[i])+') | '+(callbackCounts[i]||0)+' |'),
@@ -605,6 +632,7 @@ const md=[
 fs.writeFileSync(path.join(outDir,'RUNTIME-REBUILD.md'),md.join('\n')+'\n');
 console.log('SCOUT RUNTIME REBUILD COMPLETE');
 console.log('Root: '+hex(rootNode)+' | top-level DPC records: '+tableCount+' | callbacks seeded: '+seedOffsets.length);
+console.log('Executable disassembly bridge: '+executableBridge.status+(executableBridge.reportPath?' | '+executableBridge.reportPath:''));
 console.log('Processed: '+processed+' | queued remaining: '+work.length+' | truncated: '+truncated);
 console.log('Callbacks: '+events.length+' | unique record/states: '+visitedCounts.size+' | unresolved: '+unresolved.length);
 console.log('Geometry sections callback-linked: '+geometryLinks.filter(x=>x.transformSource!=='no callback match').length+'/'+meshes.length);
