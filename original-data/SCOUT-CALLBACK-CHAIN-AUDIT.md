@@ -33,3 +33,24 @@ The opcode-2 callback is collecting pointers to embedded descriptors, not direct
 ## Next probe
 
 Run `tools/inspect-scout-callback-descriptor-targets.mjs` against all seven variants. It dumps the bytes at descriptor +4 targets and reports descriptor +8/+12 pointer fields. Compare those target regions with the known coordinate and face-record structures. This will establish whether the paired-side targets are data arrays, embedded metadata, or another resource class before modifying the GLB exporter.
+
+
+## Executable relocation semantics for descriptor pointers (2026-10-31)
+
+A full read of executable dispatcher `0x4DD470` corrects the earlier description of descriptor +8 as merely a non-local raw pointer:
+
+- The dispatcher selects its relocation case using byte zero.
+- Case 0 begins at `0x4DD4BC`. It relocates the DWORDs at record offsets `+4`, `+8`, and `+12` against the supplied relocation base, adds the loaded-resource base held in global `0x12B3970`, and marks byte +1 as `0xFE` so the record is not relocated twice.
+- The Scout embedded descriptor begins with `0x0000FF00`, so it selects case 0. Its +8 pointer is therefore actively relocated by the game; it is not an opaque field ignored by the loader.
+
+For `scout_mj.dpc`, the header relocation base is `0x80019C40` and descriptor +8 is `0x8009B578`. The relative target is:
+
+`0x8009B578 - 0x80019C40 = 0x81938`.
+
+The DPC is 37,792 bytes (`0x93A0`), so this target is outside the extracted DPC. The units archive inventory places `scout_mj.dpc` at archive offset 936,816; adding `0x81938` gives candidate archive offset 1,467,560 (`0x1664A8`). The archive inventory places that address inside `combat_fa.tpc`, at offset `+0x3CD9` from that resource's start.
+
+That archive-offset correspondence is a **candidate cross-resource mapping**, not yet proof that the runtime loader maps the entire archive contiguously or that the bytes at the target are meaningful Scout metadata. The actual bytes at the target and the corresponding female-layout target still need inspection. Do not interpret this pointer as a transform or alter the exporter on this evidence alone.
+
+## Updated next probe
+
+Inspect the units archive bytes at the candidate target (`0x1664A8`) and compare them with the same relative pointer in the other Scout variants. In parallel, trace the loader's allocation/base arguments around `0x48C6A8`, `0x48C8A8`, and `0x48CA20` to establish whether the relocation base is a resource-local pointer into one contiguous archive buffer. Only then classify the +8 field and look for its consumer.
