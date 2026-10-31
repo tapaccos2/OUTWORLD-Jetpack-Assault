@@ -629,7 +629,7 @@ const md=[
   'This is a static callback-work-stack reconstruction candidate, not a bit-exact execution of the executable. Opcode 4 uses its inline record+0x14 child list, and opcode 9 uses its separate +0x10 list. The two helper routines and shared post-handler normalization tail remain explicitly unimplemented. The 20 GLBs compare geometry placement alternatives using callback events matched to the known nine geometry sections. A final Scout is only accepted after visual validation and resolution of the listed helper/context limitations.'
 ];
 fs.writeFileSync(path.join(outDir,'RUNTIME-REBUILD.md'),md.join('\n')+'\n');
-console.log('SCOUT RUNTIME REBUILD COMPLETE');
+console.log('SCOUT RUNTIME REBUILD RUN COMPLETE — CANDIDATES EXPORTED');
 console.log('Root: '+hex(rootNode)+' | top-level DPC records: '+tableCount+' | callbacks seeded: '+seedOffsets.length);
 console.log('Executable disassembly bridge: '+executableBridge.status+(executableBridge.reportPath?' | '+executableBridge.reportPath:''));
 console.log('Processed: '+processed+' | queued remaining: '+work.length+' | truncated: '+truncated);
