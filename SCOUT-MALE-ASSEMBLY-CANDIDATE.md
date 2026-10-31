@@ -48,3 +48,10 @@ This script deliberately does not create a GLB or silently choose a vertex base.
 ## Export policy
 
 Do not use either previous assembled GLB as a base for more tweaks. Do not apply the eight owner vectors as the complete model transform. Export should resume only after the transform-child payloads and their vertex bases are identified and the opcode-5 matrix accumulation has been implemented.
+
+
+## Follow-up to transform payload report (2026-10-31)
+
+The first `scout-mj-transform-payloads.json` report confirms 11 opcode-2 attachment records under the transform hierarchy; 9 of the records' first descriptor slots led to candidate face streams. However, opcode-2 callback `0x4DFEF3` advances the source pointer by four bytes for each item and reads inline pointer fields at record `+0x14 + 4*i`. The count at `+0x10` is therefore a descriptor-slot count, not just metadata. Two records have count 2, so the first inspector revision omitted their second descriptors.
+
+The inspector `tools/inspect-scout-transform-mesh-payloads.mjs` has been updated to enumerate all inline slots and provide bounded face-stream records plus raw coordinate/face samples. Its report is still diagnostic: coordinate pointers can target typed blocks whose vertex array may begin after a header, and face signature scanning is heuristic. No exporter change is justified until the complete descriptor slots are interpreted.
