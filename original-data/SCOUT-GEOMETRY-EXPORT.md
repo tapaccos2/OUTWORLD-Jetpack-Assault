@@ -100,3 +100,26 @@ The cross-variant report now includes the full referenced vertex record and offs
 ## Runtime-transform separation warning (2026-10-31)
 
 The executable analysis identifies runtime object fields at +0xE4/+0xE6/+0xE8 for three 16-bit rotation components, +0xB4 for a derived orientation matrix, and +0xEC/+0xF0/+0xF4 for a three-component position. This is separate evidence from the DPC type-16 geometry-pool links described above. The code paths have not yet been tied to the eight Scout submeshes or to their paired type-2 records. Do not use the type-16 descriptor chain as the transform hierarchy, and do not change the exporter to apply guessed rotations or translations until that runtime data path is connected to the Scout records.
+
+
+## Visual rejection of the local-reference-base candidate (2026-10-31)
+
+The viewer screenshots of `scout-mj-assembled-candidate.glb` (exported with `--use-mesh-vertex-reference --apply-owner-translations`) show a pile of stretched, overlapping triangles from front, back, side, and top views. This candidate is rejected.
+
+The latest cross-check favours the original shared-pool index interpretation:
+
+- The face-index ranges advance in approximately 45-vertex blocks across the eight parts: 47–81, 96–130, 141–175, 186–220, 231–265, 276–310, 321–355, and 366–395.
+- Several streams also reuse low shared indices (notably 0 and 1).
+- The `+28` references point to offsets 96, 712, and 744 inside the common coordinate pool; parts 3–8 all point to offset 744. They therefore do not behave like eight separate per-mesh array starts.
+- Reading the face indices relative to those interior pointers double-offsets the shared-pool indices. The resulting lookup reaches unrelated coordinate records and explains the extreme, fan-like faces.
+
+For the next controlled candidate, use the descriptor's shared pool base and omit `--use-mesh-vertex-reference`:
+
+```sh
+node tools/export-dpc-armour-geometry.mjs \
+  original-data/units/scout_mj.dpc \
+  scout-mj-shared-pool-candidate.glb \
+  --apply-owner-translations
+```
+
+This still does **not** prove that owner vectors are the game's runtime translations. The eight vectors match their paired-node fields, but their transform semantics and the opcode-5 matrix hierarchy remain unresolved. The shared-pool candidate is the next visual test, not a final assembly.
