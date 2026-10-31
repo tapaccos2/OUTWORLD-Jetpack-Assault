@@ -97,13 +97,19 @@ python3 "$SCRIPT_DIR/scan-scout-exe-strings.py" \
   > "$OUT/55-strided-word-rotation-caller.txt" 2>&1
 "$OBJDUMP" -d -Mintel --start-address=0x433080 --stop-address=0x433170 "$EXE" \
   > "$OUT/56-record-struct-transform-caller.txt" 2>&1
+"$OBJDUMP" -d -Mintel --start-address=0x422554 --stop-address=0x422720 "$EXE" \
+  > "$OUT/57-runtime-object-table-registration-tail.txt" 2>&1
+"$OBJDUMP" -d -Mintel --start-address=0x426900 --stop-address=0x426b20 "$EXE" \
+  > "$OUT/58-six-field-property-handler.txt" 2>&1
+"$OBJDUMP" -d -Mintel --start-address=0x416e70 --stop-address=0x416f50 "$EXE" \
+  > "$OUT/59-small-property-range-handler.txt" 2>&1
 "$OBJDUMP" -d -Mintel --start-address=0x4dfca0 --stop-address=0x4dfd90 "$EXE" \
   > "$OUT/41-callee-4dfce4-record-dispatch.txt" 2>&1
 "$OBJDUMP" -d -Mintel --start-address=0x4c5d80 --stop-address=0x4c5e10 "$EXE" \
   > "$OUT/44-callee-4c5db0-three-component-helper.txt" 2>&1
 # The previous windows cut off the dispatcher and fixed-point rotation helper.
-# Capture the complete callback body, every branch target, and its trig primitive.
-"$OBJDUMP" -d -Mintel --start-address=0x4dfce4 --stop-address=0x4dff80 "$EXE" \
+# Capture the callback through its actual tail at 0x4E04B0, every branch target, and its trig primitive.
+"$OBJDUMP" -d -Mintel --start-address=0x4dfce4 --stop-address=0x4e0580 "$EXE" \
   > "$OUT/45-callee-4dfce4-record-dispatch-full.txt" 2>&1
 "$OBJDUMP" -d -Mintel --start-address=0x420f00 --stop-address=0x422100 "$EXE" \
   > "$OUT/46-record-handler-branch-targets.txt" 2>&1
@@ -127,7 +133,7 @@ targets = (
     0x421BAA, 0x4220C0, 0x422170, 0x422278, 0x4222A8, 0x4222F0,
     0x422300, 0x422310, 0x422332, 0x42237C, 0x42244C, 0x422554,
     0x422654, 0x42269C, 0x422754, 0x433080, 0x4330A2, 0x437C51, 0x437C80,
-    0x4C5440, 0x4C5DB0, 0x4DD470, 0x4DD9C0,
+    0x416E90, 0x420B00, 0x42693C, 0x433090, 0x4E04B0,\n    0x4C5440, 0x4C5DB0, 0x4DD470, 0x4DD9C0,
 )
 with destination.open("w") as out:
     out.write("RAW LITTLE-ENDIAN VA OCCURRENCES FOR TRANSFORM / DPC HANDLER ROUTINES\n")
@@ -351,6 +357,15 @@ python3 "$SCRIPT_DIR/scan-scout-exe-callers.py" \
   echo "========== RECORD-STRUCT TRANSFORM CALLER =========="
   cat "$OUT/56-record-struct-transform-caller.txt"
   echo
+  echo "========== RUNTIME OBJECT TABLE REGISTRATION TAIL =========="
+  cat "$OUT/57-runtime-object-table-registration-tail.txt"
+  echo
+  echo "========== SIX-FIELD PROPERTY HANDLER =========="
+  cat "$OUT/58-six-field-property-handler.txt"
+  echo
+  echo "========== SMALL PROPERTY-RANGE HANDLER =========="
+  cat "$OUT/59-small-property-range-handler.txt"
+  echo
   echo "========== FILE SIZE / READ HELPER =========="
   cat "$OUT/36-file-size-and-read-helper.txt"
   echo
@@ -366,4 +381,4 @@ python3 "$SCRIPT_DIR/scan-scout-exe-callers.py" \
 
 echo "Created: $OUT/REPORT.txt"
 echo "The full report was saved to disk; it is not printed to the terminal."
-echo "New focused sections 45-56 capture DPC transform setters, rotation-matrix math, record relocation, and handler-pointer references."
+echo "New focused sections 45-59 capture the complete callback tail, runtime object-table registration, property handlers, transform setters, and rotation-matrix math."
