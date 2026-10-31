@@ -67,7 +67,7 @@ function inspect(file) {
       }
       rows.push({
         part: i + 1, role, offset: '0x' + off.toString(16),
-        opcodeByte0: b[off], callbackTarget: b[off] <= 13 ? ['0x4dfde1','0x4dfe56','0x4dfef3','0x4dff99','0x4e006d','0x4e0130','0x4e023a','0x4e0253','0x4e02e7','0x4e0399','0x4e0494','0x4e04a2','0x4e04a2','0x4e023a'][b[off]] : null,
+        opcodeByte0: b[off], callbackTarget: b[off] <= 13 ? ['0x4dfde1','0x4dfe56','0x4dfef3','0x4dff99','0x4e006d','0x4e0130','0x4e0494','0x4e04a2','0x4e023a','0x4e0253','0x4e04a2','0x4e02e7','0x4e0399','0x4e023a'][b[off]] : null,
         classWordPlus2: u16(off + 2),
         signedWordsAt8_10_12: [s32(off + 8), s32(off + 12), s32(off + 16)],
         fields: words,
