@@ -295,10 +295,19 @@ for(const centre of centres)for(let delta=-32;delta<=32;delta+=4)for(const width
     if(start<0||start+count*width>b.length)continue;
     const vals=[];for(let i=0;i<count;i++)vals.push(width===1?b[start+i]:width===2?U16(start+i*2):U32(start+i*4));
     const max=Math.max(...vals),min=Math.min(...vals),unique=new Set(vals).size;
-    let degenerate=0;for(let i=0;i+2<count;i+=3)if(vals[i]===vals[i+1]||vals[i]===vals[i+2]||vals[i+1]===vals[i+2])degenerate++;
+    let degenerate=0,repeatedEdges=0;const edgeSet=new Set();
+    for(let i=0;i+2<count;i+=3){
+      const tri=[vals[i],vals[i+1],vals[i+2]];
+      if(new Set(tri).size<3)degenerate++;
+      for(const pair of [[tri[0],tri[1]],[tri[1],tri[2]],[tri[2],tri[0]]]){
+        const key=pair.slice().sort((a,c)=>a-c).join(':');
+        if(edgeSet.has(key))repeatedEdges++;else edgeSet.add(key);
+      }
+    }
     const coverage=unique/count,triCount=Math.floor(count/3),plausible=max<=2048&&coverage>0.15&&degenerate<Math.max(2,triCount*0.5);
-    const score=plausible?Math.max(0,Math.min(100,coverage*45+(max>2?15:0)+(max<512?20:0)+(degenerate===0?20:0))):0;
-    if(score>=30)indexCandidates.push({start,nearTarget:centre,delta,width,count,min,max,uniqueCount:unique,coverage,degenerateTriangles:degenerate,score,firstValues:vals.slice(0,36)});
+    const widthPenalty=width===1?20:width===4?5:0;
+    const score=plausible?Math.max(0,Math.min(100,coverage*30+(max>2?10:0)+(max<512?10:0)+Math.min(30,repeatedEdges*3)+(degenerate===0?10:0)-widthPenalty-(repeatedEdges===0?15:0))):0;
+    if(score>=30)indexCandidates.push({start,nearTarget:centre,delta,width,count,min,max,uniqueCount:unique,coverage,degenerateTriangles:degenerate,repeatedEdges,score,firstValues:vals.slice(0,36)});
   }
 }
 indexCandidates.sort((a,c)=>c.score-a.score);
@@ -416,8 +425,8 @@ fs.writeFileSync(path.join(outDir,'hypothesis-scoreboard.csv'),hypCsv.map(r=>r.m
 const coordCsv=[['score','nearTarget','start','delta','kind','stride','count','uniqueRatio','minX','minY','minZ','maxX','maxY','maxZ'],
 ...topCoordinates.map(c=>[c.score,hex(c.nearTarget),hex(c.start),c.delta,c.kind,c.stride,c.count,c.uniqueRatio,...c.mins,...c.maxs])];
 fs.writeFileSync(path.join(outDir,'payload-coordinate-candidates.csv'),coordCsv.map(r=>r.map(csvEscape).join(',')).join('\n')+'\n');
-const indexCsv=[['score','nearTarget','start','delta','width','count','min','max','uniqueCount','coverage','degenerateTriangles','firstValues'],
-...topIndices.map(c=>[c.score,hex(c.nearTarget),hex(c.start),c.delta,c.width,c.count,c.min,c.max,c.uniqueCount,c.coverage,c.degenerateTriangles,c.firstValues.join(' ')])];
+const indexCsv=[['score','nearTarget','start','delta','width','count','min','max','uniqueCount','coverage','degenerateTriangles','repeatedEdges','firstValues'],
+...topIndices.map(c=>[c.score,hex(c.nearTarget),hex(c.start),c.delta,c.width,c.count,c.min,c.max,c.uniqueCount,c.coverage,c.degenerateTriangles,c.repeatedEdges,c.firstValues.join(' ')])];
 fs.writeFileSync(path.join(outDir,'payload-index-candidates.csv'),indexCsv.map(r=>r.map(csvEscape).join(',')).join('\n')+'\n');
 
 console.log('SCOUT AUTODISCOVERY COMPLETE');
