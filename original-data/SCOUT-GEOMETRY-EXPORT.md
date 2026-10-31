@@ -164,3 +164,18 @@ The report does not include the implementation of 0x46E4C0, so it does not yet e
 ### Next focused probe
 
 Bridge v1.3.0 adds a disassembly capture for 0x46E4C0–0x46E620 and includes direct-call references to 0x46E4C0. The next check is to identify the helper's indexed object table, then compare the resulting object indices and property values against the eight Scout owner/paired-node records and the existing +0x160 record-ID transform link. Only after that match is demonstrated should the exporter consume these relationships.
+
+
+## Correction to follow-up report 19: eight-slot handler interpretation (2026-10-31)
+
+The v1.3.0 report supplies the missing implementation of 0x46E4C0. It is a simple address calculation, not a record-ID lookup or Scout-part resolver:
+
+```
+return 0x72365C + index * 0x48E4 + 0x44
+```
+
+The two property branches are selected by the exact DPC property IDs 0x6D and 0x6E (confirmed by the comparisons at 0x4220D2–0x4220E2). Each branch loops index 0 through 7, obtains the corresponding fixed-stride table address, and writes the same callback value to +0x104 (property 0x6D) or +0x108 (property 0x6E) for every entry.
+
+This proves there are eight fixed-stride structures addressed from base 0x72365C, with the handler updating a field in all eight. It does **not** prove that the eight structures correspond to the eight Scout submeshes, and the shared-value broadcast is not evidence of eight independently supplied attachment transforms. The earlier suggestion that the count itself was a likely Scout-part mapping is withdrawn. These fields must not be used to assemble Scout geometry.
+
+Bridge v1.4.0 expands the capture to the other direct callers of 0x46E4C0 and adds a scan for references to the table base and stride. This is intended to identify the role of the eight fixed-stride structures from their surrounding uses. The Scout transform exporter remains unchanged.
