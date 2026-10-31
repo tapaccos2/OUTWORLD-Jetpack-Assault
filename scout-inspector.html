@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OUTWORLD · Scout DPC Inspector</title>
+<style>
+:root{color-scheme:dark;font-family:Inter,system-ui,Segoe UI,Arial,sans-serif;background:#081018;color:#e4edf3}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 55% -20%,#183344 0,#081018 55%)}
+header{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;border-bottom:1px solid #294251;background:#0a151e}
+.brand{font-size:14px;font-weight:850;letter-spacing:2px}.brand small{display:block;color:#6fd0e3;font-size:9px;letter-spacing:1.5px;margin-top:3px}
+#status{font-size:11px;color:#9db2bd}main{display:grid;grid-template-columns:340px minmax(0,1fr);gap:12px;padding:12px;height:calc(100vh - 64px)}
+aside{background:#0d1a24;border:1px solid #263d4b;border-radius:10px;overflow:auto;padding:14px}
+h2{font-size:12px;text-transform:uppercase;letter-spacing:1.2px;color:#83d9e7;margin:4px 0 12px}
+.section{padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid #233744}
+button,.fileButton,select{background:#142b39;border:1px solid #426477;border-radius:6px;color:#e4f3fa;padding:8px 10px;font:inherit;font-size:12px}
+button,.fileButton{cursor:pointer}.fileButton{display:block;text-align:center;font-weight:700}input[type=file]{display:none}
+select{width:100%;margin:5px 0 10px}label{font-size:11px;color:#9db5c1;display:block;margin:9px 0 4px}
+.note{font-size:11px;color:#93a9b5;line-height:1.5}.metric{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #1c303b;font-size:11px}.metric b{color:#e3f7fc;font-variant-numeric:tabular-nums}
+#tree{font-size:11px;line-height:1.5}.treeItem{padding:5px 7px;margin:2px 0;border-left:2px solid #35576a;color:#bdd0d9;cursor:pointer;overflow-wrap:anywhere}.treeItem:hover,.treeItem.active{background:#173344;color:#fff;border-left-color:#67d8e9}.treeItem .sub{color:#7895a4;font-size:10px}
+#viewport{position:relative;min-width:0;min-height:0;background:#09141d;border:1px solid #294150;border-radius:10px;overflow:hidden}
+#view{width:100%;height:100%;display:block}
+#overlay{position:absolute;left:14px;top:12px;pointer-events:none;background:#08151dcc;border:1px solid #365264;border-radius:7px;padding:10px 12px;max-width:min(420px,70%);font-size:11px;line-height:1.5}
+#overlay strong{display:block;color:#7cddeb;font-size:12px;margin-bottom:3px}
+#legend{position:absolute;right:12px;bottom:12px;background:#08151dcc;border:1px solid #365264;border-radius:7px;padding:9px 11px;font-size:10px;color:#a9c0ca}
+#detail{font-size:11px;line-height:1.5;color:#b6c9d2;white-space:pre-wrap;overflow-wrap:anywhere;max-height:240px;overflow:auto}
+#drop{border:1px dashed #51778a;border-radius:7px;padding:14px;text-align:center;color:#9cb4bf;font-size:11px;margin-top:8px}
+input[type=range]{width:100%;accent-color:#69d5e5}
+@media(max-width:850px){main{height:auto;min-height:calc(100vh - 64px);grid-template-columns:1fr}aside{max-height:50vh}#viewport{height:65vh;min-height:420px}}
+</style>
+</head>
+<body>
+<header><div class="brand">OUTWORLD <small>SCOUT DPC · BROWSER INSPECTOR</small></div><div id="status">Load scout_mj.dpc to inspect its records</div></header>
+<main>
+<aside>
+ <div class="section">
+  <h2>Source asset</h2>
+  <label class="fileButton" for="file">Choose scout_mj.dpc</label><input id="file" type="file" accept=".dpc,.bin,application/octet-stream">
+  <div id="drop">Or drop the DPC file here. Parsing happens locally in this browser; the file is not uploaded.</div>
+  <div class="note" style="margin-top:8px">Expected source: <b>extracted-ff/units/scout_mj.dpc</b></div>
+ </div>
+ <div class="section">
+  <h2>Hierarchy</h2>
+  <label for="root">Transform root</label><select id="root" disabled></select>
+  <div id="tree" class="note">No asset loaded.</div>
+ </div>
+ <div class="section">
+  <h2>Coordinate sample</h2>
+  <label for="descriptor">Attachment descriptor</label><select id="descriptor" disabled></select>
+  <label for="start">Candidate start offset: <b id="startLabel">+0 bytes</b></label>
+  <input id="start" type="range" min="0" max="64" step="4" value="0" disabled>
+  <label for="count">Points shown: <b id="countLabel">24</b></label>
+  <input id="count" type="range" min="4" max="64" step="4" value="24" disabled>
+  <div class="note">Point cloud only. No triangle topology is inferred. Offsets and point count are inspection controls, not asserted format fields.</div>
+ </div>
+ <div class="section">
+  <h2>Selected record</h2>
+  <div id="detail">Load a DPC asset, then select a descriptor.</div>
+ </div>
+</aside>
+<section id="viewport">
+ <canvas id="view"></canvas>
+ <div id="overlay"><strong>LOCAL COORDINATE VIEW</strong><span>Waiting for a DPC file.</span></div>
+ <div id="legend">Point samples · orbit: drag · zoom: wheel · pan: right drag</div>
+</section>
+</main>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","OrbitControls":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import {OrbitControls} from 'OrbitControls';
+const $=id=>document.getElementById(id);
+const canvas=$('view');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false});
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
+renderer.setClearColor(0x09141d,1);
+const scene=new THREE.Scene();
+scene.add(new THREE.HemisphereLight(0xc9e8f2,0x263440,2));
+const light=new THREE.DirectionalLight(0xffffff,2.3);light.position.set(8,12,10);scene.add(light);
+const camera=new THREE.PerspectiveCamera(48,1,.01,10000);camera.position.set(700,500,700);
+const controls=new OrbitControls(camera,canvas);controls.enableDamping=true;
+scene.add(new THREE.GridHelper(1000,40,0x375365,0x1c303d));
+scene.add(new THREE.AxesHelper(180));
+let cloud=null,source=null,currentDescriptors=[],activeDescriptor=null,transforms=[],roots=[];
+const materials=new THREE.PointsMaterial({color:0x7be0ef,size:7,sizeAttenuation:false});
+function resize(){const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}
+new ResizeObserver(resize).observe(canvas);resize();
+function render(){requestAnimationFrame(render);controls.update();renderer.render(scene,camera)}render();
+const hex=n=>'0x'+n.toString(16).toUpperCase();
+function parse(buffer,name){
+ const bytes=new Uint8Array(buffer),view=new DataView(buffer),length=buffer.byteLength;
+ const u8=o=>o>=0&&o<length?view.getUint8(o):0;
+ const u16=o=>o>=0&&o+2<=length?view.getUint16(o,true):0;
+ const u32=o=>o>=0&&o+4<=length?view.getUint32(o,true):0;
+ const s16=o=>o>=0&&o+2<=length?view.getInt16(o,true):0;
+ const s32=o=>o>=0&&o+4<=length?view.getInt32(o,true):0;
+ if(length<40||String.fromCharCode(...bytes.slice(0,4))!=='DCPM'||u8(4)!==0x43)throw Error('Not a DCPMC resource (expected DCPM, version 0x43).');
+ const base=u32(12);
+ const ptr=field=>{const raw=u32(field),off=raw-base;return raw>=base&&off>=0&&off+4<=length?off:null};
+ const header=o=>o===null?null:{opcode:u8(o),flags:u8(o+1),classWord:u16(o+2)};
+ const candidateTransforms=[];
+ for(let o=16;o+0x3c<=length;o+=4){
+  if(u8(o)!==5)continue;
+  const h=header(o),n=u8(o+0x36);
+  if(!(h.classWord===100||h.classWord===0)||n<1||n>32)continue;
+  const children=Array.from({length:n},(_,i)=>ptr(o+0x38+i*4));
+  if(children.some(x=>x===null))continue;
+  if(children.some(x=>![2,5,8,9].includes(header(x)?.opcode)))continue;
+  candidateTransforms.push({offset:o,header:h,matrix:Array.from({length:9},(_,i)=>s32(o+4+i*4)),position:[s32(o+0x28),s32(o+0x2c),s32(o+0x30)],children});
+ }
+ const byOffset=new Map(candidateTransforms.map(t=>[t.offset,t]));
+ const parent=new Map(candidateTransforms.map(t=>[t.offset,[]]));
+ for(const t of candidateTransforms)for(const c of t.children)if(byOffset.has(c))parent.get(c).push(t.offset);
+ transforms=candidateTransforms.map(t=>({...t,parents:parent.get(t.offset)}));
+ roots=transforms.filter(t=>!t.parents.length);
+ function readAttachment(offset,transformOffset){
+  const count=u32(offset+0x10);if(count>64)return [];
+  const items=[];
+  for(let i=0;i<count;i++){
+   const wrapper=ptr(offset+0x14+i*4),descriptor=wrapper===null?null:ptr(wrapper+8);
+   if(descriptor===null||descriptor+32>length)continue;
+   const coordinate=ptr(descriptor+4),face=ptr(descriptor+12);
+   const rawFields=Array.from({length:8},(_,j)=>u32(descriptor+j*4));
+   let opcode4=null;
+   if(face!==null&&u8(face)===4&&u16(face+2)===0x090c){
+    const childCount=u8(face+0x12),children=[];
+    for(let j=0;j<Math.min(childCount,64);j++){const field=face+0x14+j*4;children.push({raw:u32(field),target:ptr(field),header:header(ptr(field))});}
+    opcode4={offset:face,translation:[s32(face+4),s32(face+8),s32(face+12)],count:childCount,children};
+   }
+   items.push({id:items.length,transformOffset,attachmentOffset:offset,slot:i,wrapper,descriptor,coordinate,face,rawFields,opcode4});
+  }
+  return items;
+ }
+ const descriptors=[];
+ function walk(offset,path=[],seen=new Set()){
+  if(seen.has(offset))return;
+  seen.add(offset);
+  const t=byOffset.get(offset);if(!t)return;
+  const nextPath=[...path,offset];
+  for(const child of t.children){
+   const h=header(child);
+   if(h?.opcode===5)walk(child,nextPath,seen);
+   else if(h?.opcode===2)descriptors.push(...readAttachment(child,offset));
+  }
+ }
+ for(const r of roots)walk(r.offset);
+ source={name,length,base,bytes,u8,u16,u32,s16,s32,ptr,header};
+ return {transformCount:transforms.length,roots,descriptors};
+}
+function buildTree(rootOffset){
+ const root=transforms.find(t=>t.offset===rootOffset),target=$('tree');target.innerHTML='';
+ if(!root)return;
+ const map=new Map(transforms.map(t=>[t.offset,t]));
+ const add=(t,depth,visited)=>{
+  if(visited.has(t.offset))return;visited.add(t.offset);
+  const row=document.createElement('div');row.className='treeItem';row.style.marginLeft=(depth*12)+'px';
+  row.innerHTML='<b>Transform '+hex(t.offset)+'</b><div class="sub">class '+t.header.classWord+' · position '+t.position.join(', ')+' · '+t.children.length+' children</div>';
+  row.onclick=()=>{activeDescriptor=null;$('detail').textContent='Transform '+hex(t.offset)+'\\nLocal position: '+t.position.join(', ')+'\\nMatrix fixed 4096:\\n'+[0,1,2].map(i=>t.matrix.slice(i*3,i*3+3).join('  ')).join('\\n');clearCloud();$('overlay').innerHTML='<strong>TRANSFORM RECORD '+hex(t.offset)+'</strong><span>Local transform shown; geometry transforms have not been applied.</span>';};
+  target.appendChild(row);
+  for(const c of t.children){const h=source.header(c);
+   if(h?.opcode===5){add(map.get(c),depth+1,visited);}
+   else if(h?.opcode===2){const a=document.createElement('div');a.className='treeItem';a.style.marginLeft=((depth+1)*12)+'px';a.innerHTML='<b>Attachment '+hex(c)+'</b><div class="sub">opcode 2 · class '+h.classWord+'</div>';target.appendChild(a);}
+  }
+ };
+ add(root,0,new Set());
+}
+function clearCloud(){if(cloud){scene.remove(cloud);cloud.geometry.dispose();cloud=null;}}
+function displayCloud(){
+ if(!activeDescriptor||activeDescriptor.coordinate===null){clearCloud();return;}
+ const {bytes,s16,length}=source,start=activeDescriptor.coordinate+Number($('start').value),count=Number($('count').value);
+ const points=[];for(let i=0;i<count&&start+i*8+6<=length;i++){
+  const p=start+i*8;points.push([s16(p),s16(p+2),s16(p+4)]);
+ }
+ clearCloud();if(!points.length)return;
+ const geometry=new THREE.BufferGeometry();const positions=new Float32Array(points.length*3);
+ points.forEach((p,i)=>{positions.set([p[0],p[1],p[2]],i*3)});
+ geometry.setAttribute('position',new THREE.BufferAttribute(positions,3));
+ cloud=new THREE.Points(geometry,materials);scene.add(cloud);
+ const box=new THREE.Box3().setFromObject(cloud),center=box.getCenter(new THREE.Vector3()),size=box.getSize(new THREE.Vector3()),extent=Math.max(size.x,size.y,size.z,50);
+ controls.target.copy(center);camera.position.copy(center).add(new THREE.Vector3(extent*1.7,extent*1.2,extent*1.7));camera.near=Math.max(.01,extent/10000);camera.far=extent*100;camera.updateProjectionMatrix();controls.update();
+ $('overlay').innerHTML='<strong>COORDINATE BLOCK '+hex(activeDescriptor.coordinate)+'</strong><span>'+points.length+' records · 8-byte stride hypothesis · start '+hex(start)+' · local space only</span>';
+ $('detail').textContent=descriptorDetails(activeDescriptor,points);
+}
+function descriptorDetails(d,points){
+ const {u32,s32,header}=source;
+ const face=d.face===null?null:header(d.face);
+ const lines=['Descriptor '+hex(d.descriptor),'Attachment '+hex(d.attachmentOffset)+' · slot '+d.slot,'Coordinate target: '+(d.coordinate===null?'none':hex(d.coordinate)),'Face target: '+(d.face===null?'none':hex(d.face))+' · '+(face?('opcode '+face.opcode+' class '+face.classWord):'none'),'Descriptor DWORDs: '+d.rawFields.map((v)=>hex(v)).join('  '),'','Candidate points (X,Y,Z signed 16-bit; 8-byte stride):',...points.map((p,i)=>String(i).padStart(2,'0')+': '+p.join(', '))];
+ if(d.opcode4){lines.push('','Opcode-4 node '+hex(d.opcode4.offset),'Translation fields: '+d.opcode4.translation.join(', '),'Child count byte: '+d.opcode4.count,...d.opcode4.children.map((c,i)=>'Child '+i+': '+hex(c.raw)+(c.target===null?'':' → '+hex(c.target)+' (op '+c.header?.opcode+', class '+c.header?.classWord+')')));}
+ return lines.join('\\n');
+}
+function chooseDescriptor(index){
+ activeDescriptor=currentDescriptors[index]??null;
+ if(!activeDescriptor){clearCloud();return;}
+ $('descriptor').value=String(index);displayCloud();
+}
+function loadBuffer(buffer,name){
+ const result=parse(buffer,name);
+ $('root').innerHTML='';result.roots.forEach((r,i)=>{const op=document.createElement('option');op.value=String(r.offset);op.textContent='Root '+hex(r.offset)+' · class '+r.header.classWord;$('root').appendChild(op)});
+ $('root').disabled=!result.roots.length;
+ $('status').textContent=name+' · '+result.transformCount+' transform records · '+result.descriptors.length+' descriptors';
+ $('overlay').innerHTML='<strong>DPC LOADED</strong><span>'+result.roots.length+' roots · '+result.descriptors.length+' attachment descriptors. Select a component to inspect its local coordinate samples.</span>';
+ $('descriptor').innerHTML='';result.descriptors.forEach((d,i)=>{const op=document.createElement('option');op.value=String(i);op.textContent='Transform '+hex(d.transformOffset)+' / attachment '+hex(d.attachmentOffset)+' / slot '+d.slot+' / coord '+(d.coordinate===null?'none':hex(d.coordinate));$('descriptor').appendChild(op)});
+ currentDescriptors=result.descriptors;$('descriptor').disabled=!currentDescriptors.length;
+ ['start','count'].forEach(id=>$(id).disabled=!currentDescriptors.length);
+ if(result.roots.length){$('root').value=String(result.roots.find(r=>r.offset===0x9300)?.offset??result.roots[0].offset);buildTree(Number($('root').value));}
+ if(currentDescriptors.length)chooseDescriptor(0);
+}
+$('file').addEventListener('change',async e=>{const f=e.target.files?.[0];if(!f)return;try{loadBuffer(await f.arrayBuffer(),f.name)}catch(err){$('status').textContent='Parse error: '+err.message;console.error(err)}});
+$('root').addEventListener('change',()=>buildTree(Number($('root').value)));
+$('descriptor').addEventListener('change',()=>chooseDescriptor(Number($('descriptor').value)));
+$('start').addEventListener('input',()=>{$('startLabel').textContent='+'+$('start').value+' bytes';displayCloud()});
+$('count').addEventListener('input',()=>{$('countLabel').textContent=$('count').value;displayCloud()});
+const drop=$('drop');for(const ev of ['dragenter','dragover'])drop.addEventListener(ev,e=>{e.preventDefault();drop.style.background='#173344'});for(const ev of ['dragleave','drop'])drop.addEventListener(ev,e=>{e.preventDefault();drop.style.background='';if(ev==='drop'){const f=e.dataTransfer.files?.[0];if(f)f.arrayBuffer().then(buf=>loadBuffer(buf,f.name)).catch(err=>$('status').textContent=err.message)}});
+</script>
+</body>
+</html>
