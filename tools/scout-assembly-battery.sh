@@ -108,7 +108,7 @@ find_assets() {
   find "$@" \
     \( -type d \( -name .git -o -name node_modules -o -name .cache -o -name .local -o -name .npm -o -name .gradle \) -prune \) -o \
     \( -type f -iname "$pattern" -print0 \) 2>/dev/null |
-    while IFS= read -r -d '' file; do printf '%s\\n' "$file"; done |
+    while IFS= read -r -d '' file; do printf '%s\n' "$file"; done |
     sort -u
 }
 
@@ -128,19 +128,19 @@ MCDIRS=()
 if [[ ${#MCS[@]} -gt 0 ]]; then
   while IFS= read -r dir; do
     [[ -n "$dir" ]] && MCDIRS+=("$dir")
-  done < <(printf '%s\\n' "${MCS[@]}" | xargs -r -n1 dirname | sort -u)
+  done < <(printf '%s\n' "${MCS[@]}" | xargs -r -n1 dirname | sort -u)
 fi
 
 printf '%s\n' "${DPCS[@]}" >"$OUT/dpc-file-list.txt"
 printf '%s\n' "${TPCS[@]}" >"$OUT/tpc-file-list.txt"
 
 echo "Search roots:"
-printf '  %s\\n' "${SEARCH_ROOTS[@]}"
+printf '  %s\n' "${SEARCH_ROOTS[@]}"
 echo "DPC files found: ${#DPCS[@]}"
 echo "TPC files found: ${#TPCS[@]}"
 echo "Motion folders found: ${#MCDIRS[@]}"
-printf '%s\\n' "${DPCS[@]}" >"$OUT/dpc-file-list.txt"
-printf '%s\\n' "${TPCS[@]}" >"$OUT/tpc-file-list.txt"
+printf '%s\n' "${DPCS[@]}" >"$OUT/dpc-file-list.txt"
+printf '%s\n' "${TPCS[@]}" >"$OUT/tpc-file-list.txt"
 
 if [[ ${#DPCS[@]} -eq 0 ]]; then
   echo "ERROR: No Scout DPC files were found in the searched locations."
@@ -148,7 +148,7 @@ if [[ ${#DPCS[@]} -eq 0 ]]; then
   echo "Put the extracted files in original-data/units, or rerun with:"
   echo "  bash tools/scout-assembly-battery.sh \"/path/to/folder-containing-scout-dpc-files\""
   echo "Search roots were:"
-  printf '  %s\\n' "${SEARCH_ROOTS[@]}"
+  printf '  %s\n' "${SEARCH_ROOTS[@]}"
   pause_exit
   exit 1
 fi
