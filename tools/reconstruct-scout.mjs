@@ -71,7 +71,7 @@ const baseline=readJson(baselineGlb.replace(/\.glb$/i,'.json'));
 
 // 2. Decode candidate opcode-5 transform records and their pointer hierarchy.
 const transformFile=path.join(transforms,'opcode5-records.json');
-nodeTool('opcode-5 transform graph','inspect-scout-transform-records.mjs',[input,transformFile]);
+run('opcode-5 transform graph',process.execPath,[path.join(here,'inspect-scout-transform-records.mjs'),input],transformFile);
 const transformData=readJson(transformFile);
 const transformResult=transformData?.results?.[0]||{};
 const transformCount=transformResult.structurallyPlausibleOpcode5Records??null;
@@ -94,10 +94,10 @@ const opcode4Data=readJson(opcode4File);
 
 // 6. Cross-check the eight legacy part-list records and callback descriptor path.
 const callbackFile=path.join(callbacks,'part-list-callback-records.json');
-nodeTool('part-list callback record audit','inspect-scout-callback-records.mjs',[input,callbackFile]);
+run('part-list callback record audit',process.execPath,[path.join(here,'inspect-scout-callback-records.mjs'),input],callbackFile);
 const callbackData=readJson(callbackFile);
 const callbackChainFile=path.join(callbacks,'part-list-callback-chain.json');
-nodeTool('part-list callback descriptor chain','inspect-scout-callback-chain.mjs',[input],callbackChainFile);
+run('part-list callback descriptor chain',process.execPath,[path.join(here,'inspect-scout-callback-chain.mjs'),input],callbackChainFile);
 const callbackChainData=readJson(callbackChainFile);
 
 // 7. Optional executable analysis for validating static code semantics.
@@ -137,7 +137,7 @@ const manifest={
   },
   transformHierarchy:{
     structurallyPlausibleOpcode5Records:transformCount,
-    transformRoots:transformResult.candidates?.filter(x=>!x.parents?.length).map(x=>x.offset)??null,
+    transformRoots:attachmentSummary.transformRoots??null,
     plausibleTransformsFromAttachmentAudit:attachmentSummary.plausibleOpcode5TransformCount??null,
     transformRootsFromAttachmentAudit:attachmentSummary.transformRoots??null,
     note:'Matrices and parent-child pointers are present in the DPC transform callback hierarchy. Matrix order and final geometry linkage still require decoding.'
