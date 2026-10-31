@@ -40,7 +40,13 @@ mkdir -p "$OUT"
     "$OBJDUMP" -d -Mintel --start-address="$start" --stop-address="$stop" "$EXE" 2>&1
     echo
   }
-  dump "DPC CALLBACK TYPE DISPATCH TABLE" 0x4dfcac 0x4dfce4
+  dump_data() {
+    local title="$1" start="$2" stop="$3"
+    echo "========== $title ($start-$stop) =========="
+    "$OBJDUMP" -s --start-address="$start" --stop-address="$stop" "$EXE" 2>&1
+    echo
+  }
+  dump_data "DPC CALLBACK TYPE DISPATCH TABLE" 0x4dfcac 0x4dfce4
   dump "DPC CALLBACK TYPE-1 HELPER" 0x4df940 0x4dfa30
   dump "DPC CALLBACK RECORD TYPE RESOLVER" 0x4e59a0 0x4e5a20
   dump "SIX-PROPERTY WRAPPER AND CORE HANDLER" 0x426700 0x426820
