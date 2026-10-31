@@ -485,3 +485,18 @@ The DPC resource loop is now clearer: `0x420A5D` calls `0x4DD470` to relocate a 
 The adjacent helpers `0x422278` and `0x4222A8` still have clear position and rotation setter signatures, but the report's raw/direct-reference scan finds no direct code references to them. Their use through any runtime registration remains unproven. Likewise, `0x42244C` uses a separate 32-entry table rooted at `0x647578` and writes position/rotation fields into allocated runtime objects, but the report does not establish that this table contains Scout part objects.
 
 **Next target:** trace the DPC property identifiers emitted for the Scout type-1/type-2 nodes through the `0x420B00` handler branches, then identify which branch populates or links the runtime object table. No exporter transform should be changed yet.
+
+
+## Follow-up report 16: close the callback-disassembly gap with a minimal probe
+
+A review of the latest uploaded report found that the section labelled “full callback body” actually stopped at VA `0x4DFF80`. The callback continues through at least `0x4E04B0`, so its most important tail was not present in that report. This is a probe-window issue, not a new game-data requirement.
+
+A small targeted script, `tools/scout-exe-transform-tail.sh`, now captures only the missing and directly relevant regions:
+- `0x4DFCE4–0x4E0580`: full DPC callback, including its tail;
+- `0x422554–0x422720`: runtime object-table registration tail;
+- `0x426900–0x426B20`: six-field property handler reached by the `0x1019–0x101E` dispatch range;
+- `0x416E70–0x416F50`: small property-range handler;
+- the existing DPC dispatcher, setter, registration, combined actor-transform and direct-caller windows;
+- raw pointer occurrences for the relevant handler and setter addresses.
+
+This avoids rerunning the earlier broad probe. It uses the same local executable and PE-capable objdump, and writes `/tmp/outwars-scout-transform-tail/REPORT.txt`. The next investigation depends on this callback tail and the object-registration tail; until then, the `0x433090` combined actor transform remains unconnected to Scout, and the raw-geometry exporter remains unchanged.
