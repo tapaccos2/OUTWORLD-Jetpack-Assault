@@ -162,7 +162,7 @@ const initialMatrixInfo=readExeInitialMatrix(exePath);
 
 // Callback work-stack entry format is the six DWORDs written by 0x4dfce4:
 // record, parent/matrix index, state X, state Y, state Z, scale/context.
-const work=[],events=[],matrices=new Map([[0,initialMatrixInfo.matrix]]);
+const work=[],events=[],matrices=new Map([[0,initialMatrixInfo.matrix]]),matrixPositions=new Map([[0,[0,0,0]]]);
 const unresolved=[],leafRecords=[],edgeRows=[],callbackCounts={},seedRuns=[];
 let nextMatrixId=1,processed=0,nextEntryId=0,activeRunId=0,activeSeed=null;
 const visitedCounts=new Map();
@@ -320,6 +320,7 @@ for(const seed of seedOffsets){
     const world=mul3(parent,local);
     const matrixId=nextMatrixId++;
     matrices.set(matrixId,world);
+    matrixPositions.set(matrixId,transformed);
     event.matrix={localQ20_12:local,parentMatrixId:entry.parentMatrix,worldMatrixCandidate:world,determinant:det3(world),matrixId};
     // The executable stores the translated vector at [esp+0x68..0x70] and
     // passes that vector to each child work entry. 4C6610 also computes a
@@ -453,12 +454,17 @@ function applyTransform(point,matrix,position,convention){
   }
   const v=point.map((x,i)=>x+position[i]);return apply3(m,v);
 }
-const conventions=[
-  {name:'stored-after-translation',transpose:false,translation:'after'},
-  {name:'stored-before-translation',transpose:false,translation:'before'},
-  {name:'transposed-after-translation',transpose:true,translation:'after'},
-  {name:'transposed-before-translation',transpose:true,translation:'before'}
-];
+const conventions=[];
+for(const transposeMatrix of [false,true]){
+  for(const translation of ['after','before']){
+    for(const positionSource of ['accumulated','matrix-output']){
+      conventions.push({
+        name:(transposeMatrix?'transposed':'stored')+'-'+translation+'-'+positionSource,
+        transpose:transposeMatrix,translation,positionSource
+      });
+    }
+  }
+}
 const geometryLinks=meshes.map(mesh=>{
   const transformEvent=mesh.transformNode===null?null:eventFor(mesh.transformNode);
   const meshEvent=eventFor(mesh.meshNode);
@@ -471,6 +477,7 @@ const geometryLinks=meshes.map(mesh=>{
     selectedEvent:chosen?chosen.entryId:null,selectedEventRecord:chosen?hex(chosen.record):null,
     selectedMatrixId:chosen?(chosen.matrix?.matrixId??chosen.parentMatrix):null,
     selectedPosition:chosen?(chosen.positionAfter||chosen.position):null,
+    matrixOutputPosition:chosen?matrixPositions.get(chosen.matrix?.matrixId??chosen.parentMatrix)??null:null,
     transformSource:transformEvent?'paired transform-node callback':meshEvent?'mesh-node callback':'no callback match'
   };
 });
@@ -482,7 +489,10 @@ function buildGlb(file,convention){
   for(let mi=0;mi<meshes.length;mi++){
     const mesh=meshes[mi],link=geometryLinks[mi];
     const e=mesh.transformNode===null?eventFor(mesh.meshNode):eventFor(mesh.transformNode);
-    const M=matrixForEvent(e),pos=e?(e.positionAfter||e.position):[0,0,0];
+    const M=matrixForEvent(e);
+    const accumulated=e?(e.positionAfter||e.position):[0,0,0];
+    const matrixOutput=e?(matrixPositions.get(e.matrix?.matrixId??e.parentMatrix)||accumulated):accumulated;
+    const pos=convention.positionSource==='matrix-output'?matrixOutput:accumulated;
     const use=e!==null;
     const transformed=mesh.positions.map(p=>use?applyTransform(p,M,pos,convention):p);
     const indices=mesh.indices;
@@ -504,11 +514,11 @@ function buildGlb(file,convention){
     gltfMeshes.push({name:mesh.name,primitives:[{attributes:{POSITION:pa,NORMAL:na},indices:ia,material:mi,mode:4}],extras:{
       ownerOffset:hex(mesh.owner),meshNodeOffset:hex(mesh.meshNode),transformNodeOffset:mesh.transformNode===null?null:hex(mesh.transformNode),
       callbackEventId:e?.entryId??null,callbackMatrixId:e?(e.matrix?.matrixId??e.parentMatrix):null,
-      callbackPosition:pos,transformApplied:use,coordinateBase:hex(mesh.vertexBase),faceStart:hex(mesh.faceStart),
+      callbackPosition:pos,accumulatedPosition:accumulated,matrixOutputPosition:matrixOutput,positionSource:convention.positionSource,transformApplied:use,coordinateBase:hex(mesh.vertexBase),faceStart:hex(mesh.faceStart),
       sourceVertexIndices:mesh.sourceIndices,sourceQuads:mesh.quads
     }});
     nodes.push({name:mesh.name,mesh:mi});
-    transformDiagnostics.push({...link,matrix:M,position:pos,transformApplied:use,bounds:{min,max}});
+    transformDiagnostics.push({...link,matrix:M,position:pos,accumulatedPosition:accumulated,matrixOutputPosition:matrixOutput,positionSource:convention.positionSource,transformApplied:use,bounds:{min,max}});
   }
   const bin=Buffer.concat(parts);
   const gltf={asset:{version:'2.0',generator:'Outwars Scout runtime callback reconstruction'},
@@ -541,7 +551,7 @@ const report={
     unresolved:unresolved.map(x=>({...x,record:Number.isInteger(x.record)?hex(x.record):x.record,field:Number.isInteger(x.field)?hex(x.field):x.field}))
   },
   geometry:{meshCount:meshes.length,totalVertices:meshes.reduce((n,m)=>n+m.positions.length,0),totalTriangles:meshes.reduce((n,m)=>n+m.indices.length/3,0),links:geometryLinks},
-  matrixFrames:[...matrices.entries()].map(([id,matrix])=>({id,matrix,determinant:det3(matrix)})),
+  matrixFrames:[...matrices.entries()].map(([id,matrix])=>({id,matrix,positionCandidate:matrixPositions.get(id),determinant:det3(matrix)})),
   exports:variants,
   conclusion:{
     status:truncated?'CALLBACK_RUN_LIMIT_REACHED': 'CALLBACK_RUN_COMPLETED',
