@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Bridge the Scout DPC parser, callback record dispatcher and runtime transform path.
-# Version: 1.0.0
+# Version: 1.1.0
 # Usage: bash tools/scout-exe-transform-bridge.sh /path/to/outwars.exe [output-dir]
 set -euo pipefail
 EXE="${1:-}"
@@ -18,7 +18,7 @@ done
 if [[ -z "$OBJDUMP" ]]; then echo "No PE-capable objdump found." >&2; exit 3; fi
 mkdir -p "$OUT"
 {
-  echo "OUTWARS SCOUT DPC-TO-TRANSFORM BRIDGE v1.0.0"
+  echo "OUTWARS SCOUT DPC-TO-TRANSFORM BRIDGE v1.1.0"
   echo "Executable: $EXE"
   echo "SHA256: $(sha256sum "$EXE" | awk '{print $1}')"
   echo "PE disassembler: $OBJDUMP"
@@ -30,6 +30,9 @@ mkdir -p "$OUT"
     echo
   }
   # Callback setup, dispatch, shared epilogue and record interpretation.
+  dump "CALLBACK OPCODE 5 TRANSFORM BRANCH" 0x4e0130 0x4e023a
+  dump "FIXED-POINT MATRIX MULTIPLY" 0x4c6610 0x4c66b0
+  dump "MATRIX COMPOSITION HELPER" 0x4c5aa0 0x4c5b80
   dump "CALLBACK INITIALIZATION AND PRE-DISPATCH" 0x4dfc80 0x4dfde1
   dump "CALLBACK COMMON LOOP AND DISPATCH TAIL" 0x4e04a0 0x4e06a0
   # Both parser-to-callback call paths and the parser record dispatch.
@@ -41,7 +44,9 @@ mkdir -p "$OUT"
   dump "RUNTIME OBJECT RECORD REGISTRATION" 0x422300 0x422430
   dump "RUNTIME OBJECT CONSTRUCTION AND TRANSFORM" 0x422430 0x4227c0
   dump "SIX-PROPERTY DISPATCHER CALLER" 0x4213b0 0x421470
-  dump "TRANSFORM RECORD CONSUMER" 0x4e3260 0x4e3460
+  dump "TRANSFORM RECORD CONSUMER (FULL ROUTINE)" 0x4e3260 0x4e3fb0
+  dump "TRANSFORM OBJECT LINK / REGISTRATION" 0x422332 0x42244c
+  dump "TRANSFORM OBJECT LINK / FINALIZATION" 0x422554 0x422650
   echo "========== DIRECT CALL REFERENCES =========="
   "$OBJDUMP" -d -Mintel "$EXE" 2>&1 | grep -Ei 'call[[:space:]].*(0x4dfce4|0x4dfd88|0x4e0130|0x4c6610|0x4c5aa0|0x422754|0x422654|0x42269c|0x422278|0x4222a8)' || true
 } > "$OUT/REPORT.txt"
