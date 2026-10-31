@@ -77,17 +77,22 @@ function descriptorForOpcode2(offset) {
 }
 
 // Locate the eight mesh/paired nodes in the class-102/105 Scout root.
-let rootRecord = null, rootNode = null, partList = null;
-for (let o = 0; o <= b.length - 24; o++) {
-  if (b[o] !== 9 || u16(o + 2) !== 102) continue;
-  const candidateRoot = ptr(o + 16), candidateList = ptr(o + 20);
-  if (candidateRoot !== null && candidateList !== null &&
-      b[candidateRoot] === 1 && b[candidateList] === 9 &&
-      u16(candidateList + 2) === 105 && u16(candidateList + 6) === 9) {
-    rootRecord = o; rootNode = candidateRoot; partList = candidateList; break;
+let rootRecord = null, rootNode = null, partList = null, rootClass = null, partClass = null;
+for (const [candidateRootClass, candidatePartClass] of [[102,105],[152,155]]) {
+  for (let o = 0; o <= b.length - 24; o++) {
+    if (b[o] !== 9 || u16(o + 2) !== candidateRootClass) continue;
+    const candidateRoot = ptr(o + 16), candidateList = ptr(o + 20);
+    if (candidateRoot !== null && candidateList !== null &&
+        b[candidateRoot] === 1 && b[candidateList] === 9 &&
+        u16(candidateList + 2) === candidatePartClass && u16(candidateList + 6) === 9) {
+      rootRecord = o; rootNode = candidateRoot; partList = candidateList;
+      rootClass = candidateRootClass; partClass = candidatePartClass;
+      break;
+    }
   }
+  if (rootRecord !== null) break;
 }
-if (rootRecord === null) throw new Error('Scout class-102/class-105 root not found');
+if (rootRecord === null) throw new Error('Scout class-102/105 or class-152/155 root not found');
 
 const geometryDescriptors = [];
 for (let i = 0; i < 8; i++) {
@@ -157,7 +162,7 @@ const report = {
   source: file,
   fileBytes: b.length,
   relocationBase: hex(base),
-  root: { rootRecordOffset: rootRecord, rootNodeOffset: rootNode, partListOffset: partList },
+  root: { rootClass, partClass, rootRecordOffset: rootRecord, rootNodeOffset: rootNode, partListOffset: partList },
   geometryDescriptors,
   summary: {
     geometryDescriptorCount: geometryDescriptors.length,
