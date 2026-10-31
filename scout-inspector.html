@@ -7,7 +7,7 @@
 <style>
 :root{color-scheme:dark;font-family:Inter,system-ui,Segoe UI,Arial,sans-serif;background:#081018;color:#e4edf3}
 *{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 55% -20%,#183344 0,#081018 55%)}
-header{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;border-bottom:1px solid #294251;background:#0a151e}
+header{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;border-bottom:1px solid #294251;background:#0a151e}.headerRight{display:flex;align-items:center;gap:14px}.version{font-size:10px;font-weight:800;letter-spacing:.5px;color:#7cddeb;border:1px solid #36596a;border-radius:5px;padding:5px 8px}
 .brand{font-size:14px;font-weight:850;letter-spacing:2px}.brand small{display:block;color:#6fd0e3;font-size:9px;letter-spacing:1.5px;margin-top:3px}
 #status{font-size:11px;color:#9db2bd}main{display:grid;grid-template-columns:340px minmax(0,1fr);gap:12px;padding:12px;height:calc(100vh - 64px)}
 aside{background:#0d1a24;border:1px solid #263d4b;border-radius:10px;overflow:auto;padding:14px}
@@ -30,7 +30,7 @@ input[type=range]{width:100%;accent-color:#69d5e5}
 </style>
 </head>
 <body>
-<header><div class="brand">OUTWORLD <small>SCOUT DPC · BROWSER INSPECTOR</small></div><div id="status">Load scout_mj.dpc to inspect its records</div></header>
+<header><div class="brand">OUTWORLD <small>SCOUT DPC · BROWSER INSPECTOR</small></div><div class="headerRight"><span class="version" id="appVersion">v1.1.0</span><div id="status">Load scout_mj.dpc to inspect its records</div></div></header>
 <main>
 <aside>
  <div class="section">
