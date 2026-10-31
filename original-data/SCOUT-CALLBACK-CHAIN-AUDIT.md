@@ -54,3 +54,15 @@ That archive-offset correspondence is a **candidate cross-resource mapping**, no
 ## Updated next probe
 
 Inspect the units archive bytes at the candidate target (`0x1664A8`) and compare them with the same relative pointer in the other Scout variants. In parallel, trace the loader's allocation/base arguments around `0x48C6A8`, `0x48C8A8`, and `0x48CA20` to establish whether the relocation base is a resource-local pointer into one contiguous archive buffer. Only then classify the +8 field and look for its consumer.
+
+
+## Correction: external +8 pointer is not yet mapped to an archive resource
+
+A subsequent check against the actual `units.ff` directory index found that the earlier archive-offset calculation in the 2026-10-31 addendum used the wrong Scout archive offset (it mistakenly used the `assault_mj.dpc` offset). That proposed `combat_fa.tpc` mapping is withdrawn.
+
+Using the indexed Scout resource offsets instead:
+
+- `scout_mj.dpc`: archive offset 7,777,524; +8 relative target `0x81938` gives candidate archive address `0x7EC62C`, which falls inside `strikecraft.dpc` at +1,184.
+- `scout_fa.dpc`: archive offset 6,848,008; +8 relative target `0x81828` gives candidate archive address `0x709630`, which falls inside `scout_fj.tpc` at +72,024.
+
+These land in unrelated resources, so the archive-contiguous interpretation is not established and must not be used. The only proven statement remains that relocation case 0 processes descriptor +8 against the loader's supplied base. The runtime allocation/base mapping and actual consumer are still unknown. No transform meaning is assigned.
