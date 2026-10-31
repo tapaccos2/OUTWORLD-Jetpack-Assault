@@ -23,7 +23,7 @@
  *
  * Optional:
  *   --initial-scale 0
- *   --max-work 5000
+ *   --max-work 50000
  *   --also-transform-roots
  */
 import fs from 'node:fs';
@@ -351,10 +351,9 @@ for(const seed of seedOffsets){
     event.classStateAfter=classWord;
     event.opaqueHandler=false;
   }else if(opcode===9||opcode===13){
-    if(u8(record+0x0a)===1)b[record+0x0d]=1;
-    const n=u8(record+0x0b)??0;
-    event.list={count:n,base:record+0x20,layout:'relocated DWORD child pointers at +0x20'};
-    event.children=pushListChildren(record,record+0x20,n,entry,opcode);
+    const n=u8(record+0x06)??0;
+    event.list={count:n,base:record+0x10,layout:'relocated DWORD pointers at +0x10'};
+    event.children=pushListChildren(record,record+0x10,n,entry,opcode);
     childCount=event.children.length;
   }else if(opcode===10){
     // Executable table index 10 -> 0x4e02e7: emits record+8 and record+0x0c.
