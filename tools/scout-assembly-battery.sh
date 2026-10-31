@@ -2,12 +2,20 @@
 # OUTWARS SCOUT ASSEMBLY TEST BATTERY
 # Run from the repository root:
 #   bash tools/scout-assembly-battery.sh
+# Optional: pass the folder containing the extracted original game assets:
+#   bash tools/scout-assembly-battery.sh "/path/to/Outwars-extracted"
+# Without an argument, the script searches the repository and common folders
+# under HOME for the original Scout files.
 
 set -uo pipefail
 
 ROOT="$(pwd)"
 OUT="$ROOT/scout-assembly-battery"
 TOOLS="$ROOT/tools"
+ASSET_ROOT="${1:-}"
+if [[ -n "$ASSET_ROOT" ]]; then
+  ASSET_ROOT="$(realpath "$ASSET_ROOT" 2>/dev/null || printf '%s' "$ASSET_ROOT")"
+fi
 LOG="$OUT/logs/battery.log"
 
 mkdir -p "$OUT"/{geometry,transforms,descriptors,textures,motion,logs}
@@ -46,8 +54,8 @@ echo "Repository: $ROOT"
 echo "Started: $(date)" >"$LOG"
 
 # Confirm that the script was launched from the repository root.
-if [[ ! -d "$TOOLS" || ! -d original-data ]]; then
-  echo "ERROR: Run this script from the repository root (the folder containing tools/ and original-data/)."
+if [[ ! -d "$TOOLS" ]]; then
+  echo "ERROR: Run this script from the repository root (the folder containing tools/)."
   pause_exit
   exit 1
 fi
@@ -80,20 +88,67 @@ for tool in "${REQUIRED_TOOLS[@]}"; do
   fi
 done
 
-mapfile -t DPCS < <(find original-data -type f -iname 'scout_*.dpc' | sort)
-mapfile -t TPCS < <(find original-data -type f -iname 'scout_*.tpc' | sort)
-mapfile -t MCDIRS < <(find original-data -type d -iname 'motion' | sort)
+# Search locations. The GitHub repository may not contain the user's
+# original game files, so also search common local asset folders or an
+# explicitly supplied asset root.
+SEARCH_ROOTS=()
+if [[ -n "$ASSET_ROOT" && -d "$ASSET_ROOT" ]]; then
+  SEARCH_ROOTS+=("$ASSET_ROOT")
+else
+  for candidate in "$ROOT/original-data" "$ROOT" "$HOME/Outwars-extracted" \
+                   "$HOME/Documents" "$HOME/Downloads" "$HOME/Desktop"; do
+    [[ -d "$candidate" ]] && SEARCH_ROOTS+=("$candidate")
+  done
+fi
+
+# Prune large irrelevant directories while searching.
+find_assets() {
+  local pattern="$1"
+  shift
+  find "$@" \
+    \( -type d \( -name .git -o -name node_modules -o -name .cache -o -name .local -o -name .npm -o -name .gradle \) -prune \) -o \
+    \( -type f -iname "$pattern" -print0 \) 2>/dev/null |
+    while IFS= read -r -d '' file; do printf '%s\\n' "$file"; done |
+    sort -u
+}
+
+if [[ ${#SEARCH_ROOTS[@]} -gt 0 ]]; then
+  mapfile -t DPCS < <(find_assets 'scout_*.dpc' "${SEARCH_ROOTS[@]}")
+  mapfile -t TPCS < <(find_assets 'scout_*.tpc' "${SEARCH_ROOTS[@]}")
+  mapfile -t MCS < <(find_assets '*.mc' "${SEARCH_ROOTS[@]}")
+else
+  DPCS=()
+  TPCS=()
+  MCS=()
+fi
+
+# A motion catalog expects one directory; group discovered .MC files by
+# their containing directory so the existing inspector can process them.
+MCDIRS=()
+if [[ ${#MCS[@]} -gt 0 ]]; then
+  while IFS= read -r dir; do
+    [[ -n "$dir" ]] && MCDIRS+=("$dir")
+  done < <(printf '%s\\n' "${MCS[@]}" | xargs -r -n1 dirname | sort -u)
+fi
 
 printf '%s\n' "${DPCS[@]}" >"$OUT/dpc-file-list.txt"
 printf '%s\n' "${TPCS[@]}" >"$OUT/tpc-file-list.txt"
 
+echo "Search roots:"
+printf '  %s\\n' "${SEARCH_ROOTS[@]}"
 echo "DPC files found: ${#DPCS[@]}"
 echo "TPC files found: ${#TPCS[@]}"
-echo "Motion directories found: ${#MCDIRS[@]}"
+echo "Motion folders found: ${#MCDIRS[@]}"
+printf '%s\\n' "${DPCS[@]}" >"$OUT/dpc-file-list.txt"
+printf '%s\\n' "${TPCS[@]}" >"$OUT/tpc-file-list.txt"
 
 if [[ ${#DPCS[@]} -eq 0 ]]; then
-  echo "ERROR: No Scout DPC files found under original-data."
-  echo "Check that you are running this from the repository root."
+  echo "ERROR: No Scout DPC files were found in the searched locations."
+  echo "The original game assets are not included in this GitHub repository clone."
+  echo "Put the extracted files in original-data/units, or rerun with:"
+  echo "  bash tools/scout-assembly-battery.sh \"/path/to/folder-containing-scout-dpc-files\""
+  echo "Search roots were:"
+  printf '  %s\\n' "${SEARCH_ROOTS[@]}"
   pause_exit
   exit 1
 fi
