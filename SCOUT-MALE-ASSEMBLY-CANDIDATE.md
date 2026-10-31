@@ -1,40 +1,40 @@
 # Male Scout assembly candidate
 
-This note records the first assembled-geometry export path for `scout_mj.dpc`.
+This note records the current geometry-export hypothesis for `scout_mj.dpc`.
 
-## Evidence from the part-graph audit
+## What the latest viewer result ruled out
 
-- The playable-armour root is class 102 and its part list is class 105.
-- The list contains eight type-1 part nodes plus a ninth aggregate entry.
-- Each of the eight part nodes has a type-2 node at +24 and a paired type-2 node at +28.
-- The owner position at +8/+12/+16 matches the paired node position at +32/+36/+40 for all eight parts.
-- The type-16 wrapper links form an ordered part chain: part 1 mesh to root mesh +24; each paired node to its own mesh +24; and each mesh from part 2 onward to the previous paired node +56.
-- The mesh-node +28 references are aligned within the shared coordinate pool. Their face-index ranges can be read relative to those references. This is the basis for the `--use-mesh-vertex-reference` mode.
-- Mesh-reference vertex counts are 45, 43, 45, 45, 45, 45, 45, and 40 for parts 1–8 respectively. Each part contains 13 unique quads (26 triangles) in the parsed face stream.
+The candidate exported with `--use-mesh-vertex-reference --apply-owner-translations` is **rejected**. The viewer shows stretched, overlapping triangles rather than an assembled armour model.
 
-## First assembled candidate
+The likely cause is an incorrect interpretation of `meshNode+28` as a new vertex-array base:
+
+- All eight mesh face streams reference the common coordinate pool whose descriptor base is offset 40.
+- Their face-index ranges progress through the shared pool in roughly 45-vertex blocks: part 1 uses 47–81, part 2 uses 96–130, part 3 uses 141–175, part 4 uses 186–220, part 5 uses 231–265, part 6 uses 276–310, part 7 uses 321–355, and part 8 uses 366–395. Some also reuse low shared indices such as 0 and 1.
+- The `meshNode+28` targets are offsets 96, 712, and 744; parts 3–8 all point to 744. These targets are inside the common coordinate pool, not eight advancing per-mesh array starts.
+- Adding the face indices to those interior pointers therefore double-offsets the vertex lookup and reads the wrong coordinate records. This is the best-supported explanation for the exploded geometry in the screenshots.
+
+## Next candidate: shared pool plus owner positions
 
 Run from the repository root:
 
 ```bash
 node tools/export-dpc-armour-geometry.mjs \
   extracted-ff/units/scout_mj.dpc \
-  scout-mj-assembled-candidate.glb \
-  --use-mesh-vertex-reference \
+  scout-mj-shared-pool-candidate.glb \
   --apply-owner-translations
 ```
 
-This writes:
-- `scout-mj-assembled-candidate.glb`
-- `scout-mj-assembled-candidate.json`
+This deliberately omits `--use-mesh-vertex-reference`. It reads the face indices from the shared coordinate-pool base and applies the eight owner position vectors to the submesh nodes. It writes:
 
-The GLB contains the root mesh and eight submeshes. The eight submesh nodes use the owner position vectors as translations. The exporter checks the owner/paired-node position equality before applying them.
+- `scout-mj-shared-pool-candidate.glb`
+- `scout-mj-shared-pool-candidate.json`
 
-## Not yet established
+## Still unresolved
 
-- The four opcode-5 transform roots and their full matrix concatenation have not been mapped to the eight geometry parts. The transform-to-geometry audit found no direct descriptor-offset matches.
-- The DPC's final up-axis and matrix convention have not been runtime-verified. Z-up is a working interpretation only.
+- The eight owner positions match their paired-node position fields, but applying them as translations remains a candidate interpretation, not a runtime-verified transform.
+- The four opcode-5 transform roots and their matrix hierarchy have not been mapped to the eight geometry parts. The transform-to-geometry audit found no direct descriptor-offset matches.
+- Axis orientation and matrix concatenation convention are not runtime-verified.
 - The root mesh remains at the origin in this export.
-- UVs, source texture assignments, material segmentation, skin weights, animation, and final appearance still need validation in the viewer.
+- UVs, texture assignments, material segmentation, skin weights, and animation are not included.
 
-Treat this GLB as the first evidence-based assembly candidate, not a verified final model. The next meaningful check is the exported model in the actual viewer; avoid running another binary-inspection battery unless that visual check reveals a specific failure.
+The next useful check is the new GLB in the actual viewer. Do not reuse the rejected mesh-reference-base option for an assembled export.
