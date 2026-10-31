@@ -205,6 +205,7 @@ const deepCallbackGraph={
 for(const node of deepNodes.values())for(const edge of node.edges)
   if(edge.kind==='unclassified-callback-or-data-target')deepCallbackGraph.unclassifiedTargets.push({from:node.offset,...edge});
 const fullOpcode4s=[...new Map([...deepNodes.values()].filter(n=>n.kind==='opcode4-child-list').map(n=>[n.offset,n.parsed])).values()];
+const fullAttachments=[...new Map([...deepNodes.values()].filter(n=>n.kind==='opcode2-descriptor-list').map(n=>[n.offset,n.parsed])).values()];
 
 // Follow all opcode-4 child entries through every plausible pointer encoding.
 // The interpretations remain separate and are never silently conflated.
@@ -219,8 +220,8 @@ const recursiveTargetRows=[...recursiveTargets.values()].sort((a,c)=>a.target-c.
 
 // Index every aligned file DWORD that points to a discovered target. This gives
 // reverse references, not inferred ownership.
-const targetOffsets=new Set([...transforms.map(x=>x.offset),...attachments.map(x=>x.offset),...fullOpcode4s.map(x=>x.offset),...deepNodes.keys(),
-  ...attachments.flatMap(a=>(a.slots||[]).flatMap(s=>[s.wrapper,s.descriptor,s.coordinateTarget,s.sharedTarget,s.payloadTarget].filter(Number.isInteger))),
+const targetOffsets=new Set([...transforms.map(x=>x.offset),...fullAttachments.map(x=>x.offset),...fullOpcode4s.map(x=>x.offset),...deepNodes.keys(),
+  ...fullAttachments.flatMap(a=>(a.slots||[]).flatMap(s=>[s.wrapper,s.descriptor,s.coordinateTarget,s.sharedTarget,s.payloadTarget].filter(Number.isInteger))),
   ...recursiveTargetRows.map(x=>x.target)]);
 const reverseRefs=new Map([...targetOffsets].map(o=>[o,[]]));
 for(let field=0;field+4<=b.length;field+=4){
@@ -258,7 +259,7 @@ transformHypotheses.sort((a,c)=>c.averageOrthonormalityScore-a.averageOrthonorma
 // Probe coordinate and index candidates around every discovered payload target.
 // Candidate data layouts are scored for internal consistency only.
 const payloadCentres=new Set();
-for(const a of attachments)for(const s of a.slots||[])for(const k of ['coordinateTarget','sharedTarget','payloadTarget'])if(Number.isInteger(s[k]))payloadCentres.add(s[k]);
+for(const a of fullAttachments)for(const s of a.slots||[])for(const k of ['coordinateTarget','sharedTarget','payloadTarget'])if(Number.isInteger(s[k]))payloadCentres.add(s[k]);
 for(const o of fullOpcode4s)for(const e of o.entries)for(const mode of ['relocated-base','absolute-file-offset'])if(e.resolutions[mode])payloadCentres.add(e.resolutions[mode].target);
 for(const r of recursiveTargetRows)payloadCentres.add(r.target);
 const centres=[...payloadCentres].filter(o=>o>=0&&o<b.length).slice(0,maxTargets);
@@ -314,7 +315,7 @@ for(const mode of pointerModes)pointerSummary[mode]=opcode4EntryRows.filter(x=>m
 const hypotheses=[];
 const addHyp=(name,score,evidence,verdict='candidate')=>hypotheses.push({name,score,evidence,verdict});
 addHyp('Relocated-base pointers in opcode-5 child arrays',transforms.length?95:0,{validOpcode5Records:transforms.length,edges:transformEdges.length,relocationBase:hex(base)},transforms.length?'strong structural match':'not observed');
-addHyp('Opcode-2 descriptor slot arrays under opcode-5 children',attachments.length?90:0,{attachmentRecords:attachments.length,descriptorSlots:attachments.reduce((n,a)=>n+(a.slots?.length||0),0)},attachments.length?'strong structural match':'not observed');
+addHyp('Opcode-2 descriptor slot arrays under opcode-5 children',fullAttachments.length?90:0,{attachmentRecords:fullAttachments.length,descriptorSlots:fullAttachments.reduce((n,a)=>n+(a.slots?.length||0),0)},attachments.length?'strong structural match':'not observed');
 addHyp('Descriptor +12 targets opcode-4/class-0x090c',fullOpcode4s.length?92:0,{payloadRecords:fullOpcode4s.length,entryCount:fullOpcode4s.reduce((n,o)=>n+o.entryCount,0)},opcode4s.length?'strong structural match':'not observed');
 for(const mode of pointerModes)addHyp('Opcode-4 entries resolve as '+mode,opcode4EntryRows.length?100*pointerSummary[mode]/opcode4EntryRows.length:0,{resolvedEntries:pointerSummary[mode],totalEntries:opcode4EntryRows.length},pointerSummary[mode]?'mechanically resolves; meaning unproven':'no in-range resolutions');
 for(const c of topCoordinates.slice(0,20))addHyp('Coordinate '+c.kind+' stride '+c.stride+' near '+hex(c.nearTarget),c.score,{start:hex(c.start),count:c.count,uniqueRatio:c.uniqueRatio,extents:c.extents},'candidate only');
@@ -352,7 +353,7 @@ const report={
   scan:{recordOpcodeHistogram:recordHistogram.slice(0,14),alignedCandidateRecordHeaders:plausibleHeaders.length},
   callbackLayouts:{
     opcode5:{recordByte:5,matrix:'+0x04..+0x24 nine signed DWORDs; Q20.12 interpretation tested',position:'+0x28/+0x2c/+0x30',childCount:'+0x36 BYTE',children:'+0x38 relocated DWORD pointers',records:transforms},
-    opcode2:{recordByte:2,count:'+0x10 DWORD',slots:'+0x14 DWORD pointer slots; wrapper+8 -> descriptor',attachments},
+    opcode2:{recordByte:2,count:'+0x10 DWORD',slots:'+0x14 DWORD pointer slots; wrapper+8 -> descriptor',attachments:fullAttachments},
     opcode4:{recordByte:4,classWord:'0x090c',translation:'+0x04/+0x08/+0x0c DWORD',count:'+0x12 BYTE',children:'+0x14 DWORD entries',records:fullOpcode4s}
   },
   graph:{transformRoots:roots.map(t=>t.offset),transformEdges,deepCallbackGraph,reverseReferences:references,recursiveOpcode4EntryTargets:recursiveTargetRows},
@@ -379,8 +380,8 @@ const md=[
   '# Scout autonomous discovery report','',
   '- Input: '+input,'- Bytes: '+b.length,'- Relocation base: '+hex(base),
   '- Opcode-5 records: '+transforms.length,'- Transform roots: '+roots.map(x=>hex(x.offset)).join(', '),
-  '- Transform edges: '+transformEdges.length,'- Opcode-2 attachments: '+attachments.length,
-  '- Descriptor slots: '+attachments.reduce((n,a)=>n+(a.slots?.length||0),0),
+  '- Transform edges: '+transformEdges.length,'- Opcode-2 attachments: '+fullAttachments.length,
+  '- Descriptor slots: '+fullAttachments.reduce((n,a)=>n+(a.slots?.length||0),0),
   '- Opcode-4 payload records: '+fullOpcode4s.length,'- Opcode-4 child entries: '+opcode4EntryRows.length,'- Recursively validated callback nodes: '+deepCallbackGraph.nodeCount,
   '- Payload centres tested: '+centres.length,'- Coordinate candidates: '+coordinateCandidates.length,'- Index candidates: '+indexCandidates.length,
   '','## Highest-ranked findings','',
@@ -421,7 +422,7 @@ fs.writeFileSync(path.join(outDir,'payload-index-candidates.csv'),indexCsv.map(r
 
 console.log('SCOUT AUTODISCOVERY COMPLETE');
 console.log('Transforms: '+transforms.length+' | roots: '+roots.length+' | transform edges: '+transformEdges.length);
-console.log('Opcode-2 attachments: '+attachments.length+' | descriptor slots: '+attachments.reduce((n,a)=>n+(a.slots?.length||0),0));
+console.log('Opcode-2 attachments: '+fullAttachments.length+' | descriptor slots: '+fullAttachments.reduce((n,a)=>n+(a.slots?.length||0),0));
 console.log('Opcode-4 payloads: '+opcode4s.length+' | child entries: '+opcode4EntryRows.length);
 console.log('Payload centres: '+centres.length+' | coordinate candidates: '+coordinateCandidates.length+' | index candidates: '+indexCandidates.length);
 console.log('Raw geometry control: '+baseline.status);
