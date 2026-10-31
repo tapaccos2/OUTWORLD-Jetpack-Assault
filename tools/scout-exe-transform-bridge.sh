@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Bridge the Scout DPC parser, callback record dispatcher and runtime transform path.
+# Version: 1.0.0
 # Usage: bash tools/scout-exe-transform-bridge.sh /path/to/outwars.exe [output-dir]
 set -euo pipefail
 EXE="${1:-}"
@@ -17,7 +18,7 @@ done
 if [[ -z "$OBJDUMP" ]]; then echo "No PE-capable objdump found." >&2; exit 3; fi
 mkdir -p "$OUT"
 {
-  echo "OUTWARS SCOUT DPC-TO-TRANSFORM BRIDGE"
+  echo "OUTWARS SCOUT DPC-TO-TRANSFORM BRIDGE v1.0.0"
   echo "Executable: $EXE"
   echo "SHA256: $(sha256sum "$EXE" | awk '{print $1}')"
   echo "PE disassembler: $OBJDUMP"
