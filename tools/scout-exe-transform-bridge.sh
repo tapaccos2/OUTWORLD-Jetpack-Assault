@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Bridge the Scout DPC parser, callback record dispatcher and runtime transform path.
-# Version: 1.2.0
+# Version: 1.3.0
 # Usage: bash tools/scout-exe-transform-bridge.sh /path/to/outwars.exe [output-dir]
 set -euo pipefail
 EXE="${1:-}"
@@ -18,7 +18,7 @@ done
 if [[ -z "$OBJDUMP" ]]; then echo "No PE-capable objdump found." >&2; exit 3; fi
 mkdir -p "$OUT"
 {
-  echo "OUTWARS SCOUT DPC-TO-TRANSFORM BRIDGE v1.2.0"
+  echo "OUTWARS SCOUT DPC-TO-TRANSFORM BRIDGE v1.3.0"
   echo "Executable: $EXE"
   echo "SHA256: $(sha256sum "$EXE" | awk '{print $1}')"
   echo "PE disassembler: $OBJDUMP"
@@ -38,6 +38,7 @@ mkdir -p "$OUT"
   dump "CALLBACK COMMON LOOP AND DISPATCH TAIL" 0x4e04a0 0x4e06a0
   # Both parser-to-callback call paths and the parser record dispatch.
   dump "DPC PROPERTY DISPATCHER AND HANDLER BRANCHES" 0x420b00 0x4222d0
+  dump "EIGHT-SLOT OBJECT LOOKUP HELPER" 0x46e4c0 0x46e620
   dump "PARSER CALLSITE A" 0x4209f0 0x420b00
   dump "PARSER CALLSITE B" 0x4221a0 0x422290
   dump "DPC RECORD PARSER" 0x422170 0x4222d0
@@ -50,6 +51,6 @@ mkdir -p "$OUT"
   dump "TRANSFORM OBJECT LINK / REGISTRATION" 0x422332 0x42244c
   dump "TRANSFORM OBJECT LINK / FINALIZATION" 0x422554 0x422650
   echo "========== DIRECT CALL REFERENCES =========="
-  "$OBJDUMP" -d -Mintel "$EXE" 2>&1 | grep -Ei 'call[[:space:]].*(0x4dfce4|0x4dfd88|0x4e0130|0x4e3260|0x4df86c|0x4c6610|0x4c5aa0|0x422754|0x422654|0x42269c|0x422278|0x4222a8)' || true
+  "$OBJDUMP" -d -Mintel "$EXE" 2>&1 | grep -Ei 'call[[:space:]].*(0x4dfce4|0x4dfd88|0x4e0130|0x4e3260|0x4df86c|0x4c6610|0x4c5aa0|0x422754|0x422654|0x42269c|0x422278|0x4222a8|0x46e4c0)' || true
 } > "$OUT/REPORT.txt"
 echo "Created: $OUT/REPORT.txt"
