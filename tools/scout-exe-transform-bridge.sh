@@ -55,6 +55,11 @@ mkdir -p "$OUT"
   dump "TRANSFORM RECORD CONSUMER (FULL ROUTINE)" 0x4e3260 0x4e3fb0
   dump "TRANSFORM OBJECT LINK / REGISTRATION" 0x422332 0x42244c
   dump "TRANSFORM OBJECT LINK / FINALIZATION" 0x422554 0x422650
+  # Loader context passed in EDX to the DPC parser; this determines the
+  # callback scale/context word stored at work-entry +0x14.
+  dump "DPC LOADER CONTEXT HELPER" 0x4d3be8 0x4d3c90
+  dump "SCOUT DPC LOADER CALLER A" 0x48c800 0x48ca60
+  dump "SCOUT DPC LOADER CALLER B" 0x48cb90 0x48cc30
   echo "========== SLOT TABLE GLOBAL REFERENCES =========="
   "$OBJDUMP" -d -Mintel "$EXE" 2>&1 | grep -Ei "0x72365c|0x48e4|0x104|0x108" || true
   echo "========== DIRECT CALL REFERENCES =========="
