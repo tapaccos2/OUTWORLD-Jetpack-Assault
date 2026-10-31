@@ -7,10 +7,11 @@
  * treated opcode-4 payload DWORDs as inline geometry and misnumbered some
  * callback handlers.
  *
- * The simulator implements the handlers whose data flow is visible in the
- * checked disassembly: opcodes 0,1,2,3,4,5,7,9,10,11; the remaining handlers are
- * recorded as no-op/opaque callbacks. Opcode-4 list access is context-derived:
- * it reads [currentY + record+8 + i*4 + 0x14], exactly as the executable does.
+ * The simulator implements the visible record/list layouts for opcodes 1-13,
+ * including the separate opcode-3 and opcode-9 child-list layouts. Opcode 4
+ * reads its inline relocated child pointers at record+0x14. Opcode 5 builds
+ * Q20.12 matrix candidates. Helper routines 0x4e59c8 and 0x4df970, and the
+ * shared post-handler normalization tail, are logged but not fully emulated.
  *
  * It then correlates executed callback entries with the eight legacy geometry
  * sections, exports transform-applied GLB variants, and reports every skipped
@@ -90,9 +91,10 @@ const callbackTargets=[
   0x4e023a,0x4e0253
 ];
 const callbackNames=[
-  'scale-normalize','pointer-list-plus18','descriptor-list-op2','flag-list-plus20',
-  'context-list-op4','matrix-transform-op5','class-reset','class-reset',
-  'noop','flag-list-op9','two-child-op10','scale-child-list-op11','noop','flag-list-op9'
+  'record-helper-op0','pointer-list-op1','descriptor-list-op2','flag-child-list-op3',
+  'inline-child-list-op4','matrix-transform-op5','class-reset-op6','class-reset-op7',
+  'class-word-op8','pointer-list-op9','two-child-op10','scale-child-list-op11',
+  'class-word-op12','pointer-list-op13'
 ];
 
 function det3(m){return m[0]*(m[4]*m[8]-m[5]*m[7])-m[1]*(m[3]*m[8]-m[5]*m[6])+m[2]*(m[3]*m[7]-m[4]*m[6]);}
@@ -163,7 +165,7 @@ const initialMatrixInfo=readExeInitialMatrix(exePath);
 // Callback work-stack entry format is the six DWORDs written by 0x4dfce4:
 // record, parent/matrix index, state X, state Y, state Z, scale/context.
 const work=[],events=[],matrices=new Map([[0,initialMatrixInfo.matrix]]),matrixPositions=new Map([[0,[0,0,0]]]);
-const unresolved=[],leafRecords=[],edgeRows=[],callbackCounts={},seedRuns=[];
+const unresolved=[],leafRecords=[],edgeRows=[],callbackCounts={},seedRuns=[],helperCalls=[];
 let nextMatrixId=1,processed=0,nextEntryId=0,activeRunId=0,activeSeed=null;
 const visitedCounts=new Map();
 function enqueue(child,parentMatrix,state,scale,source,slot){
@@ -244,14 +246,10 @@ for(const seed of seedOffsets){
   const event={entryId:entry.id,runId:activeRunId,seedRecord:activeSeed,record,recordHex:hex(record),opcode,handlerAddress:hex(callbackTargets[opcode]??0),handlerName:callbackNames[opcode]??'unmapped',classWord,parentMatrix:entry.parentMatrix,position:state,scale:entry.scale,source:entry.source,sourceSlot:entry.slot,children:[]};
   let childCount=0;
   if(opcode===0){
-    // Native branch 0 normalizes the three state words between scale levels.
-    // A zero class exits immediately; otherwise keep both source and adjusted
-    // values so that alternative initial scale tests can be compared.
-    if(classWord!==0){
-      const d=entry.scale-initialScale,shift=Math.min(30,Math.abs(d));
-      if(d<0)event.normalizedPosition=state.map(v=>v<<shift);
-      else if(d>0)event.normalizedPosition=state.map(v=>v>>shift);
-    }
+    // The handler calls 0x4e59c8 before copying WORD +2 into dispatcher state.
+    // Its side effects are not guessed here; they are surfaced for the report.
+    event.helperCall={address:'0x4e59c8',emulated:false};
+    helperCalls.push({record:hex(record),opcode,handler:'0x4dfde1',helper:'0x4e59c8',reason:'helper body not yet translated'});
   }else if(opcode===1){
     const n=u8(record+0x14)??0;
     event.list={count:n,base:record+0x18,layout:'relocated DWORD pointers at +0x18'};
@@ -266,6 +264,10 @@ for(const seed of seedOffsets){
     }else unresolved.push({record,opcode,reason:'opcode-2 count invalid',count:n});
   }else if(opcode===3){
     if(u8(record+0x0a)===1)b[record+0x0d]=1;
+    if(u8(record+0x12)===1){
+      event.helperCall={address:'0x4df970',emulated:false};
+      helperCalls.push({record:hex(record),opcode,handler:'0x4dff99',helper:'0x4df970',reason:'conditional helper body not yet translated'});
+    }
     const n=u8(record+0x0b)??0;
     event.list={count:n,base:record+0x20,layout:'relocated DWORD pointers at +0x20'};
     event.children=pushListChildren(record,record+0x20,n,entry,opcode);
@@ -539,6 +541,13 @@ const report={
   fileBytes:b.length,relocationBase:hex(base),root:{record:hex(rootRecord),recordClass:rootClass,partClass,callbackStart:hex(rootNode)},
   executable:{path:exePath,initialMatrix:initialMatrixInfo,initialScale:{value:initialScale,source:initialScaleOverride===0?'default 0; loader caller context remains a runtime parameter, override with --initial-scale':'command-line override'}},
   dispatchTable:callbackTargets.map((address,opcode)=>({opcode,handler:hex(address),name:callbackNames[opcode]})),
+  helperCalls,
+  simulationLimitations:[
+    'Opcode-0 handler calls 0x4e59c8; this helper is logged but not emulated.',
+    'Opcode-3 conditionally calls 0x4df970 when record byte +0x12 is 1; this helper is logged but not emulated.',
+    'The shared dispatcher tail at 0x4dfdf9 performs scale/state normalization after callbacks; this routine is not fully emulated.',
+    'The caller-supplied initial scale/context defaults to zero unless --initial-scale overrides it; the loader helper dump is included in executable-analysis for resolving it.'
+  ],
   callbackRun:{topLevelTableCount:tableCount,topLevelRecordsUsed:seedOffsets.length,parserContextWord:initialScale,initialStateVector:[0,0,0],seedRuns,processed,remaining:work.length,truncated,callbackCounts,uniqueRecordStates:visitedCounts.size,
     totalQueueEdges:edgeRows.length,leafCount:leafRecords.length,unresolvedCount:unresolved.length,
     events:events.map(e=>({...e,record:hex(e.record),source:e.source===null?null:hex(e.source),children:e.children.map(hex)})),
@@ -567,7 +576,7 @@ const md=[
   '- Input: '+input,'- DPC bytes: '+b.length,'- Root node: '+hex(rootNode),
   '- Top-level DPC records: '+tableCount,'- Callback invocations seeded: '+seedOffsets.length,'- Work entries processed: '+processed,'- Entries remaining: '+work.length,'- Callback events: '+events.length,
   '- Distinct record/state combinations: '+visitedCounts.size,'- Queue edges: '+edgeRows.length,
-  '- Leaf callback entries: '+leafRecords.length,'- Unresolved edges: '+unresolved.length,
+  '- Leaf callback entries: '+leafRecords.length,'- Unresolved edges: '+unresolved.length,'- Unemulated helper calls: '+helperCalls.length,
   '- Geometry sections: '+meshes.length,'- Callback-linked sections: '+geometryLinks.filter(x=>x.transformSource!=='no callback match').length,
   '- Owner/paired translation invariants: '+meshes.filter(m=>m.transformNode!==null).length+'/'+(meshes.length-1)+' matched',
   '',
@@ -584,11 +593,14 @@ const md=[
   'The run compares 20 candidate combinations: two matrix orientations, two placements of translation, and five translation sources (accumulated callback state, matrix-transformed position, owner anchor, and the two additive combinations). The owner anchor is independently cross-checked against the paired transform-node vector before export.','',
   ...variants.map(v=>'- '+v.output+' — '+v.transformAppliedCount+'/'+v.meshCount+' sections received callback transforms'),
   '',
+  '## Unemulated helper calls','',
+  ...helperCalls.slice(0,100).map(x=>'- '+JSON.stringify(x)),
+  '',
   '## Unresolved pointers','',
   ...unresolved.slice(0,100).map(x=>'- '+JSON.stringify({...x,record:Number.isInteger(x.record)?hex(x.record):x.record,field:Number.isInteger(x.field)?hex(x.field):x.field})),
   '',
   '## Status','',
-  'This is a callback-work-stack reconstruction, not a claim of a finished model. It uses the real opcode dispatch table and opcode-4 context-derived addressing. The four GLBs are based on callback executions matched to the known nine geometry sections. The next acceptance test is visual: one of these models must look like a correctly assembled Scout, with all expected parts in plausible positions.'
+  'This is a static callback-work-stack reconstruction candidate, not a bit-exact execution of the executable. Opcode 4 uses its inline record+0x14 child list, and opcode 9 uses its separate +0x10 list. The two helper routines and shared post-handler normalization tail remain explicitly unimplemented. The 20 GLBs compare geometry placement alternatives using callback events matched to the known nine geometry sections. A final Scout is only accepted after visual validation and resolution of the listed helper/context limitations.'
 ];
 fs.writeFileSync(path.join(outDir,'RUNTIME-REBUILD.md'),md.join('\n')+'\n');
 console.log('SCOUT RUNTIME REBUILD COMPLETE');
