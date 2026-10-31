@@ -34,11 +34,11 @@ import { spawnSync } from 'node:child_process';
 const here=path.dirname(fileURLToPath(import.meta.url));
 const repoRoot=path.resolve(here,'..');
 const args=process.argv.slice(2);
-let input=null,outArg=null,exePath=null,initialScale=0,maxWork=5000,alsoTransformRoots=false;
+let input=null,outArg=null,exePath=null,initialScaleOverride=null,maxWork=50000,alsoTransformRoots=false;
 for(let i=0;i<args.length;i++){
   const a=args[i];
   if(a==='--exe'){if(!args[i+1])throw new Error('--exe requires a path');exePath=path.resolve(args[++i]);}
-  else if(a==='--initial-scale'){initialScale=Number(args[++i]);if(!Number.isFinite(initialScale))throw new Error('Invalid initial scale');}
+  else if(a==='--initial-scale'){initialScaleOverride=Number(args[++i]);if(!Number.isFinite(initialScaleOverride))throw new Error('Invalid initial scale');}
   else if(a==='--max-work'){maxWork=Number(args[++i]);if(!Number.isInteger(maxWork)||maxWork<1)throw new Error('--max-work must be positive');}
   else if(a==='--also-transform-roots')alsoTransformRoots=true;
   else if(a.startsWith('--'))throw new Error('Unknown option '+a);
@@ -73,6 +73,7 @@ const u16=o=>o>=0&&o+2<=b.length?b.readUInt16LE(o):null;
 const s16=o=>o>=0&&o+2<=b.length?b.readInt16LE(o):null;
 const u32=o=>o>=0&&o+4<=b.length?b.readUInt32LE(o):null;
 const s32=o=>o>=0&&o+4<=b.length?b.readInt32LE(o):null;
+const initialScale=initialScaleOverride??(u32(16)??0);
 const inRange=(o,n=4)=>Number.isInteger(o)&&o>=0&&o+n<=b.length;
 const hex=n=>'0x'+Number(n).toString(16);
 function relocatedTarget(raw){
@@ -158,42 +159,44 @@ const initialMatrixInfo=readExeInitialMatrix(exePath);
 // Callback work-stack entry format is the six DWORDs written by 0x4dfce4:
 // record, parent/matrix index, state X, state Y, state Z, scale/context.
 const work=[],events=[],matrices=new Map([[0,initialMatrixInfo.matrix]]);
-const unresolved=[],leafRecords=[],edgeRows=[],callbackCounts={};
-let nextMatrixId=1,processed=0;
+const unresolved=[],leafRecords=[],edgeRows=[],callbackCounts={},seedRuns=[];
+let nextMatrixId=1,processed=0,nextEntryId=0,activeRunId=0,activeSeed=null;
 const visitedCounts=new Map();
 function enqueue(child,parentMatrix,state,scale,source,slot){
   if(!inRange(child))return false;
   const h=header(child);
   if(!h)return false;
   const entry={
-    id:work.length,record:child,parentMatrix,
+    id:nextEntryId++,runId:activeRunId,record:child,parentMatrix,
     x:state[0]|0,y:state[1]|0,z:state[2]|0,
     scale:scale|0,source,slot
   };
   work.push(entry);
-  edgeRows.push({from:source,to:child,slot,opcode:h.opcode,classWord:h.classWord,entryId:entry.id});
+  edgeRows.push({runId:activeRunId,seed:activeSeed,from:source,to:child,slot,opcode:h.opcode,classWord:h.classWord,entryId:entry.id});
   return true;
 }
-function contextArrayAddress(y,count,record){
-  // Opcode 4 does not read an inline array at record+0x14. The actual code
-  // computes ECX = currentY + record+8, then reads DWORD [ECX+0x14] while
-  // advancing ECX by four. Test the two meaningful DPC address forms.
-  const sum=(y+s32(record+8))>>>0;
+function contextArrayAddress(newY,count){
+  // Opcode 4 adds record+8 to the incoming Y state, then dereferences
+  // [newY+0x14+4*i]. The pointer arithmetic is done in the loaded DPC address
+  // space. In the file image, test the relocated-base and direct-file-offset
+  // views of that already-updated address. Do NOT add record+8 a second time.
   const candidates=[
-    {mode:'file-offset',base:sum},
-    {mode:'relocated-address',base:sum-base},
-    {mode:'unsigned-file-offset',base:y+u32(record+8)},
-    {mode:'signed-file-offset',base:y+s32(record+8)}
+    {mode:'relocated-base',base:newY-base},
+    {mode:'direct-file-offset',base:newY}
   ];
   const scored=candidates.map(c=>{
-    const valid=inRange(c.base+0x14,Math.max(0,count-1)*4+4);
-    let hits=0,targets=[];
+    const first=c.base+0x14,valid=inRange(first,Math.max(0,count)*4);
+    let pointerHits=0,callbackHits=0,targets=[];
     if(valid)for(let i=0;i<count;i++){
-      const f=c.base+0x14+i*4,raw=u32(f),t=relocatedTarget(raw);
-      if(t!==null){hits++;targets.push(t);}
+      const field=first+i*4,raw=u32(field),target=relocatedTarget(raw);
+      if(target!==null){
+        pointerHits++;targets.push(target);
+        const op=u8(target);
+        if(op<=13)callbackHits++;
+      }
     }
-    return{...c,valid,hits,targets};
-  }).sort((a,c)=>c.hits-a.hits);
+    return{...c,firstField:first,valid,pointerHits,callbackHits,targets};
+  }).sort((a,c)=>c.callbackHits-a.callbackHits||c.pointerHits-a.pointerHits);
   return scored[0]||null;
 }
 function childFromRelocatedField(field,context){
@@ -218,28 +221,46 @@ function pushListChildren(record,offset,count,entry,handler,fieldMode='relocated
   }
   return out;
 }
-const seedOffsets=[rootNode];
+// The executable parser iterates the DPC top-level pointer table and invokes
+// the callback dispatcher once for each record. Reproduce that entry route,
+// rather than starting only at the playable-armour root.
+const tableCount=u32(32)??0,topLevelRecords=[];
+if(tableCount>0&&tableCount<=8192&&inRange(36,tableCount*4)){
+  for(let i=0;i<tableCount;i++){
+    const target=ptr(36+i*4);
+    if(target!==null&&header(target)&&!topLevelRecords.includes(target))topLevelRecords.push(target);
+  }
+}
+const seedOffsets=topLevelRecords.length?topLevelRecords.slice():[rootNode];
+if(!seedOffsets.includes(rootNode))seedOffsets.push(rootNode);
 if(alsoTransformRoots){
   for(let o=0;o+0x3c<=b.length;o++){
     if(u8(o)!==5)continue;
     const count=u8(o+0x36);
     if(count<1||count>32||!inRange(o+0x38,count*4))continue;
     let ok=true;for(let i=0;i<count;i++)if(ptr(o+0x38+i*4)===null){ok=false;break;}
-    if(ok&&![...seedOffsets].includes(o))seedOffsets.push(o);
+    if(ok&&!seedOffsets.includes(o))seedOffsets.push(o);
   }
 }
-for(const seed of seedOffsets)enqueue(seed,0,[0,0,0],initialScale,null,0);
+let truncated=false;
+for(const seed of seedOffsets){
+  if(processed>=maxWork){truncated=true;break;}
+  work.length=0;
+  activeRunId=seedRuns.length;
+  activeSeed=seed;
+  const runStart=processed;
+  enqueue(seed,0,[0,0,0],initialScale,null,0);
 
-while(work.length&&processed<maxWork){
+  while(work.length&&processed-runStart<0x44c&&processed<maxWork){
   // The native dispatcher pops the newest 24-byte stack entry.
   const entry=work.pop();processed++;
   const record=entry.record,h=header(record),opcode=h?.opcode??255,classWord=h?.classWord??0;
   callbackCounts[opcode]=(callbackCounts[opcode]||0)+1;
-  const key=record+':'+entry.parentMatrix+':'+entry.scale;
+  const key=activeRunId+':'+record+':'+entry.parentMatrix+':'+entry.scale;
   const vc=(visitedCounts.get(key)||0)+1;visitedCounts.set(key,vc);
   if(vc>16){unresolved.push({record,opcode,reason:'same record/state visited more than 16 times; cycle guard'});continue;}
   const state=[entry.x,entry.y,entry.z];
-  const event={entryId:entry.id,record,recordHex:hex(record),opcode,handlerAddress:hex(callbackTargets[opcode]??0),handlerName:callbackNames[opcode]??'unmapped',classWord,parentMatrix:entry.parentMatrix,position:state,scale:entry.scale,source:entry.source,sourceSlot:entry.slot,children:[]};
+  const event={entryId:entry.id,runId:activeRunId,seedRecord:activeSeed,record,recordHex:hex(record),opcode,handlerAddress:hex(callbackTargets[opcode]??0),handlerName:callbackNames[opcode]??'unmapped',classWord,parentMatrix:entry.parentMatrix,position:state,scale:entry.scale,source:entry.source,sourceSlot:entry.slot,children:[]};
   let childCount=0;
   if(opcode===0){
     // Native branch 0 normalizes the three state words between scale levels.
@@ -275,12 +296,12 @@ while(work.length&&processed<maxWork){
       (entry.z+s32(record+12))|0
     ];
     const n=u8(record+0x12)??0;
-    const list=contextArrayAddress(nextState[1],n,record);
-    event.contextList={count:n,sourceRule:'[newY + 0x14 + 4*i]',resolvedBase:list?hex(list.base):null,
-      addressMode:list?.mode??null,exactRelocatedPointerHits:list?.hits??0};
+    const list=contextArrayAddress(nextState[1],n);
+    event.contextList={count:n,sourceRule:'[newY + 0x14 + 4*i]',resolvedFirstField:list?hex(list.firstField):null,
+      addressMode:list?.mode??null,relocatedPointerHits:list?.pointerHits??0,callbackTargetHits:list?.callbackHits??0};
     if(n&&list?.valid){
       for(let i=0;i<n;i++){
-        const f=list.base+0x14+i*4;
+        const f=list.firstField+i*4;
         const child=childFromRelocatedField(f,record);
         if(child!==null){enqueue(child,entry.parentMatrix,nextState,entry.scale,record,i);event.children.push(child);}
       }
@@ -347,8 +368,14 @@ while(work.length&&processed<maxWork){
   event.childCount=childCount;
   if(!childCount)leafRecords.push({record,opcode,classWord,entryId:entry.id,parentMatrix:entry.parentMatrix,position:state,scale:entry.scale});
   events.push(event);
+  }
+  if(work.length){
+    truncated=true;
+    unresolved.push({record:seed,opcode:u8(seed),reason:'per-callback work-stack limit reached',remaining:work.length,runId:activeRunId});
+    work.length=0;
+  }
+  seedRuns.push({runId:activeRunId,seedRecord:seed,seedRecordHex:hex(seed),events:events.filter(e=>e.runId===activeRunId).length,processed:processed-runStart,remaining:work.length,contextWord:initialScale,initialState:[0,0,0]});
 }
-const truncated=work.length>0;
 
 // Extract the established nine raw meshes; their coordinate/face structure is
 // source-validated independently of the callback traversal.
@@ -396,7 +423,11 @@ for(const e of events){
 }
 function eventFor(offset){
   const rows=eventMap.get(String(offset))||[];
-  return rows.find(x=>x.matrix?.matrixId!==undefined)||rows[0]||null;
+  return rows.slice().sort((a,c)=>{
+    const as=(a.matrix?.matrixId!==undefined?4:0)+(a.parentMatrix!==0?2:0)+(a.positionAfter?1:0);
+    const cs=(c.matrix?.matrixId!==undefined?4:0)+(c.parentMatrix!==0?2:0)+(c.positionAfter?1:0);
+    return cs-as;
+  })[0]||null;
 }
 function matrixForEvent(e){
   if(!e)return initialMatrixInfo.matrix;
@@ -491,7 +522,7 @@ const report={
   fileBytes:b.length,relocationBase:hex(base),root:{record:hex(rootRecord),recordClass:rootClass,partClass,callbackStart:hex(rootNode)},
   executable:{path:exePath,initialMatrix:initialMatrixInfo},
   dispatchTable:callbackTargets.map((address,opcode)=>({opcode,handler:hex(address),name:callbackNames[opcode]})),
-  callbackRun:{processed,remaining:work.length,truncated,callbackCounts,uniqueRecordStates:visitedCounts.size,
+  callbackRun:{topLevelTableCount:tableCount,topLevelRecordsUsed:seedOffsets.length,parserContextWord:initialScale,initialStateVector:[0,0,0],seedRuns,processed,remaining:work.length,truncated,callbackCounts,uniqueRecordStates:visitedCounts.size,
     totalQueueEdges:edgeRows.length,leafCount:leafRecords.length,unresolvedCount:unresolved.length,
     events:events.map(e=>({...e,record:hex(e.record),source:e.source===null?null:hex(e.source),children:e.children.map(hex)})),
     leaves:leafRecords.map(x=>({...x,record:hex(x.record),parentMatrix:x.parentMatrix,position:x.position})),
@@ -510,14 +541,14 @@ const report={
 };
 fs.writeFileSync(path.join(outDir,'runtime-rebuild.json'),JSON.stringify(report,null,2)+'\n');
 function csv(v){return'"'+String(v??'').replace(/"/g,'""')+'"';}
-const workCsv=[['entryId','record','opcode','classWord','handler','parentMatrix','scale','x','y','z','childCount','children'],...events.map(e=>[e.entryId,hex(e.record),e.opcode,e.classWord,e.handlerName,e.parentMatrix,e.scale,...e.position,e.childCount,e.children.map(hex).join(' ')])];
+const workCsv=[['entryId','runId','seedRecord','record','opcode','classWord','handler','parentMatrix','scale','x','y','z','childCount','children'],...events.map(e=>[e.entryId,e.runId,hex(e.seedRecord),hex(e.record),e.opcode,e.classWord,e.handlerName,e.parentMatrix,e.scale,...e.position,e.childCount,e.children.map(hex).join(' ')])];
 fs.writeFileSync(path.join(outDir,'callback-work-stack.csv'),workCsv.map(r=>r.map(csv).join(',')).join('\n')+'\n');
 const linkCsv=[['mesh','owner','meshNode','transformNode','meshCallbackEvents','transformCallbackEvents','selectedEvent','selectedEventRecord','selectedMatrixId','selectedPosition','transformSource'],...geometryLinks.map(x=>[x.mesh,x.owner,x.meshNode,x.transformNode,x.meshCallbackEvents,x.transformCallbackEvents,x.selectedEvent,x.selectedEventRecord,x.selectedMatrixId,JSON.stringify(x.selectedPosition),x.transformSource])];
 fs.writeFileSync(path.join(outDir,'geometry-callback-links.csv'),linkCsv.map(r=>r.map(csv).join(',')).join('\n')+'\n');
 const md=[
   '# Scout runtime callback rebuild','',
   '- Input: '+input,'- DPC bytes: '+b.length,'- Root node: '+hex(rootNode),
-  '- Work entries processed: '+processed,'- Entries remaining: '+work.length,'- Callback events: '+events.length,
+  '- Top-level DPC records: '+tableCount,'- Callback invocations seeded: '+seedOffsets.length,'- Work entries processed: '+processed,'- Entries remaining: '+work.length,'- Callback events: '+events.length,
   '- Distinct record/state combinations: '+visitedCounts.size,'- Queue edges: '+edgeRows.length,
   '- Leaf callback entries: '+leafRecords.length,'- Unresolved edges: '+unresolved.length,
   '- Geometry sections: '+meshes.length,'- Callback-linked sections: '+geometryLinks.filter(x=>x.transformSource!=='no callback match').length,
@@ -542,7 +573,8 @@ const md=[
 ];
 fs.writeFileSync(path.join(outDir,'RUNTIME-REBUILD.md'),md.join('\n')+'\n');
 console.log('SCOUT RUNTIME REBUILD COMPLETE');
-console.log('Root: '+hex(rootNode)+' | processed: '+processed+' | queued remaining: '+work.length+' | truncated: '+truncated);
+console.log('Root: '+hex(rootNode)+' | top-level DPC records: '+tableCount+' | callbacks seeded: '+seedOffsets.length);
+console.log('Processed: '+processed+' | queued remaining: '+work.length+' | truncated: '+truncated);
 console.log('Callbacks: '+events.length+' | unique record/states: '+visitedCounts.size+' | unresolved: '+unresolved.length);
 console.log('Geometry sections callback-linked: '+geometryLinks.filter(x=>x.transformSource!=='no callback match').length+'/'+meshes.length);
 for(const v of variants)console.log(v.convention.name+': '+v.output+' ('+v.transformAppliedCount+'/'+v.meshCount+' transformed)');
