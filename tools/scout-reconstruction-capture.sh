@@ -5,6 +5,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
 EXE="${1:-}"
 DPC_DIR="${2:-$ROOT/extracted-ff/units}"
 OUT="${3:-/tmp/outwars-scout-reconstruction-capture}"
