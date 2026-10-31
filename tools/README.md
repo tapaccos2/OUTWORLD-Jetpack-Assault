@@ -199,10 +199,25 @@ node tools/inspect-motion-catalog.mjs original-data/motion motion-catalog.json
 
 Checks the 152-byte frame stride and inventories the 19 eight-byte entries per frame across available .MC files. The report keeps the one known declared-count mismatch (fstand2.mc) visible. It does not infer bone names or a skeleton hierarchy.
 
-## 6. Export raw playable-armour geometry
+## 6. Rebuild the Scout callback hierarchy and export assembly candidates
+
+Use the runtime callback rebuild tool for the current end-to-end Scout assembly investigation:
+
+```sh
+node tools/scout-runtime-rebuild.mjs \
+  original-data/units.ff \
+  scout-runtime-rebuild \
+  --exe /home/tapaccos/Outwars-extracted/outwars.exe
+```
+
+It extracts `scout_mj.dpc` from `units.ff`, follows the top-level record table and callback work stack, cross-references the nine established geometry sections, and exports 20 transform/anchor candidates. The executable argument is recommended because it also inspects the initial matrix and loader context helper.
+
+See [SCOUT-RUNTIME-REBUILD.md](../original-data/SCOUT-RUNTIME-REBUILD.md) for the command, output files, tested callback layouts and remaining execution gaps. The generated GLBs are candidates until one is visually recognisable and independently checked.
+
+## 7. Export raw playable-armour geometry control
 
 ```sh
 node tools/export-dpc-armour-geometry.mjs original-data/units/scout_mj.dpc scout-mj-raw.glb
 ```
 
-See original-data/SCOUT-GEOMETRY-EXPORT.md for decoded fields, verified counts, and remaining assembly limitations.
+This is the nine-section raw geometry control (390 referenced vertices, 230 triangles), not the final assembled model. See [SCOUT-GEOMETRY-EXPORT.md](../original-data/SCOUT-GEOMETRY-EXPORT.md) for decoded fields and evidence.
