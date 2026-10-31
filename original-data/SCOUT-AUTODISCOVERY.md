@@ -61,3 +61,19 @@ This stricter report also records:
 The broad coordinate/index tests are explicitly labelled heuristic. Their scores only measure byte-pattern properties such as uniqueness and spatial spread; they do not prove vertex or index arrays. Transform rigidity scores are likewise sanity checks, not a way to choose matrix order or translation scale.
 
 See [SCOUT-AUTODISCOVERY-FINDINGS-01.md](./SCOUT-AUTODISCOVERY-FINDINGS-01.md) for the interpretation of the first uploaded run.
+
+
+## Next stage: callback execution and geometry placement
+
+The static discovery pass is now followed by `tools/scout-runtime-rebuild.mjs`. It processes the DPC top-level record-pointer table using the executable's callback dispatch table, follows the observed opcode child-list layouts, links executed record offsets to the established nine raw geometry sections, and exports 20 placement candidates.
+
+Run:
+
+```sh
+node tools/scout-runtime-rebuild.mjs \
+  original-data/units.ff \
+  scout-runtime-rebuild \
+  --exe /home/tapaccos/Outwars-extracted/outwars.exe
+```
+
+See [SCOUT-RUNTIME-REBUILD.md](./SCOUT-RUNTIME-REBUILD.md) for the current executable evidence, outputs, assumptions and remaining gaps. This second-stage runner supersedes the abandoned `scout-assembly-hunt.mjs` experiment, which incorrectly interpreted opcode-4 entries as face data.
