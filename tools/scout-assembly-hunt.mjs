@@ -205,14 +205,15 @@ for(const a of attachments)for(const slot of a.slots){
     }
     cursor=found+4;
   }
-  const faces=faceRows.filter(x=>x.distinct&&Math.max(...x.indices)<=4096);
-  const indexValues=faces.flatMap(x=>x.indices);
-  const maxIndex=indexValues.length?Math.max(...indexValues):-1;
+  const rawValidFaces=faceRows.filter(x=>x.distinct&&Math.max(...x.indices)<=4096);
   const uniqueFaces=new Map();
-  for(const face of faces){
+  for(const face of rawValidFaces){
     const key=face.indices.slice().sort((x,y)=>x-y).join(',');
     if(!uniqueFaces.has(key))uniqueFaces.set(key,face);
   }
+  const faces=[...uniqueFaces.values()];
+  const indexValues=faces.flatMap(x=>x.indices);
+  const maxIndex=indexValues.length?Math.max(...indexValues):-1;
   payloads.push({
     parentTransform:a.parentTransform,attachmentOffset:a.offset,slot:slot.slot,
     wrapperOffset:slot.wrapper,descriptorOffset:slot.descriptor,
