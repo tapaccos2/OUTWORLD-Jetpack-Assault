@@ -149,9 +149,13 @@ function readExeInitialMatrix(file){
   const raw=0x10de00+(0x52d224-0x520000);
   if(!inRangeExe(e,raw,48))return{status:'identity-fallback',matrix:identity(),detail:'Static global matrix outside executable file'};
   const words=Array.from({length:12},(_,i)=>e.readInt32LE(raw+i*4));
-  const matrix=[words[0]/4096,words[1]/4096,words[2]/4096,words[4]/4096,words[5]/4096,words[6]/4096,words[8]/4096,words[9]/4096,words[10]/4096];
-  if(matrix.some(x=>!Number.isFinite(x)||Math.abs(x)>4))return{status:'identity-fallback',matrix:identity(),detail:'Static global did not resemble a Q20.12 3x3 basis',words};
-  return{status:'read-from-executable-DGROUP',matrix,words,rawOffset:raw};
+  // 4c5500 reads the parent 3x3 as nine contiguous DWORDs at frame +0..+0x20.
+  // The 12-DWORD initial block is copied byte-for-byte into the first 0x30
+  // matrix-stack slot by 4dfce4, so the active 3x3 is words[0..8], not a
+  // guessed 3x4 row-padded layout.
+  const matrix=words.slice(0,9).map(v=>v/4096);
+  if(matrix.some(x=>!Number.isFinite(x)||Math.abs(x)>4))return{status:'identity-fallback',matrix:identity(),detail:'First nine static DWORDs did not resemble a Q20.12 3x3 basis',words};
+  return{status:'read-from-executable-DGROUP',matrix,words,unusedTail:words.slice(9),rawOffset:raw};
 }
 function inRangeExe(e,o,n){return o>=0&&o+n<=e.length;}
 const initialMatrixInfo=readExeInitialMatrix(exePath);
