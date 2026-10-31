@@ -414,9 +414,7 @@ const addHyp=(name,score,evidence,verdict='candidate')=>hypotheses.push({name,sc
 addHyp('Relocated-base pointers in opcode-5 child arrays',transforms.length?95:0,{validOpcode5Records:transforms.length,edges:transformEdges.length,relocationBase:hex(base)},transforms.length?'strong structural match':'not observed');
 addHyp('Opcode-2 descriptor slot arrays under opcode-5 children',fullAttachments.length?90:0,{attachmentRecords:fullAttachments.length,descriptorSlots:fullAttachments.reduce((n,a)=>n+(a.slots?.length||0),0)},attachments.length?'strong structural match':'not observed');
 addHyp('Descriptor +12 targets opcode-4/class-0x090c',fullOpcode4s.length?92:0,{payloadRecords:fullOpcode4s.length,entryCount:fullOpcode4s.reduce((n,o)=>n+o.entryCount,0)},opcode4s.length?'strong structural match':'not observed');
-for(const mode of pointerModes)addHyp('Opcode-4 entries resolve as '+mode,opcode4EntryRows.length?100*pointerSummary[mode]/opcode4EntryRows.length:0,{resolvedEntries:pointerSummary[mode],totalEntries:opcode4EntryRows.length},pointerSummary[mode]?'mechanically resolves; meaning unproven':'no in-range resolutions');
-for(const c of topCoordinates.slice(0,20))addHyp('Coordinate '+c.kind+' stride '+c.stride+' near '+hex(c.nearTarget),c.score,{start:hex(c.start),count:c.count,uniqueRatio:c.uniqueRatio,extents:c.extents},'candidate only');
-for(const c of topIndices.slice(0,20))addHyp('Index stream width '+c.width+' count '+c.count+' near '+hex(c.nearTarget),c.score,{start:hex(c.start),max:c.max,uniqueCount:c.uniqueCount,degenerateTriangles:c.degenerateTriangles},'candidate only');
+for(const mode of pointerModes){const n=strictPointerConventionCounts[mode].total;addHyp('Known callback records resolve as '+mode,Math.max(...pointerModes.map(m=>strictPointerConventionCounts[m].total))?100*n/Math.max(...pointerModes.map(m=>strictPointerConventionCounts[m].total)):0,strictPointerConventionCounts[mode],n?'exact callback-record matches':'no exact callback-record matches');}
 // Transform rigidity scores are reported as sanity checks, not ranked as
 // convention evidence: transpose/order/position-scale are not distinguished
 // by orthogonality alone.
@@ -481,17 +479,27 @@ const md=[
   '- Opcode-5 records: '+transforms.length,'- Transform roots: '+roots.map(x=>hex(x.offset)).join(', '),
   '- Transform edges: '+transformEdges.length,'- Opcode-2 attachments: '+fullAttachments.length,
   '- Descriptor slots: '+fullAttachments.reduce((n,a)=>n+(a.slots?.length||0),0),
-  '- Opcode-4 payload records: '+fullOpcode4s.length,'- Opcode-4 child entries: '+opcode4EntryRows.length,'- Recursively validated callback nodes: '+deepCallbackGraph.nodeCount,
+  '- Direct opcode-4 payload roots: '+primaryOp4Roots.size,'- Recursively discovered opcode-4 records: '+fullOpcode4s.length,'- Opcode-4 child entries: '+opcode4EntryRows.length,'- Recursively validated callback nodes: '+deepCallbackGraph.nodeCount,
   '- Payload centres tested: '+centres.length,'- Coordinate candidates: '+coordinateCandidates.length,'- Index candidates: '+indexCandidates.length,
   '','## Highest-ranked findings','',
   ...hypotheses.slice(0,30).map(h=>'- **'+h.score.toFixed(1)+'/100 — '+h.name+'** ('+h.verdict+'). Evidence: '+JSON.stringify(h.evidence)),
-  '','## Opcode-4 pointer encoding sweep','','| Encoding | In-range entries |','|---|---:|',
+  '','## Raw opcode-4 address candidates','','These counts mean only that the decoded value lands somewhere inside the file; they are not proof of a record pointer.','','| Encoding | In-file entries |','|---|---:|',
   ...pointerModes.map(m=>'| '+m+' | '+pointerSummary[m]+' / '+opcode4EntryRows.length+' |'),
-  '','## Unvalidated coordinate scan candidates (heuristic only)','','The following score measures sample uniqueness and coordinate spread. It does not establish that a block is a vertex array.','','| Heuristic | Target | Start | Kind | Stride | Samples | Extents |','|---:|---:|---:|---:|---:|---:|---|',
+  '','## Exact callback-record pointer matches','','A match here must land exactly at a separately validated opcode-2, opcode-4 or opcode-5 record start. This is the stronger test.','','| Encoding | Total exact matches | Opcode-2 | Opcode-4 | Opcode-5 |','|---|---:|---:|---:|---:|',
+  ...pointerModes.map(m=>{const x=strictPointerConventionCounts[m];return '| '+m+' | '+x.total+' | '+x.opcode2+' | '+x.opcode4+' | '+x.opcode5+' |';}),
+  '','## Callback-entry relationship graph','','- Primary opcode-2 attachments under opcode-5 transforms: '+primaryOp2Nodes.length,
+  '- Distinct opcode-4 payload roots referenced by those attachments: '+primaryOp4Roots.size,
+  '- Opcode-4 records discovered after recursive traversal: '+fullOpcode4s.length,
+  '- Exact relocated-pointer links to known callback records: '+strictCallbackEdges.length,
+  '- Edge targets: opcode-2 '+callbackEntryGraph.edgeCountsByTargetKind.opcode2+', opcode-4 '+callbackEntryGraph.edgeCountsByTargetKind.opcode4+', opcode-5 '+callbackEntryGraph.edgeCountsByTargetKind.opcode5,
+  '- Opcode-4 records reachable from the primary descriptor roots using relocated pointers: '+relocatedReachable.size+'/'+fullOpcode4s.length,
+  '', '| Source opcode-4 | Entry index | Target offset | Target record |','|---:|---:|---:|---|',
+  ...strictCallbackEdges.map(e=>'| '+hex(e.from)+' | '+e.entryIndex+' | '+hex(e.to)+' | '+e.targetKind+' |'),
+  '','## Unvalidated coordinate scan candidates (heuristic only)','','The following score measures sample uniqueness and coordinate spread. It does not establish that a block is a vertex array.','','| Heuristic | Target | Start | Kind | Stride | Samples | Extents |','|---:|---:|---|---:|---:|---:|---|',
   ...topCoordinates.slice(0,25).map(c=>'| '+c.score.toFixed(1)+' | '+hex(c.nearTarget)+' | '+hex(c.start)+' | '+c.kind+' | '+c.stride+' | '+c.count+' | '+c.extents.map(x=>x.toFixed(1)).join(', ')+' |'),
-  '','## Unvalidated index scan candidates (heuristic only)','','| Heuristic | Target | Start | Width | Values | Maximum | Degenerate triples | Reused edges |','|---:|---:|---:|---:|---:|---:|---:|',
+  '','## Unvalidated index scan candidates (heuristic only)','','| Heuristic | Target | Start | Width | Values | Maximum | Degenerate triples | Reused edges |','|---:|---:|---:|---:|---:|---:|---:|---:|',
   ...topIndices.slice(0,25).map(c=>'| '+c.score.toFixed(1)+' | '+hex(c.nearTarget)+' | '+hex(c.start)+' | '+c.width+' | '+c.count+' | '+c.max+' | '+c.degenerateTriangles+' | '+(c.repeatedEdges??0)+' |'),
-  '','## Transform convention sweep','','| Score | Root | Order | Transpose | Position scale | Nodes | Determinant range |','|---:|---:|---|---|---:|---:|---|',
+  '','## Transform rigidity sanity checks (not a convention selector)','','These matrix scores only confirm that the matrices remain close to rigid rotations. They cannot distinguish multiplication order, transposition or position scale.','','| Rigidity | Root | Order | Transpose | Position scale | Nodes | Determinant range |','|---:|---:|---|---|---:|---:|---|',
   ...transformHypotheses.slice(0,32).map(h=>'| '+h.averageOrthonormalityScore.toFixed(1)+' | '+hex(h.root)+' | '+h.order+' | '+h.transpose+' | '+h.translationScale+' | '+h.nodeCount+' | '+(h.determinantRange||[]).map(x=>x.toFixed(4)).join(' .. ')+' |'),
   '','## Raw geometry control','',JSON.stringify(baseline,null,2),
   '','## Interpretation boundary','',
