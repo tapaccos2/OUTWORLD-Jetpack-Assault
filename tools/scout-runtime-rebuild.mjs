@@ -237,7 +237,6 @@ if(tableCount>0&&tableCount<=8192&&inRange(36,tableCount*4)){
   }
 }
 const seedOffsets=topLevelRecords.length?topLevelRecords.slice():[rootNode];
-if(!seedOffsets.includes(rootNode))seedOffsets.push(rootNode);
 if(alsoTransformRoots){
   for(let o=0;o+0x3c<=b.length;o++){
     if(u8(o)!==5)continue;
@@ -332,13 +331,17 @@ for(const seed of seedOffsets){
     event.list={count:n,base:record+0x38,layout:'relocated DWORD child pointers at +0x38'};
     for(let i=0;i<n;i++){
       const child=childFromRelocatedField(record+0x38+i*4,record);
-      if(child!==null){enqueue(child,matrixId,transformed,entry.scale,record,i);event.children.push(child);}
+      if(child!==null){enqueue(child,matrixId,translated,entry.scale,record,i);event.children.push(child);}
     }
     childCount=event.children.length;
   }else if(opcode===6||opcode===7){
     // Table entries 6 and 7 point to 0x4e0494 and 0x4e04a2.
     // Both explicitly clear the working class state and push no children.
     event.classStateAfter=0;
+    event.opaqueHandler=false;
+  }else if(opcode===8||opcode===12){
+    // Both table entries use 0x4e023a: preserve WORD +2 as class state.
+    event.classStateAfter=classWord;
     event.opaqueHandler=false;
   }else if(opcode===9||opcode===13){
     if(u8(record+0x0a)===1)b[record+0x0d]=1;
@@ -371,9 +374,8 @@ for(const seed of seedOffsets){
     }
     childCount=event.children.length;
   }else{
-    // Opcode 6, 8 and 12 are simple class-state callbacks in the observed
-    // table, and opcode 13 shares the opcode-9 handler.
-    event.opaqueHandler=true;
+    // Unmapped callback opcode: retain it as an opaque event rather than
+    // guessing a child layout.
   }
   event.childCount=childCount;
   if(!childCount)leafRecords.push({record,opcode,classWord,entryId:entry.id,parentMatrix:entry.parentMatrix,position:state,scale:entry.scale});
