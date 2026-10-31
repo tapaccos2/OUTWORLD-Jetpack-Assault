@@ -442,6 +442,20 @@ for(const order of ['parent-child','child-parent'])for(const transposeMatrix of 
   variants.push({label,order,transpose:transposeMatrix,...r});
 }
 
+// Optional executable disassembly cross-check. The bridge captures the
+// opcode-4/5 callback branches plus fixed-point matrix helpers and consumers.
+let executableBridge={status:'not requested'};
+if(exePath){
+  const bridge=path.join(here,'scout-exe-transform-bridge.sh');
+  if(!fs.existsSync(exePath))executableBridge={status:'failed',reason:'Executable not found: '+exePath};
+  else if(!fs.existsSync(bridge))executableBridge={status:'skipped',reason:'scout-exe-transform-bridge.sh not found'};
+  else{
+    const exeOut=path.join(outDir,'executable-analysis');fs.mkdirSync(exeOut,{recursive:true});
+    const r=spawnSync('bash',[bridge,exePath,exeOut],{cwd:repoRoot,encoding:'utf8',maxBuffer:128*1024*1024});
+    executableBridge={status:r.status===0?'completed':'failed',output:exeOut,report:path.join(exeOut,'REPORT.txt'),exitCode:r.status,stderr:r.stderr||''};
+  }
+}
+
 // Existing exporter control, never substituted for inline-payload candidates.
 let rawControl={status:'skipped'};
 if(!noRawControl){
@@ -482,7 +496,7 @@ const report={
     coordinateStride:x.mesh.coordinate.stride,coordinateScore:x.score,
     transformChain:getTransformChain(x.payload.parentTransform).map(t=>hx(t.offset))
   })),
-  exports:{localGeometry:rawGlb,transformedVariants:variants,legacyRawControl:rawControl},
+  exports:{localGeometry:rawGlb,transformedVariants:variants,legacyRawControl:rawControl,executableBridge},
   conclusion:{
     status:selected.length?'INLINE_GEOMETRY_CANDIDATES_EXPORTED':'NO_GEOMETRY_CANDIDATE_PASSED',
     assembledScoutClaimed:false,
@@ -544,6 +558,7 @@ console.log('Direct attachments: '+attachments.length+' | paired coordinate/payl
 console.log('Embedded face payloads: '+payloads.filter(p=>p.faceRows.length>0).length+' | exportable geometry candidates: '+selected.length);
 console.log('Local candidate: '+rawGlb.file);
 for(const v of variants)console.log(v.label+': '+v.file+' ('+v.meshCount+' meshes, '+v.totalTriangles+' triangles)');
+console.log('Executable cross-check: '+executableBridge.status);
 console.log('Legacy raw control: '+rawControl.status);
 console.log('Report: '+path.join(outDir,'ASSEMBLY-HUNT.md'));
 console.log('Full analysis: '+path.join(outDir,'analysis.json'));
