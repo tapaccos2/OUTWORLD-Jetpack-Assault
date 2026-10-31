@@ -235,6 +235,66 @@ for(const node of deepNodes.values())for(const edge of node.edges)
 const fullOpcode4s=[...new Map([...deepNodes.values()].filter(n=>n.kind==='opcode4-child-list').map(n=>[n.offset,n.parsed])).values()];
 const fullAttachments=[...new Map([...deepNodes.values()].filter(n=>n.kind==='opcode2-descriptor-list').map(n=>[n.offset,n.parsed])).values()];
 
+// Strict callback-edge validation: unlike the broad four-mode discovery pass,
+// count an edge as structurally validated only when a relocated-base pointer
+// lands exactly on a record independently validated as opcode 2, 4 or 5.
+const knownCallbackByOffset=deepNodes;
+const primaryOp2Nodes=[...deepNodes.values()].filter(n=>
+  n.kind==='opcode2-descriptor-list' &&
+  n.discoveredVia.some(v=>v.depth===1 && transformByOffset.has(v.via))
+);
+const primaryOp4Roots=new Set();
+for(const n of primaryOp2Nodes)for(const slot of n.parsed.slots||[])
+  if(slot.looksOpcode4 && knownCallbackByOffset.get(slot.payloadTarget)?.kind==='opcode4-child-list')
+    primaryOp4Roots.add(slot.payloadTarget);
+const strictCallbackEdges=[];
+const op4Adjacency=new Map(fullOpcode4s.map(o=>[o.offset,[]]));
+for(const op4 of fullOpcode4s)for(const entry of op4.entries){
+  const target=resolve(entry.field,'relocated-base');
+  const targetNode=target===null?null:knownCallbackByOffset.get(target);
+  if(!targetNode)continue;
+  const edge={from:op4.offset,to:target,entryIndex:entry.index,field:entry.field,
+    raw:entry.raw,rawHex:entry.rawHex,targetKind:targetNode.kind};
+  strictCallbackEdges.push(edge);
+  if(targetNode.kind==='opcode4-child-list')op4Adjacency.get(op4.offset)?.push(target);
+}
+const relocatedReachable=new Set(),reachQueue=[...primaryOp4Roots];
+while(reachQueue.length){
+  const current=reachQueue.shift();
+  if(relocatedReachable.has(current))continue;
+  relocatedReachable.add(current);
+  for(const target of op4Adjacency.get(current)||[])if(!relocatedReachable.has(target))reachQueue.push(target);
+}
+const strictPointerConventionCounts={};
+for(const mode of pointerModes){
+  const counts={total:0,opcode2:0,opcode4:0,opcode5:0};
+  for(const op4 of fullOpcode4s)for(const entry of op4.entries){
+    const target=resolve(entry.field,mode),node=target===null?null:knownCallbackByOffset.get(target);
+    if(!node)continue;
+    counts.total++;
+    if(node.kind==='opcode2-descriptor-list')counts.opcode2++;
+    else if(node.kind==='opcode4-child-list')counts.opcode4++;
+    else if(node.kind==='opcode5-transform')counts.opcode5++;
+  }
+  strictPointerConventionCounts[mode]=counts;
+}
+const callbackEntryGraph={
+  rule:'An edge is counted only when a relocated-base DWORD lands exactly on a separately validated opcode-2, opcode-4 or opcode-5 callback record.',
+  primaryOpcode2Attachments:primaryOp2Nodes.map(n=>n.offset),
+  primaryOpcode4DescriptorRoots:[...primaryOp4Roots].sort((a,c)=>a-c),
+  recursivelyDiscoveredOpcode4Count:fullOpcode4s.length,
+  validatedEntryToCallbackEdgeCount:strictCallbackEdges.length,
+  edgeCountsByTargetKind:{
+    opcode2:strictCallbackEdges.filter(e=>e.targetKind==='opcode2-descriptor-list').length,
+    opcode4:strictCallbackEdges.filter(e=>e.targetKind==='opcode4-child-list').length,
+    opcode5:strictCallbackEdges.filter(e=>e.targetKind==='opcode5-transform').length
+  },
+  opcode4ReachableFromDescriptorRootsByRelocatedPointers:relocatedReachable.size,
+  reachableOpcode4Offsets:[...relocatedReachable].sort((a,c)=>a-c),
+  edges:strictCallbackEdges,
+  pointerConventionCounts:strictPointerConventionCounts
+};
+
 // Follow all opcode-4 child entries through every plausible pointer encoding.
 // The interpretations remain separate and are never silently conflated.
 const recursiveTargets=new Map();
@@ -357,7 +417,9 @@ addHyp('Descriptor +12 targets opcode-4/class-0x090c',fullOpcode4s.length?92:0,{
 for(const mode of pointerModes)addHyp('Opcode-4 entries resolve as '+mode,opcode4EntryRows.length?100*pointerSummary[mode]/opcode4EntryRows.length:0,{resolvedEntries:pointerSummary[mode],totalEntries:opcode4EntryRows.length},pointerSummary[mode]?'mechanically resolves; meaning unproven':'no in-range resolutions');
 for(const c of topCoordinates.slice(0,20))addHyp('Coordinate '+c.kind+' stride '+c.stride+' near '+hex(c.nearTarget),c.score,{start:hex(c.start),count:c.count,uniqueRatio:c.uniqueRatio,extents:c.extents},'candidate only');
 for(const c of topIndices.slice(0,20))addHyp('Index stream width '+c.width+' count '+c.count+' near '+hex(c.nearTarget),c.score,{start:hex(c.start),max:c.max,uniqueCount:c.uniqueCount,degenerateTriangles:c.degenerateTriangles},'candidate only');
-for(const h of transformHypotheses.slice(0,16))addHyp('Transform root '+hex(h.root)+' '+h.order+' transpose='+h.transpose+' positionScale='+h.translationScale,h.averageOrthonormalityScore,{nodes:h.nodeCount,determinantRange:h.determinantRange},'math convention candidate only');
+// Transform rigidity scores are reported as sanity checks, not ranked as
+// convention evidence: transpose/order/position-scale are not distinguished
+// by orthogonality alone.
 hypotheses.sort((a,c)=>c.score-a.score);
 
 // Control run: retain the established raw geometry extraction, but never label
@@ -393,8 +455,8 @@ const report={
     opcode2:{recordByte:2,count:'+0x10 DWORD',slots:'+0x14 DWORD pointer slots; wrapper+8 -> descriptor',attachments:fullAttachments},
     opcode4:{recordByte:4,classWord:'0x090c',translation:'+0x04/+0x08/+0x0c DWORD',count:'+0x12 BYTE',children:'+0x14 DWORD entries',records:fullOpcode4s}
   },
-  graph:{transformRoots:roots.map(t=>t.offset),transformEdges,deepCallbackGraph,reverseReferences:references,recursiveOpcode4EntryTargets:recursiveTargetRows},
-  pointerTests:{modes:pointerModes,opcode4EntryResolutionCounts:pointerSummary,opcode4EntryRows},
+  graph:{transformRoots:roots.map(t=>t.offset),transformEdges,deepCallbackGraph,callbackEntryGraph,reverseReferences:references,recursiveOpcode4EntryTargets:recursiveTargetRows},
+  pointerTests:{modes:pointerModes,opcode4EntryResolutionCounts:pointerSummary,validatedCallbackTargetCounts:strictPointerConventionCounts,opcode4EntryRows},
   transformMathTests:transformHypotheses,
   payloadTests:{testedPayloadCentres:centres.length,coordinateCandidatesTested:coordinateCandidates.length,topCoordinateCandidates:topCoordinates,indexCandidatesTested:indexCandidates.length,topIndexCandidates:topIndices},
   hypothesisScoreboard:hypotheses,
@@ -425,10 +487,10 @@ const md=[
   ...hypotheses.slice(0,30).map(h=>'- **'+h.score.toFixed(1)+'/100 — '+h.name+'** ('+h.verdict+'). Evidence: '+JSON.stringify(h.evidence)),
   '','## Opcode-4 pointer encoding sweep','','| Encoding | In-range entries |','|---|---:|',
   ...pointerModes.map(m=>'| '+m+' | '+pointerSummary[m]+' / '+opcode4EntryRows.length+' |'),
-  '','## Highest-ranked coordinate candidates','','| Score | Target | Start | Kind | Stride | Samples | Extents |','|---:|---:|---:|---:|---:|---:|---|',
+  '','## Unvalidated coordinate scan candidates (heuristic only)','','The following score measures sample uniqueness and coordinate spread. It does not establish that a block is a vertex array.','','| Heuristic | Target | Start | Kind | Stride | Samples | Extents |','|---:|---:|---:|---:|---:|---:|---|',
   ...topCoordinates.slice(0,25).map(c=>'| '+c.score.toFixed(1)+' | '+hex(c.nearTarget)+' | '+hex(c.start)+' | '+c.kind+' | '+c.stride+' | '+c.count+' | '+c.extents.map(x=>x.toFixed(1)).join(', ')+' |'),
-  '','## Highest-ranked index candidates','','| Score | Target | Start | Width | Values | Maximum | Degenerate triples |','|---:|---:|---:|---:|---:|---:|---:|',
-  ...topIndices.slice(0,25).map(c=>'| '+c.score.toFixed(1)+' | '+hex(c.nearTarget)+' | '+hex(c.start)+' | '+c.width+' | '+c.count+' | '+c.max+' | '+c.degenerateTriangles+' |'),
+  '','## Unvalidated index scan candidates (heuristic only)','','| Heuristic | Target | Start | Width | Values | Maximum | Degenerate triples | Reused edges |','|---:|---:|---:|---:|---:|---:|---:|',
+  ...topIndices.slice(0,25).map(c=>'| '+c.score.toFixed(1)+' | '+hex(c.nearTarget)+' | '+hex(c.start)+' | '+c.width+' | '+c.count+' | '+c.max+' | '+c.degenerateTriangles+' | '+(c.repeatedEdges??0)+' |'),
   '','## Transform convention sweep','','| Score | Root | Order | Transpose | Position scale | Nodes | Determinant range |','|---:|---:|---|---|---:|---:|---|',
   ...transformHypotheses.slice(0,32).map(h=>'| '+h.averageOrthonormalityScore.toFixed(1)+' | '+hex(h.root)+' | '+h.order+' | '+h.transpose+' | '+h.translationScale+' | '+h.nodeCount+' | '+(h.determinantRange||[]).map(x=>x.toFixed(4)).join(' .. ')+' |'),
   '','## Raw geometry control','',JSON.stringify(baseline,null,2),
@@ -460,7 +522,9 @@ fs.writeFileSync(path.join(outDir,'payload-index-candidates.csv'),indexCsv.map(r
 console.log('SCOUT AUTODISCOVERY COMPLETE');
 console.log('Transforms: '+transforms.length+' | roots: '+roots.length+' | transform edges: '+transformEdges.length);
 console.log('Opcode-2 attachments: '+fullAttachments.length+' | descriptor slots: '+fullAttachments.reduce((n,a)=>n+(a.slots?.length||0),0));
-console.log('Opcode-4 payloads: '+opcode4s.length+' | child entries: '+opcode4EntryRows.length);
+console.log('Opcode-4 direct descriptor roots: '+primaryOp4Roots.size+' | recursively discovered opcode-4 records: '+fullOpcode4s.length+' | entries: '+opcode4EntryRows.length);
+console.log('Strict relocated-pointer callback edges: '+strictCallbackEdges.length+' (opcode-2: '+callbackEntryGraph.edgeCountsByTargetKind.opcode2+', opcode-4: '+callbackEntryGraph.edgeCountsByTargetKind.opcode4+', opcode-5: '+callbackEntryGraph.edgeCountsByTargetKind.opcode5+')');
+console.log('Opcode-4 records reachable from descriptor roots using relocated pointers: '+relocatedReachable.size+'/'+fullOpcode4s.length);
 console.log('Payload centres: '+centres.length+' | coordinate candidates: '+coordinateCandidates.length+' | index candidates: '+indexCandidates.length);
 console.log('Raw geometry control: '+baseline.status);
 console.log('Assembled Scout: NOT CLAIMED — transform-to-payload ownership still needs proof.');
