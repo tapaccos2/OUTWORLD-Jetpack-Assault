@@ -98,13 +98,13 @@ function det3(m){return m[0]*(m[4]*m[8]-m[5]*m[7])-m[1]*(m[3]*m[8]-m[5]*m[6])+m[
 function mul3(a,c){
   const out=new Array(9).fill(0);
   for(let r=0;r<3;r++)for(let col=0;col<3;col++)for(let k=0;k<3;k++)out[r*3+col]+=a[r*3+k]*c[k*3+col];
-  return out.map(v=>Math.trunc(v*4096)/4096);
+  return out.map(v=>Math.floor(v*4096)/4096);
 }
 function apply3(m,v){
   return[
-    Math.trunc((m[0]*v[0]+m[1]*v[1]+m[2]*v[2])*4096)/4096,
-    Math.trunc((m[3]*v[0]+m[4]*v[1]+m[5]*v[2])*4096)/4096,
-    Math.trunc((m[6]*v[0]+m[7]*v[1]+m[8]*v[2])*4096)/4096
+    Math.floor((m[0]*v[0]+m[1]*v[1]+m[2]*v[2])*4096)/4096,
+    Math.floor((m[3]*v[0]+m[4]*v[1]+m[5]*v[2])*4096)/4096,
+    Math.floor((m[6]*v[0]+m[7]*v[1]+m[8]*v[2])*4096)/4096
   ];
 }
 function transformMatrix(o){return Array.from({length:9},(_,i)=>s32(o+4+i*4)/4096);}
@@ -498,7 +498,7 @@ const report={
     unresolved:unresolved.map(x=>({...x,record:Number.isInteger(x.record)?hex(x.record):x.record,field:Number.isInteger(x.field)?hex(x.field):x.field}))
   },
   geometry:{meshCount:meshes.length,totalVertices:meshes.reduce((n,m)=>n+m.positions.length,0),totalTriangles:meshes.reduce((n,m)=>n+m.indices.length/3,0),links:geometryLinks},
-  matrixFrames:[...matrices.entries()].map(([id,matrix])=>({id,matrix,determinant:det3(matrix)}),
+  matrixFrames:[...matrices.entries()].map(([id,matrix])=>({id,matrix,determinant:det3(matrix)})),
   exports:variants,
   conclusion:{
     status:truncated?'CALLBACK_RUN_LIMIT_REACHED': 'CALLBACK_RUN_COMPLETED',
