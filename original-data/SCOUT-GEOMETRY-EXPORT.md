@@ -179,3 +179,16 @@ The two property branches are selected by the exact DPC property IDs 0x6D and 0x
 This proves there are eight fixed-stride structures addressed from base 0x72365C, with the handler updating a field in all eight. It does **not** prove that the eight structures correspond to the eight Scout submeshes, and the shared-value broadcast is not evidence of eight independently supplied attachment transforms. The earlier suggestion that the count itself was a likely Scout-part mapping is withdrawn. These fields must not be used to assemble Scout geometry.
 
 Bridge v1.4.0 expands the capture to the other direct callers of 0x46E4C0 and adds a scan for references to the table base and stride. This is intended to identify the role of the eight fixed-stride structures from their surrounding uses. The Scout transform exporter remains unchanged.
+
+
+## One-command reconstruction pipeline (2026-10-31)
+
+Use the integrated driver instead of manually invoking the geometry exporter and executable bridge separately:
+
+```sh
+node tools/reconstruct-scout.mjs original-data/units/scout_mj.dpc scout-reconstruction --exe /path/to/outwars.exe
+```
+
+The driver emits the source-faithful raw GLB, an explicitly diagnostic owner-translation GLB, both JSON extraction reports, the executable disassembly report (when an EXE is supplied), and a single `reconstruction-manifest.json` with validation counts and the current reconstruction status.
+
+**Important status:** this is now one command and one output directory, but it does not claim a completed Scout assembly. The runtime analysis currently available does not yet prove which runtime transform object belongs to each of the eight Scout parts. The driver therefore refuses to label the translation candidate as final and records the exact evidence still required. A recognisable, correctly assembled Scout remains the acceptance test.
