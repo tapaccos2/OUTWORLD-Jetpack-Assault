@@ -192,3 +192,26 @@ node tools/reconstruct-scout.mjs original-data/units/scout_mj.dpc scout-reconstr
 The driver emits the source-faithful raw GLB, an explicitly diagnostic owner-translation GLB, both JSON extraction reports, the executable disassembly report (when an EXE is supplied), and a single `reconstruction-manifest.json` with validation counts and the current reconstruction status.
 
 **Important status:** this is now one command and one output directory, but it does not claim a completed Scout assembly. The runtime analysis currently available does not yet prove which runtime transform object belongs to each of the eight Scout parts. The driver therefore refuses to label the translation candidate as final and records the exact evidence still required. A recognisable, correctly assembled Scout remains the acceptance test.
+
+
+## Corrected transform-hierarchy finding and pipeline v1.1 (2026-10-31)
+
+The transform data is not absent from the Scout DPC. The callback audit identifies 16 structurally plausible opcode-5 records in the male Scout. These records contain 3×3 fixed-point matrices, position fields, and child-pointer arrays. The graph audit finds four structural roots (0x7838, 0x8ac8, 0x8fcc, 0x9300) and 11 opcode-2 attachment records beneath transform nodes. The opcode-2 records contain 13 inline descriptor slots in total.
+
+The transform attachment descriptors are not pointer-identical to the 16 descriptors in the older class-102/class-105 part list. That earlier part list must not be forced onto the opcode-5 graph by offset matching. The opcode-5 graph is the relevant hierarchy to decode for rendered Scout geometry.
+
+A critical correction: opcode-4/class-0x090c records reached from those descriptors are **not quad-face records**. The executable callback at 0x4E006D reads DWORDs at +4/+8/+12 as position contributions, reads a byte count at +0x12, and dispatches the DWORD child entries beginning at +0x14. The earlier signature-based scanner that reported four vertex indices was therefore not a valid topology decoder. No mesh topology should be exported from those apparent quads.
+
+### Integrated pipeline v1.1
+
+The one-command driver now runs the relevant stages together:
+
+```sh
+node tools/reconstruct-scout.mjs /path/to/scout_mj.dpc scout-reconstruction --exe /path/to/outwars.exe
+```
+
+It writes a raw geometry baseline, the opcode-5 transform candidate scan, transform-to-geometry attachment audit, transform descriptor inventory, opcode-4 child payload report, part-list callback audits, optional executable disassembly, and a consolidated reconstruction-manifest.json. The attachment audit now recognises both male (102/105) and female (152/155) Scout roots.
+
+The rejected owner-translation GLB is no longer generated. The manifest's current blocker is now correctly stated as **decoding opcode-4 child entries into actual render primitives/topology and binding them to their coordinate payloads**, then applying the verified opcode-5 matrix hierarchy. The pipeline does not label its raw baseline as an assembled Scout.
+
+**Acceptance remains unchanged:** the result must be a recognisable Scout with correctly placed geometry. Until that is produced and visually checked, the reconstruction is not complete.
