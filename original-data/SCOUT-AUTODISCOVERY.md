@@ -46,3 +46,18 @@ The output directory contains:
 This is an automated static investigation sweep, not a magical semantic oracle. It is designed to expose competing interpretations and rank them using structural tests. A value that happens to resolve inside the file, or a byte sequence that resembles coordinates or indices, is not by itself proof of its runtime role.
 
 The script deliberately does not label the raw GLB as an assembled Scout. The remaining acceptance test is still a proven link from renderable payloads to their transform paths, followed by a recognisable GLB that can be visually checked against the game.
+
+
+## Follow-up: strict callback-link validation
+
+The runner now separates raw in-file address candidates from **exact callback-record matches**. An opcode-4 child entry counts as a validated callback link only when its relocated pointer lands exactly on an independently validated opcode-2, opcode-4, or opcode-5 record start.
+
+This stricter report also records:
+- the ten primary opcode-4 roots referenced by the transform-child descriptor lists;
+- all recursively discovered opcode-4 records;
+- every exact entry-index-to-record edge under the DPC relocation-base interpretation;
+- how many opcode-4 records are reachable from those primary roots without using speculative absolute/relative pointer interpretations.
+
+The broad coordinate/index tests are explicitly labelled heuristic. Their scores only measure byte-pattern properties such as uniqueness and spatial spread; they do not prove vertex or index arrays. Transform rigidity scores are likewise sanity checks, not a way to choose matrix order or translation scale.
+
+See [SCOUT-AUTODISCOVERY-FINDINGS-01.md](./SCOUT-AUTODISCOVERY-FINDINGS-01.md) for the interpretation of the first uploaded run.
