@@ -404,7 +404,7 @@ function readQuads(start,count,label){
   for(const q of out){if(new Set(q).size<3)continue;const k=q.slice().sort((a,c)=>a-c).join(',');if(!seen.has(k)){seen.add(k);dedup.push(q);}}
   return dedup;
 }
-function readMesh(name,owner,meshNode,transformNode,vertexBase,faceStart,faceCount){
+function readMesh(name,owner,meshNode,transformNode,vertexBase,faceStart,faceCount,anchor=[0,0,0]){
   const quads=readQuads(faceStart,faceCount,name),srcIds=[...new Set(quads.flat())].sort((a,c)=>a-c);
   const positions=srcIds.map(i=>{
     const p=vertexBase+i*8;if(!inRange(p,6))throw new Error(name+': vertex '+i+' out of range');
@@ -413,16 +413,25 @@ function readMesh(name,owner,meshNode,transformNode,vertexBase,faceStart,faceCou
   const indexMap=new Map(srcIds.map((v,i)=>[v,i]));
   const indices=[];
   for(const q of quads)indices.push(indexMap.get(q[0]),indexMap.get(q[1]),indexMap.get(q[2]),indexMap.get(q[0]),indexMap.get(q[2]),indexMap.get(q[3]));
-  return{name,owner,meshNode,transformNode,vertexBase,faceStart,quads,sourceIndices:srcIds,positions,indices};
+  return{name,owner,meshNode,transformNode,vertexBase,faceStart,quads,sourceIndices:srcIds,positions,indices,anchor};
 }
 const meshes=[];
 const rootVertex=ptr(rootNode+28),rootFaces=ptr(rootNode+36);
-meshes.push(readMesh('root_mesh',rootNode,rootNode,null,rootVertex,rootFaces,22));
+if(rootVertex===null||rootFaces===null)throw new Error('Root mesh geometry pointers failed relocation');
+meshes.push(readMesh('root_mesh',rootNode,rootNode,null,rootVertex,rootFaces,22,[0,0,0]));
 for(let i=0;i<owners.length;i++){
   const owner=owners[i],meshNode=ptr(owner+24),transformNode=ptr(owner+28);
   if(meshNode===null||transformNode===null)throw new Error('Part '+(i+1)+' mesh/transform pointer invalid');
-  const desc=ptr(ptr(meshNode+20)+8),vertex=ptr(desc+4),faces=ptr(meshNode+36);
-  meshes.push(readMesh('submesh_'+(i+1),owner,meshNode,transformNode,vertex,faces,26));
+  const type16=ptr(meshNode+20);
+  if(type16===null)throw new Error('Part '+(i+1)+' mesh type-16 wrapper pointer invalid');
+  const descriptor=ptr(type16+8);
+  if(descriptor===null)throw new Error('Part '+(i+1)+' mesh descriptor pointer invalid');
+  const vertex=ptr(descriptor+4),faces=ptr(meshNode+36);
+  if(vertex===null||faces===null)throw new Error('Part '+(i+1)+' geometry pointers failed relocation');
+  const ownerPosition=[s32(owner+8),s32(owner+12),s32(owner+16)];
+  const pairedPosition=[s32(transformNode+32),s32(transformNode+36),s32(transformNode+40)];
+  if(ownerPosition.some((v,k)=>v!==pairedPosition[k]))throw new Error('Part '+(i+1)+' owner/paired translation invariant failed');
+  meshes.push(readMesh('submesh_'+(i+1),owner,meshNode,transformNode,vertex,faces,26,ownerPosition));
 }
 
 // Correlate each raw geometry section with the work-stack event for its mesh
@@ -457,7 +466,7 @@ function applyTransform(point,matrix,position,convention){
 const conventions=[];
 for(const transposeMatrix of [false,true]){
   for(const translation of ['after','before']){
-    for(const positionSource of ['accumulated','matrix-output']){
+    for(const positionSource of ['accumulated','matrix-output','owner-anchor','accumulated-plus-owner','matrix-output-plus-owner']){
       conventions.push({
         name:(transposeMatrix?'transposed':'stored')+'-'+translation+'-'+positionSource,
         transpose:transposeMatrix,translation,positionSource
@@ -478,6 +487,7 @@ const geometryLinks=meshes.map(mesh=>{
     selectedMatrixId:chosen?(chosen.matrix?.matrixId??chosen.parentMatrix):null,
     selectedPosition:chosen?(chosen.positionAfter||chosen.position):null,
     matrixOutputPosition:chosen?matrixPositions.get(chosen.matrix?.matrixId??chosen.parentMatrix)??null:null,
+    ownerAnchor:mesh.anchor,
     transformSource:transformEvent?'paired transform-node callback':meshEvent?'mesh-node callback':'no callback match'
   };
 });
@@ -492,8 +502,14 @@ function buildGlb(file,convention){
     const M=matrixForEvent(e);
     const accumulated=e?(e.positionAfter||e.position):[0,0,0];
     const matrixOutput=e?(matrixPositions.get(e.matrix?.matrixId??e.parentMatrix)||accumulated):accumulated;
-    const pos=convention.positionSource==='matrix-output'?matrixOutput:accumulated;
-    const use=e!==null;
+    const ownerAnchor=mesh.anchor||[0,0,0];
+    let pos;
+    if(convention.positionSource==='matrix-output')pos=matrixOutput;
+    else if(convention.positionSource==='owner-anchor')pos=ownerAnchor;
+    else if(convention.positionSource==='accumulated-plus-owner')pos=accumulated.map((v,i)=>v+ownerAnchor[i]);
+    else if(convention.positionSource==='matrix-output-plus-owner')pos=matrixOutput.map((v,i)=>v+ownerAnchor[i]);
+    else pos=accumulated;
+    const use=e!==null||pos.some(v=>v!==0);
     const transformed=mesh.positions.map(p=>use?applyTransform(p,M,pos,convention):p);
     const indices=mesh.indices;
     const normals=Array.from({length:transformed.length},()=>[0,0,0]);
@@ -514,11 +530,11 @@ function buildGlb(file,convention){
     gltfMeshes.push({name:mesh.name,primitives:[{attributes:{POSITION:pa,NORMAL:na},indices:ia,material:mi,mode:4}],extras:{
       ownerOffset:hex(mesh.owner),meshNodeOffset:hex(mesh.meshNode),transformNodeOffset:mesh.transformNode===null?null:hex(mesh.transformNode),
       callbackEventId:e?.entryId??null,callbackMatrixId:e?(e.matrix?.matrixId??e.parentMatrix):null,
-      callbackPosition:pos,accumulatedPosition:accumulated,matrixOutputPosition:matrixOutput,positionSource:convention.positionSource,transformApplied:use,coordinateBase:hex(mesh.vertexBase),faceStart:hex(mesh.faceStart),
+      callbackPosition:pos,accumulatedPosition:accumulated,matrixOutputPosition:matrixOutput,positionSource:convention.positionSource,ownerAnchor,transformApplied:use,coordinateBase:hex(mesh.vertexBase),faceStart:hex(mesh.faceStart),
       sourceVertexIndices:mesh.sourceIndices,sourceQuads:mesh.quads
     }});
     nodes.push({name:mesh.name,mesh:mi});
-    transformDiagnostics.push({...link,matrix:M,position:pos,accumulatedPosition:accumulated,matrixOutputPosition:matrixOutput,positionSource:convention.positionSource,transformApplied:use,bounds:{min,max}});
+    transformDiagnostics.push({...link,matrix:M,position:pos,accumulatedPosition:accumulated,matrixOutputPosition:matrixOutput,positionSource:convention.positionSource,ownerAnchor,transformApplied:use,bounds:{min,max}});
   }
   const bin=Buffer.concat(parts);
   const gltf={asset:{version:'2.0',generator:'Outwars Scout runtime callback reconstruction'},
@@ -574,6 +590,7 @@ const md=[
   '- Distinct record/state combinations: '+visitedCounts.size,'- Queue edges: '+edgeRows.length,
   '- Leaf callback entries: '+leafRecords.length,'- Unresolved edges: '+unresolved.length,
   '- Geometry sections: '+meshes.length,'- Callback-linked sections: '+geometryLinks.filter(x=>x.transformSource!=='no callback match').length,
+  '- Owner/paired translation invariants: '+meshes.filter(m=>m.transformNode!==null).length+'/'+(meshes.length-1)+' matched,
   '',
   '## Callback opcodes executed','',
   '| Opcode | Handler | Calls |','|---:|---|---:|',
@@ -585,6 +602,7 @@ const md=[
   ...geometryLinks.map(x=>'| '+x.mesh+' | '+x.transformCallbackEvents+' | '+x.meshCallbackEvents+' | '+x.transformSource+' |'),
   '',
   '## Exported runtime candidates','',
+  'The run compares 20 candidate combinations: two matrix orientations, two placements of translation, and five translation sources (accumulated callback state, matrix-transformed position, owner anchor, and the two additive combinations). The owner anchor is independently cross-checked against the paired transform-node vector before export.','',
   ...variants.map(v=>'- '+v.output+' — '+v.transformAppliedCount+'/'+v.meshCount+' sections received callback transforms'),
   '',
   '## Unresolved pointers','',
@@ -599,6 +617,8 @@ console.log('Root: '+hex(rootNode)+' | top-level DPC records: '+tableCount+' | c
 console.log('Processed: '+processed+' | queued remaining: '+work.length+' | truncated: '+truncated);
 console.log('Callbacks: '+events.length+' | unique record/states: '+visitedCounts.size+' | unresolved: '+unresolved.length);
 console.log('Geometry sections callback-linked: '+geometryLinks.filter(x=>x.transformSource!=='no callback match').length+'/'+meshes.length);
+console.log('Owner/paired translation vectors verified: '+meshes.filter(m=>m.transformNode!==null).length+'/'+(meshes.length-1));
+console.log('Assembly variants: '+conventions.length+' (matrix orientation × translation placement × position source)');
 for(const v of variants)console.log(v.convention.name+': '+v.output+' ('+v.transformAppliedCount+'/'+v.meshCount+' transformed)');
 console.log('Report: '+path.join(outDir,'RUNTIME-REBUILD.md'));
 console.log('Full JSON: '+path.join(outDir,'runtime-rebuild.json'));
