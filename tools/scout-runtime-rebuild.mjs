@@ -179,31 +179,6 @@ function enqueue(child,parentMatrix,state,scale,source,slot){
   edgeRows.push({runId:activeRunId,seed:activeSeed,from:source,to:child,slot,opcode:h.opcode,classWord:h.classWord,entryId:entry.id});
   return true;
 }
-function contextArrayAddress(newY,count){
-  // Opcode 4 adds record+8 to the incoming Y state, then dereferences
-  // [newY+0x14+4*i]. The pointer arithmetic is done in the loaded DPC address
-  // space. In the file image, test the relocated-base and direct-file-offset
-  // views of that already-updated address. Do NOT add record+8 a second time.
-  const address=newY>>>0;
-  const candidates=[
-    {mode:'relocated-base',base:address-base},
-    {mode:'direct-file-offset',base:address}
-  ];
-  const scored=candidates.map(c=>{
-    const first=c.base+0x14,valid=inRange(first,Math.max(0,count)*4);
-    let pointerHits=0,callbackHits=0,targets=[];
-    if(valid)for(let i=0;i<count;i++){
-      const field=first+i*4,raw=u32(field),target=relocatedTarget(raw);
-      if(target!==null){
-        pointerHits++;targets.push(target);
-        const op=u8(target);
-        if(op<=13)callbackHits++;
-      }
-    }
-    return{...c,sourceAddress:hex(address),firstField:first,valid,pointerHits,callbackHits,targets};
-  }).sort((a,c)=>c.callbackHits-a.callbackHits||c.pointerHits-a.pointerHits);
-  return scored[0]||null;
-}
 function childFromRelocatedField(field,context){
   const raw=u32(field),target=relocatedTarget(raw);
   if(target===null)unresolved.push({source:context,field,raw:hex(raw),reason:'not a relocated in-file pointer'});
@@ -233,7 +208,9 @@ const tableCount=u32(32)??0,topLevelRecords=[];
 if(tableCount>0&&tableCount<=8192&&inRange(36,tableCount*4)){
   for(let i=0;i<tableCount;i++){
     const target=ptr(36+i*4);
-    if(target!==null&&header(target)&&!topLevelRecords.includes(target))topLevelRecords.push(target);
+    // Preserve table order and duplicate pointers: the native parser calls
+    // the callback once per table slot, not once per unique target.
+    if(target!==null&&header(target))topLevelRecords.push(target);
   }
 }
 const seedOffsets=topLevelRecords.length?topLevelRecords.slice():[rootNode];
@@ -300,16 +277,18 @@ for(const seed of seedOffsets){
       (entry.z+s32(record+12))|0
     ];
     const n=u8(record+0x12)??0;
-    const list=contextArrayAddress(nextState[1],n);
-    event.contextList={count:n,sourceRule:'[newY + 0x14 + 4*i]',resolvedFirstField:list?hex(list.firstField):null,
-      addressMode:list?.mode??null,relocatedPointerHits:list?.pointerHits??0,callbackTargetHits:list?.callbackHits??0};
-    if(n&&list?.valid){
+    // Literal execution at 0x4e00be..0x4e00f1: ECX is reset to the record
+    // pointer, incremented by four per child, and the callback reads
+    // [ECX+0x14]. Therefore the child pointer array is record+0x14,
+    // not an address derived from the accumulated position.
+    const firstField=record+0x14;
+    event.childList={count:n,firstField:hex(firstField),layout:'inline relocated DWORD pointers at record+0x14, stride 4'};
+    if(n&&inRange(firstField,n*4)){
       for(let i=0;i<n;i++){
-        const f=list.firstField+i*4;
-        const child=childFromRelocatedField(f,record);
+        const child=childFromRelocatedField(firstField+i*4,record);
         if(child!==null){enqueue(child,entry.parentMatrix,nextState,entry.scale,record,i);event.children.push(child);}
       }
-    }else if(n)unresolved.push({record,opcode,reason:'opcode-4 context-derived list could not be resolved',stateY:nextState[1],candidate:list});
+    }else if(n)unresolved.push({record,opcode,reason:'opcode-4 inline child-pointer array exceeds DPC bounds',count:n,firstField:hex(firstField)});
     event.positionAfter=nextState;childCount=event.children.length;
   }else if(opcode===5){
     const local=transformMatrix(record);
