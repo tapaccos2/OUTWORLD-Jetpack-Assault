@@ -9,3 +9,7 @@
 
 ### v1.0.0
 - Initial browser-based Scout DPC hierarchy and local coordinate-sample inspector.
+
+### Executable Transform Bridge v1.0.0 — 2026-10-31
+- Added explicit source version metadata and versioned report banner.
+- Captures parser-to-callback callsites, opcode dispatch, transform callback and runtime transform consumer disassembly.
