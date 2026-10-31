@@ -13,7 +13,7 @@ node tools/scout-autodiscovery.mjs \
   --exe /home/tapaccos/Outwars-extracted/outwars.exe
 ```
 
-It requires Node.js with modern ES-module support (Node 18 or newer is recommended). The executable argument is optional, but including it also runs the existing executable-disassembly bridge.
+It requires Node.js with modern ES-module support (Node 18 or newer is recommended). The executable argument is optional, but including it also runs the existing executable-disassembly bridge. The runner now auto-extracts `scout_mj.dpc` from `original-data/units.ff` when the loose DPC path is missing, and it also accepts `original-data/units.ff` directly as its first argument.
 
 For a wider payload sweep, use `--max-targets 1200`. To skip the raw-geometry control export, use `--no-baseline`.
 
