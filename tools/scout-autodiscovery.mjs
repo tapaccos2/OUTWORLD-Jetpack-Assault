@@ -11,6 +11,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
@@ -27,7 +28,34 @@ for(let i=0;i<argv.length;i++){
 }
 if(!input){console.error('Usage: node tools/scout-autodiscovery.mjs <scout.dpc> [output-dir] [--exe outwars.exe]');process.exit(2);}
 input=path.resolve(input);
-if(!fs.existsSync(input))throw new Error('DPC file not found: '+input);
+const repoRoot=path.resolve(here,'..');
+let sourceArchive=null,autoExtractDirectory=null;
+function extractScoutFromArchive(archive){
+  const extractor=path.join(here,'extract-ff-resources.mjs');
+  if(!fs.existsSync(extractor))throw new Error('Cannot auto-extract Scout: FF extractor missing at '+extractor);
+  autoExtractDirectory=fs.mkdtempSync(path.join(os.tmpdir(),'outwars-scout-autodiscovery-'));
+  const result=spawnSync(process.execPath,[extractor,archive,'--out',autoExtractDirectory],{
+    cwd:repoRoot,encoding:'utf8',maxBuffer:32*1024*1024
+  });
+  if(result.status!==0)throw new Error('FF archive extraction failed validation. '+(result.stderr||result.stdout||'No extractor output'));
+  const extracted=path.join(autoExtractDirectory,path.basename(archive,path.extname(archive)),'scout_mj.dpc');
+  if(!fs.existsSync(extracted))throw new Error('Archive extraction succeeded but scout_mj.dpc was not found at '+extracted);
+  sourceArchive=archive;
+  return extracted;
+}
+if(fs.existsSync(input)&&path.extname(input).toLowerCase()==='.ff'){
+  input=extractScoutFromArchive(input);
+}else if(!fs.existsSync(input)){
+  // The documented checkout stores the Scout DPC inside original-data/units.ff.
+  // Auto-extract it when the caller supplied the expected loose-file path.
+  const archive=path.join(repoRoot,'original-data','units.ff');
+  if(path.basename(input).toLowerCase()==='scout_mj.dpc'&&fs.existsSync(archive)){
+    console.log('[source] Loose scout_mj.dpc not found; extracting from '+archive);
+    input=extractScoutFromArchive(archive);
+  }else{
+    throw new Error('DPC file not found: '+input+'\\nAlso checked for the bundled Scout source archive: '+archive);
+  }
+}
 const outDir=path.resolve(outArg||'scout-autodiscovery');
 fs.mkdirSync(outDir,{recursive:true});
 const b=fs.readFileSync(input);
@@ -358,7 +386,7 @@ if(exePath){
 }
 
 const report={
-  title:'OUTWARS SCOUT AUTONOMOUS DPC DISCOVERY',generatedAt:new Date().toISOString(),input,fileBytes:b.length,relocationBase:hex(base),outputDirectory:outDir,selfTests:tests,
+  title:'OUTWARS SCOUT AUTONOMOUS DPC DISCOVERY',generatedAt:new Date().toISOString(),input,sourceArchive,autoExtractDirectory,fileBytes:b.length,relocationBase:hex(base),outputDirectory:outDir,selfTests:tests,
   scan:{recordOpcodeHistogram:recordHistogram.slice(0,14),alignedCandidateRecordHeaders:plausibleHeaders.length},
   callbackLayouts:{
     opcode5:{recordByte:5,matrix:'+0x04..+0x24 nine signed DWORDs; Q20.12 interpretation tested',position:'+0x28/+0x2c/+0x30',childCount:'+0x36 BYTE',children:'+0x38 relocated DWORD pointers',records:transforms},
