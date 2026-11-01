@@ -257,3 +257,16 @@ node tools/inspect-scout-transform-records.mjs /path/to/scout_mj.dpc
 ```
 
 These are subcomponents of the one-command finalizer. Do not use the older geometry exporter by itself as proof of a complete runtime reconstruction.
+
+## Scout runtime bridge audit
+
+Run from the repository root:
+
+```sh
+node tools/scout-runtime-bridge.mjs \
+  original-data/units.ff \
+  scout-bridge \
+  --exe /home/tapaccos/Outwars-extracted/outwars.exe
+```
+
+This reuses the maintained part-graph, opcode-2 callback-chain, transform-attachment, and opcode-5 decoders. It traces exact relocated DPC pointers and scans executable disassembly for functions referencing the callback scratch globals written by opcodes 1 and 2. The ZIP contains per-node pointer traces, exact pointer edges, descriptor-owner joins, and executable cross-references. These are leads for runtime-consumer analysis, not proof of rendering or final placement. Existing output is preserved and a numbered folder is selected automatically.
