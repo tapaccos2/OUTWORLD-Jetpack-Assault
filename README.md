@@ -82,3 +82,12 @@ Run [Scout opcode handler map](tools/scout-opcode-handler-map.mjs) after the dis
 ```bash
 node tools/scout-opcode-handler-map.mjs scout-dispatch/SCOUT-DISPATCH-AUDIT.json scout-opcode-handler-map --exe /home/tapaccos/Outwars-extracted/outwars.exe
 ```
+
+
+## Scout nested descriptor dispatch trace
+
+Run [Scout nested descriptor audit](tools/scout-nested-descriptor-audit.mjs) after the dispatch audit. It extracts the Scout DPC callback chain, resolves each nested descriptor pointer, reads its opcode byte, and joins it to the executable jump table. It groups duplicate handler destinations and captures each unique handler entry plus direct callee windows. This avoids treating shared dispatcher continuations or jump-table aliases as separate handler bodies.
+
+```bash
+node tools/scout-nested-descriptor-audit.mjs original-data/units.ff scout-dispatch/SCOUT-DISPATCH-AUDIT.json scout-nested-descriptor-audit --exe /home/tapaccos/Outwars-extracted/outwars.exe
+```
