@@ -550,7 +550,8 @@ function buildGlb(file,convention){
     else if(convention.positionSource==='accumulated-plus-owner')pos=accumulated.map((v,i)=>v+ownerAnchor[i]);
     else if(convention.positionSource==='matrix-output-plus-owner')pos=matrixOutput.map((v,i)=>v+ownerAnchor[i]);
     else pos=accumulated;
-    const use=e!==null||pos.some(v=>v!==0);
+    const callbackTransformApplied=e!==null;
+    const placementApplied=callbackTransformApplied||pos.some(v=>v!==0);
     const transformed=mesh.positions.map(p=>use?applyTransform(p,M,pos,convention):p);
     const indices=mesh.indices;
     const normals=Array.from({length:transformed.length},()=>[0,0,0]);
@@ -571,11 +572,11 @@ function buildGlb(file,convention){
     gltfMeshes.push({name:mesh.name,primitives:[{attributes:{POSITION:pa,NORMAL:na},indices:ia,material:mi,mode:4}],extras:{
       ownerOffset:hex(mesh.owner),meshNodeOffset:hex(mesh.meshNode),transformNodeOffset:mesh.transformNode===null?null:hex(mesh.transformNode),
       callbackEventId:e?.entryId??null,callbackMatrixId:e?(e.matrix?.matrixId??e.parentMatrix):null,
-      callbackPosition:pos,accumulatedPosition:accumulated,matrixOutputPosition:matrixOutput,positionSource:convention.positionSource,ownerAnchor,transformApplied:use,coordinateBase:hex(mesh.vertexBase),faceStart:hex(mesh.faceStart),
+      callbackPosition:pos,accumulatedPosition:accumulated,matrixOutputPosition:matrixOutput,positionSource:convention.positionSource,ownerAnchor,placementApplied,callbackTransformApplied,coordinateBase:hex(mesh.vertexBase),faceStart:hex(mesh.faceStart),
       sourceVertexIndices:mesh.sourceIndices,sourceQuads:mesh.quads
     }});
     nodes.push({name:mesh.name,mesh:mi});
-    transformDiagnostics.push({...link,matrix:M,position:pos,accumulatedPosition:accumulated,matrixOutputPosition:matrixOutput,positionSource:convention.positionSource,ownerAnchor,transformApplied:use,bounds:{min,max}});
+    transformDiagnostics.push({...link,matrix:M,position:pos,accumulatedPosition:accumulated,matrixOutputPosition:matrixOutput,positionSource:convention.positionSource,ownerAnchor,placementApplied,callbackTransformApplied,bounds:{min,max}});
   }
   const bin=Buffer.concat(parts);
   const gltf={asset:{version:'2.0',generator:'Outwars Scout runtime callback reconstruction'},
@@ -591,7 +592,7 @@ function buildGlb(file,convention){
   const jh=Buffer.alloc(8);jh.writeUInt32LE(json.length,0);jh.writeUInt32LE(0x4e4f534a,4);
   const bh=Buffer.alloc(8);bh.writeUInt32LE(binP.length,0);bh.writeUInt32LE(0x004e4942,4);
   const output=path.join(outDir,file);fs.writeFileSync(output,Buffer.concat([headBuf,jh,json,bh,binP]));
-  return{output,meshCount:meshes.length,totalVertices:meshes.reduce((n,m)=>n+m.positions.length,0),totalTriangles:meshes.reduce((n,m)=>n+m.indices.length/3,0),transformAppliedCount:transformDiagnostics.filter(x=>x.transformApplied).length,diagnostics:transformDiagnostics};
+  return{output,meshCount:meshes.length,totalVertices:meshes.reduce((n,m)=>n+m.positions.length,0),totalTriangles:meshes.reduce((n,m)=>n+m.indices.length/3,0),placementAppliedCount:transformDiagnostics.filter(x=>x.placementApplied).length,callbackTransformAppliedCount:transformDiagnostics.filter(x=>x.callbackTransformApplied).length,diagnostics:transformDiagnostics};
 }
 const variants=conventions.map(c=>({convention:c,...buildGlb('scout-runtime-'+c.name+'.glb',c)}));
 
@@ -652,8 +653,8 @@ const md=[
   ...geometryLinks.map(x=>'| '+x.mesh+' | '+x.transformCallbackEvents+' | '+x.meshCallbackEvents+' | '+x.transformSource+' |'),
   '',
   '## Exported runtime candidates','',
-  'The run compares 20 candidate combinations: two matrix orientations, two placements of translation, and five translation sources (accumulated callback state, matrix-transformed position, owner anchor, and the two additive combinations). The owner anchor is independently cross-checked against the paired transform-node vector before export.','',
-  ...variants.map(v=>'- '+v.output+' — '+v.transformAppliedCount+'/'+v.meshCount+' sections received callback transforms'),
+  'The run compares 20 candidate combinations: two matrix orientations, two placements of translation, and five translation sources (accumulated callback state, matrix-transformed position, owner anchor, and the two additive combinations). A placement applied from an owner anchor is not labelled a callback transform. Callback transform counts and candidate-placement counts are reported separately. Owner anchors are independently cross-checked against their paired transform-node vectors.','',
+  ...variants.map(v=>'- '+v.output+' — '+v.callbackTransformAppliedCount+'/'+v.meshCount+' sections callback-linked; '+v.placementAppliedCount+'/'+v.meshCount+' sections have candidate placement applied'),
   '',
   '## Unemulated helper calls','',
   ...helperCalls.slice(0,100).map(x=>'- '+JSON.stringify(x)),
@@ -675,7 +676,7 @@ console.log('Callbacks: '+events.length+' | unique record/states: '+visitedCount
 console.log('Geometry sections callback-linked: '+geometryLinks.filter(x=>x.transformSource!=='no callback match').length+'/'+meshes.length);
 console.log('Owner/paired translation vectors verified: '+meshes.filter(m=>m.transformNode!==null).length+'/'+(meshes.length-1));
 console.log('Assembly variants: '+conventions.length+' (matrix orientation × translation placement × position source)');
-for(const v of variants)console.log(v.convention.name+': '+v.output+' ('+v.transformAppliedCount+'/'+v.meshCount+' transformed)');
+for(const v of variants)console.log(v.convention.name+': '+v.output+' ('+v.callbackTransformAppliedCount+' callback transforms; '+v.placementAppliedCount+' candidate placements)');
 console.log('Report: '+path.join(outDir,'RUNTIME-REBUILD.md'));
 console.log('Full JSON: '+path.join(outDir,'runtime-rebuild.json'));
-console.log('A finished Scout is NOT claimed until visual validation succeeds.');
+console.log('A finished Scout is NOT claimed until visual validation succeeds and the callback-to-geometry links are established.');
