@@ -41,6 +41,13 @@ jobs:
             .scout-resource-scan-extracted/units/scout_mj.dpc \
             scout-runtime-rebuild
 
+      - name: Decode Scout texture variants
+        run: |
+          node tools/decode-tpc-palette-textures.mjs .scout-resource-scan-extracted/units/scout_mj.tpc scout-textures/scout_mj
+          node tools/decode-tpc-palette-textures.mjs .scout-resource-scan-extracted/units/scout_ma.tpc scout-textures/scout_ma
+          node tools/decode-tpc-palette-textures.mjs .scout-resource-scan-extracted/units/scout_md.tpc scout-textures/scout_md
+          cp original-data/SCOUT-TPC-DECODING.md scout-textures/
+
       - name: Resolve cross-resource pointers
         run: |
           node tools/scout-resource-pointer-scan.mjs \
@@ -55,6 +62,7 @@ jobs:
           mkdir -p scout-analysis-bundle
           [ ! -d scout-runtime-rebuild ] || cp -a scout-runtime-rebuild scout-analysis-bundle/
           [ ! -d scout-resource-pointer-scan ] || cp -a scout-resource-pointer-scan scout-analysis-bundle/
+          [ ! -d scout-textures ] || cp -a scout-textures scout-analysis-bundle/
           [ ! -f scout-resource-file-list.txt ] || cp scout-resource-file-list.txt scout-analysis-bundle/
           zip -qr scout-runtime-resource-analysis.zip scout-analysis-bundle
 
@@ -67,6 +75,7 @@ jobs:
             scout-runtime-resource-analysis.zip
             scout-runtime-rebuild/**
             scout-resource-pointer-scan/**
+            scout-textures/**
             scout-resource-file-list.txt
           if-no-files-found: warn
           retention-days: 14
