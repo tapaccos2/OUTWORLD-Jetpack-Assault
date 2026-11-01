@@ -231,20 +231,20 @@ node tools/scout-runtime-rebuild.mjs original-data/units.ff scout-final --exe /p
 
 ## 7. One-run Scout closeout (coordinate + ownership + placement)
 
-The closeout runner performs the full executable-guided discovery, exports five independent geometry controls, validates every referenced 8-byte XYZ record against the source DPC and exporter bounds, maps exact opcode-4 child pointers back to their opcode-5 transform owners, and tests all matrix order/orientation/translation-scale combinations against the eight stored mesh reference-point targets.
+The closeout runner performs the full executable-guided discovery, exports five independent geometry controls, validates every referenced 8-byte XYZ record against the source DPC and exporter bounds, joins the legacy geometry-descriptor audit to the nine exported face streams and part-list owner records, separately tests for exact opcode-5 transform ownership, and evaluates matrix conventions against the stored mesh reference-point targets. A legacy descriptor/part-owner match is not misreported as proof of a runtime transform link.
 
 Run once from the repository root:
 
 ```sh
 node tools/scout-closeout.mjs \
   original-data/units.ff \
-  scout-closeout \
-  --exe /path/to/outwars.exe
+  scout-closeout-v2 \
+  --exe /home/tapaccos/Outwars-extracted/outwars.exe
 ```
 
-It writes one `scout-closeout.zip` containing the exact DPC, executable checksum, complete callback/disassembly evidence, five geometry candidates, per-mesh coordinate/ownership results, matrix validation results, and a consolidated report.
+It writes one `scout-closeout.zip` containing the exact DPC, executable checksum, complete callback/disassembly evidence, five geometry candidates, per-mesh coordinate, legacy geometry-descriptor, part-list owner, and opcode-5 transform-link results, plus matrix validation results, and a consolidated report.
 
-If (and only if) all nine coordinate bases validate, all eight submeshes have exact callback ownership, and exactly one transform convention maps all eight reference points to their recorded targets within two game units, the tool additionally emits `geometry/scout-runtime-assembled.glb`. Otherwise it leaves the five comparison candidates intact and names the failed gate. It does not promote nearby byte-pattern or matrix-rigidity heuristics to verified runtime facts.
+If (and only if) all nine coordinate bases validate, all eight submeshes have exact opcode-5 transform ownership, and exactly one transform convention maps all eight reference points to their recorded targets within two game units, the tool additionally emits `geometry/scout-runtime-assembled.glb`. Otherwise it leaves the five comparison candidates intact and names the failed gate. It does not promote nearby byte-pattern or matrix-rigidity heuristics to verified runtime facts.
 
 ## 7. Lower-level Scout evidence tools
 
