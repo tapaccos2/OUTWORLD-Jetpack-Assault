@@ -1,25 +1,25 @@
-# Scout runtime rebuild candidate generator
+# Retired Scout runtime placement experiment
 
-Use **`tools/scout-runtime-rebuild.mjs`** for the next Scout assembly run. It replaces the earlier static discovery-only workflow and supersedes the abandoned `scout-assembly-hunt.mjs` experiment.
+<badge>SUPERSEDED — DO NOT USE FOR MODEL EXPORT</badge>
 
-## Run once
+The 1 November runtime-rebuild runner correctly traced callback records, but it also reused the older 0x04 0x01 0x0C 0x09 signature scan as if it described four-index faces. That interpretation has been disproved by the executable callback at 0x4E006D: these are opcode-4 callback records with position contributions and child DWORD entries, not validated face topology.
 
-From the repository root:
+The 24 GLBs emitted by the retired runner are placement experiments over invalid inferred triangles. They are **not Scout models** and must not be used as assembly evidence. The exact nine descriptor-to-payload matches from the class-102/105 part-list are structural links only; the latest ancestry run found zero opcode-5 transform ancestors for those descriptors.
+
+## Current command
+
+Use the corrected integrated pipeline instead:
 
 ```sh
-git pull
-
-node tools/scout-runtime-rebuild.mjs \
+node tools/reconstruct-scout.mjs \
   original-data/units.ff \
-  scout-runtime-rebuild \
+  scout-reconstruction \
   --exe /home/tapaccos/Outwars-extracted/outwars.exe
 ```
 
-Node.js 18+ is recommended. The runner validates and extracts `scout_mj.dpc` from `units.ff` automatically. It also accepts a loose `scout_mj.dpc` path.
+This runs autonomous mixed-entry callback discovery, strict relocated-pointer edge checks, opcode-5 transform audits, opcode-2 descriptor inventories, opcode-4 child-payload decoding, and the legacy part-list audits. It deliberately does not export the invalid signature-derived GLB. See [SCOUT-GEOMETRY-EXPORT.md](SCOUT-GEOMETRY-EXPORT.md) for the current evidence boundary.
 
-Supplying `--exe` runs the disassembly bridge and captures the initial matrix plus the loader/caller code around the callback context helper. The caller-supplied initial scale/context is still not decoded automatically; the runner uses zero by default and records that assumption. Do not change it arbitrarily.
-
-The first uploaded run on 1 November 2026 processed only two callbacks (`0x9368` and `0x935c`) and linked 0/9 geometry sections. That run is a failed traversal, not a model result. The tool now seeds the playable-armour root and automatically discovers and seeds the validated roots of the opcode-5 transform forest, in addition to the DPC table entries. You do not need an extra option to enable this.
+The material below is retained as historical notes about the retired runner and its callback traversal work. Its GLB-placement outputs are superseded.
 
 ## What it does
 
