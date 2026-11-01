@@ -1,0 +1,76 @@
+name: Scout finalization candidate comparison
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "tools/scout-finalize.mjs"
+      - "tools/reconstruct-scout.mjs"
+      - "tools/export-dpc-armour-geometry.mjs"
+      - ".github/workflows/scout-finalize-candidates.yml"
+      - "original-data/units.ff"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Syntax-check Scout tools
+        run: |
+          node --check tools/scout-finalize.mjs
+          node --check tools/reconstruct-scout.mjs
+          node --check tools/export-dpc-armour-geometry.mjs
+
+      - name: Run complete one-command finalizer and all placement candidates
+        run: |
+          node tools/scout-finalize.mjs original-data/units.ff scout-final
+
+      - name: Upload final bundle and standalone candidates
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scout-final-candidates
+          path: |
+            scout-final.zip
+            scout-final/FINAL-REPORT.md
+            scout-final/FINAL-REPORT.json
+            scout-final/scout-candidate.glb
+            scout-final/geometry/*.glb
+            scout-final/geometry/*.json
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Publish readable comparison to a dedicated branch
+        if: always()
+        shell: bash
+        run: |
+          set -e
+          branch="scout-final-results-${GITHUB_RUN_ID}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch --orphan "$branch"
+          mkdir -p diagnostics/scout-final
+          if [ -f scout-final/FINAL-REPORT.md ]; then
+            cp scout-final/FINAL-REPORT.md diagnostics/scout-final/FINAL-REPORT.md
+          fi
+          if [ -f scout-final/FINAL-REPORT.json ]; then
+            cp scout-final/FINAL-REPORT.json diagnostics/scout-final/FINAL-REPORT.json
+          fi
+          for f in scout-final/geometry/*.json; do
+            [ -f "$f" ] && cp "$f" diagnostics/scout-final/
+          done
+          git add diagnostics/scout-final
+          git commit -m "Publish Scout final candidate comparison"
+          git push origin "HEAD:refs/heads/$branch"
