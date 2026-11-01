@@ -683,7 +683,7 @@ const md=[
   '## Geometry-to-callback mapping','',
   '| Section | Paired node callbacks | Matrix-bearing callbacks | Descriptor coordinate matches |',
   '|---|---:|---:|---|',
-  ...geometryLinks.map(x=>'| '+x.mesh+' | '+x.transformCallbackEvents+' | '+x.meshCallbackEvents+' | '+(x.descriptorCoordinateMatches.join(', ')||'none')+' |'),
+  ...geometryLinks.map(x=>'| '+x.mesh+' | '+x.transformNodeCallbackEvents+' | '+x.matrixTransformEvents+' | '+(x.descriptorPayloadMatches.join(', ')||'none')+' |'),
   '',
   '## Exported runtime candidates','',
   'The run compares 20 placement experiments. Descriptor-list callbacks are not treated as transform matrices: only opcode-5 matrix events or callbacks inheriting a non-root matrix frame count as callback transforms. Owner-anchor and additive placements remain experiments, not proven runtime transforms. Owner anchors are independently cross-checked against their paired transform-node vectors.','',
@@ -701,7 +701,7 @@ const md=[
   ...unresolved.slice(0,100).map(x=>'- '+JSON.stringify({...x,record:Number.isInteger(x.record)?hex(x.record):x.record,field:Number.isInteger(x.field)?hex(x.field):x.field})),
   '',
   '## Status','',
-  'This is a static callback-work-stack reconstruction candidate, not a bit-exact execution of the executable. Opcode 4 uses its inline record+0x14 child list, and opcode 9 uses its separate +0x10 list. The two helper routines and shared post-handler normalization tail remain explicitly unimplemented. The 20 GLBs compare geometry placement alternatives using callback events matched to the known nine geometry sections. A final Scout is only accepted after visual validation and resolution of the listed helper/context limitations.'
+  'This is a static callback-work-stack reconstruction candidate, not a bit-exact execution of the executable. All nine geometry sections now have descriptor-payload links and callback-node matches, but those geometry callbacks carry matrix ID 0; the opcode-5 transform hierarchy is a separate sibling branch and has not yet been associated with the geometry. Opcode 4 uses its inline record+0x14 child list, and opcode 9 uses its separate +0x10 list. The two helper routines and shared post-handler normalization tail remain unimplemented. The 20 GLBs are placement experiments, not a completed Scout. A final Scout is only accepted after transform-to-geometry association and visual validation.'
 ];
 fs.writeFileSync(path.join(outDir,'RUNTIME-REBUILD.md'),md.join('\n')+'\n');
 console.log('SCOUT RUNTIME REBUILD RUN COMPLETE — CANDIDATES EXPORTED');
