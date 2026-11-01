@@ -6,7 +6,7 @@
  *   node tools/scout-finalize.mjs original-data/units.ff scout-final --exe /path/to/outwars.exe
  *
  * Performs the callback/transform/executable audit, extracts scout_mj.dpc,
- * exports three geometry candidates, validates their GLB accessors and face
+ * exports five geometry candidates, validates their GLB accessors and face
  * counts, selects the owner-translated static candidate, writes final reports,
  * and packages everything. No further assistant-side interpretation is needed.
  *
@@ -168,7 +168,15 @@ function markdown(r){
     '',
     '## Placement',
     '',
-    'The primary candidate applies the eight owner/paired-node translations. The exporter checks equality of the paired-node and owner translation vectors before export. The root mesh remains at the origin. A separate reference-point-mapped candidate is retained for comparison, but is not selected as the primary result.',
+    'The owner-translated file is retained as a baseline export, not a confirmed final placement. Matching owner and paired-node translation vectors proves those fields agree; it does not prove that the shared coordinate-pool base or runtime matrix ownership is correct.',
+    '',
+    '## Coordinate-base comparison',
+    '',
+    '| Candidate | Meshes | Vertices | Triangles | Bounds |',
+    '|---|---:|---:|---:|---|',
+    ...Object.entries(r.geometry).map(([name,x])=>'| '+name+' | '+x.meshCount+' | '+x.totalVertices+' | '+x.totalTriangles+' | '+JSON.stringify(x.combinedBounds)+' |'),
+    '',
+    'The mesh-reference candidates apply the alternate vertex base stored at meshNode+28. This was omitted from the earlier pass and must be compared before selecting a final placement.',
     '',
     '## Runtime reconstruction boundary',
     '',
@@ -187,8 +195,8 @@ function markdown(r){
     '',
     '## Files',
     '',
-    '- scout-candidate.glb: primary owner-translated static candidate.',
-    '- geometry/: raw, owner-translated and reference-point-mapped alternatives and JSON sidecars.',
+    '- scout-candidate.glb: owner-translated baseline export; not a confirmed final placement.',
+    '- geometry/: shared-pool, owner-translated, reference-point-mapped, mesh-reference-base and mesh-reference-plus-owner-translation alternatives with JSON sidecars.',
     '- analysis/: complete integrated forensic report set.',
     '- FINAL-REPORT.json and FINAL-REPORT.md: machine-readable and human-readable summaries.',
     '- The adjacent ZIP contains the complete output directory.'
@@ -219,14 +227,20 @@ if(!fs.existsSync(exporter))throw new Error('Missing tools/export-dpc-armour-geo
 const raw=path.join(geometryDir,'scout-mj-raw-shared.glb');
 const owner=path.join(geometryDir,'scout-mj-owner-translated.glb');
 const ref=path.join(geometryDir,'scout-mj-reference-point-mapped.glb');
+const meshRef=path.join(geometryDir,'scout-mj-mesh-reference-base.glb');
+const meshRefOwner=path.join(geometryDir,'scout-mj-mesh-reference-owner-translated.glb');
 run('raw shared-pool geometry',process.execPath,[exporter,dpc,raw]);
 run('owner-translated geometry',process.execPath,[exporter,dpc,owner,'--apply-owner-translations']);
 run('reference-point-mapped comparison',process.execPath,[exporter,dpc,ref,'--apply-reference-point-mapping']);
+run('meshNode+28 vertex-reference geometry',process.execPath,[exporter,dpc,meshRef,'--use-mesh-vertex-reference']);
+run('meshNode+28 plus owner-translation geometry',process.execPath,[exporter,dpc,meshRefOwner,'--use-mesh-vertex-reference','--apply-owner-translations']);
 
 const geometry={
   rawSharedPool:validateGlb(raw),
   ownerTranslated:validateGlb(owner),
-  referencePointMapped:validateGlb(ref)
+  referencePointMapped:validateGlb(ref),
+  meshReferenceBase:validateGlb(meshRef),
+  meshReferenceOwnerTranslated:validateGlb(meshRefOwner)
 };
 const candidate=path.join(outDir,'scout-candidate.glb');
 fs.copyFileSync(owner,candidate);
@@ -256,14 +270,15 @@ const report={
   geometry,
   selectedCandidate:{
     file:candidate,
-    placement:'owner-translated',
-    reason:'The owner and paired-node translation vectors are checked for exact equality by the exporter for all eight submeshes.',
+    placement:'owner-translated-baseline-not-proven',
+    reason:'Retained for compatibility. Exact owner/paired-node vector equality is necessary evidence, but does not establish the correct vertex base or composed runtime transform. Compare all five geometry variants before treating any as final.',
     passed:geometry.ownerTranslated.passed
   },
-  status:geometry.ownerTranslated.passed?'STATIC_SCOUT_CANDIDATE_EXPORTED':'GEOMETRY_VALIDATION_FAILED',
+  status:Object.values(geometry).every(x=>x.passed)?'STATIC_CANDIDATES_EXPORTED_PLACEMENT_UNVERIFIED':'GEOMETRY_VALIDATION_FAILED',
   runtimeCompletion:{
     bitExact:false,
     unresolved:[
+      'Verified shared-pool versus meshNode+28 vertex-base interpretation',
       'Verified opcode-5 transform ownership for each mesh section',
       'Composed runtime matrices applied to each mesh',
       'Original UV and texture/material binding',
@@ -292,4 +307,4 @@ console.log('Meshes: '+geometry.ownerTranslated.meshCount+
 console.log('GLB validation: '+(geometry.ownerTranslated.passed?'PASS':'FAIL'));
 console.log('Report: '+path.join(outDir,'FINAL-REPORT.md'));
 console.log('Evidence bundle: '+archive);
-if(!geometry.ownerTranslated.passed)process.exitCode=1;
+if(!Object.values(geometry).every(x=>x.passed))process.exitCode=1;
