@@ -512,6 +512,42 @@ function eventFor(offset){
     return cs-as;
   })[0]||null;
 }
+
+// Preserve the callback route into each geometry descriptor. The descriptor
+// payload pointer is the strongest exact mesh-to-descriptor key; ancestry
+// tells us whether that descriptor was reached below an opcode-5 matrix.
+const eventsByRunRecord=new Map();
+for(const event of events){
+  const key=event.runId+':'+event.record;
+  if(!eventsByRunRecord.has(key))eventsByRunRecord.set(key,[]);
+  eventsByRunRecord.get(key).push(event);
+}
+function callbackAncestry(event){
+  const chain=[event],seen=new Set([event.entryId]);
+  let current=event;
+  for(let depth=0;depth<64&&current.source!==null;depth++){
+    const candidates=eventsByRunRecord.get(current.runId+':'+current.source)||[];
+    const parent=candidates.filter(x=>x.entryId<current.entryId&&!seen.has(x.entryId))
+      .sort((a,b)=>b.entryId-a.entryId)[0];
+    if(!parent)break;
+    chain.push(parent);seen.add(parent.entryId);current=parent;
+  }
+  return chain.reverse();
+}
+const descriptorExecutions=events.filter(e=>e.descriptorData).map(e=>{
+  const ancestry=callbackAncestry(e);
+  return{
+    ...e.descriptorData,
+    eventId:e.entryId,runId:e.runId,seedRecord:hex(e.seedRecord),
+    parentMatrixId:e.parentMatrix,position:e.position,scale:e.scale,
+    ancestry:ancestry.map(x=>({record:x.recordHex,opcode:x.opcode,eventId:x.entryId,parentMatrix:x.parentMatrix,matrixId:x.matrix?.matrixId??null,position:x.position})),
+    transformPath:ancestry.filter(x=>x.matrix).map(x=>({
+      record:x.recordHex,matrixId:x.matrix.matrixId,parentMatrixId:x.matrix.parentMatrixId,
+      localQ20_12:x.matrix.localQ20_12,worldMatrixCandidate:x.matrix.worldMatrixCandidate,
+      position:x.position,positionAfter:x.positionAfter??null
+    }))
+  };
+});
 function matrixForEvent(e){
   if(!e)return initialMatrixInfo.matrix;
   const id=e.matrix?.matrixId??e.parentMatrix;
@@ -559,6 +595,9 @@ const geometryLinks=meshes.map(mesh=>{
   const transformEvent=mesh.transformNode===null?null:eventFor(mesh.transformNode);
   const meshEvent=eventFor(mesh.meshNode);
   const chosen=transformEvent||meshEvent;
+  const payloadDescriptorExecutions=descriptorExecutions.filter(d=>d.payloadTarget===hex(mesh.faceStart));
+  const coordinateDescriptorExecutions=mesh.meshVertexReference===null?[]:descriptorExecutions.filter(d=>d.coordinateTarget===hex(mesh.meshVertexReference));
+  const geometryDescriptorEvent=payloadDescriptorExecutions.slice().sort((a,b)=>b.transformPath.length-a.transformPath.length||a.eventId-b.eventId)[0]||null;
   return{
     mesh:mesh.name,owner:hex(mesh.owner),meshNode:hex(mesh.meshNode),transformNode:mesh.transformNode===null?null:hex(mesh.transformNode),
     vertexBase:hex(mesh.vertexBase),faceStart:hex(mesh.faceStart),vertices:mesh.positions.length,quads:mesh.quads.length,
@@ -575,7 +614,10 @@ const geometryLinks=meshes.map(mesh=>{
     referencePoint:mesh.referencePoint,
     targetPoint:mesh.targetPoint,
     descriptorCoordinateMatches:mesh.meshVertexReference===null?[]:descriptorLeaves.filter(d=>d.coordinateTarget===hex(mesh.meshVertexReference)).map(d=>d.descriptor),
-    descriptorPayloadMatches:descriptorLeaves.filter(d=>d.payloadTarget===hex(mesh.faceStart)).map(d=>d.descriptor),
+    descriptorPayloadMatches:payloadDescriptorExecutions.map(d=>d.descriptor),
+    descriptorPayloadExecutions:payloadDescriptorExecutions.map(d=>({descriptor:d.descriptor,eventId:d.eventId,runId:d.runId,seedRecord:d.seedRecord,parentMatrixId:d.parentMatrixId,position:d.position,scale:d.scale,transformPath:d.transformPath.map(x=>({record:x.record,matrixId:x.matrixId,parentMatrixId:x.parentMatrixId,position:x.position,positionAfter:x.positionAfter}))})),
+    descriptorCoordinateExecutions:coordinateDescriptorExecutions.map(d=>({descriptor:d.descriptor,payloadTarget:d.payloadTarget,eventId:d.eventId,runId:d.runId,seedRecord:d.seedRecord,parentMatrixId:d.parentMatrixId,position:d.position,transformPath:d.transformPath.map(x=>x.record)})),
+    geometryDescriptorTransformPath:geometryDescriptorEvent?geometryDescriptorEvent.transformPath.map(x=>x.record):[],
     transformSource:transformEvent?(transformEvent.matrix||transformEvent.parentMatrix!==0?'paired matrix-bearing transform callback':'paired descriptor callback; no matrix frame applied'):meshEvent?(meshEvent.matrix||meshEvent.parentMatrix!==0?'mesh-node callback under matrix frame':'mesh-node callback; no matrix frame applied'):'no callback match'
   };
 });
@@ -653,6 +695,7 @@ const report={
   executable:{path:exePath,initialMatrix:initialMatrixInfo,initialScale:{value:initialScale,source:initialScaleOverride===0?'default 0; loader caller context remains a runtime parameter, override with --initial-scale':'command-line override'}},
   dispatchTable:callbackTargets.map((address,opcode)=>({opcode,handler:hex(address),name:callbackNames[opcode]})),
   descriptorLeaves,
+  descriptorExecutions,
   helperCalls,
   simulationLimitations:[
     'Opcode-0 handler calls 0x4e59c8; this helper is logged but not emulated.',
@@ -684,6 +727,8 @@ const workCsv=[['entryId','runId','seedRecord','record','opcode','classWord','ha
 fs.writeFileSync(path.join(outDir,'callback-work-stack.csv'),workCsv.map(r=>r.map(csv).join(',')).join('\n')+'\n');
 const descriptorCsv=[['descriptor','coordinateTarget','sharedTarget','payloadTarget','payloadCount','helper'],...descriptorLeaves.map(x=>[x.descriptor,x.coordinateTarget,x.sharedTarget,x.payloadTarget,x.payloadCount,x.helper])];
 fs.writeFileSync(path.join(outDir,'descriptor-payload-links.csv'),descriptorCsv.map(r=>r.map(csv).join(',')).join('\n')+'\n');
+const ancestryCsv=[['mesh','faceStart','descriptor','eventId','runId','seedRecord','parentMatrixId','position','scale','transformPath','callbackAncestry'],...geometryLinks.flatMap(m=>m.descriptorPayloadExecutions.map(d=>[m.mesh,m.faceStart,d.descriptor,d.eventId,d.runId,d.seedRecord,d.parentMatrixId,JSON.stringify(d.position),d.scale,d.transformPath.map(x=>x.record).join('>'),JSON.stringify(d.ancestry??[])]))];
+fs.writeFileSync(path.join(outDir,'geometry-callback-ancestry.csv'),ancestryCsv.map(r=>r.map(csv).join(',')).join('\n')+'\n');
 const linkCsv=[['mesh','owner','meshNode','transformNode','meshVertexReference','referencePoint','targetPoint','descriptorCoordinateMatches','descriptorPayloadMatches','meshCallbackEvents','transformNodeCallbackEvents','matrixTransformEvents','selectedEvent','selectedEventRecord','selectedMatrixId','selectedPosition','transformSource'],...geometryLinks.map(x=>[x.mesh,x.owner,x.meshNode,x.transformNode,x.meshVertexReference,JSON.stringify(x.referencePoint),JSON.stringify(x.targetPoint),x.descriptorCoordinateMatches.join(';'),x.descriptorPayloadMatches.join(';'),x.meshCallbackEvents,x.transformNodeCallbackEvents,x.matrixTransformEvents,x.selectedEvent,x.selectedEventRecord,x.selectedMatrixId,JSON.stringify(x.selectedPosition),x.transformSource])];
 fs.writeFileSync(path.join(outDir,'geometry-callback-links.csv'),linkCsv.map(r=>r.map(csv).join(',')).join('\n')+'\n');
 const md=[
