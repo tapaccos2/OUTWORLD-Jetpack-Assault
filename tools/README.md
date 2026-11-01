@@ -210,7 +210,7 @@ node tools/scout-runtime-rebuild.mjs \
   --exe /home/tapaccos/Outwars-extracted/outwars.exe
 ```
 
-It extracts `scout_mj.dpc` from `units.ff`, follows the top-level record table, seeds the playable-armour root and automatically discovered opcode-5 transform roots, follows the callback work stack, records descriptor-to-payload links, cross-references the nine established geometry sections, and exports 20 placement candidates. The executable argument is recommended because it also inspects the initial matrix and loader context helper. The first run that only reached two callbacks was a failed traversal; the tool has since been corrected to seed the transform forest automatically.
+It extracts `scout_mj.dpc` from `units.ff`, follows the top-level record table, seeds the playable-armour root and automatically discovered opcode-5 transform roots, follows the callback work stack, traces exact face-payload descriptors back through their callback ancestry, reports whether each geometry descriptor has an opcode-5 ancestor, tests reference-point-to-target-point placement, and exports 24 comparative candidates. It also writes `geometry-callback-ancestry.csv` for the full mesh-to-callback audit. The executable argument is recommended because it also inspects the initial matrix and loader context helper. The first run that only reached two callbacks was a failed traversal; the tool has since been corrected to seed the transform forest automatically.
 
 See [SCOUT-RUNTIME-REBUILD.md](../original-data/SCOUT-RUNTIME-REBUILD.md) for the command, output files, tested callback layouts and remaining execution gaps. The generated GLBs are candidates until one is visually recognisable and independently checked.
 
