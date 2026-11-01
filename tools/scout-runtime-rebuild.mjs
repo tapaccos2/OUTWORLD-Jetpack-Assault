@@ -543,7 +543,8 @@ const geometryLinks=meshes.map(mesh=>{
     mesh:mesh.name,owner:hex(mesh.owner),meshNode:hex(mesh.meshNode),transformNode:mesh.transformNode===null?null:hex(mesh.transformNode),
     vertexBase:hex(mesh.vertexBase),faceStart:hex(mesh.faceStart),vertices:mesh.positions.length,quads:mesh.quads.length,
     meshCallbackEvents:(eventMap.get(String(mesh.meshNode))||[]).length,
-    transformCallbackEvents:mesh.transformNode===null?0:(eventMap.get(String(mesh.transformNode))||[]).length,
+    transformNodeCallbackEvents:mesh.transformNode===null?0:(eventMap.get(String(mesh.transformNode))||[]).length,
+    matrixTransformEvents:mesh.transformNode===null?0:(eventMap.get(String(mesh.transformNode))||[]).filter(x=>Boolean(x.matrix)||x.parentMatrix!==0).length,
     selectedEvent:chosen?chosen.entryId:null,selectedEventRecord:chosen?hex(chosen.record):null,
     selectedMatrixId:chosen?(chosen.matrix?.matrixId??chosen.parentMatrix):null,
     selectedPosition:chosen?(chosen.positionAfter||chosen.position):null,
@@ -555,7 +556,7 @@ const geometryLinks=meshes.map(mesh=>{
     targetPoint:mesh.targetPoint,
     descriptorCoordinateMatches:mesh.meshVertexReference===null?[]:descriptorLeaves.filter(d=>d.coordinateTarget===hex(mesh.meshVertexReference)).map(d=>d.descriptor),
     descriptorPayloadMatches:descriptorLeaves.filter(d=>d.payloadTarget===hex(mesh.faceStart)).map(d=>d.descriptor),
-    transformSource:transformEvent?'paired transform-node callback':meshEvent?'mesh-node callback':'no callback match'
+    transformSource:transformEvent?(transformEvent.matrix||transformEvent.parentMatrix!==0?'paired matrix-bearing transform callback':'paired descriptor callback; no matrix frame applied'):meshEvent?(meshEvent.matrix||meshEvent.parentMatrix!==0?'mesh-node callback under matrix frame':'mesh-node callback; no matrix frame applied'):'no callback match'
   };
 });
 function buildGlb(file,convention){
@@ -576,7 +577,9 @@ function buildGlb(file,convention){
     else if(convention.positionSource==='accumulated-plus-owner')pos=accumulated.map((v,i)=>v+ownerAnchor[i]);
     else if(convention.positionSource==='matrix-output-plus-owner')pos=matrixOutput.map((v,i)=>v+ownerAnchor[i]);
     else pos=accumulated;
-    const callbackTransformApplied=e!==null;
+    // Descriptor/list events are not transforms. Count only an opcode-5 matrix
+    // event or a callback inheriting a non-root matrix frame.
+    const callbackTransformApplied=Boolean(e&&(e.matrix||e.parentMatrix!==0));
     const placementApplied=callbackTransformApplied||pos.some(v=>v!==0);
     const transformed=mesh.positions.map(p=>placementApplied?applyTransform(p,M,pos,convention):p);
     const indices=mesh.indices;
@@ -648,9 +651,10 @@ const report={
   conclusion:{
     status:truncated?'CALLBACK_RUN_LIMIT_REACHED': 'CALLBACK_RUN_COMPLETED',
     assembledScoutClaimed:false,
-    matchedGeometryTransforms:geometryLinks.filter(x=>x.transformSource!=='no callback match').length,
+    matchedGeometryCallbackNodes:geometryLinks.filter(x=>x.transformSource!=='no callback match').length,
     geometrySections:meshes.length,
-    message:'This run follows the executable callback work-stack and maps legacy geometry sections to callback executions where record offsets match. The exported GLBs are runtime-derived candidates; visual verification is still required. If fewer than nine geometry sections match callbacks, the remaining links need an executable-confirmed registration path rather than a guessed transform.'
+    matrixBearingGeometryCallbacks:geometryLinks.filter(x=>x.matrixTransformEvents>0).length,
+    message:'The callback graph and descriptor payload links are recovered, but the nine geometry callback records are descriptor/list callbacks under matrix ID 0. The opcode-5 transform hierarchy is a separate sibling branch and has not yet been associated with the geometry sections. The exported GLBs are placement experiments, not an assembled Scout.'
   }
 };
 fs.writeFileSync(path.join(outDir,'runtime-rebuild.json'),JSON.stringify(report,null,2)+'\n');
@@ -659,7 +663,7 @@ const workCsv=[['entryId','runId','seedRecord','record','opcode','classWord','ha
 fs.writeFileSync(path.join(outDir,'callback-work-stack.csv'),workCsv.map(r=>r.map(csv).join(',')).join('\n')+'\n');
 const descriptorCsv=[['descriptor','coordinateTarget','sharedTarget','payloadTarget','payloadCount','helper'],...descriptorLeaves.map(x=>[x.descriptor,x.coordinateTarget,x.sharedTarget,x.payloadTarget,x.payloadCount,x.helper])];
 fs.writeFileSync(path.join(outDir,'descriptor-payload-links.csv'),descriptorCsv.map(r=>r.map(csv).join(',')).join('\n')+'\n');
-const linkCsv=[['mesh','owner','meshNode','transformNode','meshVertexReference','referencePoint','targetPoint','descriptorCoordinateMatches','descriptorPayloadMatches','meshCallbackEvents','transformCallbackEvents','selectedEvent','selectedEventRecord','selectedMatrixId','selectedPosition','transformSource'],...geometryLinks.map(x=>[x.mesh,x.owner,x.meshNode,x.transformNode,x.meshVertexReference,JSON.stringify(x.referencePoint),JSON.stringify(x.targetPoint),x.descriptorCoordinateMatches.join(';'),x.descriptorPayloadMatches.join(';'),x.meshCallbackEvents,x.transformCallbackEvents,x.selectedEvent,x.selectedEventRecord,x.selectedMatrixId,JSON.stringify(x.selectedPosition),x.transformSource])];
+const linkCsv=[['mesh','owner','meshNode','transformNode','meshVertexReference','referencePoint','targetPoint','descriptorCoordinateMatches','descriptorPayloadMatches','meshCallbackEvents','transformNodeCallbackEvents','matrixTransformEvents','selectedEvent','selectedEventRecord','selectedMatrixId','selectedPosition','transformSource'],...geometryLinks.map(x=>[x.mesh,x.owner,x.meshNode,x.transformNode,x.meshVertexReference,JSON.stringify(x.referencePoint),JSON.stringify(x.targetPoint),x.descriptorCoordinateMatches.join(';'),x.descriptorPayloadMatches.join(';'),x.meshCallbackEvents,x.transformNodeCallbackEvents,x.matrixTransformEvents,x.selectedEvent,x.selectedEventRecord,x.selectedMatrixId,JSON.stringify(x.selectedPosition),x.transformSource])];
 fs.writeFileSync(path.join(outDir,'geometry-callback-links.csv'),linkCsv.map(r=>r.map(csv).join(',')).join('\n')+'\n');
 const md=[
   '# Scout runtime callback rebuild','',
@@ -667,7 +671,7 @@ const md=[
   '- Top-level DPC records: '+tableCount,'- Validated opcode-5 transform records: '+transformRecords.length,'- Opcode-5 transform roots: '+transformRoots.map(hex).join(', '),'- Callback seed records: '+seedOffsets.map(hex).join(', '),'- Work entries processed: '+processed,'- Entries remaining: '+work.length,'- Callback events: '+events.length,
   '- Distinct record/state combinations: '+visitedCounts.size,'- Queue edges: '+edgeRows.length,
   '- Leaf callback entries: '+leafRecords.length,'- Descriptor leaves decoded: '+descriptorLeaves.length,'- Unique descriptor payload targets: '+new Set(descriptorLeaves.map(x=>x.payloadTarget).filter(Boolean)).size,'- Unresolved edges: '+unresolved.length,'- Helper calls logged: '+helperCalls.length,
-  '- Geometry sections: '+meshes.length,'- Callback-linked sections: '+geometryLinks.filter(x=>x.transformSource!=='no callback match').length,
+  '- Geometry sections: '+meshes.length,'- Geometry sections with callback-node matches: '+geometryLinks.filter(x=>x.transformSource!=='no callback match').length,'- Sections with matrix-bearing transform callbacks: '+geometryLinks.filter(x=>x.matrixTransformEvents>0).length,
   '- Owner/paired translation invariants: '+meshes.filter(m=>m.transformNode!==null).length+'/'+(meshes.length-1)+' matched',
   '- Executable disassembly bridge: '+executableBridge.status,
   '',
@@ -677,13 +681,13 @@ const md=[
   ...Array.from({length:14},(_,i)=>'| '+i+' | '+callbackNames[i]+' ('+hex(callbackTargets[i])+') | '+(callbackCounts[i]||0)+' |'),
   '',
   '## Geometry-to-callback mapping','',
-  '| Section | Transform callback | Mesh callback | Descriptor coordinate matches |',
+  '| Section | Paired node callbacks | Matrix-bearing callbacks | Descriptor coordinate matches |',
   '|---|---:|---:|---|',
   ...geometryLinks.map(x=>'| '+x.mesh+' | '+x.transformCallbackEvents+' | '+x.meshCallbackEvents+' | '+(x.descriptorCoordinateMatches.join(', ')||'none')+' |'),
   '',
   '## Exported runtime candidates','',
-  'The run compares 20 candidate combinations: two matrix orientations, two placements of translation, and five translation sources (accumulated callback state, matrix-transformed position, owner anchor, and the two additive combinations). A placement applied from an owner anchor is not labelled a callback transform. Callback transform counts and candidate-placement counts are reported separately. Owner anchors are independently cross-checked against their paired transform-node vectors.','',
-  ...variants.map(v=>'- '+v.output+' — '+v.callbackTransformAppliedCount+'/'+v.meshCount+' sections callback-linked; '+v.placementAppliedCount+'/'+v.meshCount+' sections have candidate placement applied'),
+  'The run compares 20 placement experiments. Descriptor-list callbacks are not treated as transform matrices: only opcode-5 matrix events or callbacks inheriting a non-root matrix frame count as callback transforms. Owner-anchor and additive placements remain experiments, not proven runtime transforms. Owner anchors are independently cross-checked against their paired transform-node vectors.','',
+  ...variants.map(v=>'- '+v.output+' — '+v.callbackTransformAppliedCount+'/'+v.meshCount+' sections have matrix-bearing callback transforms; '+v.placementAppliedCount+'/'+v.meshCount+' sections have candidate placement applied'),
   '',
   '## Descriptor-to-payload links','',
   '| Descriptor | Coordinate target | Payload target | Count |','|---:|---:|---:|---:|',
