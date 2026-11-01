@@ -270,3 +270,16 @@ node tools/scout-runtime-bridge.mjs \
 ```
 
 This reuses the maintained part-graph, opcode-2 callback-chain, transform-attachment, and opcode-5 decoders. It traces exact relocated DPC pointers and scans executable disassembly for functions referencing the callback scratch globals written by opcodes 1 and 2. The ZIP contains per-node pointer traces, exact pointer edges, descriptor-owner joins, and executable cross-references. These are leads for runtime-consumer analysis, not proof of rendering or final placement. Existing output is preserved and a numbered folder is selected automatically.
+
+## Scout opcode dispatch audit
+
+Run from the repository root:
+
+```sh
+node tools/scout-dispatch-audit.mjs \
+  original-data/units.ff \
+  scout-dispatch \
+  --exe /home/tapaccos/Outwars-extracted/outwars.exe
+```
+
+This reads the executable's PE32 section table, locates the opcode switch's indexed DWORD jump table in the actual file bytes, decodes each case target, and matches exact handler addresses against callback targets recorded in Scout DPC opcode-2 entries. It also writes short disassembly windows for every case and lists all references to the callback scratch-table globals. The output ZIP includes the dispatch map and exact callback joins. Address matches establish dispatch routing only; they do not alone prove rendering semantics or final placement.
