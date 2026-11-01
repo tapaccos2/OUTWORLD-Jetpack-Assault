@@ -229,9 +229,9 @@ function pushListChildren(record,offset,count,entry,handler,fieldMode='relocated
   }
   return out;
 }
-// The executable parser iterates the DPC top-level pointer table and invokes
-// the callback dispatcher once for each record. Reproduce that entry route,
-// rather than starting only at the playable-armour root.
+// Reproduce both entry routes found for this resource: the DPC top-level
+// pointer table and the playable-armour/transform-root hierarchy. The first
+// run showed that the top-level table alone is not the Scout transform graph.
 const tableCount=u32(32)??0,topLevelRecords=[];
 if(tableCount>0&&tableCount<=8192&&inRange(36,tableCount*4)){
   for(let i=0;i<tableCount;i++){
