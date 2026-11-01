@@ -90,6 +90,68 @@ function accessor(gltf,bin,id){
   }
   return{meta:a,values};
 }
+function multiply4(a,b){
+  const out=new Array(16).fill(0);
+  for(let col=0;col<4;col++)for(let row=0;row<4;row++)
+    for(let k=0;k<4;k++)out[col*4+row]+=a[k*4+row]*b[col*4+k];
+  return out;
+}
+function nodeLocalMatrix(node){
+  if(Array.isArray(node.matrix)&&node.matrix.length===16)return node.matrix.slice();
+  const t=node.translation||[0,0,0],s=node.scale||[1,1,1],q=node.rotation||[0,0,0,1];
+  const [x,y,z,w]=q,xx=x*x,yy=y*y,zz=z*z,xy=x*y,xz=x*z,yz=y*z,wx=w*x,wy=w*y,wz=w*z;
+  return [
+    (1-2*(yy+zz))*s[0],(2*(xy+wz))*s[0],(2*(xz-wy))*s[0],0,
+    (2*(xy-wz))*s[1],(1-2*(xx+zz))*s[1],(2*(yz+wx))*s[1],0,
+    (2*(xz+wy))*s[2],(2*(yz-wx))*s[2],(1-2*(xx+yy))*s[2],0,
+    t[0],t[1],t[2],1
+  ];
+}
+function transformPoint(m,v){
+  const x=v[0],y=v[1],z=v[2];
+  const w=m[3]*x+m[7]*y+m[11]*z+m[15];
+  const p=[
+    m[0]*x+m[4]*y+m[8]*z+m[12],
+    m[1]*x+m[5]*y+m[9]*z+m[13],
+    m[2]*x+m[6]*y+m[10]*z+m[14]
+  ];
+  return w&&w!==1?p.map(x=>x/w):p;
+}
+function worldBoundsForMesh(gltf,meshIndex,points){
+  const roots=gltf.scenes?.[gltf.scene??0]?.nodes||[];
+  const instances=[],path=new Set();
+  function visit(nodeIndex,parentMatrix){
+    if(path.has(nodeIndex))throw new Error('GLB node cycle at '+nodeIndex);
+    const node=gltf.nodes?.[nodeIndex];
+    if(!node)throw new Error('GLB scene references missing node '+nodeIndex);
+    path.add(nodeIndex);
+    const world=multiply4(parentMatrix,nodeLocalMatrix(node));
+    if(node.mesh===meshIndex){
+      const min=[Infinity,Infinity,Infinity],max=[-Infinity,-Infinity,-Infinity];
+      let invalid=0;
+      for(const point of points){
+        const p=transformPoint(world,point);
+        if(p.some(x=>!Number.isFinite(x))){invalid++;continue;}
+        for(let k=0;k<3;k++){min[k]=Math.min(min[k],p[k]);max[k]=Math.max(max[k],p[k]);}
+      }
+      instances.push({nodeIndex,nodeName:node.name||null,worldMatrix:world,min,max,invalidValues:invalid});
+    }
+    for(const child of node.children||[])visit(child,world);
+    path.delete(nodeIndex);
+  }
+  const identity=[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
+  for(const root of roots)visit(root,identity);
+  if(!roots.length){
+    const parents=new Set((gltf.nodes||[]).flatMap(n=>n.children||[]));
+    for(let i=0;i<(gltf.nodes||[]).length;i++)if(!parents.has(i))visit(i,identity);
+  }
+  if(!instances.length)return{instanceCount:0,min:null,max:null,instances:[]};
+  const min=[Infinity,Infinity,Infinity],max=[-Infinity,-Infinity,-Infinity];
+  for(const instance of instances)for(let k=0;k<3;k++){
+    min[k]=Math.min(min[k],instance.min[k]);max[k]=Math.max(max[k],instance.max[k]);
+  }
+  return{instanceCount:instances.length,min,max,instances};
+}
 function validateGlb(file){
   const {gltf,bin}=parseGlb(file);
   const side=readJson(file.replace(/\.glb$/i,'.json'));
@@ -101,10 +163,10 @@ function validateGlb(file){
     const idx=accessor(gltf,bin,p.indices);
     const points=pos.values,indices=idx.values,source=side.meshes?.[i]||{};
     let invalid=0,degenerate=0;
-    const min=[Infinity,Infinity,Infinity],max=[-Infinity,-Infinity,-Infinity];
+    const localMin=[Infinity,Infinity,Infinity],localMax=[-Infinity,-Infinity,-Infinity];
     for(const v of points){
       if(!Array.isArray(v)||v.length!==3||v.some(x=>!Number.isFinite(x))){invalid++;continue;}
-      for(let k=0;k<3;k++){min[k]=Math.min(min[k],v[k]);max[k]=Math.max(max[k],v[k]);}
+      for(let k=0;k<3;k++){localMin[k]=Math.min(localMin[k],v[k]);localMax[k]=Math.max(localMax[k],v[k]);}
     }
     for(let t=0;t+2<indices.length;t+=3){
       const a=indices[t],b=indices[t+1],c=indices[t+2];
@@ -120,27 +182,44 @@ function validateGlb(file){
       problems.push(m.name+': index/quad/triangle count mismatch');
     if(source.sourceFaceRecordCount!==undefined&&source.sourceFaceRecordCount!==quads*2)
       problems.push(m.name+': source face records do not form the observed duplicate pairs');
-    if(invalid)problems.push(m.name+': '+invalid+' invalid values');
+    if(invalid)problems.push(m.name+': '+invalid+' invalid local values or indices');
     if(degenerate>triangles*0.5+1)problems.push(m.name+': more than half the triangles have repeated indices');
+    const world=worldBoundsForMesh(gltf,i,points);
+    if(!world.instanceCount)problems.push(m.name+': mesh is not reachable from the active GLB scene');
+    if(world.instances.some(x=>x.invalidValues))problems.push(m.name+': invalid transformed world-space positions');
+    const localBounds={min:localMin,max:localMax,size:localMax.map((x,k)=>x-localMin[k])};
+    const worldBounds=world.min?{min:world.min,max:world.max,size:world.max.map((x,k)=>x-world.min[k])}:null;
     rows.push({
       name:m.name,vertices:points.length,triangles,
       sourceFaceRecords:source.sourceFaceRecordCount??null,
-      uniqueQuads:quads,
-      bounds:{min,max,size:max.map((x,k)=>x-min[k])},
+      uniqueQuads:quads,localBounds,worldBounds,
+      bounds:worldBounds,
+      nodeInstanceCount:world.instanceCount,
+      worldMatrices:world.instances.map(x=>({nodeIndex:x.nodeIndex,nodeName:x.nodeName,matrix:x.worldMatrix})),
       indexMin:indices.length?Math.min(...indices):null,
       indexMax:indices.length?Math.max(...indices):null,
       invalidValues:invalid,degenerateIndexTriangles:degenerate
     });
   }
   if(rows.length!==9)problems.push('Expected 9 playable-armour mesh sections; found '+rows.length);
-  const min=[Infinity,Infinity,Infinity],max=[-Infinity,-Infinity,-Infinity];
-  for(const row of rows)for(let k=0;k<3;k++){
-    min[k]=Math.min(min[k],row.bounds.min[k]);max[k]=Math.max(max[k],row.bounds.max[k]);
-  }
+  const combine=(field)=>{
+    const min=[Infinity,Infinity,Infinity],max=[-Infinity,-Infinity,-Infinity];
+    let count=0;
+    for(const row of rows){
+      const bounds=row[field];
+      if(!bounds)continue;
+      count++;
+      for(let k=0;k<3;k++){min[k]=Math.min(min[k],bounds.min[k]);max[k]=Math.max(max[k],bounds.max[k]);}
+    }
+    return count?{min,max,size:max.map((x,k)=>x-min[k])}:null;
+  };
   return{
     file,meshCount:rows.length,totalVertices:rows.reduce((s,x)=>s+x.vertices,0),
     totalTriangles:rows.reduce((s,x)=>s+x.triangles,0),
-    combinedBounds:{min,max,size:max.map((x,k)=>x-min[k])},
+    localCombinedBounds:combine('localBounds'),
+    combinedBounds:combine('worldBounds'),
+    validationSpace:'world-space (GLB node matrix/TRS and parent hierarchy applied)',
+    activeScene:gltf.scene??0,
     meshes:rows,passed:problems.length===0,problems
   };
 }
@@ -168,11 +247,11 @@ function markdown(r){
     '',
     '## Placement',
     '',
-    'The owner-translated file is retained as a baseline export, not a confirmed final placement. Matching owner and paired-node translation vectors proves those fields agree; it does not prove that the shared coordinate-pool base or runtime matrix ownership is correct.',
+    'Bounds in this report are world-space bounds: every GLB node matrix or TRS transform is applied, including parent transforms. Local-space bounds are also reported separately. This corrects the prior validator, which ignored node translations.',
     '',
     '## Coordinate-base comparison',
     '',
-    '| Candidate | Meshes | Vertices | Triangles | Bounds |',
+    '| Candidate | Meshes | Vertices | Triangles | World-space bounds |',
     '|---|---:|---:|---:|---|',
     ...Object.entries(r.geometry).map(([name,x])=>'| '+name+' | '+x.meshCount+' | '+x.totalVertices+' | '+x.totalTriangles+' | '+JSON.stringify(x.combinedBounds)+' |'),
     '',
@@ -189,13 +268,15 @@ function markdown(r){
     '',
     ...(g.problems.length?g.problems.map(x=>'- FAIL: '+x):[
       '- All nine mesh sections passed GLB/index-bound checks.',
+      '- World-space bounds include every active-scene node matrix/TRS and parent transform.',
+      '- This is structural validation only; bounds do not establish anatomical correctness or select a winning placement.'
       '- Each source face-record count matches the observed two-record-per-unique-quad pattern.',
       '- Triangle counts agree with the exported unique quad counts.'
     ]),
     '',
     '## Files',
     '',
-    '- scout-candidate.glb: owner-translated baseline export; not a confirmed final placement.',
+    '- scout-candidate.glb: owner-translated comparison baseline; not a selected or verified final placement.',
     '- geometry/: shared-pool, owner-translated, reference-point-mapped, mesh-reference-base and mesh-reference-plus-owner-translation alternatives with JSON sidecars.',
     '- analysis/: complete integrated forensic report set.',
     '- FINAL-REPORT.json and FINAL-REPORT.md: machine-readable and human-readable summaries.',
