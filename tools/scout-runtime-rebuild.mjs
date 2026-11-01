@@ -458,7 +458,7 @@ function readQuads(start,count,label){
   for(const q of out){if(new Set(q).size<3)continue;const k=q.slice().sort((a,c)=>a-c).join(',');if(!seen.has(k)){seen.add(k);dedup.push(q);}}
   return dedup;
 }
-function readMesh(name,owner,meshNode,transformNode,vertexBase,faceStart,faceCount,anchor=[0,0,0]){
+function readMesh(name,owner,meshNode,transformNode,vertexBase,faceStart,faceCount,anchor=[0,0,0],meshVertexReference=null,referencePoint=null,targetPoint=null,pairedPosition=null){
   const quads=readQuads(faceStart,faceCount,name),srcIds=[...new Set(quads.flat())].sort((a,c)=>a-c);
   const positions=srcIds.map(i=>{
     const p=vertexBase+i*8;if(!inRange(p,6))throw new Error(name+': vertex '+i+' out of range');
@@ -467,7 +467,7 @@ function readMesh(name,owner,meshNode,transformNode,vertexBase,faceStart,faceCou
   const indexMap=new Map(srcIds.map((v,i)=>[v,i]));
   const indices=[];
   for(const q of quads)indices.push(indexMap.get(q[0]),indexMap.get(q[1]),indexMap.get(q[2]),indexMap.get(q[0]),indexMap.get(q[2]),indexMap.get(q[3]));
-  return{name,owner,meshNode,transformNode,vertexBase,faceStart,quads,sourceIndices:srcIds,positions,indices,anchor};
+  return{name,owner,meshNode,transformNode,vertexBase,faceStart,quads,sourceIndices:srcIds,positions,indices,anchor,meshVertexReference,referencePoint,targetPoint,pairedPosition};
 }
 const meshes=[];
 const rootVertex=ptr(rootNode+28),rootFaces=ptr(rootNode+36);
@@ -485,7 +485,11 @@ for(let i=0;i<owners.length;i++){
   const ownerPosition=[s32(owner+8),s32(owner+12),s32(owner+16)];
   const pairedPosition=[s32(transformNode+32),s32(transformNode+36),s32(transformNode+40)];
   if(ownerPosition.some((v,k)=>v!==pairedPosition[k]))throw new Error('Part '+(i+1)+' owner/paired translation invariant failed');
-  meshes.push(readMesh('submesh_'+(i+1),owner,meshNode,transformNode,vertex,faces,26,ownerPosition));
+  const meshVertexReference=ptr(meshNode+28);
+  const referencePoint=meshVertexReference!==null&&inRange(meshVertexReference,6)
+    ?[s16(meshVertexReference),s16(meshVertexReference+2),s16(meshVertexReference+4)]:null;
+  const targetPoint=[s32(meshNode+56),s32(meshNode+60),s32(meshNode+64)];
+  meshes.push(readMesh('submesh_'+(i+1),owner,meshNode,transformNode,vertex,faces,26,ownerPosition,meshVertexReference,referencePoint,targetPoint,pairedPosition));
 }
 
 // Correlate each raw geometry section with the work-stack event for its mesh
@@ -542,6 +546,12 @@ const geometryLinks=meshes.map(mesh=>{
     selectedPosition:chosen?(chosen.positionAfter||chosen.position):null,
     matrixOutputPosition:chosen?matrixPositions.get(chosen.matrix?.matrixId??chosen.parentMatrix)??null:null,
     ownerAnchor:mesh.anchor,
+    pairedPosition:mesh.pairedPosition??null,
+    meshVertexReference:mesh.meshVertexReference===null?null:hex(mesh.meshVertexReference),
+    referencePoint:mesh.referencePoint,
+    targetPoint:mesh.targetPoint,
+    descriptorCoordinateMatches:descriptorLeaves.filter(d=>d.coordinateTarget=== (mesh.meshVertexReference===null?null:hex(mesh.meshVertexReference))).map(d=>d.descriptor),
+    descriptorPayloadMatches:descriptorLeaves.filter(d=>d.payloadTarget===hex(mesh.faceStart)).map(d=>d.descriptor),
     transformSource:transformEvent?'paired transform-node callback':meshEvent?'mesh-node callback':'no callback match'
   };
 });
@@ -646,7 +656,7 @@ const workCsv=[['entryId','runId','seedRecord','record','opcode','classWord','ha
 fs.writeFileSync(path.join(outDir,'callback-work-stack.csv'),workCsv.map(r=>r.map(csv).join(',')).join('\n')+'\n');
 const descriptorCsv=[['descriptor','coordinateTarget','sharedTarget','payloadTarget','payloadCount','helper'],...descriptorLeaves.map(x=>[x.descriptor,x.coordinateTarget,x.sharedTarget,x.payloadTarget,x.payloadCount,x.helper])];
 fs.writeFileSync(path.join(outDir,'descriptor-payload-links.csv'),descriptorCsv.map(r=>r.map(csv).join(',')).join('\n')+'\n');
-const linkCsv=[['mesh','owner','meshNode','transformNode','meshCallbackEvents','transformCallbackEvents','selectedEvent','selectedEventRecord','selectedMatrixId','selectedPosition','transformSource'],...geometryLinks.map(x=>[x.mesh,x.owner,x.meshNode,x.transformNode,x.meshCallbackEvents,x.transformCallbackEvents,x.selectedEvent,x.selectedEventRecord,x.selectedMatrixId,JSON.stringify(x.selectedPosition),x.transformSource])];
+const linkCsv=[['mesh','owner','meshNode','transformNode','meshVertexReference','referencePoint','targetPoint','descriptorCoordinateMatches','descriptorPayloadMatches','meshCallbackEvents','transformCallbackEvents','selectedEvent','selectedEventRecord','selectedMatrixId','selectedPosition','transformSource'],...geometryLinks.map(x=>[x.mesh,x.owner,x.meshNode,x.transformNode,x.meshVertexReference,JSON.stringify(x.referencePoint),JSON.stringify(x.targetPoint),x.descriptorCoordinateMatches.join(';'),x.descriptorPayloadMatches.join(';'),x.meshCallbackEvents,x.transformCallbackEvents,x.selectedEvent,x.selectedEventRecord,x.selectedMatrixId,JSON.stringify(x.selectedPosition),x.transformSource])];
 fs.writeFileSync(path.join(outDir,'geometry-callback-links.csv'),linkCsv.map(r=>r.map(csv).join(',')).join('\n')+'\n');
 const md=[
   '# Scout runtime callback rebuild','',
@@ -664,9 +674,9 @@ const md=[
   ...Array.from({length:14},(_,i)=>'| '+i+' | '+callbackNames[i]+' ('+hex(callbackTargets[i])+') | '+(callbackCounts[i]||0)+' |'),
   '',
   '## Geometry-to-callback mapping','',
-  '| Section | Transform callback | Mesh callback | Applied transform |',
+  '| Section | Transform callback | Mesh callback | Descriptor coordinate matches |',
   '|---|---:|---:|---|',
-  ...geometryLinks.map(x=>'| '+x.mesh+' | '+x.transformCallbackEvents+' | '+x.meshCallbackEvents+' | '+x.transformSource+' |'),
+  ...geometryLinks.map(x=>'| '+x.mesh+' | '+x.transformCallbackEvents+' | '+x.meshCallbackEvents+' | '+(x.descriptorCoordinateMatches.join(', ')||'none')+' |'),
   '',
   '## Exported runtime candidates','',
   'The run compares 20 candidate combinations: two matrix orientations, two placements of translation, and five translation sources (accumulated callback state, matrix-transformed position, owner anchor, and the two additive combinations). A placement applied from an owner anchor is not labelled a callback transform. Callback transform counts and candidate-placement counts are reported separately. Owner anchors are independently cross-checked against their paired transform-node vectors.','',
