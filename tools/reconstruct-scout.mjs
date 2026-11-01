@@ -187,7 +187,20 @@ const manifest={
   }
 };
 fs.writeFileSync(path.join(outDir,'reconstruction-manifest.json'),JSON.stringify(manifest,null,2)+'\n');
+
+// Package every audit output into one uploadable evidence bundle when the
+// standard zip utility is available. The archive sits beside the output folder.
+const evidenceArchive=path.resolve(outDir+'.zip');
+const zipProbe=spawnSync('zip',['-v'],{encoding:'utf8',maxBuffer:1024*1024});
+let archiveStatus='unavailable';
+if(zipProbe.status===0){
+  const zipped=spawnSync('zip',['-qr',evidenceArchive,'.'],{cwd:outDir,encoding:'utf8',maxBuffer:8*1024*1024});
+  archiveStatus=zipped.status===0?'created':'failed';
+  if(zipped.status!==0)console.error('[evidence archive] '+(zipped.stderr||zipped.stdout||'zip failed'));
+}
 console.log('\nReconstruction manifest: '+path.join(outDir,'reconstruction-manifest.json'));
+if(archiveStatus==='created')console.log('Evidence bundle: '+evidenceArchive);
+else console.log('Evidence bundle not created ('+archiveStatus+'); upload the output folder contents instead.');
 console.log('Opcode-5 transforms: '+(transformCount??'unknown'));
 console.log('Opcode-2 attachments: '+(payloadSummary.opcode2AttachmentCount??'unknown'));
 console.log('Opcode-4 payloads: '+(opcode4Summary.opcode4PayloadCount??'not yet available'));
