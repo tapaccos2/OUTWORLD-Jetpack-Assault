@@ -120,7 +120,15 @@ function disassemble(label, start, stop) {
 const windows = [
   disassemble('class-dispatch-420b00', 0x420b00, 0x422162),
   disassemble('callback-interpreter-4dfce4', 0x4dfce4, 0x4e0580),
-  disassemble('class6-object-setup-4e1ad8', 0x4e1ad8, 0x4e3266),
+  disassemble('class6-object-setup-4e1ad8', 0x4e1ad8, 0x4e1af8),
+  disassemble('class6-current-object-setter-4e3260', 0x4e3260, 0x4e32a2),
+  disassemble('class6-object-consumer-4e32a0', 0x4e32a0, 0x4e4100),
+  disassemble('eight-slot-update-4e40a0', 0x4e40a0, 0x4e4110),
+  disassemble('eight-slot-update-4e4d5c', 0x4e4d5c, 0x4e4e20),
+  disassemble('opcode5-matrix-stack-handler', 0x4e0130, 0x4e023a),
+  disassemble('shared-callback-tail', 0x4e0592, 0x4e05f0),
+  disassemble('callback-queue-pop', 0x4dfd88, 0x4dfe56),
+  disassemble('class-high-id-switch', 0x42183c, 0x421baa),
   disassemble('object-allocation-4cc83c', 0x4cc83c, 0x4cca20),
   disassemble('record-class-guard-490388', 0x490388, 0x490500),
   disassemble('record-helper-4e59c8', 0x4e59c8, 0x4e5a80),
@@ -130,8 +138,8 @@ const windows = [
 
 const full = spawnSync(objdump, ['-d', '-Mintel', exePath], { encoding: 'utf8', maxBuffer: 512 * 1024 * 1024 });
 if (full.status !== 0) throw new Error('Full executable disassembly failed: ' + (full.stderr || full.error?.message || ''));
-const callTargets = new Set(['4dfce4', '420b00', '4e1ad8', '4e3260', '4e59c8', '4cc988', '4cc9d0', '490388', '4c6610', '4c5500', '4c5aa0', '4c57dc']);
-const globals = ['0x12d7368', '0x12d6c74', '0x12d6c78', '0x12d6c7c', '0x12d6c80', '0x64752c', '0x647528', '0x647530'];
+const callTargets = new Set(['4dfce4', '420b00', '4e1ad8', '4e3260', '4e32a0', '4e40a0', '4e4d5c', '4e59c8', '4cc988', '4cc9d0', '490388', '4c6610', '4c5500', '4c5aa0', '4c57dc']);
+const globals = ['0x12d7368', '0x12d736c', '0x12d7370', '0x12d7374', '0x12d7378', '0x12d737c', '0x12d7380', '0x12d6cc8', '0x12d6c74', '0x12d6c78', '0x12d6c7c', '0x12d6c80', '0x52d218', '0x52d28c', '0x64752c', '0x647528', '0x647530'];
 const xrefLines = [];
 const allLines = full.stdout.split(/\r?\n/);
 for (let i = 0; i < allLines.length; i++) {
@@ -147,7 +155,7 @@ const xrefFile = path.join(outDir, 'CLASS-RENDERER-XREFS.txt');
 fs.writeFileSync(xrefFile, [...new Set(xrefLines)].join('\n\n') + '\n');
 
 const exeBuffer = fs.readFileSync(exePath);
-const pointerValues = [0x004dfce4, 0x00420b00, 0x004e1ad8, 0x004e3260, 0x004e59c8];
+const pointerValues = [0x004dfce4, 0x00420b00, 0x004e1ad8, 0x004e3260, 0x004e32a0, 0x004e59c8];
 const rawPointerHits = [];
 for (const value of pointerValues) {
   const needle = Buffer.alloc(4);
@@ -184,7 +192,16 @@ const summary = {
   callbackClassFunction: '0x420b00',
   class6Path: ['0x420c04', '0x4e1ad8', '0x4e3260'],
   class6ObjectSetupFunction: '0x4e1ad8',
+  class6CurrentObjectSetter: '0x4e3260',
+  class6ObjectConsumer: '0x4e32a0',
   class6CurrentObjectGlobal: '0x12d7368',
+  class6DpcRecordPointerOffset: '0x160',
+  slotTagHelper: '0x4e59c8',
+  slotTagCounterGlobal: '0x12d7370',
+  slotUpdateTableGlobal: '0x12d7374',
+  slotUpdateTableEntryCount: 8,
+  slotTagBits: '13..15',
+  slotUpdateFunctions: ['0x4e40a0', '0x4e4d5c'],
   ownerRecordCount: ownerRows.length,
   uniqueClass6RecordCount: uniqueClass6.size,
   uniqueClass7RecordCount: uniqueClass7.size,
@@ -210,7 +227,10 @@ const lines = [
   '- Class callback function: ' + summary.callbackClassFunction,
   '- Class-0x0006 path: ' + summary.class6Path.join(' -> '),
   '- Class-0x0006 setup function: ' + summary.class6ObjectSetupFunction,
-  '- Current-object global written by 0x4e3260: ' + summary.class6CurrentObjectGlobal,
+  '- Current-object setter: ' + summary.class6CurrentObjectSetter + ' writes the active object pointer to ' + summary.class6CurrentObjectGlobal,
+  '- Class-0x0006 object consumer: ' + summary.class6ObjectConsumer + ' reads the DPC record pointer at object+0x160 and builds spatial/attachment records.',
+  '- Face-record helper: ' + summary.slotTagHelper + ' assigns a modulo-8 slot tag in bits ' + summary.slotTagBits + ' using counter ' + summary.slotTagCounterGlobal + '.',
+  '- Eight-entry update table: ' + summary.slotUpdateTableGlobal + ' with update functions ' + summary.slotUpdateFunctions.join(', ') + '.',
   '- Owner records: ' + summary.ownerRecordCount,
   '- Unique class-0x0006 records: ' + summary.uniqueClass6RecordCount,
   '- Unique class-0x0007 records: ' + summary.uniqueClass7RecordCount,
@@ -218,9 +238,9 @@ const lines = [
   '',
   '## What this establishes',
   '',
-  'The executable calls 0x4dfce4 with 0x420b00 as its class callback. The class-0x0006 branch invokes 0x4e1ad8 and then 0x4e3260; 0x4e3260 stores the object pointer in global 0x12d7368. This audit captures the full code region for 0x4e1ad8 and the exact DPC owner, mesh-node and paired-node records.',
+  'The executable calls 0x4dfce4 with 0x420b00 as its class callback. The class-0x0006 branch invokes 0x4e1ad8 and then 0x4e3260; 0x4e3260 stores the object pointer in global 0x12d7368. The 0x4e32a0 consumer reads the DPC record pointer at object+0x160 and emits 0x1c-byte spatial/attachment records. Separately, 0x4e59c8 assigns 3-bit modulo-8 tags to descriptor payload records, and two routines update an eight-entry runtime table.',
   '',
-  'This is not yet a claim that 0x4e1ad8 applies the final mesh transform. Its disassembly and all related class records are included for direct verification.',
+  'The meaning of the modulo-8 slot tag is not yet identified as a bone, material, or other runtime slot. The 0x4e32a0 consumer is not yet proven to be the visual mesh renderer. This audit records executable behavior without assigning unsupported semantics.',
   '',
   '## Files',
   '',

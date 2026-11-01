@@ -450,7 +450,15 @@ const gates = {
   }
 };
 
-// 6. Trace the class-specific renderer path used by the callback interpreter.
+// 6. Re-run the callback interpreter with executable-accurate opcode-0 slot tagging.
+const callbackRebuildTool = path.join(here, 'scout-runtime-callback-rebuild.mjs');
+if (!fs.existsSync(callbackRebuildTool)) throw new Error('Missing tools/scout-runtime-callback-rebuild.mjs');
+const callbackRebuildDir = path.join(analysisDir, 'runtime-callback-rebuild');
+run('runtime callback simulation and face-slot tagging', process.execPath,
+  [callbackRebuildTool, dpc, callbackRebuildDir, '--exe', exe, '--analysis-only']);
+const callbackRebuild = readJson(path.join(callbackRebuildDir, 'runtime-rebuild.json'));
+
+// 7. Trace the class-specific renderer path used by the callback interpreter.
 const classAuditTool = path.join(here, 'scout-class-renderer-audit.mjs');
 if (!fs.existsSync(classAuditTool)) throw new Error('Missing tools/scout-class-renderer-audit.mjs');
 const classAuditDir = path.join(analysisDir, 'class-renderer');
@@ -475,6 +483,15 @@ const report = {
   geometry, coordinateBaseValidation, coordinateClassification: coordinateRows, ownership,
   matrixHypotheses, matrixValidation, assembledArtifact,
   classRendererAudit: classAudit.summary,
+  runtimeCallbackSimulation: {
+    processedCallbacks: callbackRebuild.callbackRun?.processed ?? null,
+    eventCount: callbackRebuild.callbackRun?.events?.length ?? null,
+    descriptorCount: callbackRebuild.descriptorLeaves?.length ?? null,
+    helperRecordsTagged: callbackRebuild.helperSlotAssignments?.length ?? null,
+    helperCounterFinal: callbackRebuild.helperCounterFinal ?? null,
+    helperSlotCounts: callbackRebuild.helperSlotCounts ?? null,
+    analysisOnly: callbackRebuild.analysisOnly ?? false
+  },
   gates,
   finalStatus: assembledArtifact ? 'RUNTIME_ASSEMBLY_GATE_PASSED' : 'EVIDENCE_BUNDLE_COMPLETE_RUNTIME_ASSEMBLY_NOT_PROVEN',
   interpretation: 'This tool completes the evidence collection and exact-link tests in one run. It deliberately does not fabricate missing runtime semantics. A visually plausible GLB is not considered solved until all three gates pass.'
@@ -504,6 +521,12 @@ const lines = [
     ' | ' + x.slot + ' | 0x' + x.coordinateTarget.toString(16) + ' | ' +
     (x.targetHeader ? x.targetHeader.opcode + '/0x' + x.targetHeader.classWord.toString(16) : 'none') +
     ' | ' + x.classification + ' |'),
+  '', '## Runtime callback simulation', '',
+  '- Callback events: ' + (callbackRebuild.callbackRun?.events?.length ?? 'unavailable') + ' across ' + (callbackRebuild.callbackRun?.processed ?? 'unavailable') + ' processed work items.',
+  '- Descriptor leaves: ' + (callbackRebuild.descriptorLeaves?.length ?? 'unavailable') + '.',
+  '- Face-record slot tags applied by 0x4e59c8: ' + (callbackRebuild.helperSlotAssignments?.length ?? 'unavailable') + '.',
+  '- Final modulo-8 counter: ' + (callbackRebuild.helperCounterFinal ?? 'unavailable') + '; per-slot counts: ' + JSON.stringify(callbackRebuild.helperSlotCounts ?? {}),
+  '- Full event/descriptor ancestry is under analysis/runtime-callback-rebuild/. The run is analysis-only and does not export another set of GLBs.',
   '', '## Class-specific renderer path', '',
   '- Callback interpreter: ' + classAudit.summary.callbackInterpreter + ' with class callback ' + classAudit.summary.callbackClassFunction + '.',
   '- Class 0x0006 enters ' + classAudit.summary.class6ObjectSetupFunction + ' and stores the current object through ' + classAudit.summary.class6CurrentObjectGlobal + '.',
@@ -533,6 +556,7 @@ console.log('Submeshes with exact callback-owner links: ' + linkedMeshCount + '/
 console.log('Matrix conventions passing reference-point test: ' + passingSignatures.length);
 console.log('Geometry variants: ' + variants.length);
 console.log('Class-0x0006 records captured: ' + classAudit.summary.uniqueClass6RecordCount);
+console.log('Runtime callback events: ' + (callbackRebuild.callbackRun?.events?.length ?? 0) + ' | helper slot tags: ' + (callbackRebuild.helperSlotAssignments?.length ?? 0));
 console.log('Runtime assembly gate: ' + report.finalStatus);
 if (assembledArtifact) console.log('Assembled GLB: ' + path.join(geometryDir, 'scout-runtime-assembled.glb'));
 console.log('Report: ' + path.join(out, 'SCOUT-CLOSEOUT.md'));
