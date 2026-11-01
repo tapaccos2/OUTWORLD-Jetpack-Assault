@@ -181,6 +181,16 @@ function ancestry(offset) {
   }
   walk(offset); return out;
 }
+// An opcode-4 node is owned by the opcode-5 transform whose opcode-2
+// descriptor points to it. Keep that direct owner separate from its ancestors.
+const op4OwnerTransforms = new Map();
+for (const a of attachments) for (const s of a.slots || []) {
+  const owner = a.context?.transform;
+  if (Number.isInteger(s.payloadTarget) && Number.isInteger(owner)) {
+    if (!op4OwnerTransforms.has(s.payloadTarget)) op4OwnerTransforms.set(s.payloadTarget, []);
+    op4OwnerTransforms.get(s.payloadTarget).push(owner);
+  }
+}
 const ownership = geometry.sharedPool.meshes.map(mesh => {
   const face = mesh.faceDataOffset;
   const directDescriptor = [];
@@ -189,16 +199,21 @@ const ownership = geometry.sharedPool.meshes.map(mesh => {
   const opcode4Matches = [];
   for (const node of op4Nodes) for (const entry of node.parsed?.entries || []) {
     const target = entry.resolutions?.['relocated-base']?.target;
-    if (target === face) opcode4Matches.push({ opcode4: node.offset, entry: entry.index, transformAncestry: ancestry(node.offset) });
+    if (target === face) opcode4Matches.push({
+      opcode4: node.offset, entry: entry.index,
+      directTransformOwners: [...new Set(op4OwnerTransforms.get(node.offset) || [])]
+    });
   }
-  const linkedTransforms = [...new Set([
+  const directTransformOwners = [...new Set([
     ...directDescriptor.map(x => x.transform).filter(Number.isInteger),
-    ...opcode4Matches.flatMap(x => x.transformAncestry)
+    ...opcode4Matches.flatMap(x => x.directTransformOwners)
   ])];
+  const linkedTransforms = [...new Set(directTransformOwners.flatMap(ancestry))];
   return {
     mesh: mesh.name, faceDataOffset: face, descriptorExactMatches: directDescriptor,
-    opcode4ExactChildMatches: opcode4Matches, candidateTransformOwners: linkedTransforms,
-    status: linkedTransforms.length ? 'exact-pointer-link-candidate' : 'no-exact-callback-owner-link'
+    opcode4ExactChildMatches: opcode4Matches, directTransformOwners,
+    candidateTransformOwners: linkedTransforms,
+    status: directTransformOwners.length ? 'exact-pointer-link-candidate' : 'no-exact-callback-owner-link'
   };
 });
 
@@ -210,10 +225,55 @@ const matrixHypotheses = (discovery.transformMathTests || []).map(h => ({
   determinantRange: h.determinantRange,
   positions: h.positions, matrices: h.matrices
 }));
-const linkedMeshCount = ownership.filter(x => x.candidateTransformOwners.length > 0).length;
+// Test each candidate matrix convention against the independent mesh reference
+// point stored at meshNode+28 and its target at meshNode+56/+60/+64. This is a
+// stronger discriminator than matrix orthogonality: a convention must map all
+// eight submesh reference points to their recorded targets within two game units.
+function apply3(m, v) {
+  return [m[0]*v[0]+m[1]*v[1]+m[2]*v[2], m[3]*v[0]+m[4]*v[1]+m[5]*v[2], m[6]*v[0]+m[7]*v[1]+m[8]*v[2]];
+}
+const matrixValidation = matrixHypotheses.map(h => {
+  const matrices = new Map((h.matrices || []).map(x => [x.offset, x.matrix]));
+  const positions = new Map((h.positions || []).map(x => [x.offset, x.position]));
+  const meshTests = ownership.map((owner, i) => {
+    const mesh = geometry.sharedPool.meshes[i];
+    if (!mesh.meshNodeOffset || !Number.isInteger(mesh.meshVertexReferenceTarget) || !owner.directTransformOwners.length)
+      return { mesh: mesh.name, matched: false, reason: 'no exact transform owner or reference point' };
+    const ref = mesh.meshVertexReferenceTarget;
+    const point = [s16(ref), s16(ref + 2), s16(ref + 4)];
+    const targetOffset = mesh.meshNodeOffset + 56;
+    if (targetOffset + 12 > bytes.length || point.some(x => x === null))
+      return { mesh: mesh.name, matched: false, reason: 'reference point/target outside DPC' };
+    const target = [bytes.readInt32LE(targetOffset), bytes.readInt32LE(targetOffset + 4), bytes.readInt32LE(targetOffset + 8)];
+    const candidates = owner.directTransformOwners.map(offset => {
+      const m = matrices.get(offset), p = positions.get(offset);
+      if (!m || !p) return null;
+      const transformed = apply3(m, point).map((x, k) => x + p[k]);
+      const error = Math.hypot(...transformed.map((x, k) => x - target[k]));
+      return { transformOffset: offset, transformed, target, error };
+    }).filter(Boolean).sort((a, b) => a.error - b.error);
+    const best = candidates[0] || null;
+    return { mesh: mesh.name, matched: !!best && best.error <= 2, best, candidates };
+  });
+  const matched = meshTests.filter(x => x.matched).length;
+  const errors = meshTests.map(x => x.best?.error).filter(Number.isFinite);
+  return {
+    root: h.root, order: h.order, transpose: h.transpose, translationScale: h.translationScale,
+    matchedMeshes: matched, testedMeshes: meshTests.filter(x => x.best).length,
+    maxReferenceError: errors.length ? Math.max(...errors) : null,
+    rmsReferenceError: errors.length ? Math.sqrt(errors.reduce((s, x) => s + x*x, 0) / errors.length) : null,
+    meshTests, matrices: h.matrices, positions: h.positions
+  };
+});
+const passingMatrixTests = matrixValidation.filter(x => x.matchedMeshes === 8 && x.testedMeshes === 8 && x.maxReferenceError <= 2);
+const passingSignatures = [...new Set(passingMatrixTests.map(x => [x.order, x.transpose, x.translationScale].join('|')))];
+const selectedMatrix = passingSignatures.length === 1
+  ? passingMatrixTests.sort((a, b) => a.rmsReferenceError - b.rmsReferenceError)[0]
+  : null;
+const linkedMeshCount = ownership.filter(x => x.directTransformOwners.length > 0).length;
 const exactCoordinateCount = coordinateRows.filter(x => x.classification === 'exact-exporter-base-match').length;
 const allNineLinked = linkedMeshCount === 9;
-const hasUniqueExecutableConvention = false; // Must be established by data-flow/cross-resource evidence, not matrix rigidity.
+const hasUniqueExecutableConvention = !!selectedMatrix;
 const gates = {
   coordinateRecords: {
     status: exactCoordinateCount > 0 ? 'PARTIAL_EXACT_BASE_LINKS' : 'UNRESOLVED',
@@ -231,10 +291,12 @@ const gates = {
     reason: 'The executable follow-up identifies callback handlers and a runtime matrix consumer, but does not yet prove the callback-produced Scout entries reach that consumer with a unique matrix order and position scale. Rigidity scores cannot prove this.'
   },
   assembly: {
-    status: 'CANDIDATES_EXPORTED_NOT_RUNTIME_ASSEMBLED',
+    status: allNineLinked && hasUniqueExecutableConvention ? 'RUNTIME_PLACEMENT_READY' : 'CANDIDATES_EXPORTED_NOT_RUNTIME_ASSEMBLED',
     candidateCount: variants.length,
     expectedMeshes: 9,
-    reason: 'A runtime GLB is not emitted unless all nine sections have exact transform ownership and a unique executable-supported transform convention. No heuristic placement is promoted.'
+    reason: allNineLinked && hasUniqueExecutableConvention
+      ? 'All nine sections have exact callback ownership and one transform convention passes all eight independent reference-point checks.'
+      : 'A runtime GLB is not emitted unless all nine sections have exact transform ownership and one transform convention passes all eight independent reference-point checks.'
   }
 };
 
@@ -253,7 +315,7 @@ const report = {
   discoveryManifest: path.relative(out, manifestPath),
   autodiscoveryReport: path.relative(out, discoveryPath),
   geometry, coordinateClassification: coordinateRows, ownership,
-  matrixHypotheses,
+  matrixHypotheses, matrixValidation,
   gates,
   finalStatus: allNineLinked && hasUniqueExecutableConvention ? 'RUNTIME_ASSEMBLY_GATE_PASSED' : 'EVIDENCE_BUNDLE_COMPLETE_RUNTIME_ASSEMBLY_NOT_PROVEN',
   interpretation: 'This tool completes the evidence collection and exact-link tests in one run. It deliberately does not fabricate missing runtime semantics. A visually plausible GLB is not considered solved until all three gates pass.'
@@ -300,7 +362,8 @@ if (zip.status !== 0) throw new Error('ZIP packaging failed: ' + (zip.stderr || 
 console.log('\nSCOUT CLOSEOUT COMPLETE');
 console.log('Coordinate targets: ' + coordinateRows.length + ' | exact exporter-base matches: ' + exactCoordinateCount);
 console.log('Meshes with exact callback-owner links: ' + linkedMeshCount + '/9');
+console.log('Matrix conventions passing reference-point test: ' + passingSignatures.length);
 console.log('Geometry variants: ' + variants.length);
-console.log('Runtime assembly: ' + report.finalStatus);
+console.log('Runtime assembly gate: ' + report.finalStatus);
 console.log('Report: ' + path.join(out, 'SCOUT-CLOSEOUT.md'));
 console.log('Bundle: ' + archive);
