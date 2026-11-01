@@ -615,7 +615,7 @@ const geometryLinks=meshes.map(mesh=>{
     targetPoint:mesh.targetPoint,
     descriptorCoordinateMatches:mesh.meshVertexReference===null?[]:descriptorLeaves.filter(d=>d.coordinateTarget===hex(mesh.meshVertexReference)).map(d=>d.descriptor),
     descriptorPayloadMatches:payloadDescriptorExecutions.map(d=>d.descriptor),
-    descriptorPayloadExecutions:payloadDescriptorExecutions.map(d=>({descriptor:d.descriptor,eventId:d.eventId,runId:d.runId,seedRecord:d.seedRecord,parentMatrixId:d.parentMatrixId,position:d.position,scale:d.scale,transformPath:d.transformPath.map(x=>({record:x.record,matrixId:x.matrixId,parentMatrixId:x.parentMatrixId,position:x.position,positionAfter:x.positionAfter}))})),
+    descriptorPayloadExecutions:payloadDescriptorExecutions.map(d=>({descriptor:d.descriptor,eventId:d.eventId,runId:d.runId,seedRecord:d.seedRecord,parentMatrixId:d.parentMatrixId,position:d.position,scale:d.scale,ancestry:d.ancestry,transformPath:d.transformPath.map(x=>({record:x.record,matrixId:x.matrixId,parentMatrixId:x.parentMatrixId,position:x.position,positionAfter:x.positionAfter}))})),
     descriptorCoordinateExecutions:coordinateDescriptorExecutions.map(d=>({descriptor:d.descriptor,payloadTarget:d.payloadTarget,eventId:d.eventId,runId:d.runId,seedRecord:d.seedRecord,parentMatrixId:d.parentMatrixId,position:d.position,transformPath:d.transformPath.map(x=>x.record)})),
     geometryDescriptorTransformPath:geometryDescriptorEvent?geometryDescriptorEvent.transformPath.map(x=>x.record):[],
     transformSource:transformEvent?(transformEvent.matrix||transformEvent.parentMatrix!==0?'paired matrix-bearing transform callback':'paired descriptor callback; no matrix frame applied'):meshEvent?(meshEvent.matrix||meshEvent.parentMatrix!==0?'mesh-node callback under matrix frame':'mesh-node callback; no matrix frame applied'):'no callback match'
@@ -718,7 +718,10 @@ const report={
     matchedGeometryCallbackNodes:geometryLinks.filter(x=>x.transformSource!=='no callback match').length,
     geometrySections:meshes.length,
     matrixBearingGeometryCallbacks:geometryLinks.filter(x=>x.matrixTransformEvents>0).length,
-    message:'The callback graph and descriptor payload links are recovered, but the nine geometry callback records are descriptor/list callbacks under matrix ID 0. The opcode-5 transform hierarchy is a separate sibling branch and has not yet been associated with the geometry sections. The exported GLBs are placement experiments, not an assembled Scout.'
+    geometryPayloadDescriptorMatches:geometryLinks.filter(x=>x.descriptorPayloadExecutions.length===1).length,
+    geometryPayloadDescriptorsWithOpcode5Ancestor:geometryLinks.filter(x=>x.descriptorPayloadExecutions.some(d=>d.transformPath.length>0)).length,
+    geometryPayloadDescriptorAmbiguities:geometryLinks.filter(x=>x.descriptorPayloadExecutions.length!==1).map(x=>({mesh:x.mesh,matches:x.descriptorPayloadExecutions.length})),
+    message:'Exact descriptor-to-face payload links are traced with callback ancestry. The report separately states whether an opcode-5 matrix transform occurs on each geometry descriptor path. Where no opcode-5 ancestor exists, the transform hierarchy remains unassociated; the exported GLBs are placement experiments, not an assembled Scout.'
   }
 };
 fs.writeFileSync(path.join(outDir,'runtime-rebuild.json'),JSON.stringify(report,null,2)+'\n');
@@ -737,7 +740,7 @@ const md=[
   '- Top-level DPC records: '+tableCount,'- Validated opcode-5 transform records: '+transformRecords.length,'- Opcode-5 transform roots: '+transformRoots.map(hex).join(', '),'- Callback seed records: '+seedOffsets.map(hex).join(', '),'- Work entries processed: '+processed,'- Entries remaining: '+work.length,'- Callback events: '+events.length,
   '- Distinct record/state combinations: '+visitedCounts.size,'- Queue edges: '+edgeRows.length,
   '- Leaf callback entries: '+leafRecords.length,'- Descriptor leaves decoded: '+descriptorLeaves.length,'- Unique descriptor payload targets: '+new Set(descriptorLeaves.map(x=>x.payloadTarget).filter(Boolean)).size,'- Unresolved edges: '+unresolved.length,'- Helper calls logged: '+helperCalls.length,
-  '- Geometry sections: '+meshes.length,'- Geometry sections with callback-node matches: '+geometryLinks.filter(x=>x.transformSource!=='no callback match').length,'- Sections with matrix-bearing transform callbacks: '+geometryLinks.filter(x=>x.matrixTransformEvents>0).length,
+  '- Geometry sections: '+meshes.length,'- Geometry sections with callback-node matches: '+geometryLinks.filter(x=>x.transformSource!=='no callback match').length,'- Sections with matrix-bearing transform callbacks: '+geometryLinks.filter(x=>x.matrixTransformEvents>0).length,'- Exact face-payload descriptor matches: '+geometryLinks.filter(x=>x.descriptorPayloadExecutions.length===1).length+'/'+meshes.length,'- Face-payload descriptors with opcode-5 ancestry: '+geometryLinks.filter(x=>x.descriptorPayloadExecutions.some(d=>d.transformPath.length>0)).length+'/'+meshes.length,
   '- Owner/paired translation invariants: '+meshes.filter(m=>m.transformNode!==null).length+'/'+(meshes.length-1)+' matched',
   '- Executable disassembly bridge: '+executableBridge.status,
   '',
@@ -767,7 +770,7 @@ const md=[
   ...unresolved.slice(0,100).map(x=>'- '+JSON.stringify({...x,record:Number.isInteger(x.record)?hex(x.record):x.record,field:Number.isInteger(x.field)?hex(x.field):x.field})),
   '',
   '## Status','',
-  'This is a static callback-work-stack reconstruction candidate, not a bit-exact execution of the executable. All nine geometry sections now have descriptor-payload links and callback-node matches, but those geometry callbacks carry matrix ID 0; the opcode-5 transform hierarchy is a separate sibling branch and has not yet been associated with the geometry. Opcode 4 uses its inline record+0x14 child list, and opcode 9 uses its separate +0x10 list. The two helper routines and shared post-handler normalization tail remain unimplemented. The 24 GLBs are placement experiments, including a reference-point-to-target-point candidate, not a completed Scout. A final Scout is only accepted after transform-to-geometry association and visual validation.'
+  'This is a static callback-work-stack reconstruction candidate, not a bit-exact execution of the executable. Exact face-payload descriptor matches are traced through their callback ancestry, and the report counts whether each descriptor path includes an opcode-5 transform. Opcode 4 uses its inline record+0x14 child list, and opcode 9 uses its separate +0x10 list. The opcode-0 and opcode-3 helpers and shared post-handler normalisation tail remain unimplemented. The 24 GLBs are placement experiments, including a reference-point-to-target-point candidate, not a completed Scout. A final Scout is only accepted after transform-to-geometry association and visual validation.'
 ];
 fs.writeFileSync(path.join(outDir,'RUNTIME-REBUILD.md'),md.join('\n')+'\n');
 console.log('SCOUT RUNTIME REBUILD RUN COMPLETE — CANDIDATES EXPORTED');
