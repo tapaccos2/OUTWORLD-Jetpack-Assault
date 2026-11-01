@@ -578,7 +578,7 @@ function buildGlb(file,convention){
     else pos=accumulated;
     const callbackTransformApplied=e!==null;
     const placementApplied=callbackTransformApplied||pos.some(v=>v!==0);
-    const transformed=mesh.positions.map(p=>use?applyTransform(p,M,pos,convention):p);
+    const transformed=mesh.positions.map(p=>placementApplied?applyTransform(p,M,pos,convention):p);
     const indices=mesh.indices;
     const normals=Array.from({length:transformed.length},()=>[0,0,0]);
     for(let i=0;i<indices.length;i+=3){
