@@ -1,0 +1,72 @@
+name: Scout runtime and resource-pointer reconstruction
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/scout-resource-pointer-scan.yml"
+      - "tools/scout-resource-pointer-scan.mjs"
+      - "tools/scout-runtime-callback-rebuild.mjs"
+      - "tools/extract-ff-resources.mjs"
+      - "original-data/units.ff"
+      - "original-data/structs/**"
+
+permissions:
+  contents: read
+
+jobs:
+  rebuild-and-resolve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Extract unit resources
+        run: |
+          test -f original-data/units.ff
+          node tools/extract-ff-resources.mjs original-data/units.ff --out .scout-resource-scan-extracted
+          test -f .scout-resource-scan-extracted/units/scout_mj.dpc
+          find .scout-resource-scan-extracted/units -type f | sort > scout-resource-file-list.txt
+
+      - name: Rebuild runtime callback and transform candidates
+        run: |
+          node tools/scout-runtime-callback-rebuild.mjs \
+            .scout-resource-scan-extracted/units/scout_mj.dpc \
+            scout-runtime-rebuild
+
+      - name: Resolve cross-resource pointers
+        run: |
+          node tools/scout-resource-pointer-scan.mjs \
+            .scout-resource-scan-extracted/units/scout_mj.dpc \
+            scout-resource-pointer-scan \
+            .scout-resource-scan-extracted/units \
+            original-data
+
+      - name: Bundle analysis outputs
+        if: always()
+        run: |
+          mkdir -p scout-analysis-bundle
+          [ ! -d scout-runtime-rebuild ] || cp -a scout-runtime-rebuild scout-analysis-bundle/
+          [ ! -d scout-resource-pointer-scan ] || cp -a scout-resource-pointer-scan scout-analysis-bundle/
+          [ ! -f scout-resource-file-list.txt ] || cp scout-resource-file-list.txt scout-analysis-bundle/
+          zip -qr scout-runtime-resource-analysis.zip scout-analysis-bundle
+
+      - name: Upload reconstruction results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scout-runtime-resource-analysis
+          path: |
+            scout-runtime-resource-analysis.zip
+            scout-runtime-rebuild/**
+            scout-resource-pointer-scan/**
+            scout-resource-file-list.txt
+          if-no-files-found: warn
+          retention-days: 14
