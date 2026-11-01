@@ -100,3 +100,12 @@ Run [Scout Opcode 0 CFG audit](tools/scout-opcode0-cfg-audit.mjs) after the disp
 ```bash
 node tools/scout-opcode0-cfg-audit.mjs scout-dispatch/SCOUT-DISPATCH-AUDIT.json scout-opcode0-cfg-audit --exe /home/tapaccos/Outwars-extracted/outwars.exe
 ```
+
+
+## Scout descriptor preparation audit
+
+Run [Scout descriptor preparation audit](tools/scout-descriptor-preparation-audit.mjs) to correlate the Opcode 0 callee at 0x4e59c8 with each nested Scout descriptor. It extracts the DPC, walks the variable-stride records referenced by descriptor fields +0x0C and +0x10, and reports the fields changed by the preparation routine.
+
+```bash
+node tools/scout-descriptor-preparation-audit.mjs original-data/units.ff scout-descriptor-preparation-audit --exe /home/tapaccos/Outwars-extracted/outwars.exe
+```
