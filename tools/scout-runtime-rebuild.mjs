@@ -580,6 +580,20 @@ function referencePointTranslation(mesh,matrix,convention){
   const localTarget=apply3(inverse3(m),mesh.targetPoint);
   return localTarget.map((v,i)=>v-mesh.referencePoint[i]);
 }
+// Verify both reference-point placement equations against a non-identity
+// rotation. These tests validate the candidate math, not the game semantics.
+const referenceTestMesh={referencePoint:[2,3,4],targetPoint:[10,20,30]};
+const referenceTestMatrix=[0,-1,0,1,0,0,0,0,1];
+for(const transpose of [false,true]){
+  for(const translation of ['after','before']){
+    const convention={transpose,translation};
+    const p=referencePointTranslation(referenceTestMesh,referenceTestMatrix,convention);
+    const mapped=applyTransform(referenceTestMesh.referencePoint,referenceTestMatrix,p,convention);
+    assert('reference-point mapping '+(transpose?'transposed':'stored')+' '+translation,
+      mapped.every((v,i)=>Math.abs(v-referenceTestMesh.targetPoint[i])<0.01));
+  }
+}
+if(selfTests.some(x=>!x.passed))throw new Error('Placement candidate self-test failed: '+JSON.stringify(selfTests));
 const conventions=[];
 for(const transposeMatrix of [false,true]){
   for(const translation of ['after','before']){
@@ -696,6 +710,7 @@ const report={
   dispatchTable:callbackTargets.map((address,opcode)=>({opcode,handler:hex(address),name:callbackNames[opcode]})),
   descriptorLeaves,
   descriptorExecutions,
+  selfTests,
   helperCalls,
   simulationLimitations:[
     'Opcode-0 handler calls 0x4e59c8; this helper is logged but not emulated.',
