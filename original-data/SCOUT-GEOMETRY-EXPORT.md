@@ -1,14 +1,16 @@
-# Scout armour geometry extraction
+# Scout armour geometry investigation
 
-**Status: raw indexed geometry decoded and exported; assembled model transforms remain unresolved.**
+<badge>TOPOLOGY INTERPRETATION CORRECTED — NO VALIDATED ASSEMBLED MESH YET</badge>
 
-## Export
+The earlier signature-based exporter is retained as a forensic diagnostic only. Its assumption that the byte sequence `04 01 0C 09` begins a four-index face record was disproved by the executable callback at `0x4E006D`. Those records are opcode-4/class-`0x090C` callback nodes: DWORDs at +4/+8/+12 contribute to position, a BYTE at +0x12 gives the child count, and relocated child entries begin at +0x14. The old 390-vertex/230-triangle totals are therefore **historical signature-scan counts, not validated render topology**.
 
-tools/export-dpc-armour-geometry.mjs reads an original DCPMC playable-armour resource and writes a self-contained glTF 2.0 binary (.glb) plus a JSON report.
+## Legacy signature diagnostic (not a model exporter)
 
-Across the seven available Scout DPC files, the exporter follows class-102/class-105 roots for male variants and class-152/class-155 roots for female/test variants. It finds one root mesh and eight additional mesh nodes (the ninth class-105 entry is a container, not another mesh). It reads signed 16-bit XYZ vertex entries from the shared coordinate pool and class-090c face records, deduplicates the paired face records that repeat the same unordered four-index set, and triangulates each unique quad as a two-triangle fan. For submeshes, the shared coordinate-pool base is resolved through type-2 +20 → type-16 +8 → descriptor +4. The type-2 +28 pointer is retained as a separate mesh-reference field; current tests do not establish it as the base of the XYZ array. The face indices resolve against the shared coordinate pool.
+The legacy `tools/export-dpc-armour-geometry.mjs` tool still writes a GLB and JSON report, but the apparent triangles were inferred from callback-record bytes. Do not use those GLBs as source-faithful geometry, and do not apply owner translations or type-2 +28 reference-point experiments to them as though they were decoded meshes.
 
-## Validated extraction counts
+The class-102/class-105 list still identifies a root record, eight type-1 part-owner records, and paired type-2 nodes. The chain type-2 +20 → type-16 +8 → descriptor +4 resolves shared coordinate-pool metadata. The type-2 +28 target is a separate reference field. None of these observations establishes the actual render primitive topology or connects the legacy part list to the opcode-5 transform hierarchy.
+
+## Historical signature-scan counts (not topology validated)
 
 | Mesh | Source face records | Unique quads | Triangles |
 |---|---:|---:|---:|
@@ -215,3 +217,29 @@ It writes a raw geometry baseline, the opcode-5 transform candidate scan, transf
 The rejected owner-translation GLB is no longer generated. The manifest's current blocker is now correctly stated as **decoding opcode-4 child entries into actual render primitives/topology and binding them to their coordinate payloads**, then applying the verified opcode-5 matrix hierarchy. The pipeline does not label its raw baseline as an assembled Scout.
 
 **Acceptance remains unchanged:** the result must be a recognisable Scout with correctly placed geometry. Until that is produced and visually checked, the reconstruction is not complete.
+
+## Corrected pipeline v1.2 and latest callback ancestry result (2026-11-01)
+
+Use the integrated evidence pipeline rather than the retired runtime GLB experiment:
+
+```sh
+node tools/reconstruct-scout.mjs \
+  original-data/units.ff \
+  scout-reconstruction \
+  --exe /home/tapaccos/Outwars-extracted/outwars.exe
+```
+
+This command automatically extracts `scout_mj.dpc`, runs the autonomous mixed-entry callback graph audit with the raw signature baseline disabled, audits the opcode-5 transform hierarchy and opcode-2 attachment descriptors, emits the opcode-4 child-payload inventory, and captures the legacy part-list and callback descriptor chain separately. The manifest is written as `reconstruction-manifest.json`. It intentionally emits no GLB until render primitives are proven.
+
+The latest uploaded ancestry run confirms:
+
+- 239 callback entries processed, with zero unresolved callback edges.
+- 16 structurally plausible opcode-5 records, in four structural roots.
+- 99 opcode-0 descriptor leaves decoded.
+- Nine descriptor payload pointers land exactly at the old class-102/105 part-list's opcode-4 starting records.
+- Those nine descriptor callbacks have no opcode-5 transform ancestor in that callback route.
+- The class-102/105 part-list callback route and the opcode-5 transform hierarchy must therefore remain separate until a real callback-entry or payload reference connects them.
+
+This is not evidence that the geometry has been assembled. The immediate blocker is to decode the mixed opcode-4 child entries into renderable leaf primitives, determine their coordinate/index interpretation, and prove which opcode-5 transform branch owns each leaf. The 24 GLBs from the retired `scout-runtime-rebuild.mjs` are invalid placement experiments over unverified triangles and must not be used.
+
+**Acceptance remains:** a visually recognisable Scout with validated renderable topology and correct transform placement. No final Scout GLB is claimed yet.
