@@ -49,10 +49,20 @@ input = path.resolve(input);
 exe = path.resolve(exe);
 if (!fs.existsSync(input)) throw new Error('Input not found: ' + input);
 if (!fs.existsSync(exe)) throw new Error('Executable not found: ' + exe);
-const out = path.resolve(outArg || 'scout-closeout');
+let out = path.resolve(outArg || 'scout-closeout');
 const rel = path.relative(repo, out);
 if (!rel || rel.startsWith('..') || path.isAbsolute(rel)) throw new Error('Output must be a dedicated folder inside the repository.');
-if (fs.existsSync(out) && fs.readdirSync(out).length) throw new Error('Output folder is not empty; choose a new folder to preserve previous evidence.');
+// Preserve every previous evidence bundle. If the requested directory is
+// already populated, automatically choose the next free numbered sibling
+// instead of aborting and forcing the user to edit the command.
+if (fs.existsSync(out) && fs.readdirSync(out).length) {
+  const requested = out;
+  let suffix = 2;
+  while (fs.existsSync(out) && fs.readdirSync(out).length) {
+    out = requested + '-' + suffix++;
+  }
+  console.log('Output folder already contains evidence; preserving it and writing this run to: ' + out);
+}
 fs.mkdirSync(out, { recursive: true });
 const analysisDir = path.join(out, 'analysis');
 const geometryDir = path.join(out, 'geometry');
