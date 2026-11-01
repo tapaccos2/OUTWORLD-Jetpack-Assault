@@ -392,9 +392,11 @@ const gates = {
     ownership
   },
   placement: {
-    status: hasUniqueExecutableConvention ? 'VERIFIED' : 'UNRESOLVED',
+    status: hasUniqueExecutableConvention ? 'REFERENCE_POINT_INVARIANT_PASSED' : 'UNRESOLVED',
     matrixHypothesisCount: matrixHypotheses.length,
-    reason: 'The executable follow-up identifies callback handlers and a runtime matrix consumer, but does not yet prove the callback-produced Scout entries reach that consumer with a unique matrix order and position scale. Rigidity scores cannot prove this.'
+    passingConventions: passingSignatures,
+    selected: selectedMatrix ? { root: selectedMatrix.root, order: selectedMatrix.order, transpose: selectedMatrix.transpose, translationScale: selectedMatrix.translationScale, maxReferenceError: selectedMatrix.maxReferenceError, rmsReferenceError: selectedMatrix.rmsReferenceError } : null,
+    reason: 'A convention passes only when one order/orientation/translation-scale signature maps all eight mesh reference points to their exact DPC target coordinates within two game units. Matrix rigidity alone is not used.'
   },
   assembly: {
     status: assembledArtifact ? 'RUNTIME_GLB_ASSEMBLED_AND_REFERENCE_VALIDATED' : 'CANDIDATES_EXPORTED_NOT_RUNTIME_ASSEMBLED',
