@@ -1,6 +1,6 @@
 # Scout armour geometry investigation
 
-<badge>TOPOLOGY INTERPRETATION CORRECTED — NO VALIDATED ASSEMBLED MESH YET</badge>
+**TOPOLOGY INTERPRETATION CORRECTED — NO VALIDATED ASSEMBLED MESH YET.**
 
 The earlier signature-based exporter is retained as a forensic diagnostic only. Its assumption that the byte sequence `04 01 0C 09` begins a four-index face record was disproved by the executable callback at `0x4E006D`. Those records are opcode-4/class-`0x090C` callback nodes: DWORDs at +4/+8/+12 contribute to position, a BYTE at +0x12 gives the child count, and relocated child entries begin at +0x14. The old 390-vertex/230-triangle totals are therefore **historical signature-scan counts, not validated render topology**.
 
