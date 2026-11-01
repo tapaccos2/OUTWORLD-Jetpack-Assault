@@ -468,6 +468,7 @@ fs.writeFileSync(path.join(out, 'SCOUT-CLOSEOUT.md'), lines.join('\n') + '\n');
 
 // Package a single uploadable bundle.
 const archive = out + '.zip';
+fs.rmSync(archive, { force: true });
 const zip = spawnSync('zip', ['-qr', archive, '.'], { cwd: out, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 });
 if (zip.status !== 0) throw new Error('ZIP packaging failed: ' + (zip.stderr || zip.stdout || ''));
 console.log('\nSCOUT CLOSEOUT COMPLETE');
