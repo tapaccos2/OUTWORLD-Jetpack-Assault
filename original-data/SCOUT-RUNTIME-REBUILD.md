@@ -1,25 +1,27 @@
-# Retired Scout runtime placement experiment
+# Historical Scout runtime placement experiment
 
-**SUPERSEDED — DO NOT USE FOR MODEL EXPORT.**
+**SUPERSEDED — USE THE ONE-RUN FINALIZER.**
 
-The 1 November runtime-rebuild runner correctly traced callback records, but it also reused the older 0x04 0x01 0x0C 0x09 signature scan as if it described four-index faces. That interpretation has been disproved by the executable callback at 0x4E006D: these are opcode-4 callback records with position contributions and child DWORD entries, not validated face topology.
+The old runtime runner traced callback records and emitted 24 placement experiments, but it did not apply a verified per-mesh opcode-5 hierarchy. Those GLBs are not accepted as a runtime-exact Scout model.
 
-The 24 GLBs emitted by the retired runner are placement experiments over invalid inferred triangles. They are **not Scout models** and must not be used as assembly evidence. The exact nine descriptor-to-payload matches from the class-102/105 part-list are structural links only; the latest ancestry run found zero opcode-5 transform ancestors for those descriptors.
+**Correction to the earlier topology warning:** the executable handler at 0x4E006D interprets an opcode-4/class-0x090c record as a callback child-list when that record is dispatched. That does not prove every occurrence of the same four-byte prefix inside the separate owner-part mesh stream is a callback work item. The owner-part stream now has a context-specific face-record candidate interpretation: 22/26 source records per section, 11/13 unique quads, and indices that fit the coordinate pools. See [SCOUT-GEOMETRY-EXPORT.md](SCOUT-GEOMETRY-EXPORT.md).
 
-## Current command
+## Current one-command workflow
 
-Use the corrected integrated pipeline instead:
+Run this once from the repository root:
 
 ```sh
-node tools/reconstruct-scout.mjs \
+node tools/scout-finalize.mjs \
   original-data/units.ff \
-  scout-reconstruction \
+  scout-final \
   --exe /home/tapaccos/Outwars-extracted/outwars.exe
 ```
 
-This runs autonomous mixed-entry callback discovery, strict relocated-pointer edge checks, opcode-5 transform audits, opcode-2 descriptor inventories, opcode-4 child-payload decoding, and the legacy part-list audits. It deliberately does not export the invalid signature-derived GLB. See [SCOUT-GEOMETRY-EXPORT.md](SCOUT-GEOMETRY-EXPORT.md) for the current evidence boundary.
+It performs the callback/transform/executable audits, extracts scout_mj.dpc, exports raw/owner-translated/reference-point geometry candidates, validates all nine GLB mesh sections, selects the owner-translated static candidate, writes FINAL-REPORT.md/JSON, and packages the entire output as scout-final.zip. The compatibility command `tools/scout-runtime-rebuild.mjs` now forwards to the same finalizer.
 
-The material below is retained as historical notes about the retired runner and its callback traversal work. Its GLB-placement outputs are superseded.
+The output is a static geometry candidate, not a bit-exact runtime reconstruction. Mesh-to-opcode-5 ownership, composed runtime matrices, UVs, texture/material assignment, skinning and animation remain reported as unresolved; they are not guessed or silently omitted.
+
+The material below is retained as historical notes about the retired callback-placement experiment. Do not use its old placement results as proof of a completed runtime model.
 
 ## What it does
 
