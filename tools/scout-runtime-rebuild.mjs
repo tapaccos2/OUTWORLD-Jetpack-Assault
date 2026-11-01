@@ -24,7 +24,6 @@
  * Optional:
  *   --initial-scale 0
  *   --max-work 50000
- *   --also-transform-roots
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -35,13 +34,12 @@ import { spawnSync } from 'node:child_process';
 const here=path.dirname(fileURLToPath(import.meta.url));
 const repoRoot=path.resolve(here,'..');
 const args=process.argv.slice(2);
-let input=null,outArg=null,exePath=null,initialScaleOverride=0,maxWork=50000,alsoTransformRoots=false;
+let input=null,outArg=null,exePath=null,initialScaleOverride=0,maxWork=50000;
 for(let i=0;i<args.length;i++){
   const a=args[i];
   if(a==='--exe'){if(!args[i+1])throw new Error('--exe requires a path');exePath=path.resolve(args[++i]);}
   else if(a==='--initial-scale'){initialScaleOverride=Number(args[++i]);if(!Number.isFinite(initialScaleOverride))throw new Error('Invalid initial scale');}
   else if(a==='--max-work'){maxWork=Number(args[++i]);if(!Number.isInteger(maxWork)||maxWork<1)throw new Error('--max-work must be positive');}
-  else if(a==='--also-transform-roots')alsoTransformRoots=true;
   else if(a.startsWith('--'))throw new Error('Unknown option '+a);
   else if(input===null)input=a;else if(outArg===null)outArg=a;else throw new Error('Unexpected argument '+a);
 }
@@ -190,7 +188,7 @@ if(exePath){
 // Callback work-stack entry format is the six DWORDs written by 0x4dfce4:
 // record, parent/matrix index, state X, state Y, state Z, scale/context.
 const work=[],events=[],matrices=new Map([[0,initialMatrixInfo.matrix]]),matrixPositions=new Map([[0,[0,0,0]]]);
-const unresolved=[],leafRecords=[],edgeRows=[],callbackCounts={},seedRuns=[],helperCalls=[];
+const unresolved=[],leafRecords=[],edgeRows=[],callbackCounts={},seedRuns=[],helperCalls=[],descriptorLeaves=[];
 let nextMatrixId=1,processed=0,nextEntryId=0,activeRunId=0,activeSeed=null;
 const visitedCounts=new Map();
 function enqueue(child,parentMatrix,state,scale,source,slot){
@@ -307,10 +305,25 @@ for(const seed of seedOffsets){
   const event={entryId:entry.id,runId:activeRunId,seedRecord:activeSeed,record,recordHex:hex(record),opcode,handlerAddress:hex(callbackTargets[opcode]??0),handlerName:callbackNames[opcode]??'unmapped',classWord,parentMatrix:entry.parentMatrix,position:state,scale:entry.scale,source:entry.source,sourceSlot:entry.slot,children:[]};
   let childCount=0;
   if(opcode===0){
-    // The handler calls 0x4e59c8 before copying WORD +2 into dispatcher state.
-    // Its side effects are not guessed here; they are surfaced for the report.
-    event.helperCall={address:'0x4e59c8',emulated:false};
-    helperCalls.push({record:hex(record),opcode,handler:'0x4dfde1',helper:'0x4e59c8',reason:'helper body not yet translated'});
+    // 0x4e59c8 consumes the descriptor at this work-stack entry. It reads
+    // descriptor+0x10 as a count and descriptor+0x0c as the opcode-4 payload
+    // chain, stepping by (payload byte +2)*4 and modifying the eight packed
+    // property lanes at each payload item. Record the true descriptor links
+    // here; keep the mutation out of the placement calculation.
+    const coordinateRaw=u32(record+4),sharedRaw=u32(record+8),payloadRaw=u32(record+12),payloadCount=u32(record+0x10);
+    const coordinateTarget=relocatedTarget(coordinateRaw);
+    const sharedTarget=relocatedTarget(sharedRaw);
+    const payloadTarget=relocatedTarget(payloadRaw);
+    const payloadHeader=payloadTarget===null?null:header(payloadTarget);
+    event.descriptorData={
+      descriptor:hex(record),coordinateRaw:hex(coordinateRaw),coordinateTarget:coordinateTarget===null?null:hex(coordinateTarget),
+      sharedRaw:hex(sharedRaw),sharedTarget:sharedTarget===null?null:hex(sharedTarget),
+      payloadRaw:hex(payloadRaw),payloadTarget:payloadTarget===null?null:hex(payloadTarget),
+      payloadHeader,payloadCount,helper:'0x4e59c8',helperEmulation:'descriptor/payload references decoded; packed payload mutation not yet reproduced'
+    };
+    descriptorLeaves.push(event.descriptorData);
+    event.helperCall={address:'0x4e59c8',emulated:false,reason:'payload mutation logged, not applied to DPC bytes'};
+    helperCalls.push({record:hex(record),opcode,handler:'0x4dfde1',helper:'0x4e59c8',payloadTarget:payloadTarget===null?null:hex(payloadTarget),payloadCount,reason:'packed payload mutation logged but not applied'});
   }else if(opcode===1){
     const n=u8(record+0x14)??0;
     event.list={count:n,base:record+0x18,layout:'relocated DWORD pointers at +0x18'};
@@ -602,6 +615,7 @@ const report={
   fileBytes:b.length,relocationBase:hex(base),root:{record:hex(rootRecord),recordClass:rootClass,partClass,callbackStart:hex(rootNode)},
   executable:{path:exePath,initialMatrix:initialMatrixInfo,initialScale:{value:initialScale,source:initialScaleOverride===0?'default 0; loader caller context remains a runtime parameter, override with --initial-scale':'command-line override'}},
   dispatchTable:callbackTargets.map((address,opcode)=>({opcode,handler:hex(address),name:callbackNames[opcode]})),
+  descriptorLeaves,
   helperCalls,
   simulationLimitations:[
     'Opcode-0 handler calls 0x4e59c8; this helper is logged but not emulated.',
@@ -630,6 +644,8 @@ fs.writeFileSync(path.join(outDir,'runtime-rebuild.json'),JSON.stringify(report,
 function csv(v){return'"'+String(v??'').replace(/"/g,'""')+'"';}
 const workCsv=[['entryId','runId','seedRecord','record','opcode','classWord','handler','parentMatrix','scale','x','y','z','childCount','children'],...events.map(e=>[e.entryId,e.runId,hex(e.seedRecord),hex(e.record),e.opcode,e.classWord,e.handlerName,e.parentMatrix,e.scale,...e.position,e.childCount,e.children.map(hex).join(' ')])];
 fs.writeFileSync(path.join(outDir,'callback-work-stack.csv'),workCsv.map(r=>r.map(csv).join(',')).join('\n')+'\n');
+const descriptorCsv=[['descriptor','coordinateTarget','sharedTarget','payloadTarget','payloadCount','helper'],...descriptorLeaves.map(x=>[x.descriptor,x.coordinateTarget,x.sharedTarget,x.payloadTarget,x.payloadCount,x.helper])];
+fs.writeFileSync(path.join(outDir,'descriptor-payload-links.csv'),descriptorCsv.map(r=>r.map(csv).join(',')).join('\n')+'\n');
 const linkCsv=[['mesh','owner','meshNode','transformNode','meshCallbackEvents','transformCallbackEvents','selectedEvent','selectedEventRecord','selectedMatrixId','selectedPosition','transformSource'],...geometryLinks.map(x=>[x.mesh,x.owner,x.meshNode,x.transformNode,x.meshCallbackEvents,x.transformCallbackEvents,x.selectedEvent,x.selectedEventRecord,x.selectedMatrixId,JSON.stringify(x.selectedPosition),x.transformSource])];
 fs.writeFileSync(path.join(outDir,'geometry-callback-links.csv'),linkCsv.map(r=>r.map(csv).join(',')).join('\n')+'\n');
 const md=[
@@ -637,7 +653,7 @@ const md=[
   '- Input: '+input,'- DPC bytes: '+b.length,'- Root node: '+hex(rootNode),
   '- Top-level DPC records: '+tableCount,'- Validated opcode-5 transform records: '+transformRecords.length,'- Opcode-5 transform roots: '+transformRoots.map(hex).join(', '),'- Callback seed records: '+seedOffsets.map(hex).join(', '),'- Work entries processed: '+processed,'- Entries remaining: '+work.length,'- Callback events: '+events.length,
   '- Distinct record/state combinations: '+visitedCounts.size,'- Queue edges: '+edgeRows.length,
-  '- Leaf callback entries: '+leafRecords.length,'- Unresolved edges: '+unresolved.length,'- Unemulated helper calls: '+helperCalls.length,
+  '- Leaf callback entries: '+leafRecords.length,'- Descriptor leaves decoded: '+descriptorLeaves.length,'- Unique descriptor payload targets: '+new Set(descriptorLeaves.map(x=>x.payloadTarget).filter(Boolean)).size,'- Unresolved edges: '+unresolved.length,'- Helper calls logged: '+helperCalls.length,
   '- Geometry sections: '+meshes.length,'- Callback-linked sections: '+geometryLinks.filter(x=>x.transformSource!=='no callback match').length,
   '- Owner/paired translation invariants: '+meshes.filter(m=>m.transformNode!==null).length+'/'+(meshes.length-1)+' matched',
   '- Executable disassembly bridge: '+executableBridge.status,
@@ -656,6 +672,11 @@ const md=[
   'The run compares 20 candidate combinations: two matrix orientations, two placements of translation, and five translation sources (accumulated callback state, matrix-transformed position, owner anchor, and the two additive combinations). A placement applied from an owner anchor is not labelled a callback transform. Callback transform counts and candidate-placement counts are reported separately. Owner anchors are independently cross-checked against their paired transform-node vectors.','',
   ...variants.map(v=>'- '+v.output+' — '+v.callbackTransformAppliedCount+'/'+v.meshCount+' sections callback-linked; '+v.placementAppliedCount+'/'+v.meshCount+' sections have candidate placement applied'),
   '',
+  '## Descriptor-to-payload links','',
+  '| Descriptor | Coordinate target | Payload target | Count |','|---:|---:|---:|---:|',
+  ...descriptorLeaves.map(x=>'| '+x.descriptor+' | '+(x.coordinateTarget??'—')+' | '+(x.payloadTarget??'—')+' | '+(x.payloadCount??'—')+' |'),
+  '',
+  'The opcode-0 resolver at 0x4E59C8 reads descriptor+0x0C/+0x10 and updates packed fields within the payload chain. This runner records the descriptor links and counts but does not yet apply that payload mutation.','',
   '## Unemulated helper calls','',
   ...helperCalls.slice(0,100).map(x=>'- '+JSON.stringify(x)),
   '',
@@ -672,11 +693,12 @@ console.log('Validated opcode-5 transforms: '+transformRecords.length+' | transf
 console.log('Callback seeds: '+seedOffsets.map(hex).join(', '));
 console.log('Executable disassembly bridge: '+executableBridge.status+(executableBridge.reportPath?' | '+executableBridge.reportPath:''));
 console.log('Processed: '+processed+' | queued remaining: '+work.length+' | truncated: '+truncated);
-console.log('Callbacks: '+events.length+' | unique record/states: '+visitedCounts.size+' | unresolved: '+unresolved.length);
+console.log('Callbacks: '+events.length+' | unique record/states: '+visitedCounts.size+' | descriptors: '+descriptorLeaves.length+' | unresolved: '+unresolved.length);
 console.log('Geometry sections callback-linked: '+geometryLinks.filter(x=>x.transformSource!=='no callback match').length+'/'+meshes.length);
 console.log('Owner/paired translation vectors verified: '+meshes.filter(m=>m.transformNode!==null).length+'/'+(meshes.length-1));
 console.log('Assembly variants: '+conventions.length+' (matrix orientation × translation placement × position source)');
 for(const v of variants)console.log(v.convention.name+': '+v.output+' ('+v.callbackTransformAppliedCount+' callback transforms; '+v.placementAppliedCount+' candidate placements)');
 console.log('Report: '+path.join(outDir,'RUNTIME-REBUILD.md'));
+console.log('Descriptor links: '+path.join(outDir,'descriptor-payload-links.csv'));
 console.log('Full JSON: '+path.join(outDir,'runtime-rebuild.json'));
 console.log('A finished Scout is NOT claimed until visual validation succeeds and the callback-to-geometry links are established.');
