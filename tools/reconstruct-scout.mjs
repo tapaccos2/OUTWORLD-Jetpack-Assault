@@ -3,15 +3,16 @@
  * Integrated Scout DPC reconstruction pipeline.
  *
  * Usage:
- *   node tools/reconstruct-scout.mjs <scout.dpc> [out-dir] [--exe outwars.exe]
+ *   node tools/reconstruct-scout.mjs <units.ff|scout.dpc> [out-dir] [--exe outwars.exe]
  *
- * Runs the established DPC transform-hierarchy, attachment and opcode-4
- * payload inspectors in one invocation. It also writes the source-faithful
- * nine-mesh extraction as a diagnostic baseline, not as the assembled Scout.
+ * Runs the autonomous mixed-entry callback discovery plus the transform,
+ * attachment, opcode-4 payload and legacy part-list audits in one invocation.
+ * units.ff is accepted and scout_mj.dpc is extracted automatically.
  *
- * The final GLB is intentionally withheld until opcode-4 child entries and
- * their render payloads are decoded. The old class-102/105 owner-translation
- * experiment is known to be visually wrong and is no longer generated.
+ * It deliberately does NOT run the legacy 0x04010C09 signature exporter:
+ * those records are opcode-4 callbacks, not proven four-index faces. No GLB
+ * is emitted until leaf render payload semantics and transform ownership are
+ * established.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -20,12 +21,15 @@ import { spawnSync } from 'node:child_process';
 
 const here=path.dirname(fileURLToPath(import.meta.url));
 const argv=process.argv.slice(2);
-let input=null, outDirArg=null, exePath=null;
+let input=null, outDirArg=null, exePath=null, maxTargets=700;
 for(let i=0;i<argv.length;i++){
   const a=argv[i];
   if(a==='--exe'){
     if(!argv[i+1]) throw new Error('--exe requires a path');
     exePath=path.resolve(argv[++i]);
+  } else if(a==='--max-targets'){
+    maxTargets=Number(argv[++i]);
+    if(!Number.isInteger(maxTargets)||maxTargets<1)throw new Error('--max-targets must be positive');
   } else if(a.startsWith('--')) {
     throw new Error('Unknown option: '+a);
   } else if(input===null) input=a;
@@ -33,19 +37,18 @@ for(let i=0;i<argv.length;i++){
   else throw new Error('Unexpected argument: '+a);
 }
 if(!input){
-  console.error('Usage: node tools/reconstruct-scout.mjs <scout.dpc> [out-dir] [--exe outwars.exe]');
+  console.error('Usage: node tools/reconstruct-scout.mjs <units.ff|scout.dpc> [out-dir] [--exe outwars.exe] [--max-targets 700]');
   process.exit(2);
 }
-input=path.resolve(input);
-if(!fs.existsSync(input)) throw new Error('DPC file not found: '+input);
+const requestedInput=path.resolve(input);
 const outDir=path.resolve(outDirArg||'scout-reconstruction');
 fs.mkdirSync(outDir,{recursive:true});
-const stem=path.basename(input).replace(/\.dpc$/i,'');
-const source=path.join(outDir,'source-geometry');
+const autodiscoveryDir=path.join(outDir,'autodiscovery');
 const transforms=path.join(outDir,'transform-hierarchy');
 const attachments=path.join(outDir,'attachments');
 const callbacks=path.join(outDir,'callbacks');
-for(const d of [source,transforms,attachments,callbacks])fs.mkdirSync(d,{recursive:true});
+const partGraph=path.join(outDir,'part-graph');
+for(const d of [autodiscoveryDir,transforms,attachments,callbacks,partGraph])fs.mkdirSync(d,{recursive:true});
 
 function run(label,command,args,stdoutFile=null){
   console.log('['+label+']');
@@ -64,10 +67,19 @@ function readJson(file){
   try{return JSON.parse(fs.readFileSync(file,'utf8'));}catch{return null;}
 }
 
-// 1. Keep the already-decoded class-102/105 meshes as a baseline only.
-const baselineGlb=path.join(source,stem+'-raw-baseline.glb');
-nodeTool('source geometry baseline','export-dpc-armour-geometry.mjs',[input,baselineGlb]);
-const baseline=readJson(baselineGlb.replace(/\.glb$/i,'.json'));
+// 1. Run autonomous discovery with the legacy signature-derived geometry GLB
+//    explicitly disabled. This resolves units.ff automatically and emits the
+//    mixed opcode-4 entry graph plus exact relocated callback-edge counts.
+const discoveryReportFile=path.join(autodiscoveryDir,'discovery-report.json');
+const discoveryArgs=[path.join(here,'scout-autodiscovery.mjs'),requestedInput,autodiscoveryDir,'--max-targets',String(maxTargets),'--no-baseline'];
+if(exePath)discoveryArgs.push('--exe',exePath);
+run('autonomous mixed-entry callback discovery',process.execPath,discoveryArgs);
+const discoveryData=readJson(discoveryReportFile);
+if(!discoveryData?.input||!fs.existsSync(discoveryData.input))
+  throw new Error('Autodiscovery did not provide a usable extracted DPC path in '+discoveryReportFile);
+input=path.resolve(discoveryData.input);
+const stem=path.basename(input).replace(/\\.dpc$/i,'');
+const sourceArchive=discoveryData.sourceArchive??null;
 
 // 2. Decode candidate opcode-5 transform records and their pointer hierarchy.
 const transformFile=path.join(transforms,'opcode5-records.json');
@@ -100,40 +112,47 @@ const callbackChainFile=path.join(callbacks,'part-list-callback-chain.json');
 run('part-list callback descriptor chain',process.execPath,[path.join(here,'inspect-scout-callback-chain.mjs'),input],callbackChainFile);
 const callbackChainData=readJson(callbackChainFile);
 
-// 7. Optional executable analysis for validating static code semantics.
-let exeReport=null;
-if(exePath){
-  if(!fs.existsSync(exePath))throw new Error('Executable not found: '+exePath);
-  const bridgeOut=path.join(outDir,'executable-analysis');
-  run('executable transform disassembly','bash',[path.join(here,'scout-exe-transform-bridge.sh'),exePath,bridgeOut]);
-  exeReport=path.join(bridgeOut,'REPORT.txt');
-}
+// 7. Preserve the detailed legacy part-list record structure. The data is
+//    retained as a separate geometry-pool audit, not treated as the bone tree.
+const partGraphFile=path.join(partGraph,'male-part-graph.json');
+nodeTool('legacy part-list structural audit','inspect-scout-part-graph.mjs',[input,partGraphFile]);
+
+// The executable bridge is run by scout-autodiscovery above.
+const exeReport=discoveryData?.controls?.executableAnalysis?.output
+  ?path.join(discoveryData.controls.executableAnalysis.output,'REPORT.txt'):null;
 
 const attachmentSummary=attachmentData?.summary||{};
 const payloadSummary=payloadData?.summary||{};
 const opcode4Summary=opcode4Data?.summary||{};
 const callbackResult=callbackData?.results?.[0]||{};
+const discoveryGraph=discoveryData?.graph?.callbackEntryGraph||{};
+const discoveryOpcode4=discoveryData?.callbackLayouts?.opcode4||{};
 const manifest={
   pipeline:'Outwars Scout DPC reconstruction pipeline',
-  version:'1.1.0',
+  version:'1.2.0',
+  requestedInput:requestedInput,
   source:input,
+  sourceArchive,
   executable:exePath,
   outputs:{
-    sourceGeometryBaseline:baselineGlb,
-    sourceGeometryReport:baselineGlb.replace(/\.glb$/i,'.json'),
+    discoveryReport:path.join(autodiscoveryDir,'DISCOVERY-REPORT.md'),
+    discoveryJson:discoveryReportFile,
+    opcode4EntryCandidates:path.join(autodiscoveryDir,'opcode4-entry-candidates.csv'),
+    hypothesisScoreboard:path.join(autodiscoveryDir,'hypothesis-scoreboard.csv'),
+    payloadCoordinateCandidates:path.join(autodiscoveryDir,'payload-coordinate-candidates.csv'),
+    payloadIndexCandidates:path.join(autodiscoveryDir,'payload-index-candidates.csv'),
     opcode5TransformRecords:transformFile,
     transformAttachmentAudit:attachmentFile,
     transformMeshPayloadInventory:payloadFile,
     opcode4ChildPayloads:opcode4File,
     partListCallbackRecords:callbackFile,
     partListCallbackChain:callbackChainFile,
+    legacyPartGraph:partGraphFile,
     executableAnalysis:exeReport
   },
-  validatedBaseline:{
-    meshCount:baseline?.meshCount??null,
-    vertices:baseline?.totalVertices??null,
-    triangles:baseline?.totalTriangles??null,
-    note:'This is the earlier class-102/105 raw extraction only. It is not the assembled Scout and no owner translation is applied.'
+  legacySignatureGeometryExport:{
+    generated:false,
+    reason:'The 0x04 0x01 0x0C 0x09 signature is not a proven four-index face. Opcode-4/class-0x090c records are callback nodes with translation fields and child DWORD entries. The legacy GLB is intentionally omitted.'
   },
   transformHierarchy:{
     structurallyPlausibleOpcode5Records:transformCount,
@@ -148,12 +167,18 @@ const manifest={
     descriptorsWithFaceStreams:payloadSummary.descriptorsWithFaceStreams??null,
     opcode4PayloadCount:opcode4Summary.opcode4PayloadCount??null,
     opcode4EntryCount:opcode4Summary.reportedEntryCount??null,
-    callbackPartListRecords:callbackResult.callbackRecordCount??null
+    callbackPartListRecords:callbackResult.callbackRecordCount??null,
+    recursivelyDiscoveredOpcode4Records:discoveryOpcode4.records?.length??null,
+    opcode4ChildEntryCount:discoveryGraph.recursivelyDiscoveredOpcode4Count
+      ?discoveryGraph.nodes?.filter(n=>n.kind==='opcode4-child-list').reduce((sum,n)=>sum+(n.parsed?.entries?.length??0),0):null,
+    strictCallbackEdges:discoveryGraph.validatedEntryToCallbackEdgeCount??null,
+    strictCallbackEdgesByTargetKind:discoveryGraph.edgeCountsByTargetKind??null,
+    reachableOpcode4FromDescriptorRoots:discoveryGraph.opcode4ReachableFromDescriptorRootsByRelocatedPointers??null
   },
   reconstruction:{
     status:'NOT_YET_ASSEMBLED_OPCODE4_PAYLOAD_SEMANTICS',
     assembledScout:false,
-    currentBlocker:'The transform hierarchy is identified, but opcode-4 child entries have not yet been decoded into the actual render primitives/topology and linked to their coordinate payloads. The old signature-based quad interpretation is invalid.',
+    currentBlocker:'The opcode-4 mixed-entry graph is now inventoried and strict relocated pointers to known opcode-2/opcode-4/opcode-5 records are counted. The remaining task is to establish which opcode-4 child entries point to renderable leaves, decode those leaves into real primitives/topology, and bind them to the matching coordinate payloads. The old signature-based quad interpretation is invalid.',
     acceptanceCriteria:[
       'Decode opcode-4 child-entry targets by actual callback opcode and record layout',
       'Identify the leaf render-primitive payload and its vertex/index interpretation',
@@ -167,4 +192,8 @@ console.log('\nReconstruction manifest: '+path.join(outDir,'reconstruction-manif
 console.log('Opcode-5 transforms: '+(transformCount??'unknown'));
 console.log('Opcode-2 attachments: '+(payloadSummary.opcode2AttachmentCount??'unknown'));
 console.log('Opcode-4 payloads: '+(opcode4Summary.opcode4PayloadCount??'not yet available'));
+console.log('Strict callback edges: '+(discoveryGraph.validatedEntryToCallbackEdgeCount??'unknown'));
+console.log('Strict edge targets: '+JSON.stringify(discoveryGraph.edgeCountsByTargetKind??{}));
+console.log('Opcode-4 reachable records: '+(discoveryGraph.opcode4ReachableFromDescriptorRootsByRelocatedPointers??'unknown'));
+console.log('Legacy signature-derived GLB: OMITTED (invalid topology assumption).');
 console.log('Final Scout GLB: NOT CLAIMED — render primitive semantics still unresolved.');
