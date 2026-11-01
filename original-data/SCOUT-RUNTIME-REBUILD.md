@@ -19,9 +19,11 @@ Node.js 18+ is recommended. The runner validates and extracts `scout_mj.dpc` fro
 
 Supplying `--exe` runs the disassembly bridge and captures the initial matrix plus the loader/caller code around the callback context helper. The caller-supplied initial scale/context is still not decoded automatically; the runner uses zero by default and records that assumption. Do not change it arbitrarily.
 
+The first uploaded run on 1 November 2026 processed only two callbacks (`0x9368` and `0x935c`) and linked 0/9 geometry sections. That run is a failed traversal, not a model result. The tool now seeds the playable-armour root and automatically discovers and seeds the validated roots of the opcode-5 transform forest, in addition to the DPC table entries. You do not need an extra option to enable this.
+
 ## What it does
 
-1. Reads the DPC's top-level relocated record-pointer table and invokes the callback simulation for each table slot in order, preserving repeated pointers.
+1. Reads the DPC's top-level relocated record-pointer table and invokes the callback simulation for each table slot in order, preserving repeated pointers. It also seeds the playable-armour root and automatically discovers opcode-5 transform records by their flags, Q20.12 orthogonality, child counts and relocated child pointers; it seeds only opcode-5 forest roots.
 2. Uses the executable's 14-entry callback table at `0x4DFCAC` (byte zero is the opcode; WORD +2 is a separate class/state field).
 3. Follows the visible child-list layouts:
    - opcode 1: BYTE count at +0x14, pointer list at +0x18;
@@ -34,8 +36,9 @@ Supplying `--exe` runs the disassembly bridge and captures the initial matrix pl
    - opcode 11: WORD scale at +4, WORD count at +6, child pointers at +8.
 4. Recovers the existing nine raw geometry sections using the already-established shared coordinate pool and face-record structure: one root mesh and eight submeshes, 390 referenced vertices and 230 triangles.
 5. Checks each submesh's owner translation against the paired transform-node translation. The vectors must match before the runner accepts that anchor.
-6. Maps actual callback record offsets to mesh/transform-node offsets where they match.
-7. Exports **20 GLB candidates**: two source-matrix orientations × two translation placements × five position sources (accumulated callback state, matrix-output position, owner anchor, and the two additive combinations).
+6. Records descriptor leaves reached through opcode 2. For each it captures the +4 coordinate target, +8 shared target, +12 opcode-4 payload target and +0x10 payload count from the opcode-0 descriptor resolver. These references are compared with the legacy submesh reference points; exact matches are reported, not guessed.
+7. Separates genuine callback-to-geometry matches from candidate placements using owner anchors. The owner/paired-node vectors are cross-checked, but owner anchors are not labelled as callback transforms.
+8. Exports **20 GLB candidates**: two source-matrix orientations × two translation placements × five position sources (accumulated callback state, matrix-output position, owner anchor, and the two additive combinations).
 
 ## Output directory
 
@@ -44,7 +47,8 @@ The run writes:
 - `RUNTIME-REBUILD.md`: concise summary, callback counts, mesh-to-callback links, unresolved records and candidate files.
 - `runtime-rebuild.json`: full event trace, dispatch table, matrix frames, geometry links, helper calls and assumptions.
 - `callback-work-stack.csv`: each simulated work-stack entry and its parent/child relationship.
-- `geometry-callback-links.csv`: which geometry sections matched callback executions.
+- `geometry-callback-links.csv`: geometry nodes, reference points, descriptor-coordinate/payload matches and direct callback matches.
+- `descriptor-payload-links.csv`: descriptor-to-coordinate/payload targets recovered by opcode-2 / opcode-0 traversal.
 - `scout-runtime-*.glb`: 20 alternative placements for visual comparison.
 - `executable-analysis/REPORT.txt`: disassembly bridge output, including the loader context helper and its call sites.
 
@@ -52,13 +56,13 @@ The run writes:
 
 This is a **static callback reconstruction candidate generator**, not a bit-exact execution of the Windows executable. Three important pieces remain explicitly exposed rather than guessed:
 
-- opcode 0 calls helper `0x4E59C8`; its side effects are logged but not emulated;
+- opcode 0 calls helper `0x4E59C8`; descriptor coordinate/payload references and counts are decoded, but the helper's packed-property mutation across the payload records is not applied;
 - opcode 3 can call helper `0x4DF970` when record byte +0x12 is 1; that conditional helper is logged but not emulated;
 - the shared callback tail at `0x4DFDF9` performs post-handler scale/state normalization; the whole routine is not yet emulated.
 
 The initial callback scale/context is supplied in EDX by the loader. The current default is zero. The new executable bridge dump gives the exact loader/helper code needed to resolve this parameter, but the runner does not yet infer it.
 
-The 20 GLBs are therefore **comparative assembly candidates**, not a declared finished Scout. The acceptance test is a recognisable humanoid Scout with all expected sections in plausible positions, followed by checking the selected transform convention against another Scout variant. The raw 9-section geometry counts are controls, not proof that the placement is correct.
+The 20 GLBs are therefore **comparative placement candidates**, not a declared finished Scout. A GLB can have owner-anchor placements without having any callback-derived geometry transform; the report now counts those separately. The acceptance test is a recognisable humanoid Scout with all expected sections in plausible positions, followed by checking the selected transform convention against another Scout variant. The raw 9-section geometry counts are controls, not proof that the placement is correct.
 
 ## Why opcode 4 is inline
 
