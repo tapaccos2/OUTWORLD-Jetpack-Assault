@@ -228,6 +228,24 @@ The historical command is now a compatibility alias for the same complete workfl
 node tools/scout-runtime-rebuild.mjs original-data/units.ff scout-final --exe /path/to/outwars.exe
 ```
 
+
+## 7. One-run Scout closeout (coordinate + ownership + placement)
+
+The closeout runner performs the full executable-guided discovery, exports five independent geometry controls, validates every referenced 8-byte XYZ record against the source DPC and exporter bounds, maps exact opcode-4 child pointers back to their opcode-5 transform owners, and tests all matrix order/orientation/translation-scale combinations against the eight stored mesh reference-point targets.
+
+Run once from the repository root:
+
+```sh
+node tools/scout-closeout.mjs \
+  original-data/units.ff \
+  scout-closeout \
+  --exe /path/to/outwars.exe
+```
+
+It writes one `scout-closeout.zip` containing the exact DPC, executable checksum, complete callback/disassembly evidence, five geometry candidates, per-mesh coordinate/ownership results, matrix validation results, and a consolidated report.
+
+If (and only if) all nine coordinate bases validate, all eight submeshes have exact callback ownership, and exactly one transform convention maps all eight reference points to their recorded targets within two game units, the tool additionally emits `geometry/scout-runtime-assembled.glb`. Otherwise it leaves the five comparison candidates intact and names the failed gate. It does not promote nearby byte-pattern or matrix-rigidity heuristics to verified runtime facts.
+
 ## 7. Lower-level Scout evidence tools
 
 For focused investigations, the component tools remain available:
