@@ -199,25 +199,28 @@ node tools/inspect-motion-catalog.mjs original-data/motion motion-catalog.json
 
 Checks the 152-byte frame stride and inventories the 19 eight-byte entries per frame across available .MC files. The report keeps the one known declared-count mismatch (fstand2.mc) visible. It does not infer bone names or a skeleton hierarchy.
 
-## 6. Rebuild the Scout callback hierarchy and export assembly candidates
+## 6. Reconstruct Scout DPC callback payloads and transform hierarchy
 
-Use the runtime callback rebuild tool for the current end-to-end Scout assembly investigation:
+Use the integrated evidence pipeline. It accepts the original FF archive, extracts the Scout DPC, runs autonomous mixed-entry callback discovery, audits opcode-5 transforms and opcode-2 descriptor attachments, decodes opcode-4 child records, and records the legacy part-list graph separately.
 
 ```sh
-node tools/scout-runtime-rebuild.mjs \
+node tools/reconstruct-scout.mjs \
   original-data/units.ff \
-  scout-runtime-rebuild \
+  scout-reconstruction \
   --exe /home/tapaccos/Outwars-extracted/outwars.exe
 ```
 
-It extracts `scout_mj.dpc` from `units.ff`, follows the top-level record table, seeds the playable-armour root and automatically discovered opcode-5 transform roots, follows the callback work stack, traces exact face-payload descriptors back through their callback ancestry, reports whether each geometry descriptor has an opcode-5 ancestor, tests reference-point-to-target-point placement, and exports 24 comparative candidates. It also writes `geometry-callback-ancestry.csv` for the full mesh-to-callback audit. The executable argument is recommended because it also inspects the initial matrix and loader context helper. The first run that only reached two callbacks was a failed traversal; the tool has since been corrected to seed the transform forest automatically.
+This pipeline deliberately skips the old `0x04 0x01 0x0C 0x09` signature-derived GLB export. Those records are opcode-4 callbacks with position contributions and child entries, not validated four-index faces. The run writes `DISCOVERY-REPORT.md`, `discovery-report.json`, `opcode4-entry-candidates.csv`, transform/attachment inventories, opcode-4 child payload reports, callback-chain reports and `reconstruction-manifest.json`.
 
-See [SCOUT-RUNTIME-REBUILD.md](../original-data/SCOUT-RUNTIME-REBUILD.md) for the command, output files, tested callback layouts and remaining execution gaps. The generated GLBs are candidates until one is visually recognisable and independently checked.
+The Scout is not declared assembled until the opcode-4 leaves are decoded into real render primitives, linked to their coordinate payloads, and placed under the verified opcode-5 transform hierarchy.
 
-## 7. Export raw playable-armour geometry control
+The former `scout-runtime-rebuild.mjs` command is retained only as a compatibility wrapper and now forwards to this corrected pipeline. Its previous 24 GLB placement candidates are not valid assembled geometry.
+
+## 7. Legacy raw-geometry signature diagnostic (not a model exporter)
 
 ```sh
-node tools/export-dpc-armour-geometry.mjs original-data/units/scout_mj.dpc scout-mj-raw.glb
+node tools/export-dpc-armour-geometry.mjs original-data/units/scout_mj.dpc scout-mj-signature-diagnostic.glb
 ```
 
-This is the nine-section raw geometry control (390 referenced vertices, 230 triangles), not the final assembled model. See [SCOUT-GEOMETRY-EXPORT.md](../original-data/SCOUT-GEOMETRY-EXPORT.md) for decoded fields and evidence.
+This older utility is retained for forensic comparison only. Its apparent face records were later identified as opcode-4 callback records, so its 390-vertex/230-triangle output must not be treated as verified Scout topology or used as the final model. See [SCOUT-GEOMETRY-EXPORT.md](../original-data/SCOUT-GEOMETRY-EXPORT.md) for the correction and remaining blockers.
+
