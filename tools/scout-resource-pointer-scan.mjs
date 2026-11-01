@@ -165,6 +165,26 @@ for(const f of files){
   }
 }
 const matchedValues=new Set(matches.map(x=>x.pointer));
+const matchesByPointer=new Map();
+for(const m of matches){
+  if(!matchesByPointer.has(m.pointer))matchesByPointer.set(m.pointer,[]);
+  matchesByPointer.get(m.pointer).push(m);
+}
+const uniqueRangeMatchValues=new Set([...matchesByPointer.entries()].filter(([,v])=>v.length===1).map(([k])=>k));
+const ambiguousRangeMatchValues=new Set([...matchesByPointer.entries()].filter(([,v])=>v.length>1).map(([k])=>k));
+const ambiguousPointers=externalPointers.filter(p=>(matchesByPointer.get(p.raw)||[]).length>1).map(p=>({
+  pointer:p.raw,targetOffset:hex(p.targetOffset),candidateCount:matchesByPointer.get(p.raw).length,
+  candidates:matchesByPointer.get(p.raw).map(m=>({resource:m.resource,resourceBase:m.resourceBase,resourceOffset:m.resourceOffset,targetPreview:m.targetPreview}))
+}));
+const matchedResourcePaths=new Set(matches.map(m=>m.resource));
+const matchedResourceDir=path.join(outDir,'matched-resources');
+fs.mkdirSync(matchedResourceDir,{recursive:true});
+for(const f of files){
+  const relPath=path.relative(process.cwd(),f.path);
+  if(!matchedResourcePaths.has(relPath))continue;
+  const safeName=relPath.replace(/[\\/]/g,'__');
+  fs.copyFileSync(f.path,path.join(matchedResourceDir,safeName));
+}
 const rawReferenceRows=[];
 for(const [raw,hits] of rawHits)if(hits.length)rawReferenceRows.push({pointer:hex(raw),references:hits});
 const unresolved=externalPointers.filter(x=>!matchedValues.has(x.raw)&&!rawHits.get(x.rawValue).length);
@@ -174,13 +194,14 @@ const report={
   summary:{
     transformRecordCount:transformRecords.length,transformChildTargetCount:transformChildRecords.size,
     opcode0DescriptorCandidates:knownDescriptors.length,uniqueExternalPointerCount:externalPointers.length,
-    matchedPointerCount:matchedValues.size,rawReferencePointerCount:rawReferenceRows.length,
+    matchedPointerCount:matchedValues.size,uniqueRangeMatchPointerCount:uniqueRangeMatchValues.size,
+    ambiguousRangeMatchPointerCount:ambiguousRangeMatchValues.size,rawReferencePointerCount:rawReferenceRows.length,
     unresolvedPointerCount:unresolved.length
   },
   transformRecords:transformRecords.map(o=>({offset:hex(o),classWord:u16(o+2),position:[s32(o+0x28),s32(o+0x2c),s32(o+0x30)],childCount:u8(o+0x36)})),
   transformChildTargets:[...transformChildRecords].sort((a,b)=>a-b).map(o=>({offset:hex(o),opcode:u8(o),classWord:u16(o+2)})),
   descriptorCandidates:knownDescriptors.map(x=>({offset:hex(x.offset),payload:hex(x.payload),count:x.count})),
-  externalPointers,matches,rawReferenceRows,unresolvedPointers:unresolved
+  externalPointers,matches,ambiguousPointers,rawReferenceRows,unresolvedPointers:unresolved
 };
 fs.writeFileSync(path.join(outDir,'RESOURCE-POINTER-SCAN.json'),JSON.stringify(report,null,2)+'\n');
 const md=[
@@ -197,12 +218,21 @@ const md=[
   ...Object.entries(report.summary).map(([k,v])=>'| '+k+' | '+v+' |'),
   '',
   '## External pointers','',
-  '| Pointer | DPC target offset | Occurrences | Resource range match |',
-  '|---:|---:|---:|---|',
-  ...externalPointers.map(p=>'| '+p.raw+' | '+hex(p.targetOffset)+' | '+p.occurrenceCount+' | '+(matches.filter(m=>m.pointer===p.raw).map(m=>m.resource+' @ '+m.resourceOffset).join('; ')||'none')+' |'),
+  '| Pointer | DPC target offset | Occurrences | Range matches | Resolution |',
+  '|---:|---:|---:|---:|---|',
+  ...externalPointers.map(p=>{
+    const n=(matchesByPointer.get(p.raw)||[]).length;
+    const status=n===1?'UNIQUE':n>1?'AMBIGUOUS':'UNRESOLVED';
+    return '| '+p.raw+' | '+hex(p.targetOffset)+' | '+p.occurrenceCount+' | '+n+' | '+status+' |';
+  }),
   '',
-  '## Exact resource-range matches','',
+  '## Exact resource-range candidates','',
   ...matches.map(m=>'- '+m.pointer+' → '+m.resource+' + '+m.resourceOffset+' (base '+m.resourceBase+')'),
+  '',
+  '## Ambiguous pointers','',
+  ...(ambiguousPointers.length?ambiguousPointers.map(p=>'- '+p.pointer+' has '+p.candidateCount+' overlapping resource candidates; none is selected automatically'):['- None']),
+  '',
+  'Matched candidate files are copied into matched-resources/ for direct inspection.',
   '',
   '## Raw pointer references','',
   ...rawReferenceRows.map(x=>'- '+x.pointer+': '+x.references.map(y=>y.resource+' @ '+y.offset).join(', ')),
@@ -211,7 +241,7 @@ const md=[
   ...(unresolved.length?unresolved.map(x=>'- '+x.raw+' (DPC offset '+hex(x.targetOffset)+', '+x.occurrenceCount+' occurrence(s))'):['- None']),
   '',
   '## Interpretation boundary','',
-  'A resource-range match establishes where a virtual address falls in an extracted resource image. A raw pointer occurrence establishes only that the value is stored in that file. Neither alone proves semantic ownership; the pointed-to record must still be decoded and linked to the Scout geometry callbacks.'
+  'A resource-range match establishes only that an address falls inside a file image. When multiple DPC files share the same virtual base and range, the match is ambiguous and does not identify the target resource. A raw pointer occurrence establishes only that the value is stored in that file. The pointed-to record must still be decoded and linked to the Scout geometry callbacks.'
 ];
 fs.writeFileSync(path.join(outDir,'RESOURCE-POINTER-SCAN.md'),md.join('\n')+'\n');
 console.log('Scout resource-pointer scan complete');
