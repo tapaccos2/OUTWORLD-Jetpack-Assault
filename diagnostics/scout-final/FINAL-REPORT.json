@@ -1,0 +1,4189 @@
+{
+  "pipeline": "Outwars Scout one-run finalization",
+  "version": "1.0.0",
+  "generatedAt": "2026-11-01T13:16:18.669Z",
+  "source": "/home/runner/work/OUTWORLD-Jetpack-Assault/OUTWORLD-Jetpack-Assault/original-data/units.ff",
+  "extractedDpc": "/tmp/outwars-scout-autodiscovery-Y4U6tG/units/scout_mj.dpc",
+  "sourceDpcSha256": "05887eae665ec9eb7da64420d549e239d23c0a81e3b27eae4f77ac655df58758",
+  "executable": null,
+  "executableAnalysis": "not requested",
+  "callbackEvidence": {
+    "opcode5TransformCount": 16,
+    "opcode2AttachmentCount": 11,
+    "descriptorCount": 13,
+    "opcode4PayloadCount": 10,
+    "opcode4EntryCount": 1320,
+    "strictCallbackEdges": 86,
+    "strictCallbackEdgesByTargetKind": {
+      "opcode2": 21,
+      "opcode4": 40,
+      "opcode5": 25
+    }
+  },
+  "geometry": {
+    "rawSharedPool": {
+      "file": "/home/runner/work/OUTWORLD-Jetpack-Assault/OUTWORLD-Jetpack-Assault/scout-final/geometry/scout-mj-raw-shared.glb",
+      "meshCount": 9,
+      "totalVertices": 390,
+      "totalTriangles": 230,
+      "localCombinedBounds": {
+        "min": [
+          -2047,
+          -1328,
+          120
+        ],
+        "max": [
+          2047,
+          644,
+          832
+        ],
+        "size": [
+          4094,
+          1972,
+          712
+        ]
+      },
+      "combinedBounds": {
+        "min": [
+          -2047,
+          -1328,
+          120
+        ],
+        "max": [
+          2047,
+          644,
+          832
+        ],
+        "size": [
+          4094,
+          1972,
+          712
+        ]
+      },
+      "validationSpace": "world-space (GLB node matrix/TRS and parent hierarchy applied)",
+      "activeScene": 0,
+      "meshes": [
+        {
+          "name": "root_mesh",
+          "vertices": 37,
+          "triangles": 22,
+          "sourceFaceRecords": 22,
+          "uniqueQuads": 11,
+          "localBounds": {
+            "min": [
+              -189,
+              -795,
+              120
+            ],
+            "max": [
+              189,
+              644,
+              421
+            ],
+            "size": [
+              378,
+              1439,
+              301
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -189,
+              -795,
+              120
+            ],
+            "max": [
+              189,
+              644,
+              421
+            ],
+            "size": [
+              378,
+              1439,
+              301
+            ]
+          },
+          "bounds": {
+            "min": [
+              -189,
+              -795,
+              120
+            ],
+            "max": [
+              189,
+              644,
+              421
+            ],
+            "size": [
+              378,
+              1439,
+              301
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 0,
+              "nodeName": "root_mesh",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 36,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_1",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "localBounds": {
+            "min": [
+              -348,
+              -927,
+              139
+            ],
+            "max": [
+              348,
+              642,
+              732
+            ],
+            "size": [
+              696,
+              1569,
+              593
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -348,
+              -927,
+              139
+            ],
+            "max": [
+              348,
+              642,
+              732
+            ],
+            "size": [
+              696,
+              1569,
+              593
+            ]
+          },
+          "bounds": {
+            "min": [
+              -348,
+              -927,
+              139
+            ],
+            "max": [
+              348,
+              642,
+              732
+            ],
+            "size": [
+              696,
+              1569,
+              593
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 1,
+              "nodeName": "submesh_1",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_2",
+          "vertices": 43,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "localBounds": {
+            "min": [
+              -515,
+              -1051,
+              147
+            ],
+            "max": [
+              515,
+              644,
+              543
+            ],
+            "size": [
+              1030,
+              1695,
+              396
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -515,
+              -1051,
+              147
+            ],
+            "max": [
+              515,
+              644,
+              543
+            ],
+            "size": [
+              1030,
+              1695,
+              396
+            ]
+          },
+          "bounds": {
+            "min": [
+              -515,
+              -1051,
+              147
+            ],
+            "max": [
+              515,
+              644,
+              543
+            ],
+            "size": [
+              1030,
+              1695,
+              396
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 2,
+              "nodeName": "submesh_2",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 42,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_3",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "localBounds": {
+            "min": [
+              -666,
+              -1211,
+              140
+            ],
+            "max": [
+              666,
+              642,
+              732
+            ],
+            "size": [
+              1332,
+              1853,
+              592
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -666,
+              -1211,
+              140
+            ],
+            "max": [
+              666,
+              642,
+              732
+            ],
+            "size": [
+              1332,
+              1853,
+              592
+            ]
+          },
+          "bounds": {
+            "min": [
+              -666,
+              -1211,
+              140
+            ],
+            "max": [
+              666,
+              642,
+              732
+            ],
+            "size": [
+              1332,
+              1853,
+              592
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 3,
+              "nodeName": "submesh_3",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_4",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "localBounds": {
+            "min": [
+              -931,
+              -1306,
+              147
+            ],
+            "max": [
+              931,
+              638,
+              732
+            ],
+            "size": [
+              1862,
+              1944,
+              585
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -931,
+              -1306,
+              147
+            ],
+            "max": [
+              931,
+              638,
+              732
+            ],
+            "size": [
+              1862,
+              1944,
+              585
+            ]
+          },
+          "bounds": {
+            "min": [
+              -931,
+              -1306,
+              147
+            ],
+            "max": [
+              931,
+              638,
+              732
+            ],
+            "size": [
+              1862,
+              1944,
+              585
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 4,
+              "nodeName": "submesh_4",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_5",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "localBounds": {
+            "min": [
+              -1272,
+              -1328,
+              147
+            ],
+            "max": [
+              1272,
+              635,
+              733
+            ],
+            "size": [
+              2544,
+              1963,
+              586
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -1272,
+              -1328,
+              147
+            ],
+            "max": [
+              1272,
+              635,
+              733
+            ],
+            "size": [
+              2544,
+              1963,
+              586
+            ]
+          },
+          "bounds": {
+            "min": [
+              -1272,
+              -1328,
+              147
+            ],
+            "max": [
+              1272,
+              635,
+              733
+            ],
+            "size": [
+              2544,
+              1963,
+              586
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 5,
+              "nodeName": "submesh_5",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_6",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "localBounds": {
+            "min": [
+              -1590,
+              -1269,
+              147
+            ],
+            "max": [
+              1590,
+              630,
+              820
+            ],
+            "size": [
+              3180,
+              1899,
+              673
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -1590,
+              -1269,
+              147
+            ],
+            "max": [
+              1590,
+              630,
+              820
+            ],
+            "size": [
+              3180,
+              1899,
+              673
+            ]
+          },
+          "bounds": {
+            "min": [
+              -1590,
+              -1269,
+              147
+            ],
+            "max": [
+              1590,
+              630,
+              820
+            ],
+            "size": [
+              3180,
+              1899,
+              673
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 6,
+              "nodeName": "submesh_6",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_7",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "localBounds": {
+            "min": [
+              -1847,
+              -1121,
+              147
+            ],
+            "max": [
+              1847,
+              624,
+              832
+            ],
+            "size": [
+              3694,
+              1745,
+              685
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -1847,
+              -1121,
+              147
+            ],
+            "max": [
+              1847,
+              624,
+              832
+            ],
+            "size": [
+              3694,
+              1745,
+              685
+            ]
+          },
+          "bounds": {
+            "min": [
+              -1847,
+              -1121,
+              147
+            ],
+            "max": [
+              1847,
+              624,
+              832
+            ],
+            "size": [
+              3694,
+              1745,
+              685
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 7,
+              "nodeName": "submesh_7",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_8",
+          "vertices": 40,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "localBounds": {
+            "min": [
+              -2047,
+              -880,
+              147
+            ],
+            "max": [
+              2047,
+              616,
+              732
+            ],
+            "size": [
+              4094,
+              1496,
+              585
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -2047,
+              -880,
+              147
+            ],
+            "max": [
+              2047,
+              616,
+              732
+            ],
+            "size": [
+              4094,
+              1496,
+              585
+            ]
+          },
+          "bounds": {
+            "min": [
+              -2047,
+              -880,
+              147
+            ],
+            "max": [
+              2047,
+              616,
+              732
+            ],
+            "size": [
+              4094,
+              1496,
+              585
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 8,
+              "nodeName": "submesh_8",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 39,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        }
+      ],
+      "passed": true,
+      "problems": []
+    },
+    "ownerTranslated": {
+      "file": "/home/runner/work/OUTWORLD-Jetpack-Assault/OUTWORLD-Jetpack-Assault/scout-final/geometry/scout-mj-owner-translated.glb",
+      "meshCount": 9,
+      "totalVertices": 390,
+      "totalTriangles": 230,
+      "localCombinedBounds": {
+        "min": [
+          -2047,
+          -1328,
+          120
+        ],
+        "max": [
+          2047,
+          644,
+          832
+        ],
+        "size": [
+          4094,
+          1972,
+          712
+        ]
+      },
+      "combinedBounds": {
+        "min": [
+          -2304,
+          -904,
+          120
+        ],
+        "max": [
+          1790,
+          1107,
+          2799
+        ],
+        "size": [
+          4094,
+          2011,
+          2679
+        ]
+      },
+      "validationSpace": "world-space (GLB node matrix/TRS and parent hierarchy applied)",
+      "activeScene": 0,
+      "meshes": [
+        {
+          "name": "root_mesh",
+          "vertices": 37,
+          "triangles": 22,
+          "sourceFaceRecords": 22,
+          "uniqueQuads": 11,
+          "localBounds": {
+            "min": [
+              -189,
+              -795,
+              120
+            ],
+            "max": [
+              189,
+              644,
+              421
+            ],
+            "size": [
+              378,
+              1439,
+              301
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -189,
+              -795,
+              120
+            ],
+            "max": [
+              189,
+              644,
+              421
+            ],
+            "size": [
+              378,
+              1439,
+              301
+            ]
+          },
+          "bounds": {
+            "min": [
+              -189,
+              -795,
+              120
+            ],
+            "max": [
+              189,
+              644,
+              421
+            ],
+            "size": [
+              378,
+              1439,
+              301
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 0,
+              "nodeName": "root_mesh",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 36,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_1",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "localBounds": {
+            "min": [
+              -348,
+              -927,
+              139
+            ],
+            "max": [
+              348,
+              642,
+              732
+            ],
+            "size": [
+              696,
+              1569,
+              593
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -457,
+              -537,
+              1022
+            ],
+            "max": [
+              239,
+              1032,
+              1615
+            ],
+            "size": [
+              696,
+              1569,
+              593
+            ]
+          },
+          "bounds": {
+            "min": [
+              -457,
+              -537,
+              1022
+            ],
+            "max": [
+              239,
+              1032,
+              1615
+            ],
+            "size": [
+              696,
+              1569,
+              593
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 1,
+              "nodeName": "submesh_1",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                -109,
+                390,
+                883,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_2",
+          "vertices": 43,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "localBounds": {
+            "min": [
+              -515,
+              -1051,
+              147
+            ],
+            "max": [
+              515,
+              644,
+              543
+            ],
+            "size": [
+              1030,
+              1695,
+              396
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -658,
+              -654,
+              1109
+            ],
+            "max": [
+              372,
+              1041,
+              1505
+            ],
+            "size": [
+              1030,
+              1695,
+              396
+            ]
+          },
+          "bounds": {
+            "min": [
+              -658,
+              -654,
+              1109
+            ],
+            "max": [
+              372,
+              1041,
+              1505
+            ],
+            "size": [
+              1030,
+              1695,
+              396
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 2,
+              "nodeName": "submesh_2",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                -143,
+                397,
+                962,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 42,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_3",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "localBounds": {
+            "min": [
+              -666,
+              -1211,
+              140
+            ],
+            "max": [
+              666,
+              642,
+              732
+            ],
+            "size": [
+              1332,
+              1853,
+              592
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -845,
+              -807,
+              1214
+            ],
+            "max": [
+              487,
+              1046,
+              1806
+            ],
+            "size": [
+              1332,
+              1853,
+              592
+            ]
+          },
+          "bounds": {
+            "min": [
+              -845,
+              -807,
+              1214
+            ],
+            "max": [
+              487,
+              1046,
+              1806
+            ],
+            "size": [
+              1332,
+              1853,
+              592
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 3,
+              "nodeName": "submesh_3",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                -179,
+                404,
+                1074,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_4",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "localBounds": {
+            "min": [
+              -931,
+              -1306,
+              147
+            ],
+            "max": [
+              931,
+              638,
+              732
+            ],
+            "size": [
+              1862,
+              1944,
+              585
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -1159,
+              -888,
+              1381
+            ],
+            "max": [
+              703,
+              1056,
+              1966
+            ],
+            "size": [
+              1862,
+              1944,
+              585
+            ]
+          },
+          "bounds": {
+            "min": [
+              -1159,
+              -888,
+              1381
+            ],
+            "max": [
+              703,
+              1056,
+              1966
+            ],
+            "size": [
+              1862,
+              1944,
+              585
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 4,
+              "nodeName": "submesh_4",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                -228,
+                418,
+                1234,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_5",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "localBounds": {
+            "min": [
+              -1272,
+              -1328,
+              147
+            ],
+            "max": [
+              1272,
+              635,
+              733
+            ],
+            "size": [
+              2544,
+              1963,
+              586
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -1551,
+              -904,
+              1577
+            ],
+            "max": [
+              993,
+              1059,
+              2163
+            ],
+            "size": [
+              2544,
+              1963,
+              586
+            ]
+          },
+          "bounds": {
+            "min": [
+              -1551,
+              -904,
+              1577
+            ],
+            "max": [
+              993,
+              1059,
+              2163
+            ],
+            "size": [
+              2544,
+              1963,
+              586
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 5,
+              "nodeName": "submesh_5",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                -279,
+                424,
+                1430,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_6",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "localBounds": {
+            "min": [
+              -1590,
+              -1269,
+              147
+            ],
+            "max": [
+              1590,
+              630,
+              820
+            ],
+            "size": [
+              3180,
+              1899,
+              673
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -1924,
+              -826,
+              1794
+            ],
+            "max": [
+              1256,
+              1073,
+              2467
+            ],
+            "size": [
+              3180,
+              1899,
+              673
+            ]
+          },
+          "bounds": {
+            "min": [
+              -1924,
+              -826,
+              1794
+            ],
+            "max": [
+              1256,
+              1073,
+              2467
+            ],
+            "size": [
+              3180,
+              1899,
+              673
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 6,
+              "nodeName": "submesh_6",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                -334,
+                443,
+                1647,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_7",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "localBounds": {
+            "min": [
+              -1847,
+              -1121,
+              147
+            ],
+            "max": [
+              1847,
+              624,
+              832
+            ],
+            "size": [
+              3694,
+              1745,
+              685
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -2173,
+              -638,
+              2025
+            ],
+            "max": [
+              1521,
+              1107,
+              2710
+            ],
+            "size": [
+              3694,
+              1745,
+              685
+            ]
+          },
+          "bounds": {
+            "min": [
+              -2173,
+              -638,
+              2025
+            ],
+            "max": [
+              1521,
+              1107,
+              2710
+            ],
+            "size": [
+              3694,
+              1745,
+              685
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 7,
+              "nodeName": "submesh_7",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                -326,
+                483,
+                1878,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_8",
+          "vertices": 40,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "localBounds": {
+            "min": [
+              -2047,
+              -880,
+              147
+            ],
+            "max": [
+              2047,
+              616,
+              732
+            ],
+            "size": [
+              4094,
+              1496,
+              585
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -2304,
+              -391,
+              2214
+            ],
+            "max": [
+              1790,
+              1105,
+              2799
+            ],
+            "size": [
+              4094,
+              1496,
+              585
+            ]
+          },
+          "bounds": {
+            "min": [
+              -2304,
+              -391,
+              2214
+            ],
+            "max": [
+              1790,
+              1105,
+              2799
+            ],
+            "size": [
+              4094,
+              1496,
+              585
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 8,
+              "nodeName": "submesh_8",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                -257,
+                489,
+                2067,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 39,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        }
+      ],
+      "passed": true,
+      "problems": []
+    },
+    "referencePointMapped": {
+      "file": "/home/runner/work/OUTWORLD-Jetpack-Assault/OUTWORLD-Jetpack-Assault/scout-final/geometry/scout-mj-reference-point-mapped.glb",
+      "meshCount": 9,
+      "totalVertices": 390,
+      "totalTriangles": 230,
+      "localCombinedBounds": {
+        "min": [
+          -2152,
+          -795,
+          120
+        ],
+        "max": [
+          1942,
+          1519,
+          2278
+        ],
+        "size": [
+          4094,
+          2314,
+          2158
+        ]
+      },
+      "combinedBounds": {
+        "min": [
+          -2152,
+          -795,
+          120
+        ],
+        "max": [
+          1942,
+          1519,
+          2278
+        ],
+        "size": [
+          4094,
+          2314,
+          2158
+        ]
+      },
+      "validationSpace": "world-space (GLB node matrix/TRS and parent hierarchy applied)",
+      "activeScene": 0,
+      "meshes": [
+        {
+          "name": "root_mesh",
+          "vertices": 37,
+          "triangles": 22,
+          "sourceFaceRecords": 22,
+          "uniqueQuads": 11,
+          "localBounds": {
+            "min": [
+              -189,
+              -795,
+              120
+            ],
+            "max": [
+              189,
+              644,
+              421
+            ],
+            "size": [
+              378,
+              1439,
+              301
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -189,
+              -795,
+              120
+            ],
+            "max": [
+              189,
+              644,
+              421
+            ],
+            "size": [
+              378,
+              1439,
+              301
+            ]
+          },
+          "bounds": {
+            "min": [
+              -189,
+              -795,
+              120
+            ],
+            "max": [
+              189,
+              644,
+              421
+            ],
+            "size": [
+              378,
+              1439,
+              301
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 0,
+              "nodeName": "root_mesh",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 36,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_1",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "localBounds": {
+            "min": [
+              -468,
+              -151,
+              855
+            ],
+            "max": [
+              228,
+              1418,
+              1448
+            ],
+            "size": [
+              696,
+              1569,
+              593
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -468,
+              -151,
+              855
+            ],
+            "max": [
+              228,
+              1418,
+              1448
+            ],
+            "size": [
+              696,
+              1569,
+              593
+            ]
+          },
+          "bounds": {
+            "min": [
+              -468,
+              -151,
+              855
+            ],
+            "max": [
+              228,
+              1418,
+              1448
+            ],
+            "size": [
+              696,
+              1569,
+              593
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 1,
+              "nodeName": "submesh_1",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_2",
+          "vertices": 43,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "localBounds": {
+            "min": [
+              -250,
+              -285,
+              293
+            ],
+            "max": [
+              780,
+              1410,
+              689
+            ],
+            "size": [
+              1030,
+              1695,
+              396
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -250,
+              -285,
+              293
+            ],
+            "max": [
+              780,
+              1410,
+              689
+            ],
+            "size": [
+              1030,
+              1695,
+              396
+            ]
+          },
+          "bounds": {
+            "min": [
+              -250,
+              -285,
+              293
+            ],
+            "max": [
+              780,
+              1410,
+              689
+            ],
+            "size": [
+              1030,
+              1695,
+              396
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 2,
+              "nodeName": "submesh_2",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 42,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_3",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "localBounds": {
+            "min": [
+              -771,
+              -334,
+              771
+            ],
+            "max": [
+              561,
+              1519,
+              1363
+            ],
+            "size": [
+              1332,
+              1853,
+              592
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -771,
+              -334,
+              771
+            ],
+            "max": [
+              561,
+              1519,
+              1363
+            ],
+            "size": [
+              1332,
+              1853,
+              592
+            ]
+          },
+          "bounds": {
+            "min": [
+              -771,
+              -334,
+              771
+            ],
+            "max": [
+              561,
+              1519,
+              1363
+            ],
+            "size": [
+              1332,
+              1853,
+              592
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 3,
+              "nodeName": "submesh_3",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_4",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "localBounds": {
+            "min": [
+              -1036,
+              -429,
+              917
+            ],
+            "max": [
+              826,
+              1515,
+              1502
+            ],
+            "size": [
+              1862,
+              1944,
+              585
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -1036,
+              -429,
+              917
+            ],
+            "max": [
+              826,
+              1515,
+              1502
+            ],
+            "size": [
+              1862,
+              1944,
+              585
+            ]
+          },
+          "bounds": {
+            "min": [
+              -1036,
+              -429,
+              917
+            ],
+            "max": [
+              826,
+              1515,
+              1502
+            ],
+            "size": [
+              1862,
+              1944,
+              585
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 4,
+              "nodeName": "submesh_4",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_5",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "localBounds": {
+            "min": [
+              -1377,
+              -451,
+              1072
+            ],
+            "max": [
+              1167,
+              1512,
+              1658
+            ],
+            "size": [
+              2544,
+              1963,
+              586
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -1377,
+              -451,
+              1072
+            ],
+            "max": [
+              1167,
+              1512,
+              1658
+            ],
+            "size": [
+              2544,
+              1963,
+              586
+            ]
+          },
+          "bounds": {
+            "min": [
+              -1377,
+              -451,
+              1072
+            ],
+            "max": [
+              1167,
+              1512,
+              1658
+            ],
+            "size": [
+              2544,
+              1963,
+              586
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 5,
+              "nodeName": "submesh_5",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_6",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "localBounds": {
+            "min": [
+              -1695,
+              -392,
+              1241
+            ],
+            "max": [
+              1485,
+              1507,
+              1914
+            ],
+            "size": [
+              3180,
+              1899,
+              673
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -1695,
+              -392,
+              1241
+            ],
+            "max": [
+              1485,
+              1507,
+              1914
+            ],
+            "size": [
+              3180,
+              1899,
+              673
+            ]
+          },
+          "bounds": {
+            "min": [
+              -1695,
+              -392,
+              1241
+            ],
+            "max": [
+              1485,
+              1507,
+              1914
+            ],
+            "size": [
+              3180,
+              1899,
+              673
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 6,
+              "nodeName": "submesh_6",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_7",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "localBounds": {
+            "min": [
+              -1952,
+              -244,
+              1418
+            ],
+            "max": [
+              1742,
+              1501,
+              2103
+            ],
+            "size": [
+              3694,
+              1745,
+              685
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -1952,
+              -244,
+              1418
+            ],
+            "max": [
+              1742,
+              1501,
+              2103
+            ],
+            "size": [
+              3694,
+              1745,
+              685
+            ]
+          },
+          "bounds": {
+            "min": [
+              -1952,
+              -244,
+              1418
+            ],
+            "max": [
+              1742,
+              1501,
+              2103
+            ],
+            "size": [
+              3694,
+              1745,
+              685
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 7,
+              "nodeName": "submesh_7",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_8",
+          "vertices": 40,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "localBounds": {
+            "min": [
+              -2152,
+              -3,
+              1693
+            ],
+            "max": [
+              1942,
+              1493,
+              2278
+            ],
+            "size": [
+              4094,
+              1496,
+              585
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -2152,
+              -3,
+              1693
+            ],
+            "max": [
+              1942,
+              1493,
+              2278
+            ],
+            "size": [
+              4094,
+              1496,
+              585
+            ]
+          },
+          "bounds": {
+            "min": [
+              -2152,
+              -3,
+              1693
+            ],
+            "max": [
+              1942,
+              1493,
+              2278
+            ],
+            "size": [
+              4094,
+              1496,
+              585
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 8,
+              "nodeName": "submesh_8",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 39,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        }
+      ],
+      "passed": true,
+      "problems": []
+    },
+    "meshReferenceBase": {
+      "file": "/home/runner/work/OUTWORLD-Jetpack-Assault/OUTWORLD-Jetpack-Assault/scout-final/geometry/scout-mj-mesh-reference-base.glb",
+      "meshCount": 9,
+      "totalVertices": 390,
+      "totalTriangles": 230,
+      "localCombinedBounds": {
+        "min": [
+          -2047,
+          -1328,
+          -451
+        ],
+        "max": [
+          2047,
+          644,
+          832
+        ],
+        "size": [
+          4094,
+          1972,
+          1283
+        ]
+      },
+      "combinedBounds": {
+        "min": [
+          -2047,
+          -1328,
+          -451
+        ],
+        "max": [
+          2047,
+          644,
+          832
+        ],
+        "size": [
+          4094,
+          1972,
+          1283
+        ]
+      },
+      "validationSpace": "world-space (GLB node matrix/TRS and parent hierarchy applied)",
+      "activeScene": 0,
+      "meshes": [
+        {
+          "name": "root_mesh",
+          "vertices": 37,
+          "triangles": 22,
+          "sourceFaceRecords": 22,
+          "uniqueQuads": 11,
+          "localBounds": {
+            "min": [
+              -189,
+              -795,
+              120
+            ],
+            "max": [
+              189,
+              644,
+              421
+            ],
+            "size": [
+              378,
+              1439,
+              301
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -189,
+              -795,
+              120
+            ],
+            "max": [
+              189,
+              644,
+              421
+            ],
+            "size": [
+              378,
+              1439,
+              301
+            ]
+          },
+          "bounds": {
+            "min": [
+              -189,
+              -795,
+              120
+            ],
+            "max": [
+              189,
+              644,
+              421
+            ],
+            "size": [
+              378,
+              1439,
+              301
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 0,
+              "nodeName": "root_mesh",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 36,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_1",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "localBounds": {
+            "min": [
+              -409,
+              -927,
+              127
+            ],
+            "max": [
+              348,
+              637,
+              732
+            ],
+            "size": [
+              757,
+              1564,
+              605
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -409,
+              -927,
+              127
+            ],
+            "max": [
+              348,
+              637,
+              732
+            ],
+            "size": [
+              757,
+              1564,
+              605
+            ]
+          },
+          "bounds": {
+            "min": [
+              -409,
+              -927,
+              127
+            ],
+            "max": [
+              348,
+              637,
+              732
+            ],
+            "size": [
+              757,
+              1564,
+              605
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 1,
+              "nodeName": "submesh_1",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_2",
+          "vertices": 43,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "localBounds": {
+            "min": [
+              -931,
+              -1306,
+              197
+            ],
+            "max": [
+              931,
+              630,
+              732
+            ],
+            "size": [
+              1862,
+              1936,
+              535
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -931,
+              -1306,
+              197
+            ],
+            "max": [
+              931,
+              630,
+              732
+            ],
+            "size": [
+              1862,
+              1936,
+              535
+            ]
+          },
+          "bounds": {
+            "min": [
+              -931,
+              -1306,
+              197
+            ],
+            "max": [
+              931,
+              630,
+              732
+            ],
+            "size": [
+              1862,
+              1936,
+              535
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 2,
+              "nodeName": "submesh_2",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 42,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_3",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "localBounds": {
+            "min": [
+              -1272,
+              -1328,
+              226
+            ],
+            "max": [
+              1272,
+              624,
+              733
+            ],
+            "size": [
+              2544,
+              1952,
+              507
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -1272,
+              -1328,
+              226
+            ],
+            "max": [
+              1272,
+              624,
+              733
+            ],
+            "size": [
+              2544,
+              1952,
+              507
+            ]
+          },
+          "bounds": {
+            "min": [
+              -1272,
+              -1328,
+              226
+            ],
+            "max": [
+              1272,
+              624,
+              733
+            ],
+            "size": [
+              2544,
+              1952,
+              507
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 3,
+              "nodeName": "submesh_3",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_4",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "localBounds": {
+            "min": [
+              -1590,
+              -1269,
+              230
+            ],
+            "max": [
+              1590,
+              616,
+              820
+            ],
+            "size": [
+              3180,
+              1885,
+              590
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -1590,
+              -1269,
+              230
+            ],
+            "max": [
+              1590,
+              616,
+              820
+            ],
+            "size": [
+              3180,
+              1885,
+              590
+            ]
+          },
+          "bounds": {
+            "min": [
+              -1590,
+              -1269,
+              230
+            ],
+            "max": [
+              1590,
+              616,
+              820
+            ],
+            "size": [
+              3180,
+              1885,
+              590
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 4,
+              "nodeName": "submesh_4",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_5",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "localBounds": {
+            "min": [
+              -1847,
+              -1121,
+              230
+            ],
+            "max": [
+              1847,
+              607,
+              832
+            ],
+            "size": [
+              3694,
+              1728,
+              602
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -1847,
+              -1121,
+              230
+            ],
+            "max": [
+              1847,
+              607,
+              832
+            ],
+            "size": [
+              3694,
+              1728,
+              602
+            ]
+          },
+          "bounds": {
+            "min": [
+              -1847,
+              -1121,
+              230
+            ],
+            "max": [
+              1847,
+              607,
+              832
+            ],
+            "size": [
+              3694,
+              1728,
+              602
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 5,
+              "nodeName": "submesh_5",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_6",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "localBounds": {
+            "min": [
+              -2047,
+              -880,
+              -384
+            ],
+            "max": [
+              2047,
+              595,
+              732
+            ],
+            "size": [
+              4094,
+              1475,
+              1116
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -2047,
+              -880,
+              -384
+            ],
+            "max": [
+              2047,
+              595,
+              732
+            ],
+            "size": [
+              4094,
+              1475,
+              1116
+            ]
+          },
+          "bounds": {
+            "min": [
+              -2047,
+              -880,
+              -384
+            ],
+            "max": [
+              2047,
+              595,
+              732
+            ],
+            "size": [
+              4094,
+              1475,
+              1116
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 6,
+              "nodeName": "submesh_6",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_7",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "localBounds": {
+            "min": [
+              -1433,
+              -1056,
+              -205
+            ],
+            "max": [
+              1433,
+              597,
+              732
+            ],
+            "size": [
+              2866,
+              1653,
+              937
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -1433,
+              -1056,
+              -205
+            ],
+            "max": [
+              1433,
+              597,
+              732
+            ],
+            "size": [
+              2866,
+              1653,
+              937
+            ]
+          },
+          "bounds": {
+            "min": [
+              -1433,
+              -1056,
+              -205
+            ],
+            "max": [
+              1433,
+              597,
+              732
+            ],
+            "size": [
+              2866,
+              1653,
+              937
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 7,
+              "nodeName": "submesh_7",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_8",
+          "vertices": 40,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "localBounds": {
+            "min": [
+              -1740,
+              -880,
+              -451
+            ],
+            "max": [
+              1740,
+              591,
+              732
+            ],
+            "size": [
+              3480,
+              1471,
+              1183
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -1740,
+              -880,
+              -451
+            ],
+            "max": [
+              1740,
+              591,
+              732
+            ],
+            "size": [
+              3480,
+              1471,
+              1183
+            ]
+          },
+          "bounds": {
+            "min": [
+              -1740,
+              -880,
+              -451
+            ],
+            "max": [
+              1740,
+              591,
+              732
+            ],
+            "size": [
+              3480,
+              1471,
+              1183
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 8,
+              "nodeName": "submesh_8",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 39,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        }
+      ],
+      "passed": true,
+      "problems": []
+    },
+    "meshReferenceOwnerTranslated": {
+      "file": "/home/runner/work/OUTWORLD-Jetpack-Assault/OUTWORLD-Jetpack-Assault/scout-final/geometry/scout-mj-mesh-reference-owner-translated.glb",
+      "meshCount": 9,
+      "totalVertices": 390,
+      "totalTriangles": 230,
+      "localCombinedBounds": {
+        "min": [
+          -2047,
+          -1328,
+          -451
+        ],
+        "max": [
+          2047,
+          644,
+          832
+        ],
+        "size": [
+          4094,
+          1972,
+          1283
+        ]
+      },
+      "combinedBounds": {
+        "min": [
+          -2381,
+          -924,
+          120
+        ],
+        "max": [
+          1713,
+          1080,
+          2799
+        ],
+        "size": [
+          4094,
+          2004,
+          2679
+        ]
+      },
+      "validationSpace": "world-space (GLB node matrix/TRS and parent hierarchy applied)",
+      "activeScene": 0,
+      "meshes": [
+        {
+          "name": "root_mesh",
+          "vertices": 37,
+          "triangles": 22,
+          "sourceFaceRecords": 22,
+          "uniqueQuads": 11,
+          "localBounds": {
+            "min": [
+              -189,
+              -795,
+              120
+            ],
+            "max": [
+              189,
+              644,
+              421
+            ],
+            "size": [
+              378,
+              1439,
+              301
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -189,
+              -795,
+              120
+            ],
+            "max": [
+              189,
+              644,
+              421
+            ],
+            "size": [
+              378,
+              1439,
+              301
+            ]
+          },
+          "bounds": {
+            "min": [
+              -189,
+              -795,
+              120
+            ],
+            "max": [
+              189,
+              644,
+              421
+            ],
+            "size": [
+              378,
+              1439,
+              301
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 0,
+              "nodeName": "root_mesh",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 36,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_1",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "localBounds": {
+            "min": [
+              -409,
+              -927,
+              127
+            ],
+            "max": [
+              348,
+              637,
+              732
+            ],
+            "size": [
+              757,
+              1564,
+              605
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -518,
+              -537,
+              1010
+            ],
+            "max": [
+              239,
+              1027,
+              1615
+            ],
+            "size": [
+              757,
+              1564,
+              605
+            ]
+          },
+          "bounds": {
+            "min": [
+              -518,
+              -537,
+              1010
+            ],
+            "max": [
+              239,
+              1027,
+              1615
+            ],
+            "size": [
+              757,
+              1564,
+              605
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 1,
+              "nodeName": "submesh_1",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                -109,
+                390,
+                883,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_2",
+          "vertices": 43,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "localBounds": {
+            "min": [
+              -931,
+              -1306,
+              197
+            ],
+            "max": [
+              931,
+              630,
+              732
+            ],
+            "size": [
+              1862,
+              1936,
+              535
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -1074,
+              -909,
+              1159
+            ],
+            "max": [
+              788,
+              1027,
+              1694
+            ],
+            "size": [
+              1862,
+              1936,
+              535
+            ]
+          },
+          "bounds": {
+            "min": [
+              -1074,
+              -909,
+              1159
+            ],
+            "max": [
+              788,
+              1027,
+              1694
+            ],
+            "size": [
+              1862,
+              1936,
+              535
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 2,
+              "nodeName": "submesh_2",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                -143,
+                397,
+                962,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 42,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_3",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "localBounds": {
+            "min": [
+              -1272,
+              -1328,
+              226
+            ],
+            "max": [
+              1272,
+              624,
+              733
+            ],
+            "size": [
+              2544,
+              1952,
+              507
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -1451,
+              -924,
+              1300
+            ],
+            "max": [
+              1093,
+              1028,
+              1807
+            ],
+            "size": [
+              2544,
+              1952,
+              507
+            ]
+          },
+          "bounds": {
+            "min": [
+              -1451,
+              -924,
+              1300
+            ],
+            "max": [
+              1093,
+              1028,
+              1807
+            ],
+            "size": [
+              2544,
+              1952,
+              507
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 3,
+              "nodeName": "submesh_3",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                -179,
+                404,
+                1074,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_4",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "localBounds": {
+            "min": [
+              -1590,
+              -1269,
+              230
+            ],
+            "max": [
+              1590,
+              616,
+              820
+            ],
+            "size": [
+              3180,
+              1885,
+              590
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -1818,
+              -851,
+              1464
+            ],
+            "max": [
+              1362,
+              1034,
+              2054
+            ],
+            "size": [
+              3180,
+              1885,
+              590
+            ]
+          },
+          "bounds": {
+            "min": [
+              -1818,
+              -851,
+              1464
+            ],
+            "max": [
+              1362,
+              1034,
+              2054
+            ],
+            "size": [
+              3180,
+              1885,
+              590
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 4,
+              "nodeName": "submesh_4",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                -228,
+                418,
+                1234,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_5",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "localBounds": {
+            "min": [
+              -1847,
+              -1121,
+              230
+            ],
+            "max": [
+              1847,
+              607,
+              832
+            ],
+            "size": [
+              3694,
+              1728,
+              602
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -2126,
+              -697,
+              1660
+            ],
+            "max": [
+              1568,
+              1031,
+              2262
+            ],
+            "size": [
+              3694,
+              1728,
+              602
+            ]
+          },
+          "bounds": {
+            "min": [
+              -2126,
+              -697,
+              1660
+            ],
+            "max": [
+              1568,
+              1031,
+              2262
+            ],
+            "size": [
+              3694,
+              1728,
+              602
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 5,
+              "nodeName": "submesh_5",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                -279,
+                424,
+                1430,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_6",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "localBounds": {
+            "min": [
+              -2047,
+              -880,
+              -384
+            ],
+            "max": [
+              2047,
+              595,
+              732
+            ],
+            "size": [
+              4094,
+              1475,
+              1116
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -2381,
+              -437,
+              1263
+            ],
+            "max": [
+              1713,
+              1038,
+              2379
+            ],
+            "size": [
+              4094,
+              1475,
+              1116
+            ]
+          },
+          "bounds": {
+            "min": [
+              -2381,
+              -437,
+              1263
+            ],
+            "max": [
+              1713,
+              1038,
+              2379
+            ],
+            "size": [
+              4094,
+              1475,
+              1116
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 6,
+              "nodeName": "submesh_6",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                -334,
+                443,
+                1647,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_7",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "localBounds": {
+            "min": [
+              -1433,
+              -1056,
+              -205
+            ],
+            "max": [
+              1433,
+              597,
+              732
+            ],
+            "size": [
+              2866,
+              1653,
+              937
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -1759,
+              -573,
+              1673
+            ],
+            "max": [
+              1107,
+              1080,
+              2610
+            ],
+            "size": [
+              2866,
+              1653,
+              937
+            ]
+          },
+          "bounds": {
+            "min": [
+              -1759,
+              -573,
+              1673
+            ],
+            "max": [
+              1107,
+              1080,
+              2610
+            ],
+            "size": [
+              2866,
+              1653,
+              937
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 7,
+              "nodeName": "submesh_7",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                -326,
+                483,
+                1878,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_8",
+          "vertices": 40,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "localBounds": {
+            "min": [
+              -1740,
+              -880,
+              -451
+            ],
+            "max": [
+              1740,
+              591,
+              732
+            ],
+            "size": [
+              3480,
+              1471,
+              1183
+            ]
+          },
+          "worldBounds": {
+            "min": [
+              -1997,
+              -391,
+              1616
+            ],
+            "max": [
+              1483,
+              1080,
+              2799
+            ],
+            "size": [
+              3480,
+              1471,
+              1183
+            ]
+          },
+          "bounds": {
+            "min": [
+              -1997,
+              -391,
+              1616
+            ],
+            "max": [
+              1483,
+              1080,
+              2799
+            ],
+            "size": [
+              3480,
+              1471,
+              1183
+            ]
+          },
+          "nodeInstanceCount": 1,
+          "worldMatrices": [
+            {
+              "nodeIndex": 8,
+              "nodeName": "submesh_8",
+              "matrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                -257,
+                489,
+                2067,
+                1
+              ]
+            }
+          ],
+          "indexMin": 0,
+          "indexMax": 39,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        }
+      ],
+      "passed": true,
+      "problems": []
+    }
+  },
+  "selectedCandidate": {
+    "file": "/home/runner/work/OUTWORLD-Jetpack-Assault/OUTWORLD-Jetpack-Assault/scout-final/scout-candidate.glb",
+    "placement": "owner-translated-baseline-not-proven",
+    "reason": "Retained for compatibility. Exact owner/paired-node vector equality is necessary evidence, but does not establish the correct vertex base or composed runtime transform. Compare all five geometry variants before treating any as final.",
+    "passed": true
+  },
+  "status": "STATIC_CANDIDATES_EXPORTED_PLACEMENT_UNVERIFIED",
+  "runtimeCompletion": {
+    "bitExact": false,
+    "unresolved": [
+      "Verified shared-pool versus meshNode+28 vertex-base interpretation",
+      "Verified opcode-5 transform ownership for each mesh section",
+      "Composed runtime matrices applied to each mesh",
+      "Original UV and texture/material binding",
+      "Skinning and animation"
+    ],
+    "note": "These runtime items are kept separate from the static candidate and are not guessed."
+  },
+  "warnings": []
+}
