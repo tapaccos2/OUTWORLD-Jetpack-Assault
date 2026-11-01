@@ -269,7 +269,7 @@ function markdown(r){
     ...(g.problems.length?g.problems.map(x=>'- FAIL: '+x):[
       '- All nine mesh sections passed GLB/index-bound checks.',
       '- World-space bounds include every active-scene node matrix/TRS and parent transform.',
-      '- This is structural validation only; bounds do not establish anatomical correctness or select a winning placement.'
+      '- This is structural validation only; bounds do not establish anatomical correctness or select a winning placement.',
       '- Each source face-record count matches the observed two-record-per-unique-quad pattern.',
       '- Triangle counts agree with the exported unique quad counts.'
     ]),
