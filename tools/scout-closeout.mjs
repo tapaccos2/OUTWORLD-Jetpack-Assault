@@ -531,7 +531,7 @@ const lines = [
   '- Callback interpreter: ' + classAudit.summary.callbackInterpreter + ' with class callback ' + classAudit.summary.callbackClassFunction + '.',
   '- Class 0x0006 setup: ' + classAudit.summary.class6ObjectSetupFunction + '; current-object setter: ' + classAudit.summary.class6CurrentObjectSetter + ' writes the pointer to ' + classAudit.summary.class6CurrentObjectGlobal + '.',
   '- Object consumer: ' + classAudit.summary.class6ObjectConsumer + ' reads the DPC record at object+0x160 and emits spatial/attachment records; it is not yet proven to be the visual renderer.',
-  '- Face-record helper: ' + classAudit.summary.slotTagHelper + ' assigns modulo-8 tags; the role of those slots is still unknown.',
+  '- Face-record helper: ' + classAudit.summary.slotTagHelper + ' assigns modulo-8 tags; consumer ' + classAudit.summary.slotTagConsumer + ' uses each tag to select a two-bit renderer-state flag from faceRecord+0x24. Its relationship to the eight-entry rotation/position update table remains unresolved.',
   '- Full class-dispatch, object-consumer, slot-update, record-helper and matrix-helper disassembly is included under analysis/class-renderer/.',
   '', '## Interpretation boundary', '',
   'Coordinate stride probes are not proof of a vertex layout. A descriptor-to-face match is not by itself proof of runtime matrix ownership. Matrix orthogonality cannot distinguish multiplication order or translation scale. The executable path must link callback-produced entries to the runtime matrix consumer before a final placement can be selected.',
