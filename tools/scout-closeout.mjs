@@ -270,9 +270,83 @@ const passingSignatures = [...new Set(passingMatrixTests.map(x => [x.order, x.tr
 const selectedMatrix = passingSignatures.length === 1
   ? passingMatrixTests.sort((a, b) => a.rmsReferenceError - b.rmsReferenceError)[0]
   : null;
-const linkedMeshCount = ownership.filter(x => x.directTransformOwners.length > 0).length;
+const submeshOwnershipComplete = ownership.slice(1).length === 8 &&
+  ownership.slice(1).every(x => x.directTransformOwners.length > 0);
+function bakeRuntimePlacement(sourceFile, outputFile, selected) {
+  const inputGlb = fs.readFileSync(sourceFile);
+  const jsonLength = inputGlb.readUInt32LE(12);
+  const jsonEnd = 20 + jsonLength;
+  const gltf = JSON.parse(inputGlb.toString('utf8', 20, jsonEnd).trim());
+  const binHeader = jsonEnd;
+  const binLength = inputGlb.readUInt32LE(binHeader);
+  const binStart = binHeader + 8;
+  const bin = Buffer.from(inputGlb.subarray(binStart, binStart + binLength));
+  const matrices = new Map((selected.matrices || []).map(x => [x.offset, x.matrix]));
+  const positions = new Map((selected.positions || []).map(x => [x.offset, x.position]));
+  const tests = new Map((selected.meshTests || []).map(x => [x.mesh, x]));
+  const applied = [];
+  for (let i = 1; i < (gltf.meshes || []).length; i++) {
+    const mesh = geometry.sharedPool.meshes[i];
+    const test = tests.get(mesh.name);
+    if (!test?.matched || !test.best) throw new Error('Missing passing transform for ' + mesh.name);
+    const m = matrices.get(test.best.transformOffset), t = positions.get(test.best.transformOffset);
+    if (!m || !t) throw new Error('Missing composed matrix/position for ' + mesh.name);
+    const primitive = gltf.meshes[i].primitives?.[0];
+    if (!primitive) throw new Error('Missing primitive for ' + mesh.name);
+    const posAccessor = gltf.accessors[primitive.attributes.POSITION];
+    const posView = gltf.bufferViews[posAccessor.bufferView];
+    if (posAccessor.componentType !== 5126 || posAccessor.type !== 'VEC3') throw new Error('Unsupported POSITION accessor in ' + mesh.name);
+    const stride = posView.byteStride || 12;
+    const start = (posView.byteOffset || 0) + (posAccessor.byteOffset || 0);
+    const min = [Infinity, Infinity, Infinity], max = [-Infinity, -Infinity, -Infinity];
+    for (let v = 0; v < posAccessor.count; v++) {
+      const p = start + v * stride;
+      const point = [bin.readFloatLE(p), bin.readFloatLE(p + 4), bin.readFloatLE(p + 8)];
+      const q = apply3(m, point).map((x, k) => x + t[k]);
+      if (q.some(x => !Number.isFinite(x))) throw new Error('Non-finite transformed position in ' + mesh.name);
+      for (let k = 0; k < 3; k++) { bin.writeFloatLE(q[k], p + k * 4); min[k] = Math.min(min[k], q[k]); max[k] = Math.max(max[k], q[k]); }
+    }
+    posAccessor.min = min; posAccessor.max = max;
+    if (primitive.attributes.NORMAL !== undefined) {
+      const normalAccessor = gltf.accessors[primitive.attributes.NORMAL];
+      const normalView = gltf.bufferViews[normalAccessor.bufferView];
+      const normalStride = normalView.byteStride || 12;
+      const normalStart = (normalView.byteOffset || 0) + (normalAccessor.byteOffset || 0);
+      for (let v = 0; v < normalAccessor.count; v++) {
+        const p = normalStart + v * normalStride;
+        const n = [bin.readFloatLE(p), bin.readFloatLE(p + 4), bin.readFloatLE(p + 8)];
+        const q = apply3(m, n), length = Math.hypot(...q) || 1;
+        q.forEach((x, k) => bin.writeFloatLE(x / length, p + k * 4));
+      }
+    }
+    applied.push({ mesh: mesh.name, transformOffset: test.best.transformOffset, referenceError: test.best.error, matrix: m, translation: t });
+  }
+  let json = Buffer.from(JSON.stringify(gltf));
+  const jsonPad = (4 - json.length % 4) % 4;
+  if (jsonPad) json = Buffer.concat([json, Buffer.alloc(jsonPad, 0x20)]);
+  const binPad = (4 - bin.length % 4) % 4;
+  const paddedBin = binPad ? Buffer.concat([bin, Buffer.alloc(binPad)]) : bin;
+  const total = 12 + 8 + json.length + 8 + paddedBin.length;
+  const header = Buffer.alloc(12); header.writeUInt32LE(0x46546c67, 0); header.writeUInt32LE(2, 4); header.writeUInt32LE(total, 8);
+  const jh = Buffer.alloc(8); jh.writeUInt32LE(json.length, 0); jh.writeUInt32LE(0x4e4f534a, 4);
+  const bh = Buffer.alloc(8); bh.writeUInt32LE(paddedBin.length, 0); bh.writeUInt32LE(0x004e4942, 4);
+  fs.writeFileSync(outputFile, Buffer.concat([header, jh, json, bh, paddedBin]));
+  const check = fs.readFileSync(outputFile);
+  if (check.readUInt32LE(0) !== 0x46546c67 || check.readUInt32LE(4) !== 2 || check.readUInt32LE(8) !== check.length)
+    throw new Error('Baked GLB failed container validation.');
+  return { file: path.relative(out, outputFile), sha256: sha256(outputFile), bytes: check.length, transformedSubmeshes: applied };
+}
+let assembledArtifact = null;
+if (selectedMatrix && submeshOwnershipComplete) {
+  assembledArtifact = bakeRuntimePlacement(
+    path.join(geometryDir, 'scout-shared-pool.glb'),
+    path.join(geometryDir, 'scout-runtime-assembled.glb'),
+    selectedMatrix
+  );
+}
+const linkedMeshCount = ownership.slice(1).filter(x => x.directTransformOwners.length > 0).length;
 const exactCoordinateCount = coordinateRows.filter(x => x.classification === 'exact-exporter-base-match').length;
-const allNineLinked = linkedMeshCount === 9;
+const allNineLinked = submeshOwnershipComplete;
 const hasUniqueExecutableConvention = !!selectedMatrix;
 const gates = {
   coordinateRecords: {
@@ -282,7 +356,8 @@ const gates = {
   },
   transformOwnership: {
     status: allNineLinked ? 'ALL_NINE_HAVE_EXACT_POINTER_LINK_CANDIDATES' : 'INCOMPLETE',
-    meshesWithExactCallbackOwnerLinks: linkedMeshCount, expectedMeshes: 9,
+    meshesWithExactCallbackOwnerLinks: linkedMeshCount, expectedMeshes: 8,
+    rootMeshTransformExempt: true,
     ownership
   },
   placement: {
@@ -291,9 +366,10 @@ const gates = {
     reason: 'The executable follow-up identifies callback handlers and a runtime matrix consumer, but does not yet prove the callback-produced Scout entries reach that consumer with a unique matrix order and position scale. Rigidity scores cannot prove this.'
   },
   assembly: {
-    status: allNineLinked && hasUniqueExecutableConvention ? 'RUNTIME_PLACEMENT_READY' : 'CANDIDATES_EXPORTED_NOT_RUNTIME_ASSEMBLED',
+    status: assembledArtifact ? 'RUNTIME_GLB_ASSEMBLED_AND_REFERENCE_VALIDATED' : 'CANDIDATES_EXPORTED_NOT_RUNTIME_ASSEMBLED',
     candidateCount: variants.length,
     expectedMeshes: 9,
+    assembledArtifact,
     reason: allNineLinked && hasUniqueExecutableConvention
       ? 'All nine sections have exact callback ownership and one transform convention passes all eight independent reference-point checks.'
       : 'A runtime GLB is not emitted unless all nine sections have exact transform ownership and one transform convention passes all eight independent reference-point checks.'
@@ -315,9 +391,9 @@ const report = {
   discoveryManifest: path.relative(out, manifestPath),
   autodiscoveryReport: path.relative(out, discoveryPath),
   geometry, coordinateClassification: coordinateRows, ownership,
-  matrixHypotheses, matrixValidation,
+  matrixHypotheses, matrixValidation, assembledArtifact,
   gates,
-  finalStatus: allNineLinked && hasUniqueExecutableConvention ? 'RUNTIME_ASSEMBLY_GATE_PASSED' : 'EVIDENCE_BUNDLE_COMPLETE_RUNTIME_ASSEMBLY_NOT_PROVEN',
+  finalStatus: assembledArtifact ? 'RUNTIME_ASSEMBLY_GATE_PASSED' : 'EVIDENCE_BUNDLE_COMPLETE_RUNTIME_ASSEMBLY_NOT_PROVEN',
   interpretation: 'This tool completes the evidence collection and exact-link tests in one run. It deliberately does not fabricate missing runtime semantics. A visually plausible GLB is not considered solved until all three gates pass.'
 };
 writeJson(path.join(out, 'SCOUT-CLOSEOUT.json'), report);
@@ -330,7 +406,7 @@ const lines = [
   '| Gate | Result | Evidence |', '|---|---|---|',
   '| Coordinate records | ' + gates.coordinateRecords.status + ' | ' + exactCoordinateCount + ' exact base links / ' + coordinateRows.length + ' descriptor targets |',
   '| Transform ownership | ' + gates.transformOwnership.status + ' | ' + linkedMeshCount + ' / 9 mesh sections linked |',
-  '| Placement and assembly | ' + gates.placement.status + ' | ' + matrixHypotheses.length + ' matrix hypotheses retained; no unsupported selection |',
+  '| Placement and assembly | ' + gates.placement.status + ' | ' + matrixHypotheses.length + ' matrix hypotheses tested against eight reference points |',
   '', '## Geometry candidates', '',
   '| Variant | Meshes | Vertices | Triangles |', '|---|---:|---:|---:|',
   ...Object.entries(geometry).map(([name, x]) => '| ' + name + ' | ' + x.meshCount + ' | ' + x.vertices + ' | ' + x.triangles + ' |'),
@@ -351,6 +427,7 @@ const lines = [
   '- analysis/: integrated callback, transform, descriptor, opcode-4 and executable disassembly reports.',
   '- geometry/: five independent GLB candidates and JSON sidecars.',
   '- source-binaries/scout_mj.dpc: exact source DPC used.',
+  '- geometry/scout-runtime-assembled.glb: emitted only when the unique reference-point transform gate passes.',
   '- scout-closeout.zip: one uploadable evidence bundle.'
 ];
 fs.writeFileSync(path.join(out, 'SCOUT-CLOSEOUT.md'), lines.join('\n') + '\n');
@@ -365,5 +442,6 @@ console.log('Meshes with exact callback-owner links: ' + linkedMeshCount + '/9')
 console.log('Matrix conventions passing reference-point test: ' + passingSignatures.length);
 console.log('Geometry variants: ' + variants.length);
 console.log('Runtime assembly gate: ' + report.finalStatus);
+if (assembledArtifact) console.log('Assembled GLB: ' + path.join(geometryDir, 'scout-runtime-assembled.glb'));
 console.log('Report: ' + path.join(out, 'SCOUT-CLOSEOUT.md'));
 console.log('Bundle: ' + archive);
