@@ -210,7 +210,7 @@ node tools/reconstruct-scout.mjs \
   --exe /home/tapaccos/Outwars-extracted/outwars.exe
 ```
 
-This pipeline deliberately skips the old `0x04 0x01 0x0C 0x09` signature-derived GLB export. Those records are opcode-4 callbacks with position contributions and child entries, not validated four-index faces. The run writes `DISCOVERY-REPORT.md`, `discovery-report.json`, `opcode4-entry-candidates.csv`, transform/attachment inventories, opcode-4 child payload reports, callback-chain reports and `reconstruction-manifest.json`.
+This pipeline deliberately skips the old `0x04 0x01 0x0C 0x09` signature-derived GLB export. Those records are opcode-4 callbacks with position contributions and child entries, not validated four-index faces. The run writes `DISCOVERY-REPORT.md`, `discovery-report.json`, `opcode4-entry-candidates.csv`, transform/attachment inventories, opcode-4 child payload reports, callback-chain reports and `reconstruction-manifest.json`. When the system `zip` utility is available, it also packages the complete output folder as `scout-reconstruction.zip` (or `<out-dir>.zip`) for a single upload.
 
 The Scout is not declared assembled until the opcode-4 leaves are decoded into real render primitives, linked to their coordinate payloads, and placed under the verified opcode-5 transform hierarchy.
 
