@@ -55,3 +55,12 @@ The terrain preview is a separate diagnostic page, so it does not alter the play
 Use [Scout DPC Inspector](./scout-inspector.html) to inspect `extracted-ff/units/scout_mj.dpc` directly in a browser. It parses the selected file locally (no upload or server processing), lists transform roots and attachment descriptors, and renders selectable coordinate samples as a 3D point cloud. The inspector shows transform matrices and opcode-4 child payloads but deliberately does not infer triangles or export a GLB: mesh topology and the exact coordinate-block boundaries still need to be established from the runtime data.
 
 Open the page through the same static HTTP(S) server used for the game, choose `scout_mj.dpc`, then select a transform root and attachment descriptor. The coordinate start and sample-count controls are diagnostic views only; they do not claim a final vertex count or byte layout.
+
+
+## Scout runtime handler audit
+
+After running [Scout dispatch audit](tools/scout-dispatch-audit.mjs), run [Scout handler semantics audit](tools/scout-handler-semantics.mjs) to extract each verified opcode handler up to the next distinct dispatch target. The report includes the complete bounded opcode-2 block, branches, calls, and scratch-global references. It is a static data-flow audit; it does not claim final mesh placement.
+
+```bash
+node tools/scout-handler-semantics.mjs scout-dispatch/SCOUT-DISPATCH-AUDIT.json scout-handler-semantics --exe /home/tapaccos/Outwars-extracted/outwars.exe
+```
