@@ -1,0 +1,1439 @@
+{
+  "pipeline": "Outwars Scout one-run finalization",
+  "version": "1.0.0",
+  "generatedAt": "2026-11-01T13:07:24.991Z",
+  "source": "/home/runner/work/OUTWORLD-Jetpack-Assault/OUTWORLD-Jetpack-Assault/original-data/units.ff",
+  "extractedDpc": "/tmp/outwars-scout-autodiscovery-I5dYFV/units/scout_mj.dpc",
+  "sourceDpcSha256": "05887eae665ec9eb7da64420d549e239d23c0a81e3b27eae4f77ac655df58758",
+  "executable": null,
+  "executableAnalysis": "not requested",
+  "callbackEvidence": {
+    "opcode5TransformCount": 16,
+    "opcode2AttachmentCount": 11,
+    "descriptorCount": 13,
+    "opcode4PayloadCount": 10,
+    "opcode4EntryCount": 1320,
+    "strictCallbackEdges": 86,
+    "strictCallbackEdgesByTargetKind": {
+      "opcode2": 21,
+      "opcode4": 40,
+      "opcode5": 25
+    }
+  },
+  "geometry": {
+    "rawSharedPool": {
+      "file": "/home/runner/work/OUTWORLD-Jetpack-Assault/OUTWORLD-Jetpack-Assault/scout-final/geometry/scout-mj-raw-shared.glb",
+      "meshCount": 9,
+      "totalVertices": 390,
+      "totalTriangles": 230,
+      "combinedBounds": {
+        "min": [
+          -2047,
+          -1328,
+          120
+        ],
+        "max": [
+          2047,
+          644,
+          832
+        ],
+        "size": [
+          4094,
+          1972,
+          712
+        ]
+      },
+      "meshes": [
+        {
+          "name": "root_mesh",
+          "vertices": 37,
+          "triangles": 22,
+          "sourceFaceRecords": 22,
+          "uniqueQuads": 11,
+          "bounds": {
+            "min": [
+              -189,
+              -795,
+              120
+            ],
+            "max": [
+              189,
+              644,
+              421
+            ],
+            "size": [
+              378,
+              1439,
+              301
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 36,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_1",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "bounds": {
+            "min": [
+              -348,
+              -927,
+              139
+            ],
+            "max": [
+              348,
+              642,
+              732
+            ],
+            "size": [
+              696,
+              1569,
+              593
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_2",
+          "vertices": 43,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "bounds": {
+            "min": [
+              -515,
+              -1051,
+              147
+            ],
+            "max": [
+              515,
+              644,
+              543
+            ],
+            "size": [
+              1030,
+              1695,
+              396
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 42,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_3",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "bounds": {
+            "min": [
+              -666,
+              -1211,
+              140
+            ],
+            "max": [
+              666,
+              642,
+              732
+            ],
+            "size": [
+              1332,
+              1853,
+              592
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_4",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "bounds": {
+            "min": [
+              -931,
+              -1306,
+              147
+            ],
+            "max": [
+              931,
+              638,
+              732
+            ],
+            "size": [
+              1862,
+              1944,
+              585
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_5",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "bounds": {
+            "min": [
+              -1272,
+              -1328,
+              147
+            ],
+            "max": [
+              1272,
+              635,
+              733
+            ],
+            "size": [
+              2544,
+              1963,
+              586
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_6",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "bounds": {
+            "min": [
+              -1590,
+              -1269,
+              147
+            ],
+            "max": [
+              1590,
+              630,
+              820
+            ],
+            "size": [
+              3180,
+              1899,
+              673
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_7",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "bounds": {
+            "min": [
+              -1847,
+              -1121,
+              147
+            ],
+            "max": [
+              1847,
+              624,
+              832
+            ],
+            "size": [
+              3694,
+              1745,
+              685
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_8",
+          "vertices": 40,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "bounds": {
+            "min": [
+              -2047,
+              -880,
+              147
+            ],
+            "max": [
+              2047,
+              616,
+              732
+            ],
+            "size": [
+              4094,
+              1496,
+              585
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 39,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        }
+      ],
+      "passed": true,
+      "problems": []
+    },
+    "ownerTranslated": {
+      "file": "/home/runner/work/OUTWORLD-Jetpack-Assault/OUTWORLD-Jetpack-Assault/scout-final/geometry/scout-mj-owner-translated.glb",
+      "meshCount": 9,
+      "totalVertices": 390,
+      "totalTriangles": 230,
+      "combinedBounds": {
+        "min": [
+          -2047,
+          -1328,
+          120
+        ],
+        "max": [
+          2047,
+          644,
+          832
+        ],
+        "size": [
+          4094,
+          1972,
+          712
+        ]
+      },
+      "meshes": [
+        {
+          "name": "root_mesh",
+          "vertices": 37,
+          "triangles": 22,
+          "sourceFaceRecords": 22,
+          "uniqueQuads": 11,
+          "bounds": {
+            "min": [
+              -189,
+              -795,
+              120
+            ],
+            "max": [
+              189,
+              644,
+              421
+            ],
+            "size": [
+              378,
+              1439,
+              301
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 36,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_1",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "bounds": {
+            "min": [
+              -348,
+              -927,
+              139
+            ],
+            "max": [
+              348,
+              642,
+              732
+            ],
+            "size": [
+              696,
+              1569,
+              593
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_2",
+          "vertices": 43,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "bounds": {
+            "min": [
+              -515,
+              -1051,
+              147
+            ],
+            "max": [
+              515,
+              644,
+              543
+            ],
+            "size": [
+              1030,
+              1695,
+              396
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 42,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_3",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "bounds": {
+            "min": [
+              -666,
+              -1211,
+              140
+            ],
+            "max": [
+              666,
+              642,
+              732
+            ],
+            "size": [
+              1332,
+              1853,
+              592
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_4",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "bounds": {
+            "min": [
+              -931,
+              -1306,
+              147
+            ],
+            "max": [
+              931,
+              638,
+              732
+            ],
+            "size": [
+              1862,
+              1944,
+              585
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_5",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "bounds": {
+            "min": [
+              -1272,
+              -1328,
+              147
+            ],
+            "max": [
+              1272,
+              635,
+              733
+            ],
+            "size": [
+              2544,
+              1963,
+              586
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_6",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "bounds": {
+            "min": [
+              -1590,
+              -1269,
+              147
+            ],
+            "max": [
+              1590,
+              630,
+              820
+            ],
+            "size": [
+              3180,
+              1899,
+              673
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_7",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "bounds": {
+            "min": [
+              -1847,
+              -1121,
+              147
+            ],
+            "max": [
+              1847,
+              624,
+              832
+            ],
+            "size": [
+              3694,
+              1745,
+              685
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_8",
+          "vertices": 40,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "bounds": {
+            "min": [
+              -2047,
+              -880,
+              147
+            ],
+            "max": [
+              2047,
+              616,
+              732
+            ],
+            "size": [
+              4094,
+              1496,
+              585
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 39,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        }
+      ],
+      "passed": true,
+      "problems": []
+    },
+    "referencePointMapped": {
+      "file": "/home/runner/work/OUTWORLD-Jetpack-Assault/OUTWORLD-Jetpack-Assault/scout-final/geometry/scout-mj-reference-point-mapped.glb",
+      "meshCount": 9,
+      "totalVertices": 390,
+      "totalTriangles": 230,
+      "combinedBounds": {
+        "min": [
+          -2152,
+          -795,
+          120
+        ],
+        "max": [
+          1942,
+          1519,
+          2278
+        ],
+        "size": [
+          4094,
+          2314,
+          2158
+        ]
+      },
+      "meshes": [
+        {
+          "name": "root_mesh",
+          "vertices": 37,
+          "triangles": 22,
+          "sourceFaceRecords": 22,
+          "uniqueQuads": 11,
+          "bounds": {
+            "min": [
+              -189,
+              -795,
+              120
+            ],
+            "max": [
+              189,
+              644,
+              421
+            ],
+            "size": [
+              378,
+              1439,
+              301
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 36,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_1",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "bounds": {
+            "min": [
+              -468,
+              -151,
+              855
+            ],
+            "max": [
+              228,
+              1418,
+              1448
+            ],
+            "size": [
+              696,
+              1569,
+              593
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_2",
+          "vertices": 43,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "bounds": {
+            "min": [
+              -250,
+              -285,
+              293
+            ],
+            "max": [
+              780,
+              1410,
+              689
+            ],
+            "size": [
+              1030,
+              1695,
+              396
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 42,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_3",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "bounds": {
+            "min": [
+              -771,
+              -334,
+              771
+            ],
+            "max": [
+              561,
+              1519,
+              1363
+            ],
+            "size": [
+              1332,
+              1853,
+              592
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_4",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "bounds": {
+            "min": [
+              -1036,
+              -429,
+              917
+            ],
+            "max": [
+              826,
+              1515,
+              1502
+            ],
+            "size": [
+              1862,
+              1944,
+              585
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_5",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "bounds": {
+            "min": [
+              -1377,
+              -451,
+              1072
+            ],
+            "max": [
+              1167,
+              1512,
+              1658
+            ],
+            "size": [
+              2544,
+              1963,
+              586
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_6",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "bounds": {
+            "min": [
+              -1695,
+              -392,
+              1241
+            ],
+            "max": [
+              1485,
+              1507,
+              1914
+            ],
+            "size": [
+              3180,
+              1899,
+              673
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_7",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "bounds": {
+            "min": [
+              -1952,
+              -244,
+              1418
+            ],
+            "max": [
+              1742,
+              1501,
+              2103
+            ],
+            "size": [
+              3694,
+              1745,
+              685
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_8",
+          "vertices": 40,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "bounds": {
+            "min": [
+              -2152,
+              -3,
+              1693
+            ],
+            "max": [
+              1942,
+              1493,
+              2278
+            ],
+            "size": [
+              4094,
+              1496,
+              585
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 39,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        }
+      ],
+      "passed": true,
+      "problems": []
+    },
+    "meshReferenceBase": {
+      "file": "/home/runner/work/OUTWORLD-Jetpack-Assault/OUTWORLD-Jetpack-Assault/scout-final/geometry/scout-mj-mesh-reference-base.glb",
+      "meshCount": 9,
+      "totalVertices": 390,
+      "totalTriangles": 230,
+      "combinedBounds": {
+        "min": [
+          -2047,
+          -1328,
+          -451
+        ],
+        "max": [
+          2047,
+          644,
+          832
+        ],
+        "size": [
+          4094,
+          1972,
+          1283
+        ]
+      },
+      "meshes": [
+        {
+          "name": "root_mesh",
+          "vertices": 37,
+          "triangles": 22,
+          "sourceFaceRecords": 22,
+          "uniqueQuads": 11,
+          "bounds": {
+            "min": [
+              -189,
+              -795,
+              120
+            ],
+            "max": [
+              189,
+              644,
+              421
+            ],
+            "size": [
+              378,
+              1439,
+              301
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 36,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_1",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "bounds": {
+            "min": [
+              -409,
+              -927,
+              127
+            ],
+            "max": [
+              348,
+              637,
+              732
+            ],
+            "size": [
+              757,
+              1564,
+              605
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_2",
+          "vertices": 43,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "bounds": {
+            "min": [
+              -931,
+              -1306,
+              197
+            ],
+            "max": [
+              931,
+              630,
+              732
+            ],
+            "size": [
+              1862,
+              1936,
+              535
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 42,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_3",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "bounds": {
+            "min": [
+              -1272,
+              -1328,
+              226
+            ],
+            "max": [
+              1272,
+              624,
+              733
+            ],
+            "size": [
+              2544,
+              1952,
+              507
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_4",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "bounds": {
+            "min": [
+              -1590,
+              -1269,
+              230
+            ],
+            "max": [
+              1590,
+              616,
+              820
+            ],
+            "size": [
+              3180,
+              1885,
+              590
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_5",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "bounds": {
+            "min": [
+              -1847,
+              -1121,
+              230
+            ],
+            "max": [
+              1847,
+              607,
+              832
+            ],
+            "size": [
+              3694,
+              1728,
+              602
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_6",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "bounds": {
+            "min": [
+              -2047,
+              -880,
+              -384
+            ],
+            "max": [
+              2047,
+              595,
+              732
+            ],
+            "size": [
+              4094,
+              1475,
+              1116
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_7",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "bounds": {
+            "min": [
+              -1433,
+              -1056,
+              -205
+            ],
+            "max": [
+              1433,
+              597,
+              732
+            ],
+            "size": [
+              2866,
+              1653,
+              937
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_8",
+          "vertices": 40,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "bounds": {
+            "min": [
+              -1740,
+              -880,
+              -451
+            ],
+            "max": [
+              1740,
+              591,
+              732
+            ],
+            "size": [
+              3480,
+              1471,
+              1183
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 39,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        }
+      ],
+      "passed": true,
+      "problems": []
+    },
+    "meshReferenceOwnerTranslated": {
+      "file": "/home/runner/work/OUTWORLD-Jetpack-Assault/OUTWORLD-Jetpack-Assault/scout-final/geometry/scout-mj-mesh-reference-owner-translated.glb",
+      "meshCount": 9,
+      "totalVertices": 390,
+      "totalTriangles": 230,
+      "combinedBounds": {
+        "min": [
+          -2047,
+          -1328,
+          -451
+        ],
+        "max": [
+          2047,
+          644,
+          832
+        ],
+        "size": [
+          4094,
+          1972,
+          1283
+        ]
+      },
+      "meshes": [
+        {
+          "name": "root_mesh",
+          "vertices": 37,
+          "triangles": 22,
+          "sourceFaceRecords": 22,
+          "uniqueQuads": 11,
+          "bounds": {
+            "min": [
+              -189,
+              -795,
+              120
+            ],
+            "max": [
+              189,
+              644,
+              421
+            ],
+            "size": [
+              378,
+              1439,
+              301
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 36,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_1",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "bounds": {
+            "min": [
+              -409,
+              -927,
+              127
+            ],
+            "max": [
+              348,
+              637,
+              732
+            ],
+            "size": [
+              757,
+              1564,
+              605
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_2",
+          "vertices": 43,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "bounds": {
+            "min": [
+              -931,
+              -1306,
+              197
+            ],
+            "max": [
+              931,
+              630,
+              732
+            ],
+            "size": [
+              1862,
+              1936,
+              535
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 42,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_3",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "bounds": {
+            "min": [
+              -1272,
+              -1328,
+              226
+            ],
+            "max": [
+              1272,
+              624,
+              733
+            ],
+            "size": [
+              2544,
+              1952,
+              507
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_4",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "bounds": {
+            "min": [
+              -1590,
+              -1269,
+              230
+            ],
+            "max": [
+              1590,
+              616,
+              820
+            ],
+            "size": [
+              3180,
+              1885,
+              590
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_5",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "bounds": {
+            "min": [
+              -1847,
+              -1121,
+              230
+            ],
+            "max": [
+              1847,
+              607,
+              832
+            ],
+            "size": [
+              3694,
+              1728,
+              602
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_6",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "bounds": {
+            "min": [
+              -2047,
+              -880,
+              -384
+            ],
+            "max": [
+              2047,
+              595,
+              732
+            ],
+            "size": [
+              4094,
+              1475,
+              1116
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_7",
+          "vertices": 45,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "bounds": {
+            "min": [
+              -1433,
+              -1056,
+              -205
+            ],
+            "max": [
+              1433,
+              597,
+              732
+            ],
+            "size": [
+              2866,
+              1653,
+              937
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 44,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        },
+        {
+          "name": "submesh_8",
+          "vertices": 40,
+          "triangles": 26,
+          "sourceFaceRecords": 26,
+          "uniqueQuads": 13,
+          "bounds": {
+            "min": [
+              -1740,
+              -880,
+              -451
+            ],
+            "max": [
+              1740,
+              591,
+              732
+            ],
+            "size": [
+              3480,
+              1471,
+              1183
+            ]
+          },
+          "indexMin": 0,
+          "indexMax": 39,
+          "invalidValues": 0,
+          "degenerateIndexTriangles": 0
+        }
+      ],
+      "passed": true,
+      "problems": []
+    }
+  },
+  "selectedCandidate": {
+    "file": "/home/runner/work/OUTWORLD-Jetpack-Assault/OUTWORLD-Jetpack-Assault/scout-final/scout-candidate.glb",
+    "placement": "owner-translated-baseline-not-proven",
+    "reason": "Retained for compatibility. Exact owner/paired-node vector equality is necessary evidence, but does not establish the correct vertex base or composed runtime transform. Compare all five geometry variants before treating any as final.",
+    "passed": true
+  },
+  "status": "STATIC_CANDIDATES_EXPORTED_PLACEMENT_UNVERIFIED",
+  "runtimeCompletion": {
+    "bitExact": false,
+    "unresolved": [
+      "Verified shared-pool versus meshNode+28 vertex-base interpretation",
+      "Verified opcode-5 transform ownership for each mesh section",
+      "Composed runtime matrices applied to each mesh",
+      "Original UV and texture/material binding",
+      "Skinning and animation"
+    ],
+    "note": "These runtime items are kept separate from the static candidate and are not guessed."
+  },
+  "warnings": []
+}
