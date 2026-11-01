@@ -715,11 +715,14 @@ const report={
   descriptorExecutions,
   helperCalls,
   helperSlotAssignments,
+  helperCounterInitial:0,
+  helperCounterInitialAssumption:'The executable helper does not reset this global; this run assumes the zero-initialized process state.',
   helperCounterFinal:helperCounter,
   helperSlotCounts:Object.fromEntries(Array.from({length:8},(_,slot)=>[slot,helperSlotAssignments.filter(x=>x.slot===slot).length])),
   analysisOnly,
   simulationLimitations:[
     'Opcode-0 helper 0x4e59c8 is emulated, including its variable stride, byte+0x15 mask, 3-bit slot tag and global modulo-8 counter.',
+    'The initial value of global 0x12d7370 is assumed to be zero; the executable helper itself does not reset it.',
     'Opcode-3 conditionally calls 0x4df970 when record byte +0x12 is 1; this helper is logged but not emulated.',
     'The shared dispatcher tail at 0x4dfdf9 performs scale/state normalization after callbacks; this routine is not fully emulated.',
     'The caller-supplied initial scale/context defaults to zero unless --initial-scale overrides it; the loader helper dump is included in executable-analysis for resolving it.'
