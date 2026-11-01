@@ -135,3 +135,15 @@ node tools/scout-preparation-target-graph.mjs \
   scout-descriptor-preparation-audit-3/SCOUT-DESCRIPTOR-PREPARATION-AUDIT.json \
   scout-preparation-target-graph
 ```
+
+
+## Scout transform-attached descriptor audit
+
+Run [Scout transform-attached descriptor audit](tools/scout-transform-attached-descriptor-audit.mjs) to inspect the separate Opcode-2 descriptors attached beneath Opcode-5 transform nodes. This decodes each opcode-0 descriptor's +0x0C array pointer and +0x10 iteration count, then follows the same variable-stride record preparation logic used by the part-graph descriptor audit.
+
+```bash
+node tools/scout-transform-attached-descriptor-audit.mjs \
+  original-data/units.ff \
+  scout-bridge/analysis/transform-attachment-audit.json \
+  scout-transform-attached-descriptor-audit
+```
