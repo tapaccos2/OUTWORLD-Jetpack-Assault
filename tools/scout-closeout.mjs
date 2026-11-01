@@ -416,7 +416,8 @@ const gates = {
     meshesWithExactTransformOwnerLinks: linkedMeshCount, expectedSubmeshes: 8,
     exactGeometryDescriptorLinks: ownership.filter(x => x.geometryDescriptorMatches.length > 0).length,
     expectedGeometryDescriptorLinks: 9,
-    matchedPartListOwnerRecords: ownership.reduce((n, x) => n + x.partOwners.length, 0),
+    matchedPartListOwnerRecords: new Set(ownership.flatMap(x => x.partOwners.map(p => p.offset))).size,
+    geometryDescriptorOwnerLinks: ownership.reduce((n, x) => n + x.partOwners.length, 0),
     rootMeshTransformExempt: true,
     note: 'Exact legacy geometry-descriptor and part-list owner links are reported separately; they do not by themselves prove an opcode-5 runtime transform owner.',
     ownership
