@@ -78,7 +78,7 @@ const discoveryData=readJson(discoveryReportFile);
 if(!discoveryData?.input||!fs.existsSync(discoveryData.input))
   throw new Error('Autodiscovery did not provide a usable extracted DPC path in '+discoveryReportFile);
 input=path.resolve(discoveryData.input);
-const stem=path.basename(input).replace(/\\.dpc$/i,'');
+
 const sourceArchive=discoveryData.sourceArchive??null;
 
 // 2. Decode candidate opcode-5 transform records and their pointer hierarchy.
@@ -169,8 +169,7 @@ const manifest={
     opcode4EntryCount:opcode4Summary.reportedEntryCount??null,
     callbackPartListRecords:callbackResult.callbackRecordCount??null,
     recursivelyDiscoveredOpcode4Records:discoveryOpcode4.records?.length??null,
-    opcode4ChildEntryCount:discoveryGraph.recursivelyDiscoveredOpcode4Count
-      ?discoveryGraph.nodes?.filter(n=>n.kind==='opcode4-child-list').reduce((sum,n)=>sum+(n.parsed?.entries?.length??0),0):null,
+    opcode4ChildEntryCount:discoveryOpcode4.records?.reduce((sum,record)=>sum+(record.entries?.length??0),0)??null,
     strictCallbackEdges:discoveryGraph.validatedEntryToCallbackEdgeCount??null,
     strictCallbackEdgesByTargetKind:discoveryGraph.edgeCountsByTargetKind??null,
     reachableOpcode4FromDescriptorRoots:discoveryGraph.opcode4ReachableFromDescriptorRootsByRelocatedPointers??null
