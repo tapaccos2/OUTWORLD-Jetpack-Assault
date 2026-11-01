@@ -11,14 +11,14 @@ import crypto from 'node:crypto';
 import {spawnSync} from 'node:child_process';
 const a=process.argv.slice(2);let ff=null,bridgeFile=null,outArg=null;
 for(let i=0;i<a.length;i++){if(a[i].startsWith('--'))throw Error('Unknown option '+a[i]);if(!ff)ff=a[i];else if(!bridgeFile)bridgeFile=a[i];else if(!outArg)outArg=a[i];else throw Error('Unexpected argument '+a[i]);}
-if(!ff||!bridgeFile)throw Error('Usage: node tools/scout-transform-attached-descriptor-audit.mjs original-data/units.ff scout-bridge/analysis/transform-attachment-audit.json scout-transform-attached-descriptor-audit');
-ff=path.resolve(ff);bridgeFile=path.resolve(bridgeFile);if(!fs.existsSync(ff)||!fs.existsSync(bridgeFile))throw Error('units.ff or transform-attachment-audit.json missing.');
+if(!ff||!bridgeFile)throw Error('Usage: node tools/scout-transform-attached-descriptor-audit.mjs <units.ff|scout_mj.dpc> scout-bridge/analysis/transform-attachment-audit.json [out-dir]');
+ff=path.resolve(ff);bridgeFile=path.resolve(bridgeFile);if(!fs.existsSync(ff)||!fs.existsSync(bridgeFile))throw Error('DPC/units.ff or transform-attachment-audit.json missing.');
 const here=path.dirname(new URL(import.meta.url).pathname),repo=path.resolve(here,'..');let out=path.resolve(outArg||'scout-transform-attached-descriptor-audit');const rel=path.relative(repo,out);if(!rel||rel.startsWith('..')||path.isAbsolute(rel))throw Error('Output must be inside repository.');
 if(fs.existsSync(out)&&fs.readdirSync(out).length){const base=out;let n=2;do{out=base+'-'+n++;}while(fs.existsSync(out)&&fs.readdirSync(out).length);}
 const ad=path.join(out,'analysis');fs.mkdirSync(ad,{recursive:true});const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'outwars-scout-xdesc-'));
 const run=(cmd,args)=>{const r=spawnSync(cmd,args,{cwd:repo,encoding:'utf8',maxBuffer:512*1024*1024});if(r.status!==0)throw Error(cmd+' failed: '+(r.error?.message||r.stderr||r.status));return r.stdout||'';};
 try{
- run(process.execPath,[path.join(here,'extract-ff-resources.mjs'),ff,'--out',tmp]);const dpcPath=path.join(tmp,'units','scout_mj.dpc');if(!fs.existsSync(dpcPath))throw Error('Extracted units/scout_mj.dpc missing.');
+ let dpcPath=ff;if(path.extname(ff).toLowerCase()==='.ff'){run(process.execPath,[path.join(here,'extract-ff-resources.mjs'),ff,'--out',tmp]);dpcPath=path.join(tmp,'units','scout_mj.dpc');}if(!fs.existsSync(dpcPath))throw Error('DPC input missing.');
  const dpc=fs.readFileSync(dpcPath),bridge=JSON.parse(fs.readFileSync(bridgeFile,'utf8'));
  // The header's +0x0c value is the relocation base for DPC pointer fields.
  // The mapped image/load base is 0x1c40 bytes earlier; do not resolve pointers against it.
