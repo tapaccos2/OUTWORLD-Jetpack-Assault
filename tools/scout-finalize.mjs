@@ -37,7 +37,9 @@ if(!input){
   process.exit(2);
 }
 const source=path.resolve(input),outDir=path.resolve(outArg||'scout-final');
-if(outDir===process.cwd())throw new Error('Choose a dedicated output directory, not the repository root.');
+const outRel=path.relative(process.cwd(),outDir);
+if(!outRel||outRel.startsWith('..')||path.isAbsolute(outRel))
+  throw new Error('Choose a dedicated output directory inside the repository; refusing to remove a path outside it.');
 fs.rmSync(outDir,{recursive:true,force:true});
 fs.mkdirSync(outDir,{recursive:true});
 const analysisDir=path.join(outDir,'analysis');
