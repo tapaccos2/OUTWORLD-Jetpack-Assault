@@ -109,3 +109,16 @@ Run [Scout descriptor preparation audit](tools/scout-descriptor-preparation-audi
 ```bash
 node tools/scout-descriptor-preparation-audit.mjs original-data/units.ff scout-descriptor-preparation-audit --exe /home/tapaccos/Outwars-extracted/outwars.exe
 ```
+
+
+## Scout preparation-record pointer map
+
+Run [Scout preparation-record pointer map](tools/scout-preparation-pointer-map.mjs) after the descriptor-preparation audit. It extracts the DPC, inspects each unique physical record reached by the 16 descriptors, maps DPC-relative pointer fields, and cross-references targets against the known geometry-descriptor and opcode-5 transform inventories.
+
+```bash
+node tools/scout-preparation-pointer-map.mjs \
+  original-data/units.ff \
+  scout-descriptor-preparation-audit/SCOUT-DESCRIPTOR-PREPARATION-AUDIT.json \
+  scout-bridge/analysis/transform-attachment-audit.json \
+  scout-preparation-pointer-map
+```
