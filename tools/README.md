@@ -201,7 +201,7 @@ Checks the 152-byte frame stride and inventories the 19 eight-byte entries per f
 
 ## 6. One-command Scout finalization
 
-Run this single command from the repository root. It performs the callback/transform/executable analysis, extracts the male Scout DPC from the FF archive, exports the raw and placement candidates, validates the GLB accessors and topology counts, writes a final report, and packages all outputs.
+Run this single command from the repository root. It performs the callback/transform/executable analysis, extracts the male Scout DPC from the FF archive, exports five coordinate-base/placement candidates, validates the GLB accessors and topology counts, applies active-scene node transforms (including parent transforms) when calculating world-space bounds, and writes a comparison report, and packages all outputs.
 
 ```sh
 node tools/scout-finalize.mjs \
@@ -214,11 +214,11 @@ Main outputs:
 
 - `scout-final/scout-candidate.glb`: owner-translated static geometry candidate.
 - `scout-final/FINAL-REPORT.md` and `FINAL-REPORT.json`: validation and completion status.
-- `scout-final/geometry/`: raw, owner-translated and reference-point-mapped alternatives.
+- `scout-final/geometry/`: shared-pool, owner-translated, reference-point-mapped, mesh-reference-base and mesh-reference-plus-owner-translation alternatives.
 - `scout-final/analysis/`: callback graph, descriptor, opcode-4/opcode-5 and executable-disassembly evidence.
 - `scout-final.zip`: the complete bundle.
 
-The exporter checks that the eight owner translation vectors match their paired-node translation fields before applying them. The candidate contains nine sections. The repeated `0x04 0x01 0x0C 0x09` pattern is treated as a face-record candidate only inside the owner-part mesh streams; it is not globally interpreted as a face record in the callback graph. Mesh indices and face/triangle counts are checked before the candidate is promoted.
+The exporter checks that the eight owner translation vectors match their paired-node translation fields before applying them. The candidate contains nine sections. The repeated `0x04 0x01 0x0C 0x09` pattern is treated as a face-record candidate only inside the owner-part mesh streams; it is not globally interpreted as a face record in the callback graph. Mesh indices and face/triangle counts are checked, and local/world-space bounds are recorded for every mesh. These checks establish structural validity only; they do not select a placement or prove anatomical correctness.
 
 The output is explicitly a **static Scout candidate**, not a bit-exact runtime model. The report keeps unverified opcode-5 mesh ownership, composed runtime matrices, UVs, texture/material assignment, skinning and animation visible as unresolved. The one-command run does not require a second diagnostic upload or another assistant interpretation pass.
 
