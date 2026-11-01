@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Bridge the Scout DPC parser, callback record dispatcher and runtime transform path.
-# Version: 1.4.0
+# Version: 1.5.0
 # Usage: bash tools/scout-exe-transform-bridge.sh /path/to/outwars.exe [output-dir]
 set -euo pipefail
 EXE="${1:-}"
@@ -18,7 +18,7 @@ done
 if [[ -z "$OBJDUMP" ]]; then echo "No PE-capable objdump found." >&2; exit 3; fi
 mkdir -p "$OUT"
 {
-  echo "OUTWARS SCOUT DPC-TO-TRANSFORM BRIDGE v1.4.0"
+  echo "OUTWARS SCOUT DPC-TO-TRANSFORM BRIDGE v1.5.0"
   echo "Executable: $EXE"
   echo "SHA256: $(sha256sum "$EXE" | awk '{print $1}')"
   echo "PE disassembler: $OBJDUMP"
@@ -30,6 +30,7 @@ mkdir -p "$OUT"
     echo
   }
   # Callback setup, dispatch, shared epilogue and record interpretation.
+  dump "CALLBACK OPCODE 4 CLASS 0x090c BRANCH" 0x4e006d 0x4e0130
   dump "CALLBACK OPCODE 5 TRANSFORM BRANCH" 0x4e0130 0x4e023a
   dump "FIXED-POINT MATRIX MULTIPLY" 0x4c6610 0x4c66b0
   dump "MATRIX COMPOSITION HELPER" 0x4c5aa0 0x4c5b80
