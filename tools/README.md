@@ -199,28 +199,43 @@ node tools/inspect-motion-catalog.mjs original-data/motion motion-catalog.json
 
 Checks the 152-byte frame stride and inventories the 19 eight-byte entries per frame across available .MC files. The report keeps the one known declared-count mismatch (fstand2.mc) visible. It does not infer bone names or a skeleton hierarchy.
 
-## 6. Reconstruct Scout DPC callback payloads and transform hierarchy
+## 6. One-command Scout finalization
 
-Use the integrated evidence pipeline. It accepts the original FF archive, extracts the Scout DPC, runs autonomous mixed-entry callback discovery, audits opcode-5 transforms and opcode-2 descriptor attachments, decodes opcode-4 child records, and records the legacy part-list graph separately.
+Run this single command from the repository root. It performs the callback/transform/executable analysis, extracts the male Scout DPC from the FF archive, exports the raw and placement candidates, validates the GLB accessors and topology counts, writes a final report, and packages all outputs.
 
 ```sh
-node tools/reconstruct-scout.mjs \
+node tools/scout-finalize.mjs \
   original-data/units.ff \
-  scout-reconstruction \
+  scout-final \
   --exe /home/tapaccos/Outwars-extracted/outwars.exe
 ```
 
-This pipeline deliberately skips the old `0x04 0x01 0x0C 0x09` signature-derived GLB export. Those records are opcode-4 callbacks with position contributions and child entries, not validated four-index faces. The run writes `DISCOVERY-REPORT.md`, `discovery-report.json`, `opcode4-entry-candidates.csv`, transform/attachment inventories, opcode-4 child payload reports, callback-chain reports and `reconstruction-manifest.json`. When the system `zip` utility is available, it also packages the complete output folder as `scout-reconstruction.zip` (or `<out-dir>.zip`) for a single upload.
+Main outputs:
 
-The Scout is not declared assembled until the opcode-4 leaves are decoded into real render primitives, linked to their coordinate payloads, and placed under the verified opcode-5 transform hierarchy.
+- `scout-final/scout-candidate.glb`: owner-translated static geometry candidate.
+- `scout-final/FINAL-REPORT.md` and `FINAL-REPORT.json`: validation and completion status.
+- `scout-final/geometry/`: raw, owner-translated and reference-point-mapped alternatives.
+- `scout-final/analysis/`: callback graph, descriptor, opcode-4/opcode-5 and executable-disassembly evidence.
+- `scout-final.zip`: the complete bundle.
 
-The former `scout-runtime-rebuild.mjs` command is retained only as a compatibility wrapper and now forwards to this corrected pipeline. Its previous 24 GLB placement candidates are not valid assembled geometry.
+The exporter checks that the eight owner translation vectors match their paired-node translation fields before applying them. The candidate contains nine sections. The repeated `0x04 0x01 0x0C 0x09` pattern is treated as a face-record candidate only inside the owner-part mesh streams; it is not globally interpreted as a face record in the callback graph. Mesh indices and face/triangle counts are checked before the candidate is promoted.
 
-## 7. Legacy raw-geometry signature diagnostic (not a model exporter)
+The output is explicitly a **static Scout candidate**, not a bit-exact runtime model. The report keeps unverified opcode-5 mesh ownership, composed runtime matrices, UVs, texture/material assignment, skinning and animation visible as unresolved. The one-command run does not require a second diagnostic upload or another assistant interpretation pass.
+
+The historical command is now a compatibility alias for the same complete workflow:
 
 ```sh
-node tools/export-dpc-armour-geometry.mjs original-data/units/scout_mj.dpc scout-mj-signature-diagnostic.glb
+node tools/scout-runtime-rebuild.mjs original-data/units.ff scout-final --exe /path/to/outwars.exe
 ```
 
-This older utility is retained for forensic comparison only. Its apparent face records were later identified as opcode-4 callback records, so its 390-vertex/230-triangle output must not be treated as verified Scout topology or used as the final model. See [SCOUT-GEOMETRY-EXPORT.md](../original-data/SCOUT-GEOMETRY-EXPORT.md) for the correction and remaining blockers.
+## 7. Lower-level Scout evidence tools
 
+For focused investigations, the component tools remain available:
+
+```sh
+node tools/reconstruct-scout.mjs original-data/units.ff scout-reconstruction --exe /path/to/outwars.exe
+node tools/inspect-scout-part-graph.mjs /path/to/scout_mj.dpc scout-part-graph.json
+node tools/inspect-scout-transform-records.mjs /path/to/scout_mj.dpc
+```
+
+These are subcomponents of the one-command finalizer. Do not use the older geometry exporter by itself as proof of a complete runtime reconstruction.
