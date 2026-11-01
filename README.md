@@ -122,3 +122,16 @@ node tools/scout-preparation-pointer-map.mjs \
   scout-bridge/analysis/transform-attachment-audit.json \
   scout-preparation-pointer-map
 ```
+
+
+## Scout preparation target graph
+
+Run [Scout preparation target graph](tools/scout-preparation-target-graph.mjs) after the preparation pointer map. It extracts the Scout DPC, captures 128-byte target windows, finds nested DPC-relative pointer candidates to depth two, and inventories aligned inbound references.
+
+```bash
+node tools/scout-preparation-target-graph.mjs \
+  original-data/units.ff \
+  scout-preparation-pointer-map/SCOUT-PREPARATION-POINTER-MAP.json \
+  scout-descriptor-preparation-audit-3/SCOUT-DESCRIPTOR-PREPARATION-AUDIT.json \
+  scout-preparation-target-graph
+```
