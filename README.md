@@ -73,3 +73,12 @@ After the dispatch and handler audits, run [Scout scratch data-flow audit](tools
 ```bash
 node tools/scout-scratch-dataflow.mjs scout-dispatch/SCOUT-DISPATCH-AUDIT.json scout-scratch-dataflow --exe /home/tapaccos/Outwars-extracted/outwars.exe
 ```
+
+
+## Scout opcode handler map
+
+Run [Scout opcode handler map](tools/scout-opcode-handler-map.mjs) after the dispatch audit. It inventories all 14 opcode handlers, their bounded linear instruction ranges, register-relative memory offsets, calls, branches, and associated Scout DPC callback records. The report deliberately distinguishes address-range boundaries from true compiler function boundaries and does not guess register roles.
+
+```bash
+node tools/scout-opcode-handler-map.mjs scout-dispatch/SCOUT-DISPATCH-AUDIT.json scout-opcode-handler-map --exe /home/tapaccos/Outwars-extracted/outwars.exe
+```
