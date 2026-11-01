@@ -1,0 +1,25 @@
+#!/usr/bin/env node
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+const a=process.argv.slice(2);let report=null,outArg=null,exe=null;
+for(let i=0;i<a.length;i++){if(a[i]==='--exe')exe=path.resolve(a[++i]);else if(!report)report=a[i];else if(!outArg)outArg=a[i];else throw Error('Unexpected argument '+a[i]);}
+if(!report||!exe)throw Error('Usage: node tools/scout-scratch-dataflow.mjs scout-dispatch/SCOUT-DISPATCH-AUDIT.json scout-scratch-dataflow --exe /home/tapaccos/Outwars-extracted/outwars.exe');
+report=path.resolve(report);if(!fs.existsSync(report)||!fs.existsSync(exe))throw Error('Dispatch report or executable not found.');
+const sw=JSON.parse(fs.readFileSync(report,'utf8')).switch;if(!sw?.cases?.length)throw Error('No switch cases in dispatch report.');
+const here=path.dirname(new URL(import.meta.url).pathname),repo=path.resolve(here,'..');let out=path.resolve(outArg||'scout-scratch-dataflow');const rel=path.relative(repo,out);if(!rel||rel.startsWith('..')||path.isAbsolute(rel))throw Error('Output must be inside repository.');
+if(fs.existsSync(out)&&fs.readdirSync(out).length){const base=out;let n=2;do{out=base+'-'+n++;}while(fs.existsSync(out)&&fs.readdirSync(out).length);}
+const ad=path.join(out,'analysis');fs.mkdirSync(ad,{recursive:true});
+const obj=process.env.OBJDUMP||(fs.existsSync('/usr/bin/i686-w64-mingw32-objdump')?'/usr/bin/i686-w64-mingw32-objdump':'objdump'),d=spawnSync(obj,['-d','-Mintel',exe],{encoding:'utf8',maxBuffer:512*1024*1024});if(d.status!==0)throw Error(d.stderr||'objdump failed');
+const ins=[];for(const line of d.stdout.split(/\r?\n/)){const m=line.match(/^\s*([0-9a-fA-F]+):\s*((?:[0-9a-fA-F]{2}\s+)+)\s*(.*)$/);if(m)ins.push({address:parseInt(m[1],16),text:m[3].trim(),raw:line.trim()});}
+const idx=new Map(ins.map((x,i)=>[x.address,i])),context=(va,before,after)=>{const i=idx.get(va);return i===undefined?[]:ins.slice(Math.max(0,i-before),Math.min(ins.length,i+after+1)).map(x=>x.raw);};
+const globals=[0x12d6c74,0x12d6c78,0x12d6c7c],refs=[];
+for(let i=0;i<ins.length;i++)for(const g of globals)if(ins[i].text.toLowerCase().includes(g.toString(16)))refs.push({global:'0x'+g.toString(16),address:'0x'+ins[i].address.toString(16),instruction:ins[i].text,context:ins.slice(Math.max(0,i-8),Math.min(ins.length,i+9)).map(x=>x.raw)});
+const c=sw.cases.find(x=>x.opcode===2);if(!c)throw Error('Opcode 2 not found.');const h=parseInt(c.target,16),hi=idx.get(h);if(hi===undefined)throw Error('Opcode-2 target absent from disassembly.');
+const handler=ins.slice(hi,hi+70).map(x=>x.raw),stores=ins.filter(x=>x.address>=h&&x.address<h+0x200&&/\bmov\s+DWORD PTR \[edx\+ebx\*1(?:\+0x[0-9a-f]+)?\],/i.test(x.text)).map(x=>({address:'0x'+x.address.toString(16),instruction:x.text}));
+const anchors=[0x4e04a2,0x4e04b0,0x4e04c5,0x4dfdf9,0x4dfd88,0x4dfef3].map(x=>({address:'0x'+x.toString(16),instructions:context(x,24,48)}));
+const result={title:'Scout scratch dataflow audit',version:'1.0.0',executable:path.basename(exe),sha256:crypto.createHash('sha256').update(fs.readFileSync(exe)).digest('hex'),dispatchCaseCount:sw.caseCount,opcode2:{target:c.target,callbackRecords:c.dpcRecords?.length||0,handler,stores,recordReads:['[record+0x10] is loop count','[record+0x14] is pointer; its +0x08 DWORD becomes scratch field 0'],scratchFields:[{offset:0,source:'DWORD at pointer [record+0x14]+0x08'},{offset:4,source:'[esp+0x64]'},{offset:8,source:'[esp+0x68]'},{offset:12,source:'[esp+0x6c]'},{offset:16,source:'[esp+0x70]'},{offset:20,source:'[esp+0x74]'}]},globalReferences:refs,dispatcherContexts:anchors,conclusion:'Opcode 2 emits six DWORD fields per 0x18-byte scratch record. This report inventories static references; field semantics and final rendering consumer remain unproven.'};
+fs.writeFileSync(path.join(ad,'scratch-global-xrefs.json'),JSON.stringify(refs,null,2));fs.writeFileSync(path.join(ad,'dispatcher-contexts.json'),JSON.stringify(anchors,null,2));fs.writeFileSync(path.join(ad,'opcode2-handler.json'),JSON.stringify(result.opcode2,null,2));fs.writeFileSync(path.join(out,'SCOUT-SCRATCH-DATAFLOW.json'),JSON.stringify(result,null,2)+'\n');
+const md=['# Scout scratch dataflow audit','','| Measure | Result |','|---|---:|','| Dispatch cases | '+sw.caseCount+' |','| Opcode-2 callback records | '+result.opcode2.callbackRecords+' |','| Scratch fields per record | 6 DWORDs |','| Record stride | 0x18 bytes |','| Scratch-global references | '+refs.length+' |','','## Opcode-2 handler','',...handler,'','## Scratch-global references','',...refs.map(x=>x.address+' '+x.global+' — '+x.instruction),'','## Dispatcher contexts','',...anchors.flatMap(x=>['### '+x.address,...x.instructions]),'','Field semantics and final rendering consumer remain unproven.'];
+fs.writeFileSync(path.join(out,'SCOUT-SCRATCH-DATAFLOW.md'),md.join('\n')+'\n');const z=spawnSync('zip',['-qr',out+'.zip','.'],{cwd:out});if(z.status!==0)throw Error('ZIP packaging failed');console.log(JSON.stringify({globalReferences:refs.length,opcode2Stores:stores.length,opcode2Records:result.opcode2.callbackRecords,bundle:out+'.zip'},null,2));
