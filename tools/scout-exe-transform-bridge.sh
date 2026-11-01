@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Bridge the Scout DPC parser, callback record dispatcher and runtime transform path.
-# Version: 1.5.0
+# Version: 1.6.0
 # Usage: bash tools/scout-exe-transform-bridge.sh /path/to/outwars.exe [output-dir]
 set -euo pipefail
 EXE="${1:-}"
@@ -18,7 +18,7 @@ done
 if [[ -z "$OBJDUMP" ]]; then echo "No PE-capable objdump found." >&2; exit 3; fi
 mkdir -p "$OUT"
 {
-  echo "OUTWARS SCOUT DPC-TO-TRANSFORM BRIDGE v1.5.0"
+  echo "OUTWARS SCOUT DPC-TO-TRANSFORM BRIDGE v1.6.0"
   echo "Executable: $EXE"
   echo "SHA256: $(sha256sum "$EXE" | awk '{print $1}')"
   echo "PE disassembler: $OBJDUMP"
@@ -29,6 +29,18 @@ mkdir -p "$OUT"
     "$OBJDUMP" -d -Mintel --start-address="$start" --stop-address="$stop" "$EXE" 2>&1
     echo
   }
+  # Full callback dispatch table, not just the already-understood opcode-4/5 paths.
+  # These branches determine how the mixed child entries are interpreted.
+  dump "CALLBACK OPCODE 0" 0x4dfde1 0x4dfe56
+  dump "CALLBACK OPCODE 1" 0x4dfe56 0x4dfef3
+  dump "CALLBACK OPCODE 2" 0x4dfef3 0x4dff99
+  dump "CALLBACK OPCODE 3" 0x4dff99 0x4e006d
+  dump "CALLBACK OPCODE 6" 0x4e0494 0x4e04a2
+  dump "CALLBACK OPCODE 7/10 SHARED BRANCH" 0x4e04a2 0x4e04b0
+  dump "CALLBACK OPCODE 8/13 SHARED BRANCH" 0x4e023a 0x4e0253
+  dump "CALLBACK OPCODE 9" 0x4e0253 0x4e02e7
+  dump "CALLBACK OPCODE 11" 0x4e02e7 0x4e0399
+  dump "CALLBACK OPCODE 12" 0x4e0399 0x4e0494
   # Callback setup, dispatch, shared epilogue and record interpretation.
   dump "CALLBACK OPCODE 4 CLASS 0x090c BRANCH" 0x4e006d 0x4e0130
   dump "CALLBACK OPCODE 5 TRANSFORM BRANCH" 0x4e0130 0x4e023a
