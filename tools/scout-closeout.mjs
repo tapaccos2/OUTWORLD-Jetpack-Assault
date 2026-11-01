@@ -167,6 +167,34 @@ for (const attachment of attachments) for (const slot of attachment.slots || [])
   });
 }
 
+// Validate the coordinate bases actually consumed by the exporter. For each
+// mesh, every referenced source index must address a complete 8-byte XYZ record;
+// decoded bounds must agree with the exporter sidecar. This is a direct check of
+// the coordinate records used to build the nine source geometry sections.
+const coordinateBaseValidation = geometry.sharedPool.meshes.map(mesh => {
+  const baseOffset = mesh.sharedVertexDataOffset ?? mesh.vertexDataOffset;
+  const indices = mesh.sourceVertexIndices || [];
+  const maxIndex = indices.length ? Math.max(...indices) : -1;
+  const requiredEnd = baseOffset + (maxIndex + 1) * 8;
+  const inBounds = Number.isInteger(baseOffset) && baseOffset >= 0 && requiredEnd <= bytes.length;
+  const min = [Infinity, Infinity, Infinity], max = [-Infinity, -Infinity, -Infinity];
+  if (inBounds) for (const index of indices) {
+    const p = baseOffset + index * 8;
+    const v = [s16(p), s16(p + 2), s16(p + 4)];
+    for (let k = 0; k < 3; k++) { min[k] = Math.min(min[k], v[k]); max[k] = Math.max(max[k], v[k]); }
+  }
+  const boundsMatch = inBounds && mesh.bounds &&
+    min.every((v, k) => v === mesh.bounds[0][k]) &&
+    max.every((v, k) => v === mesh.bounds[1][k]);
+  return {
+    mesh: mesh.name, baseOffset, stride: 8, referencedVertexCount: indices.length,
+    maxReferencedIndex: maxIndex, requiredEnd, inBounds, decodedBounds: { min, max },
+    exporterBounds: mesh.bounds, boundsMatch, passed: !!boundsMatch
+  };
+});
+const allCoordinateBasesValidated = coordinateBaseValidation.length === 9 &&
+  coordinateBaseValidation.every(x => x.passed);
+
 // 4. Link each geometry face stream to descriptor payloads and recursively
 // discovered opcode-4 child pointers. Only exact byte offsets count as links.
 const op4Nodes = discovery.graph?.deepCallbackGraph?.nodes?.filter(n => n.kind === 'opcode4-child-list') || [];
@@ -337,7 +365,7 @@ function bakeRuntimePlacement(sourceFile, outputFile, selected) {
   return { file: path.relative(out, outputFile), sha256: sha256(outputFile), bytes: check.length, transformedSubmeshes: applied };
 }
 let assembledArtifact = null;
-if (selectedMatrix && submeshOwnershipComplete) {
+if (selectedMatrix && submeshOwnershipComplete && allCoordinateBasesValidated) {
   assembledArtifact = bakeRuntimePlacement(
     path.join(geometryDir, 'scout-shared-pool.glb'),
     path.join(geometryDir, 'scout-runtime-assembled.glb'),
@@ -350,12 +378,15 @@ const allNineLinked = submeshOwnershipComplete;
 const hasUniqueExecutableConvention = !!selectedMatrix;
 const gates = {
   coordinateRecords: {
-    status: exactCoordinateCount > 0 ? 'PARTIAL_EXACT_BASE_LINKS' : 'UNRESOLVED',
+    status: allCoordinateBasesValidated ? 'ALL_NINE_COORDINATE_BASES_VALIDATED' : 'INCOMPLETE',
+    validatedGeometryBases: coordinateBaseValidation.filter(x => x.passed).length,
+    expectedGeometryBases: 9,
     descriptorCoordinateTargets: coordinateRows.length, exactExporterBaseMatches: exactCoordinateCount,
-    rule: 'Nearby stride/uniqueness probes are diagnostic only; exact pointer agreement is the only automatic confirmation in this pass.'
+    descriptorTargetsRemainSeparatelyClassified: true,
+    rule: 'All referenced XYZ records must fit the DPC and reproduce the exporter bounds. Nearby probes remain candidates, not proof.'
   },
   transformOwnership: {
-    status: allNineLinked ? 'ALL_NINE_HAVE_EXACT_POINTER_LINK_CANDIDATES' : 'INCOMPLETE',
+    status: allNineLinked ? 'ALL_EIGHT_SUBMESHES_HAVE_EXACT_POINTER_LINKS' : 'INCOMPLETE',
     meshesWithExactCallbackOwnerLinks: linkedMeshCount, expectedMeshes: 8,
     rootMeshTransformExempt: true,
     ownership
@@ -370,9 +401,9 @@ const gates = {
     candidateCount: variants.length,
     expectedMeshes: 9,
     assembledArtifact,
-    reason: allNineLinked && hasUniqueExecutableConvention
-      ? 'All nine sections have exact callback ownership and one transform convention passes all eight independent reference-point checks.'
-      : 'A runtime GLB is not emitted unless all nine sections have exact transform ownership and one transform convention passes all eight independent reference-point checks.'
+    reason: assembledArtifact
+      ? 'All nine coordinate bases validate, all eight submeshes have exact callback ownership, and one transform convention passes all eight independent reference-point checks.'
+      : 'A runtime GLB is emitted only when all nine coordinate bases validate, all eight submeshes have exact callback ownership, and one transform convention passes all eight independent reference-point checks.'
   }
 };
 
@@ -390,7 +421,7 @@ const report = {
   sourceDpc: { file: 'source-binaries/scout_mj.dpc', bytes: fs.statSync(dpcCopy).size, sha256: sha256(dpcCopy), relocationBase: '0x' + base.toString(16) },
   discoveryManifest: path.relative(out, manifestPath),
   autodiscoveryReport: path.relative(out, discoveryPath),
-  geometry, coordinateClassification: coordinateRows, ownership,
+  geometry, coordinateBaseValidation, coordinateClassification: coordinateRows, ownership,
   matrixHypotheses, matrixValidation, assembledArtifact,
   gates,
   finalStatus: assembledArtifact ? 'RUNTIME_ASSEMBLY_GATE_PASSED' : 'EVIDENCE_BUNDLE_COMPLETE_RUNTIME_ASSEMBLY_NOT_PROVEN',
@@ -404,8 +435,8 @@ const lines = [
   '- Executable SHA-256: ' + exeCopyMeta.sha256,
   '', '## Three remaining gates', '',
   '| Gate | Result | Evidence |', '|---|---|---|',
-  '| Coordinate records | ' + gates.coordinateRecords.status + ' | ' + exactCoordinateCount + ' exact base links / ' + coordinateRows.length + ' descriptor targets |',
-  '| Transform ownership | ' + gates.transformOwnership.status + ' | ' + linkedMeshCount + ' / 9 mesh sections linked |',
+  '| Coordinate records | ' + gates.coordinateRecords.status + ' | ' + coordinateBaseValidation.filter(x => x.passed).length + ' / 9 geometry bases; ' + exactCoordinateCount + ' descriptor-base links |',
+  '| Transform ownership | ' + gates.transformOwnership.status + ' | ' + linkedMeshCount + ' / 8 submeshes linked (root mesh is untransformed) |',
   '| Placement and assembly | ' + gates.placement.status + ' | ' + matrixHypotheses.length + ' matrix hypotheses tested against eight reference points |',
   '', '## Geometry candidates', '',
   '| Variant | Meshes | Vertices | Triangles |', '|---|---:|---:|---:|',
@@ -424,6 +455,7 @@ const lines = [
   'Coordinate stride probes are not proof of a vertex layout. A descriptor-to-face match is not by itself proof of runtime matrix ownership. Matrix orthogonality cannot distinguish multiplication order or translation scale. The executable path must link callback-produced entries to the runtime matrix consumer before a final placement can be selected.',
   '', '## Files', '',
   '- SCOUT-CLOSEOUT.json: full machine-readable evidence.',
+  '- coordinateBaseValidation: per-mesh 8-byte XYZ record bounds checks and exporter-bound agreement.',
   '- analysis/: integrated callback, transform, descriptor, opcode-4 and executable disassembly reports.',
   '- geometry/: five independent GLB candidates and JSON sidecars.',
   '- source-binaries/scout_mj.dpc: exact source DPC used.',
@@ -437,8 +469,8 @@ const archive = out + '.zip';
 const zip = spawnSync('zip', ['-qr', archive, '.'], { cwd: out, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 });
 if (zip.status !== 0) throw new Error('ZIP packaging failed: ' + (zip.stderr || zip.stdout || ''));
 console.log('\nSCOUT CLOSEOUT COMPLETE');
-console.log('Coordinate targets: ' + coordinateRows.length + ' | exact exporter-base matches: ' + exactCoordinateCount);
-console.log('Meshes with exact callback-owner links: ' + linkedMeshCount + '/9');
+console.log('Coordinate bases validated: ' + coordinateBaseValidation.filter(x => x.passed).length + '/9 | descriptor-base matches: ' + exactCoordinateCount);
+console.log('Submeshes with exact callback-owner links: ' + linkedMeshCount + '/8');
 console.log('Matrix conventions passing reference-point test: ' + passingSignatures.length);
 console.log('Geometry variants: ' + variants.length);
 console.log('Runtime assembly gate: ' + report.finalStatus);
