@@ -1,6 +1,6 @@
 # Retired Scout runtime placement experiment
 
-<badge>SUPERSEDED — DO NOT USE FOR MODEL EXPORT</badge>
+**SUPERSEDED — DO NOT USE FOR MODEL EXPORT.**
 
 The 1 November runtime-rebuild runner correctly traced callback records, but it also reused the older 0x04 0x01 0x0C 0x09 signature scan as if it described four-index faces. That interpretation has been disproved by the executable callback at 0x4E006D: these are opcode-4 callback records with position contributions and child DWORD entries, not validated face topology.
 
