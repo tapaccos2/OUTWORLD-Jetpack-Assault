@@ -635,6 +635,14 @@ const geometryLinks=meshes.map(mesh=>{
     transformSource:transformEvent?(transformEvent.matrix||transformEvent.parentMatrix!==0?'paired matrix-bearing transform callback':'paired descriptor callback; no matrix frame applied'):meshEvent?(meshEvent.matrix||meshEvent.parentMatrix!==0?'mesh-node callback under matrix frame':'mesh-node callback; no matrix frame applied'):'no callback match'
   };
 });
+assert('all nine geometry sections have one exact face-payload descriptor',
+  geometryLinks.length===9&&geometryLinks.every(x=>x.descriptorPayloadExecutions.length===1));
+assert('each face-payload descriptor has callback ancestry',
+  geometryLinks.every(x=>x.descriptorPayloadExecutions[0]?.ancestry?.length>1));
+assert('all eight submeshes have both reference and target points',
+  meshes.slice(1).every(m=>Array.isArray(m.referencePoint)&&Array.isArray(m.targetPoint)));
+assert('twenty-four placement candidates configured',conventions.length===24);
+if(selfTests.some(x=>!x.passed))throw new Error('Geometry association self-test failed: '+JSON.stringify(selfTests));
 function buildGlb(file,convention){
   const allPositions=[],allNormals=[],allIndices=[],gltfMeshes=[],nodes=[],materials=[],accessors=[],bufferViews=[],parts=[];
   let offset=0;
