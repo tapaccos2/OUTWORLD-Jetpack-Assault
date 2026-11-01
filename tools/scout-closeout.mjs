@@ -124,6 +124,12 @@ if (geometry.sharedPool.meshCount !== 9) throw new Error('Expected nine geometry
 // base" only when it exactly matches a base independently consumed by the
 // existing mesh exporter. Nearby scans remain candidates, not conclusions.
 const attachments = discovery.callbackLayouts?.opcode2?.attachments || [];
+const geometryAuditPath = path.join(analysisDir, 'attachments', 'transform-to-geometry-audit.json');
+const partGraphPath = path.join(analysisDir, 'part-graph', 'male-part-graph.json');
+const geometryAudit = fs.existsSync(geometryAuditPath) ? readJson(geometryAuditPath) : { geometryDescriptors: [] };
+const partGraphReport = fs.existsSync(partGraphPath) ? readJson(partGraphPath) : { graph: { entries: [] } };
+const partGraphEntries = partGraphReport.graph?.entries || [];
+const partGraphOwners = new Map(partGraphEntries.map(e => [e.detail?.offset, e.detail]));
 const coordinateRows = [];
 for (const attachment of attachments) for (const slot of attachment.slots || []) {
   if (!Number.isInteger(slot.coordinateTarget)) continue;
@@ -159,7 +165,7 @@ for (const attachment of attachments) for (const slot of attachment.slots || [])
   }
   probes.sort((a, b) => b.score - a.score);
   coordinateRows.push({
-    transformOffset: attachment.context?.transform ?? null,
+    transformOffset: attachment.context?.via ?? attachment.context?.transform ?? null,
     attachmentOffset: attachment.offset, slot: slot.slot, descriptorOffset: slot.descriptor,
     coordinateTarget: target, targetHeader: h, exactGeometryMatches: exactMatches,
     classification: exactMatches.length ? 'exact-exporter-base-match' : 'unresolved-typed-or-payload-target',
@@ -213,7 +219,7 @@ function ancestry(offset) {
 // descriptor points to it. Keep that direct owner separate from its ancestors.
 const op4OwnerTransforms = new Map();
 for (const a of attachments) for (const s of a.slots || []) {
-  const owner = a.context?.transform;
+  const owner = a.context?.via ?? a.context?.transform;
   if (Number.isInteger(s.payloadTarget) && Number.isInteger(owner)) {
     if (!op4OwnerTransforms.has(s.payloadTarget)) op4OwnerTransforms.set(s.payloadTarget, []);
     op4OwnerTransforms.get(s.payloadTarget).push(owner);
@@ -223,15 +229,32 @@ const ownership = geometry.sharedPool.meshes.map(mesh => {
   const face = mesh.faceDataOffset;
   const directDescriptor = [];
   for (const a of attachments) for (const s of a.slots || [])
-    if (s.payloadTarget === face) directDescriptor.push({ attachment: a.offset, slot: s.slot, transform: a.context?.transform ?? null });
+    if (s.payloadTarget === face) directDescriptor.push({ attachment: a.offset, slot: s.slot, transform: a.context?.via ?? a.context?.transform ?? null });
   const opcode4Matches = [];
   for (const node of op4Nodes) for (const entry of node.parsed?.entries || []) {
-    const target = entry.resolutions?.['relocated-base']?.target;
-    if (target === face) opcode4Matches.push({
+    const targets = Object.values(entry.resolutions || {}).map(x => x?.target).filter(Number.isInteger);
+    if (targets.includes(face)) opcode4Matches.push({
       opcode4: node.offset, entry: entry.index,
       directTransformOwners: [...new Set(op4OwnerTransforms.get(node.offset) || [])]
     });
   }
+  // The legacy part-list audit is a separate, independently decoded graph. Its
+  // descriptor pointer at +12 targets the exact face stream consumed by the
+  // geometry exporter. Preserve this as a geometry/part-owner link, not as a
+  // claimed opcode-5 transform link.
+  const geometryDescriptorMatches = (geometryAudit.geometryDescriptors || []).flatMap(gd => {
+    const targets = (gd.attachment?.descriptorPointerTargets || []).map(x => x.targetOffset);
+    return targets.includes(face) ? [{
+      part: gd.part, role: gd.role, ownerOffset: gd.ownerOffset,
+      recordOffset: gd.recordOffset, descriptorOffset: gd.descriptorOffset
+    }] : [];
+  });
+  const partOwners = [...new Map(geometryDescriptorMatches
+    .map(x => [x.ownerOffset, partGraphOwners.get(x.ownerOffset)])
+    .filter(([,x]) => !!x)).values()].map(x => ({
+      offset: x.offset, ownerVectorCandidate: x.ownerVectorCandidate,
+      child24: x.child24?.targetOffset ?? null, child28: x.child28?.targetOffset ?? null
+    }));
   const directTransformOwners = [...new Set([
     ...directDescriptor.map(x => x.transform).filter(Number.isInteger),
     ...opcode4Matches.flatMap(x => x.directTransformOwners)
@@ -239,9 +262,12 @@ const ownership = geometry.sharedPool.meshes.map(mesh => {
   const linkedTransforms = [...new Set(directTransformOwners.flatMap(ancestry))];
   return {
     mesh: mesh.name, faceDataOffset: face, descriptorExactMatches: directDescriptor,
+    geometryDescriptorMatches, partOwners,
     opcode4ExactChildMatches: opcode4Matches, directTransformOwners,
     candidateTransformOwners: linkedTransforms,
-    status: directTransformOwners.length ? 'exact-pointer-link-candidate' : 'no-exact-callback-owner-link'
+    status: directTransformOwners.length ? 'exact-transform-pointer-link-candidate'
+      : geometryDescriptorMatches.length ? 'exact-geometry-descriptor-link-transform-unresolved'
+      : 'no-exact-callback-owner-link'
   };
 });
 
@@ -386,9 +412,13 @@ const gates = {
     rule: 'All referenced XYZ records must fit the DPC and reproduce the exporter bounds. Nearby probes remain candidates, not proof.'
   },
   transformOwnership: {
-    status: allNineLinked ? 'ALL_EIGHT_SUBMESHES_HAVE_EXACT_POINTER_LINKS' : 'INCOMPLETE',
-    meshesWithExactCallbackOwnerLinks: linkedMeshCount, expectedMeshes: 8,
+    status: allNineLinked ? 'ALL_EIGHT_SUBMESHES_HAVE_EXACT_TRANSFORM_POINTER_LINKS' : 'INCOMPLETE',
+    meshesWithExactTransformOwnerLinks: linkedMeshCount, expectedSubmeshes: 8,
+    exactGeometryDescriptorLinks: ownership.filter(x => x.geometryDescriptorMatches.length > 0).length,
+    expectedGeometryDescriptorLinks: 9,
+    matchedPartListOwnerRecords: ownership.reduce((n, x) => n + x.partOwners.length, 0),
     rootMeshTransformExempt: true,
+    note: 'Exact legacy geometry-descriptor and part-list owner links are reported separately; they do not by themselves prove an opcode-5 runtime transform owner.',
     ownership
   },
   placement: {
@@ -438,15 +468,16 @@ const lines = [
   '', '## Three remaining gates', '',
   '| Gate | Result | Evidence |', '|---|---|---|',
   '| Coordinate records | ' + gates.coordinateRecords.status + ' | ' + coordinateBaseValidation.filter(x => x.passed).length + ' / 9 geometry bases; ' + exactCoordinateCount + ' descriptor-base links |',
-  '| Transform ownership | ' + gates.transformOwnership.status + ' | ' + linkedMeshCount + ' / 8 submeshes linked (root mesh is untransformed) |',
+  '| Transform ownership | ' + gates.transformOwnership.status + ' | ' + linkedMeshCount + ' / 8 opcode-5 transform links; ' + gates.transformOwnership.exactGeometryDescriptorLinks + ' / 9 exact geometry descriptor links |',
   '| Placement and assembly | ' + gates.placement.status + ' | ' + matrixHypotheses.length + ' matrix hypotheses tested against eight reference points |',
   '', '## Geometry candidates', '',
   '| Variant | Meshes | Vertices | Triangles |', '|---|---:|---:|---:|',
   ...Object.entries(geometry).map(([name, x]) => '| ' + name + ' | ' + x.meshCount + ' | ' + x.vertices + ' | ' + x.triangles + ' |'),
   '', '## Per-mesh callback ownership', '',
-  '| Mesh | Face offset | Exact callback link | Candidate transforms |', '|---|---:|---|---|',
+  '| Mesh | Face offset | Geometry descriptor / part owner | Opcode-5 transform link |', '|---|---:|---|---|',
   ...ownership.map(x => '| ' + x.mesh + ' | 0x' + Number(x.faceDataOffset).toString(16) + ' | ' +
-    (x.status === 'exact-pointer-link-candidate' ? 'yes' : 'no') + ' | ' + x.candidateTransformOwners.map(n => '0x' + n.toString(16)).join(', ') + ' |'),
+    (x.geometryDescriptorMatches.length ? x.geometryDescriptorMatches.map(g => 'part ' + g.part + ' ' + g.role + ' / owner 0x' + g.ownerOffset.toString(16)).join('; ') : 'no') + ' | ' +
+    (x.directTransformOwners.length ? x.directTransformOwners.map(n => '0x' + n.toString(16)).join(', ') : 'unresolved') + ' |'),
   '', '## Coordinate target classifications', '',
   '| Transform | Descriptor slot | Target | Header | Classification |', '|---:|---:|---:|---|---|',
   ...coordinateRows.map(x => '| ' + (x.transformOffset === null ? 'unknown' : '0x' + x.transformOffset.toString(16)) +
