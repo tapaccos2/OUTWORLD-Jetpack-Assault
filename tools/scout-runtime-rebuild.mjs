@@ -240,15 +240,51 @@ if(tableCount>0&&tableCount<=8192&&inRange(36,tableCount*4)){
     if(target!==null&&header(target))topLevelRecords.push(target);
   }
 }
-const seedOffsets=topLevelRecords.length?topLevelRecords.slice():[rootNode];
-if(alsoTransformRoots){
-  for(let o=0;o+0x3c<=b.length;o++){
-    if(u8(o)!==5)continue;
-    const count=u8(o+0x36);
-    if(count<1||count>32||!inRange(o+0x38,count*4))continue;
-    let ok=true;for(let i=0;i<count;i++)if(ptr(o+0x38+i*4)===null){ok=false;break;}
-    if(ok&&!seedOffsets.includes(o))seedOffsets.push(o);
+// Discover opcode-5 transform records by their executable-observed layout:
+ // opcode 5, flags 0x0B, near-orthonormal Q20.12 matrix, bounded child count,
+ // and relocated child pointers that land on plausible callback headers.
+ // Then seed only the roots of the opcode-5-to-opcode-5 forest. The previous
+ // run seeded only the one DPC pointer-table item (0x9368), which was a
+ // separate two-callback branch and never entered the Scout transform graph.
+function isTransformRecord(o){
+  if(!inRange(o,0x3c)||u8(o)!==5||u8(o+1)!==0x0b)return false;
+  const cls=u16(o+2),count=u8(o+0x36);
+  if(count>32||!inRange(o+0x38,count*4))return false;
+  if(cls!==0&&cls!==100)return false;
+  const m=Array.from({length:9},(_,i)=>s32(o+4+i*4)/4096);
+  if(m.some(v=>!Number.isFinite(v)||Math.abs(v)>1.5))return false;
+  const rowErr=Math.max(
+    Math.abs(m[0]*m[0]+m[1]*m[1]+m[2]*m[2]-1),
+    Math.abs(m[3]*m[3]+m[4]*m[4]+m[5]*m[5]-1),
+    Math.abs(m[6]*m[6]+m[7]*m[7]+m[8]*m[8]-1),
+    Math.abs(m[0]*m[3]+m[1]*m[4]+m[2]*m[5]),
+    Math.abs(m[0]*m[6]+m[1]*m[7]+m[2]*m[8]),
+    Math.abs(m[3]*m[6]+m[4]*m[7]+m[5]*m[8])
+  );
+  if(rowErr>0.05||Math.abs(det3(m))<0.8)return false;
+  for(let i=0;i<count;i++){
+    const target=ptr(o+0x38+i*4);
+    if(target===null||!header(target)||u8(target)>13)return false;
   }
+  return true;
+}
+const transformRecords=[];
+for(let o=0;o+0x3c<=b.length;o++)if(isTransformRecord(o))transformRecords.push(o);
+const transformRecordSet=new Set(transformRecords),transformHasParent=new Set(),transformEdges=[];
+for(const o of transformRecords){
+  const count=u8(o+0x36);
+  for(let i=0;i<count;i++){
+    const field=o+0x38+i*4,target=ptr(field);
+    if(target!==null&&transformRecordSet.has(target)){
+      transformHasParent.add(target);
+      transformEdges.push({parent:o,child:target,pointerField:field});
+    }
+  }
+}
+const transformRoots=transformRecords.filter(o=>!transformHasParent.has(o));
+const seedOffsets=[];
+for(const seed of [...topLevelRecords,rootNode,...transformRoots]){
+  if(Number.isInteger(seed)&&!seedOffsets.includes(seed))seedOffsets.push(seed);
 }
 let truncated=false;
 for(const seed of seedOffsets){
@@ -572,7 +608,7 @@ const report={
     'The shared dispatcher tail at 0x4dfdf9 performs scale/state normalization after callbacks; this routine is not fully emulated.',
     'The caller-supplied initial scale/context defaults to zero unless --initial-scale overrides it; the loader helper dump is included in executable-analysis for resolving it.'
   ],
-  callbackRun:{topLevelTableCount:tableCount,topLevelRecordsUsed:seedOffsets.length,parserContextWord:initialScale,initialStateVector:[0,0,0],seedRuns,processed,remaining:work.length,truncated,callbackCounts,uniqueRecordStates:visitedCounts.size,
+  callbackRun:{topLevelTableCount:tableCount,topLevelRecordsUsed:topLevelRecords.length,playableArmourRootSeed:hex(rootNode),discoveredTransformRecordCount:transformRecords.length,discoveredTransformRoots:transformRoots.map(hex),discoveredTransformEdges:transformEdges.map(e=>({parent:hex(e.parent),child:hex(e.child),pointerField:hex(e.pointerField)})),seedOffsets:seedOffsets.map(hex),parserContextWord:initialScale,initialStateVector:[0,0,0],seedRuns,processed,remaining:work.length,truncated,callbackCounts,uniqueRecordStates:visitedCounts.size,
     totalQueueEdges:edgeRows.length,leafCount:leafRecords.length,unresolvedCount:unresolved.length,
     events:events.map(e=>({...e,record:hex(e.record),source:e.source===null?null:hex(e.source),children:e.children.map(hex)})),
     leaves:leafRecords.map(x=>({...x,record:hex(x.record),parentMatrix:x.parentMatrix,position:x.position})),
@@ -598,7 +634,7 @@ fs.writeFileSync(path.join(outDir,'geometry-callback-links.csv'),linkCsv.map(r=>
 const md=[
   '# Scout runtime callback rebuild','',
   '- Input: '+input,'- DPC bytes: '+b.length,'- Root node: '+hex(rootNode),
-  '- Top-level DPC records: '+tableCount,'- Callback invocations seeded: '+seedOffsets.length,'- Work entries processed: '+processed,'- Entries remaining: '+work.length,'- Callback events: '+events.length,
+  '- Top-level DPC records: '+tableCount,'- Validated opcode-5 transform records: '+transformRecords.length,'- Opcode-5 transform roots: '+transformRoots.map(hex).join(', '),'- Callback seed records: '+seedOffsets.map(hex).join(', '),'- Work entries processed: '+processed,'- Entries remaining: '+work.length,'- Callback events: '+events.length,
   '- Distinct record/state combinations: '+visitedCounts.size,'- Queue edges: '+edgeRows.length,
   '- Leaf callback entries: '+leafRecords.length,'- Unresolved edges: '+unresolved.length,'- Unemulated helper calls: '+helperCalls.length,
   '- Geometry sections: '+meshes.length,'- Callback-linked sections: '+geometryLinks.filter(x=>x.transformSource!=='no callback match').length,
@@ -630,7 +666,9 @@ const md=[
 ];
 fs.writeFileSync(path.join(outDir,'RUNTIME-REBUILD.md'),md.join('\n')+'\n');
 console.log('SCOUT RUNTIME REBUILD RUN COMPLETE — CANDIDATES EXPORTED');
-console.log('Root: '+hex(rootNode)+' | top-level DPC records: '+tableCount+' | callbacks seeded: '+seedOffsets.length);
+console.log('Playable-armour root: '+hex(rootNode)+' | top-level DPC records: '+tableCount);
+console.log('Validated opcode-5 transforms: '+transformRecords.length+' | transform roots: '+transformRoots.map(hex).join(', '));
+console.log('Callback seeds: '+seedOffsets.map(hex).join(', '));
 console.log('Executable disassembly bridge: '+executableBridge.status+(executableBridge.reportPath?' | '+executableBridge.reportPath:''));
 console.log('Processed: '+processed+' | queued remaining: '+work.length+' | truncated: '+truncated);
 console.log('Callbacks: '+events.length+' | unique record/states: '+visitedCounts.size+' | unresolved: '+unresolved.length);
