@@ -31,9 +31,11 @@ The first uploaded run on 1 November 2026 processed only two callbacks (`0x9368`
    - opcode 3: BYTE count at +0x0B, child pointers at +0x20;
    - opcode 4: BYTE count at +0x12, inline child pointers at +0x14;
    - opcode 5: BYTE count at +0x36, child pointers at +0x38, with Q20.12 matrix and position fields;
-   - opcode 9/13: BYTE count at +6, child pointers at +0x10;
-   - opcode 10: two child pointers at +8 and +0x0C;
-   - opcode 11: WORD scale at +4, WORD count at +6, child pointers at +8.
+   - opcode 9: BYTE count at +6, child pointers at +0x10;
+   - opcode 10: class reset (handler repeats `0x4E04A2`);
+   - opcode 11: two child pointers at +8 and +0x0C;
+   - opcode 12: WORD scale at +4, WORD count at +6, child pointers at +8;
+   - opcode 13: class-word state callback (`0x4E023A`).
 4. Recovers the existing nine raw geometry sections using the already-established shared coordinate pool and face-record structure: one root mesh and eight submeshes, 390 referenced vertices and 230 triangles.
 5. Checks each submesh's owner translation against the paired transform-node translation. The vectors must match before the runner accepts that anchor.
 6. Records descriptor leaves reached through opcode 2. For each it captures the +4 coordinate target, +8 shared target, +12 opcode-4 payload target and +0x10 payload count from the opcode-0 descriptor resolver. These references are compared with the legacy submesh reference points; exact matches are reported, not guessed.
@@ -61,6 +63,8 @@ This is a **static callback reconstruction candidate generator**, not a bit-exac
 - the shared callback tail at `0x4DFDF9` performs post-handler scale/state normalization; the whole routine is not yet emulated.
 
 The initial callback scale/context is supplied in EDX by the loader. The current default is zero. The new executable bridge dump gives the exact loader/helper code needed to resolve this parameter, but the runner does not yet infer it.
+
+The dispatch entries 10–13 were cross-checked against the raw 14-DWORD table bytes: opcode 10 repeats `0x4E04A2`, opcode 11 points to `0x4E02E7`, opcode 12 to `0x4E0399`, and opcode 13 to `0x4E023A`. The first uploaded run used the wrong mapping for 10–13; the current tool corrects it.
 
 The 20 GLBs are therefore **comparative placement candidates**, not a declared finished Scout. A GLB can have owner-anchor placements without having any callback-derived geometry transform; the report now counts those separately. The acceptance test is a recognisable humanoid Scout with all expected sections in plausible positions, followed by checking the selected transform convention against another Scout variant. The raw 9-section geometry counts are controls, not proof that the placement is correct.
 
