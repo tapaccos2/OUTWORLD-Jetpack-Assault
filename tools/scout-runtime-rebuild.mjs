@@ -85,14 +85,14 @@ function safeDword(o){return inRange(o)?u32(o):null;}
 function header(o){return inRange(o)?{offset:o,opcode:u8(o),flags:u8(o+1),classWord:u16(o+2)}:null;}
 const callbackTargets=[
   0x4dfde1,0x4dfe56,0x4dfef3,0x4dff99,0x4e006d,0x4e0130,
-  0x4e0494,0x4e04a2,0x4e023a,0x4e0253,0x4e02e7,0x4e0399,
-  0x4e023a,0x4e0253
+  0x4e0494,0x4e04a2,0x4e023a,0x4e0253,0x4e04a2,0x4e02e7,
+  0x4e0399,0x4e023a
 ];
 const callbackNames=[
   'record-helper-op0','pointer-list-op1','descriptor-list-op2','flag-child-list-op3',
   'inline-child-list-op4','matrix-transform-op5','class-reset-op6','class-reset-op7',
-  'class-word-op8','pointer-list-op9','two-child-op10','scale-child-list-op11',
-  'class-word-op12','pointer-list-op13'
+  'class-word-op8','pointer-list-op9','class-reset-op10','two-child-op11',
+  'scale-child-list-op12','class-word-op13'
 ];
 
 function det3(m){return m[0]*(m[4]*m[8]-m[5]*m[7])-m[1]*(m[3]*m[8]-m[5]*m[6])+m[2]*(m[3]*m[7]-m[4]*m[6]);}
@@ -115,7 +115,10 @@ function assert(name,ok){selfTests.push({name,passed:!!ok});}
 assert('relocation base present',base>0);
 assert('callback table has fourteen entries',callbackTargets.length===14);
 assert('opcode 9 targets 0x4e0253',callbackTargets[9]===0x4e0253);
-assert('opcode 11 targets 0x4e0399',callbackTargets[11]===0x4e0399);
+assert('opcode 10 targets repeated reset handler 0x4e04a2',callbackTargets[10]===0x4e04a2);
+assert('opcode 11 targets two-child handler 0x4e02e7',callbackTargets[11]===0x4e02e7);
+assert('opcode 12 targets scale-list handler 0x4e0399',callbackTargets[12]===0x4e0399);
+assert('opcode 13 targets class-word handler 0x4e023a',callbackTargets[13]===0x4e023a);
 assert('identity matrix product',mul3(identity(),[1,2,3,4,5,6,7,8,9]).join(',')==='1,2,3,4,5,6,7,8,9');
 assert('Q20.12 unit identity transform',apply3(identity(),[12,-6,3]).join(',')==='12,-6,3');
 if(selfTests.some(x=>!x.passed))throw new Error('Runtime simulator self-test failed: '+JSON.stringify(selfTests));
@@ -390,22 +393,22 @@ for(const seed of seedOffsets){
       if(child!==null){enqueue(child,matrixId,translated,entry.scale,record,i);event.children.push(child);}
     }
     childCount=event.children.length;
-  }else if(opcode===6||opcode===7){
-    // Table entries 6 and 7 point to 0x4e0494 and 0x4e04a2.
+  }else if(opcode===6||opcode===7||opcode===10){
+    // Table entries 6, 7 and 10 point to reset handlers (10 repeats 0x4e04a2).
     // Both explicitly clear the working class state and push no children.
     event.classStateAfter=0;
     event.opaqueHandler=false;
-  }else if(opcode===8||opcode===12){
+  }else if(opcode===8||opcode===13){
     // Both table entries use 0x4e023a: preserve WORD +2 as class state.
     event.classStateAfter=classWord;
     event.opaqueHandler=false;
-  }else if(opcode===9||opcode===13){
+  }else if(opcode===9){
     const n=u8(record+0x06)??0;
     event.list={count:n,base:record+0x10,layout:'relocated DWORD pointers at +0x10'};
     event.children=pushListChildren(record,record+0x10,n,entry,opcode);
     childCount=event.children.length;
-  }else if(opcode===10){
-    // Executable table index 10 -> 0x4e02e7: emits record+8 and record+0x0c.
+  }else if(opcode===11){
+    // Executable table index 11 -> 0x4e02e7: emits record+8 and record+0x0c.
     const children=[];
     for(const rel of [8,12]){
       const child=childFromRelocatedField(record+rel,record);
@@ -413,8 +416,8 @@ for(const seed of seedOffsets){
     }
     event.list={count:2,base:record+8,layout:'two relocated pointers at +8 and +0x0c'};
     event.children=children;childCount=children.length;
-  }else if(opcode===11){
-    // Executable table index 11 -> 0x4e0399: WORD +4 selects scale level;
+  }else if(opcode===12){
+    // Executable table index 12 -> 0x4e0399: WORD +4 selects scale level;
     // WORD +6 counts relocated child pointers beginning at +8.
     const targetScale=u16(record+4)??entry.scale;
     const delta=entry.scale-targetScale,shift=Math.min(30,Math.abs(delta));
