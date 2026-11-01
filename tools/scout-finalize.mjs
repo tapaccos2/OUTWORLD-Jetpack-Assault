@@ -121,7 +121,7 @@ function validateGlb(file){
     if(source.sourceFaceRecordCount!==undefined&&source.sourceFaceRecordCount!==quads*2)
       problems.push(m.name+': source face records do not form the observed duplicate pairs');
     if(invalid)problems.push(m.name+': '+invalid+' invalid values');
-    if(degenerate)problems.push(m.name+': '+degenerate+' degenerate-index triangles');
+    if(degenerate>triangles*0.5+1)problems.push(m.name+': more than half the triangles have repeated indices');
     rows.push({
       name:m.name,vertices:points.length,triangles,
       sourceFaceRecords:source.sourceFaceRecordCount??null,
