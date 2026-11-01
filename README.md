@@ -91,3 +91,12 @@ Run [Scout nested descriptor audit](tools/scout-nested-descriptor-audit.mjs) aft
 ```bash
 node tools/scout-nested-descriptor-audit.mjs original-data/units.ff scout-dispatch/SCOUT-DISPATCH-AUDIT.json scout-nested-descriptor-audit --exe /home/tapaccos/Outwars-extracted/outwars.exe
 ```
+
+
+## Scout Opcode 0 control-flow audit
+
+Run [Scout Opcode 0 CFG audit](tools/scout-opcode0-cfg-audit.mjs) after the dispatch audit. Unlike the earlier linear-range handler inventory, this follows decoded instruction lengths and direct branch edges, stops at other verified dispatch entries, and analyzes direct callees separately. It is intended to inspect the child-descriptor handler and the routine it calls without treating the entire remaining executable as one function.
+
+```bash
+node tools/scout-opcode0-cfg-audit.mjs scout-dispatch/SCOUT-DISPATCH-AUDIT.json scout-opcode0-cfg-audit --exe /home/tapaccos/Outwars-extracted/outwars.exe
+```
