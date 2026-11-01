@@ -64,3 +64,12 @@ After running [Scout dispatch audit](tools/scout-dispatch-audit.mjs), run [Scout
 ```bash
 node tools/scout-handler-semantics.mjs scout-dispatch/SCOUT-DISPATCH-AUDIT.json scout-handler-semantics --exe /home/tapaccos/Outwars-extracted/outwars.exe
 ```
+
+
+## Scout scratch data-flow audit
+
+After the dispatch and handler audits, run [Scout scratch data-flow audit](tools/scout-scratch-dataflow.mjs). It inventories all executable references to the three scratch globals and captures the dispatcher and opcode-2 handler contexts. It confirms the six-DWORD, 0x18-byte scratch record layout without assigning speculative meanings to its fields.
+
+```bash
+node tools/scout-scratch-dataflow.mjs scout-dispatch/SCOUT-DISPATCH-AUDIT.json scout-scratch-dataflow --exe /home/tapaccos/Outwars-extracted/outwars.exe
+```
