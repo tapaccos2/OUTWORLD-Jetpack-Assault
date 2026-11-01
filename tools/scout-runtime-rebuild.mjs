@@ -550,7 +550,7 @@ const geometryLinks=meshes.map(mesh=>{
     meshVertexReference:mesh.meshVertexReference===null?null:hex(mesh.meshVertexReference),
     referencePoint:mesh.referencePoint,
     targetPoint:mesh.targetPoint,
-    descriptorCoordinateMatches:descriptorLeaves.filter(d=>d.coordinateTarget=== (mesh.meshVertexReference===null?null:hex(mesh.meshVertexReference))).map(d=>d.descriptor),
+    descriptorCoordinateMatches:mesh.meshVertexReference===null?[]:descriptorLeaves.filter(d=>d.coordinateTarget===hex(mesh.meshVertexReference)).map(d=>d.descriptor),
     descriptorPayloadMatches:descriptorLeaves.filter(d=>d.payloadTarget===hex(mesh.faceStart)).map(d=>d.descriptor),
     transformSource:transformEvent?'paired transform-node callback':meshEvent?'mesh-node callback':'no callback match'
   };
