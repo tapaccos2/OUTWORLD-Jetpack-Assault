@@ -23,7 +23,7 @@ if(argv.length<3){
 }
 const dpcPath=path.resolve(argv[0]);
 const outDir=path.resolve(argv[1]);
-const resourceRoots=argv.slice(2).map(path.resolve);
+const resourceRoots=argv.slice(2).map(root=>path.resolve(root));
 if(!fs.existsSync(dpcPath))throw new Error('DPC not found: '+dpcPath);
 for(const root of resourceRoots)if(!fs.existsSync(root))throw new Error('Resource root not found: '+root);
 fs.mkdirSync(outDir,{recursive:true});
