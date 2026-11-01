@@ -517,17 +517,37 @@ function matrixForEvent(e){
   const id=e.matrix?.matrixId??e.parentMatrix;
   return matrices.get(id)||initialMatrixInfo.matrix;
 }
+function transpose3(m){return[m[0],m[3],m[6],m[1],m[4],m[7],m[2],m[5],m[8]];}
+function inverse3(m){
+  const [a,b,c,d,e,f,g,h,i]=m;
+  const A=e*i-f*h,B=c*h-b*i,C=b*f-c*e;
+  const D=f*g-d*i,E=a*i-c*g,F=c*d-a*f;
+  const G=d*h-e*g,H=b*g-a*h,I=a*e-b*d;
+  const det=a*A+b*D+c*G;
+  if(Math.abs(det)<1e-9)return identity();
+  return[A,B,C,D,E,F,G,H,I].map(v=>v/det);
+}
 function applyTransform(point,matrix,position,convention){
-  const m=convention.transpose?[matrix[0],matrix[3],matrix[6],matrix[1],matrix[4],matrix[7],matrix[2],matrix[5],matrix[8]]:matrix;
+  const m=convention.transpose?transpose3(matrix):matrix;
   if(convention.translation==='after'){
     const p=apply3(m,point);return p.map((v,i)=>v+position[i]);
   }
   const v=point.map((x,i)=>x+position[i]);return apply3(m,v);
 }
+function referencePointTranslation(mesh,matrix,convention){
+  if(!mesh.referencePoint||!mesh.targetPoint)return[0,0,0];
+  const m=convention.transpose?transpose3(matrix):matrix;
+  if(convention.translation==='after'){
+    const mapped=apply3(m,mesh.referencePoint);
+    return mesh.targetPoint.map((v,i)=>v-mapped[i]);
+  }
+  const localTarget=apply3(inverse3(m),mesh.targetPoint);
+  return localTarget.map((v,i)=>v-mesh.referencePoint[i]);
+}
 const conventions=[];
 for(const transposeMatrix of [false,true]){
   for(const translation of ['after','before']){
-    for(const positionSource of ['accumulated','matrix-output','owner-anchor','accumulated-plus-owner','matrix-output-plus-owner']){
+    for(const positionSource of ['accumulated','matrix-output','owner-anchor','accumulated-plus-owner','matrix-output-plus-owner','reference-point-mapping']){
       conventions.push({
         name:(transposeMatrix?'transposed':'stored')+'-'+translation+'-'+positionSource,
         transpose:transposeMatrix,translation,positionSource
@@ -576,6 +596,7 @@ function buildGlb(file,convention){
     else if(convention.positionSource==='owner-anchor')pos=ownerAnchor;
     else if(convention.positionSource==='accumulated-plus-owner')pos=accumulated.map((v,i)=>v+ownerAnchor[i]);
     else if(convention.positionSource==='matrix-output-plus-owner')pos=matrixOutput.map((v,i)=>v+ownerAnchor[i]);
+    else if(convention.positionSource==='reference-point-mapping')pos=referencePointTranslation(mesh,M,convention);
     else pos=accumulated;
     // Descriptor/list events are not transforms. Count only an opcode-5 matrix
     // event or a callback inheriting a non-root matrix frame.
@@ -601,7 +622,7 @@ function buildGlb(file,convention){
     gltfMeshes.push({name:mesh.name,primitives:[{attributes:{POSITION:pa,NORMAL:na},indices:ia,material:mi,mode:4}],extras:{
       ownerOffset:hex(mesh.owner),meshNodeOffset:hex(mesh.meshNode),transformNodeOffset:mesh.transformNode===null?null:hex(mesh.transformNode),
       callbackEventId:e?.entryId??null,callbackMatrixId:e?(e.matrix?.matrixId??e.parentMatrix):null,
-      callbackPosition:pos,accumulatedPosition:accumulated,matrixOutputPosition:matrixOutput,positionSource:convention.positionSource,ownerAnchor,placementApplied,callbackTransformApplied,coordinateBase:hex(mesh.vertexBase),faceStart:hex(mesh.faceStart),
+      callbackPosition:pos,accumulatedPosition:accumulated,matrixOutputPosition:matrixOutput,positionSource:convention.positionSource,ownerAnchor,referencePoint:mesh.referencePoint,targetPoint:mesh.targetPoint,referencePointMappingApplied:convention.positionSource==='reference-point-mapping'&&Boolean(mesh.referencePoint&&mesh.targetPoint),placementApplied,callbackTransformApplied,coordinateBase:hex(mesh.vertexBase),faceStart:hex(mesh.faceStart),
       sourceVertexIndices:mesh.sourceIndices,sourceQuads:mesh.quads
     }});
     nodes.push({name:mesh.name,mesh:mi});
@@ -686,7 +707,7 @@ const md=[
   ...geometryLinks.map(x=>'| '+x.mesh+' | '+x.transformNodeCallbackEvents+' | '+x.matrixTransformEvents+' | '+(x.descriptorPayloadMatches.join(', ')||'none')+' |'),
   '',
   '## Exported runtime candidates','',
-  'The run compares 20 placement experiments. Descriptor-list callbacks are not treated as transform matrices: only opcode-5 matrix events or callbacks inheriting a non-root matrix frame count as callback transforms. Owner-anchor and additive placements remain experiments, not proven runtime transforms. Owner anchors are independently cross-checked against their paired transform-node vectors.','',
+  'The run compares 24 placement experiments, including reference-point mapping: meshNode+28 is aligned with the target point at meshNode+56/+60/+64. This is a separate hypothesis from owner-anchor placement. Descriptor-list callbacks are not treated as transform matrices: only opcode-5 matrix events or callbacks inheriting a non-root matrix frame count as callback transforms. Owner-anchor and additive placements remain experiments, not proven runtime transforms. Owner anchors are independently cross-checked against their paired transform-node vectors.','',
   ...variants.map(v=>'- '+v.output+' — '+v.callbackTransformAppliedCount+'/'+v.meshCount+' sections have matrix-bearing callback transforms; '+v.placementAppliedCount+'/'+v.meshCount+' sections have candidate placement applied'),
   '',
   '## Descriptor-to-payload links','',
@@ -701,7 +722,7 @@ const md=[
   ...unresolved.slice(0,100).map(x=>'- '+JSON.stringify({...x,record:Number.isInteger(x.record)?hex(x.record):x.record,field:Number.isInteger(x.field)?hex(x.field):x.field})),
   '',
   '## Status','',
-  'This is a static callback-work-stack reconstruction candidate, not a bit-exact execution of the executable. All nine geometry sections now have descriptor-payload links and callback-node matches, but those geometry callbacks carry matrix ID 0; the opcode-5 transform hierarchy is a separate sibling branch and has not yet been associated with the geometry. Opcode 4 uses its inline record+0x14 child list, and opcode 9 uses its separate +0x10 list. The two helper routines and shared post-handler normalization tail remain unimplemented. The 20 GLBs are placement experiments, not a completed Scout. A final Scout is only accepted after transform-to-geometry association and visual validation.'
+  'This is a static callback-work-stack reconstruction candidate, not a bit-exact execution of the executable. All nine geometry sections now have descriptor-payload links and callback-node matches, but those geometry callbacks carry matrix ID 0; the opcode-5 transform hierarchy is a separate sibling branch and has not yet been associated with the geometry. Opcode 4 uses its inline record+0x14 child list, and opcode 9 uses its separate +0x10 list. The two helper routines and shared post-handler normalization tail remain unimplemented. The 24 GLBs are placement experiments, including a reference-point-to-target-point candidate, not a completed Scout. A final Scout is only accepted after transform-to-geometry association and visual validation.'
 ];
 fs.writeFileSync(path.join(outDir,'RUNTIME-REBUILD.md'),md.join('\n')+'\n');
 console.log('SCOUT RUNTIME REBUILD RUN COMPLETE — CANDIDATES EXPORTED');
