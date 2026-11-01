@@ -8,6 +8,8 @@ on:
       - ".github/workflows/scout-resource-pointer-scan.yml"
       - "tools/scout-resource-pointer-scan.mjs"
       - "tools/scout-runtime-callback-rebuild.mjs"
+      - "tools/audit-scout-transform-attachments.mjs"
+      - "tools/scout-transform-attached-descriptor-audit.mjs"
       - "tools/extract-ff-resources.mjs"
       - "original-data/units.ff"
       - "original-data/structs/**"
@@ -41,6 +43,17 @@ jobs:
             .scout-resource-scan-extracted/units/scout_mj.dpc \
             scout-runtime-rebuild
 
+      - name: Audit transform-attached descriptors
+        run: |
+          mkdir -p scout-bridge/analysis
+          node tools/audit-scout-transform-attachments.mjs \
+            .scout-resource-scan-extracted/units/scout_mj.dpc \
+            scout-bridge/analysis/transform-attachment-audit.json
+          node tools/scout-transform-attached-descriptor-audit.mjs \
+            .scout-resource-scan-extracted/units/scout_mj.dpc \
+            scout-bridge/analysis/transform-attachment-audit.json \
+            scout-transform-attached-descriptor-audit
+
       - name: Decode Scout texture variants
         run: |
           node tools/decode-tpc-palette-textures.mjs .scout-resource-scan-extracted/units/scout_mj.tpc scout-textures/scout_mj
@@ -63,6 +76,9 @@ jobs:
           [ ! -d scout-runtime-rebuild ] || cp -a scout-runtime-rebuild scout-analysis-bundle/
           [ ! -d scout-resource-pointer-scan ] || cp -a scout-resource-pointer-scan scout-analysis-bundle/
           [ ! -d scout-textures ] || cp -a scout-textures scout-analysis-bundle/
+          [ ! -d scout-transform-attached-descriptor-audit ] || cp -a scout-transform-attached-descriptor-audit scout-analysis-bundle/
+          [ ! -f scout-transform-attached-descriptor-audit.zip ] || cp scout-transform-attached-descriptor-audit.zip scout-analysis-bundle/
+          [ ! -f scout-bridge/analysis/transform-attachment-audit.json ] || cp scout-bridge/analysis/transform-attachment-audit.json scout-analysis-bundle/
           [ ! -f scout-resource-file-list.txt ] || cp scout-resource-file-list.txt scout-analysis-bundle/
           zip -qr scout-runtime-resource-analysis.zip scout-analysis-bundle
 
@@ -76,6 +92,9 @@ jobs:
             scout-runtime-rebuild/**
             scout-resource-pointer-scan/**
             scout-textures/**
+            scout-transform-attached-descriptor-audit/**
+            scout-transform-attached-descriptor-audit.zip
+            scout-bridge/analysis/transform-attachment-audit.json
             scout-resource-file-list.txt
           if-no-files-found: warn
           retention-days: 14
