@@ -244,6 +244,8 @@ node tools/scout-closeout.mjs \
 
 It writes one `scout-closeout.zip` containing the exact DPC, executable checksum, complete callback/disassembly evidence, five geometry candidates, per-mesh coordinate, legacy geometry-descriptor, part-list owner, and opcode-5 transform-link results, plus matrix validation results, and a consolidated report.
 
+The same run now also audits the class-specific renderer path: the callback interpreter at `0x4dfce4` is invoked with class callback `0x420b00`; class `0x0006` enters object setup at `0x4e1ad8`, followed by the current-object setter at `0x4e3260`. The bundle includes the complete disassembly window, call/global xrefs, and exact owner, mesh-node, and paired-node records under `analysis/class-renderer/`. This captures the missing object-processing path without claiming that its final placement is solved.
+
 If (and only if) all nine coordinate bases validate, all eight submeshes have exact opcode-5 transform ownership, and exactly one transform convention maps all eight reference points to their recorded targets within two game units, the tool additionally emits `geometry/scout-runtime-assembled.glb`. Otherwise it leaves the five comparison candidates intact and names the failed gate. It does not promote nearby byte-pattern or matrix-rigidity heuristics to verified runtime facts.
 
 ## 7. Lower-level Scout evidence tools

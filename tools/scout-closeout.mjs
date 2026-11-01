@@ -450,7 +450,15 @@ const gates = {
   }
 };
 
-// 6. Keep the exact source bytes and checksums beside the reports.
+// 6. Trace the class-specific renderer path used by the callback interpreter.
+const classAuditTool = path.join(here, 'scout-class-renderer-audit.mjs');
+if (!fs.existsSync(classAuditTool)) throw new Error('Missing tools/scout-class-renderer-audit.mjs');
+const classAuditDir = path.join(analysisDir, 'class-renderer');
+run('class-specific renderer and object-setup audit', process.execPath,
+  [classAuditTool, dpc, exe, classAuditDir, partGraphPath]);
+const classAudit = readJson(path.join(classAuditDir, 'CLASS-RENDERER-AUDIT.json'));
+
+// 7. Keep the exact source bytes and checksums beside the reports.
 const sourceDir = path.join(out, 'source-binaries');
 fs.mkdirSync(sourceDir, { recursive: true });
 const dpcCopy = path.join(sourceDir, 'scout_mj.dpc');
@@ -466,6 +474,7 @@ const report = {
   autodiscoveryReport: path.relative(out, discoveryPath),
   geometry, coordinateBaseValidation, coordinateClassification: coordinateRows, ownership,
   matrixHypotheses, matrixValidation, assembledArtifact,
+  classRendererAudit: classAudit.summary,
   gates,
   finalStatus: assembledArtifact ? 'RUNTIME_ASSEMBLY_GATE_PASSED' : 'EVIDENCE_BUNDLE_COMPLETE_RUNTIME_ASSEMBLY_NOT_PROVEN',
   interpretation: 'This tool completes the evidence collection and exact-link tests in one run. It deliberately does not fabricate missing runtime semantics. A visually plausible GLB is not considered solved until all three gates pass.'
@@ -495,6 +504,11 @@ const lines = [
     ' | ' + x.slot + ' | 0x' + x.coordinateTarget.toString(16) + ' | ' +
     (x.targetHeader ? x.targetHeader.opcode + '/0x' + x.targetHeader.classWord.toString(16) : 'none') +
     ' | ' + x.classification + ' |'),
+  '', '## Class-specific renderer path', '',
+  '- Callback interpreter: ' + classAudit.summary.callbackInterpreter + ' with class callback ' + classAudit.summary.callbackClassFunction + '.',
+  '- Class 0x0006 enters ' + classAudit.summary.class6ObjectSetupFunction + ' and stores the current object through ' + classAudit.summary.class6CurrentObjectGlobal + '.',
+  '- Full class-dispatch, object-setup, record-helper and matrix-helper disassembly is included under analysis/class-renderer/.',
+  '- This captures the missing class-specific path; it does not yet claim that the object-setup function supplies final mesh placement.',
   '', '## Interpretation boundary', '',
   'Coordinate stride probes are not proof of a vertex layout. A descriptor-to-face match is not by itself proof of runtime matrix ownership. Matrix orthogonality cannot distinguish multiplication order or translation scale. The executable path must link callback-produced entries to the runtime matrix consumer before a final placement can be selected.',
   '', '## Files', '',
@@ -518,6 +532,7 @@ console.log('Coordinate bases validated: ' + coordinateBaseValidation.filter(x =
 console.log('Submeshes with exact callback-owner links: ' + linkedMeshCount + '/8');
 console.log('Matrix conventions passing reference-point test: ' + passingSignatures.length);
 console.log('Geometry variants: ' + variants.length);
+console.log('Class-0x0006 records captured: ' + classAudit.summary.uniqueClass6RecordCount);
 console.log('Runtime assembly gate: ' + report.finalStatus);
 if (assembledArtifact) console.log('Assembled GLB: ' + path.join(geometryDir, 'scout-runtime-assembled.glb'));
 console.log('Report: ' + path.join(out, 'SCOUT-CLOSEOUT.md'));
