@@ -1,16 +1,20 @@
 # Scout armour geometry investigation
 
-**TOPOLOGY INTERPRETATION CORRECTED — NO VALIDATED ASSEMBLED MESH YET.**
+**UPDATED CONTEXT-SENSITIVE INTERPRETATION — STATIC GEOMETRY CANDIDATE, RUNTIME ASSEMBLY STILL OPEN.**
 
-The earlier signature-based exporter is retained as a forensic diagnostic only. Its assumption that the byte sequence `04 01 0C 09` begins a four-index face record was disproved by the executable callback at `0x4E006D`. Those records are opcode-4/class-`0x090C` callback nodes: DWORDs at +4/+8/+12 contribute to position, a BYTE at +0x12 gives the child count, and relocated child entries begin at +0x14. The old 390-vertex/230-triangle totals are therefore **historical signature-scan counts, not validated render topology**.
+The earlier blanket conclusion that every `04 01 0C 09` occurrence is necessarily a callback work-list record was too broad. The executable callback at `0x4E006D` does treat an opcode-4/class-`0x090C` record as a child-list callback when that record is actually dispatched. However, the same four-byte prefix also recurs within the owner-part mesh-data stream. In that separate context, the following four 16-bit values form a plausible face-index record.
 
-## Legacy signature diagnostic (not a model exporter)
+The owner-part audit reports 22 source records / 11 unique quads for the root and 26 source records / 13 unique quads for each of eight submeshes. The indices fall within the referenced coordinate-pool ranges, and the exact two-record-per-unique-quad pattern is consistent across the nine sections. This is meaningful structural evidence for the face-stream hypothesis, but it is not by itself proof of the game's render path. The one-run finalizer now exports it as a **static candidate**, checks every GLB index against its vertex array, checks triangle/quad counts, and retains the raw, owner-translated and reference-point-mapped variants.
 
-The legacy `tools/export-dpc-armour-geometry.mjs` tool still writes a GLB and JSON report, but the apparent triangles were inferred from callback-record bytes. Do not use those GLBs as source-faithful geometry, and do not apply owner translations or type-2 +28 reference-point experiments to them as though they were decoded meshes.
+The old claim that the 390-vertex/230-triangle counts were definitively fake is withdrawn. Conversely, those counts are not promoted to a bit-exact runtime model: mesh-to-opcode-5 transform ownership, composed matrices, textures, UVs, skinning and animation remain unverified.
+
+## Context-specific owner-part face-stream candidate
+
+The lower-level `tools/export-dpc-armour-geometry.mjs` tool writes raw, owner-translated and reference-point-mapped geometry candidates. Use `tools/scout-finalize.mjs` as the supported entry point: it first runs the callback/executable analysis, then exports all three variants and validates GLB structure, index ranges, and face/triangle count consistency. The owner-translated candidate is selected because the eight owner and paired-node position vectors agree exactly. The reference-point variant remains a comparison, not a proven runtime transform.
 
 The class-102/class-105 list still identifies a root record, eight type-1 part-owner records, and paired type-2 nodes. The chain type-2 +20 → type-16 +8 → descriptor +4 resolves shared coordinate-pool metadata. The type-2 +28 target is a separate reference field. None of these observations establishes the actual render primitive topology or connects the legacy part list to the opcode-5 transform hierarchy.
 
-## Historical signature-scan counts (not topology validated)
+## Owner-part face-stream candidate counts (structural validation)
 
 | Mesh | Source face records | Unique quads | Triangles |
 |---|---:|---:|---:|
@@ -22,18 +26,17 @@ Each GLB contains nine meshes, 390 referenced position entries, 230 triangles, g
 
 ## What is and is not decoded
 
-Decoded: the model root/part-list relationship, eight submesh owner nodes, the mesh-data pointers, coordinate records, face-record indices, quad deduplication, triangulation, and a reproducible GLB export.
+Decoded: the model root/part-list relationship, eight submesh owner nodes, the mesh-data pointers, coordinate records, candidate face-record indices, duplicate-pair structure, quad deduplication, triangulation, and a reproducible static GLB candidate.
 
 Not yet decoded: the full attachment/rotation hierarchy, the exact meaning of the linked type-16 records, UV coordinates, TPC pixel records, original material assignments, skin weights, skeleton names, and motion-slot-to-bone mapping. The type-2 wrapper values at +32/+36/+40 match the owning type-1 node's +8/+12/+16 values; they are retained as candidate translation metadata. The --apply-anchor-candidates option is exploratory and must not be mistaken for the game's verified transform behavior.
 
-The current GLB is therefore a verified **raw geometry extraction**, not yet a recognisable, correctly assembled or animated Scout character. The shared coordinate-pool base is validated across all seven Scout DPC resources; type-2 +28 remains separate unresolved metadata. The GLBs export nine meshes, 390 referenced vertices and 230 triangles per variant. This validates the extracted pointer graph and shared coordinate-pool reads, but not the attachment transforms. The resulting combined surfaces are still broad overlapping/fan-like forms rather than a recognisable character; attachment rotations and hierarchy remain the primary blocker. Do not replace the in-game soldier with it until attachment transforms and a visual comparison are solved.
+The current GLB is therefore a **structurally validated static geometry candidate**, not yet a visually accepted, runtime-exact or animated Scout character. The shared coordinate-pool base is validated across all seven Scout DPC resources; type-2 +28 remains separate unresolved metadata. The GLBs export nine meshes, 390 referenced vertices and 230 triangles per variant. This validates the extracted pointer graph and shared coordinate-pool reads, but not the attachment transforms. The resulting combined surfaces are still broad overlapping/fan-like forms rather than a recognisable character; attachment rotations and hierarchy remain the primary blocker. Do not replace the in-game soldier with it until attachment transforms and a visual comparison are solved.
 
-## Usage
+## Supported one-run usage
 
-    node tools/export-dpc-armour-geometry.mjs units/scout_mj.dpc scout-mj-raw.glb
-    node tools/export-dpc-armour-geometry.mjs units/scout_mj.dpc scout-mj-anchor-test.glb --apply-anchor-candidates
+    node tools/scout-finalize.mjs original-data/units.ff scout-final --exe /path/to/outwars.exe
 
-The exporter also writes a .json report next to each GLB. The first command is the source-faithful default; the second applies candidate translations for investigation only.
+This produces `scout-final/scout-candidate.glb`, `FINAL-REPORT.md`, all geometry alternatives and `scout-final.zip`. The lower-level exporter remains available for focused experiments, but the finalizer is the supported end-to-end command.
 
 ## Corrected part-list audit (2026-10-30)
 
