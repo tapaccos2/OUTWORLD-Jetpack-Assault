@@ -412,7 +412,7 @@ for(const seed of seedOffsets){
     event.list={count:n,base:record+0x38,layout:'relocated DWORD child pointers at +0x38'};
     for(let i=0;i<n;i++){
       const child=childFromRelocatedField(record+0x38+i*4,record);
-      if(child!==null){enqueue(child,matrixId,translated,entry.scale,record,i);event.children.push(child);}
+      if(child!==null){enqueue(child,matrixId,worldPosition,entry.scale,record,i);event.children.push(child);}
     }
     childCount=event.children.length;
   }else if(opcode===6||opcode===7||opcode===10){
