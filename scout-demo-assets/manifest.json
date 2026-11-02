@@ -1,0 +1,124 @@
+{
+  "title": "Outwars Scout reconstruction demo",
+  "buildVersion": "0.2",
+  "source": {
+    "dpc": "scout_mj.dpc",
+    "dpcSha256": "05887eae665ec9eb7da64420d549e239d23c0a81e3b27eae4f77ac655df58758",
+    "runtimeJson": "runtime-rebuild.json",
+    "scale": 0.0625,
+    "translationComposition": "worldPosition = parentMatrix * localTranslation + parentPosition"
+  },
+  "generatedAt": "2026-11-02T15:16:19.723Z",
+  "validationPassed": true,
+  "textureCount": 6,
+  "models": [
+    {
+      "key": "body",
+      "label": "Scout body",
+      "file": "scout-body.glb",
+      "descriptors": 24,
+      "meshes": 28,
+      "triangles": 358,
+      "bounds": [
+        [
+          -39.27471923828125,
+          -62.816314697265625,
+          -71.66596984863281
+        ],
+        [
+          36.28013610839844,
+          33.38179016113281,
+          39.849822998046875
+        ]
+      ],
+      "omitted": 0,
+      "omissions": []
+    },
+    {
+      "key": "glider",
+      "label": "Scout glider",
+      "file": "scout-glider.glb",
+      "descriptors": 18,
+      "meshes": 18,
+      "triangles": 468,
+      "bounds": [
+        [
+          -131.5,
+          9.185256958007812,
+          -54.986572265625
+        ],
+        [
+          127.9375,
+          82.5498046875,
+          167.11573791503906
+        ]
+      ],
+      "omitted": 0,
+      "omissions": []
+    },
+    {
+      "key": "full",
+      "label": "Body + glider",
+      "file": "scout-full.glb",
+      "descriptors": 50,
+      "meshes": 54,
+      "triangles": 954,
+      "bounds": [
+        [
+          -131.5,
+          -62.816314697265625,
+          -71.66596984863281
+        ],
+        [
+          127.9375,
+          82.5498046875,
+          167.11573791503906
+        ]
+      ],
+      "omitted": 6,
+      "omissions": [
+        {
+          "descriptor": "0x7e00",
+          "coordinateTarget": "0x1508",
+          "maxIndex": 200,
+          "reason": "unresolved effect/index pool"
+        },
+        {
+          "descriptor": "0x7d08",
+          "coordinateTarget": "0x14b8",
+          "maxIndex": 449,
+          "reason": "unresolved effect/index pool"
+        },
+        {
+          "descriptor": "0x7c70",
+          "coordinateTarget": "0x1490",
+          "maxIndex": 900,
+          "reason": "unresolved effect/index pool"
+        },
+        {
+          "descriptor": "0x7adc",
+          "coordinateTarget": "0x1508",
+          "maxIndex": 200,
+          "reason": "unresolved effect/index pool"
+        },
+        {
+          "descriptor": "0x79e4",
+          "coordinateTarget": "0x14b8",
+          "maxIndex": 449,
+          "reason": "unresolved effect/index pool"
+        },
+        {
+          "descriptor": "0x794c",
+          "coordinateTarget": "0x1490",
+          "maxIndex": 900,
+          "reason": "unresolved effect/index pool"
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "Experimental static reconstruction; not yet visually accepted against an in-game reference.",
+    "Six effect descriptors with unresolved index pools are omitted from the full export.",
+    "Skinning, animation and exact game-runtime behaviour are not claimed."
+  ]
+}

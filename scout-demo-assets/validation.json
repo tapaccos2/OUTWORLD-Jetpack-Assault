@@ -1,0 +1,102 @@
+{
+  "passed": true,
+  "models": {
+    "body": {
+      "file": "scout-body.glb",
+      "geometryNodes": 28,
+      "triangles": 358,
+      "texturedGeometryNodes": 28,
+      "bounds": [
+        [
+          -39.27471923828125,
+          -62.816314697265625,
+          -71.66596984863281
+        ],
+        [
+          36.28013610839844,
+          33.38179016113281,
+          39.849822998046875
+        ]
+      ],
+      "reportedOmissions": [],
+      "fileBytes": 79632
+    },
+    "glider": {
+      "file": "scout-glider.glb",
+      "geometryNodes": 18,
+      "triangles": 468,
+      "texturedGeometryNodes": 18,
+      "bounds": [
+        [
+          -131.5,
+          9.185256958007812,
+          -54.986572265625
+        ],
+        [
+          127.9375,
+          82.5498046875,
+          167.11573791503906
+        ]
+      ],
+      "reportedOmissions": [],
+      "fileBytes": 26116
+    },
+    "full": {
+      "file": "scout-full.glb",
+      "geometryNodes": 54,
+      "triangles": 954,
+      "texturedGeometryNodes": 54,
+      "bounds": [
+        [
+          -131.5,
+          -62.816314697265625,
+          -71.66596984863281
+        ],
+        [
+          127.9375,
+          82.5498046875,
+          167.11573791503906
+        ]
+      ],
+      "reportedOmissions": [
+        {
+          "descriptor": "0x7e00",
+          "coordinateTarget": "0x1508",
+          "maxIndex": 200,
+          "reason": "unresolved effect/index pool"
+        },
+        {
+          "descriptor": "0x7d08",
+          "coordinateTarget": "0x14b8",
+          "maxIndex": 449,
+          "reason": "unresolved effect/index pool"
+        },
+        {
+          "descriptor": "0x7c70",
+          "coordinateTarget": "0x1490",
+          "maxIndex": 900,
+          "reason": "unresolved effect/index pool"
+        },
+        {
+          "descriptor": "0x7adc",
+          "coordinateTarget": "0x1508",
+          "maxIndex": 200,
+          "reason": "unresolved effect/index pool"
+        },
+        {
+          "descriptor": "0x79e4",
+          "coordinateTarget": "0x14b8",
+          "maxIndex": 449,
+          "reason": "unresolved effect/index pool"
+        },
+        {
+          "descriptor": "0x794c",
+          "coordinateTarget": "0x1490",
+          "maxIndex": 900,
+          "reason": "unresolved effect/index pool"
+        }
+      ],
+      "fileBytes": 116588
+    }
+  }
+}

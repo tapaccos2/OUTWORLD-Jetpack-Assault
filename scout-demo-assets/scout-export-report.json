@@ -1,0 +1,214 @@
+{
+  "body": {
+    "file": "scout-body.glb",
+    "descriptors": 24,
+    "descriptorOffsets": [
+      "0x5e7c",
+      "0x601c",
+      "0x65bc",
+      "0x67bc",
+      "0x6d9c",
+      "0x6f9c",
+      "0x7538",
+      "0x7630",
+      "0x774c",
+      "0x7fd4",
+      "0x806c",
+      "0x8220",
+      "0x8370",
+      "0x8480",
+      "0x8688",
+      "0x8798",
+      "0x8884",
+      "0x8970",
+      "0x8b8c",
+      "0x8c9c",
+      "0x8d88",
+      "0x8e74",
+      "0x9090",
+      "0x91a0"
+    ],
+    "geometryNodes": 28,
+    "triangles": 358,
+    "textureTriangleCounts": {
+      "2": 250,
+      "3": 108
+    },
+    "bounds": [
+      [
+        -39.27471923828125,
+        -62.816314697265625,
+        -71.66596984863281
+      ],
+      [
+        36.28013610839844,
+        33.38179016113281,
+        39.849822998046875
+      ]
+    ],
+    "omitted": []
+  },
+  "glider": {
+    "file": "scout-glider.glb",
+    "descriptors": 18,
+    "descriptorOffsets": [
+      "0x1978",
+      "0x1e20",
+      "0x1f88",
+      "0x2430",
+      "0x2598",
+      "0x2a40",
+      "0x2ba8",
+      "0x3050",
+      "0x31b8",
+      "0x3660",
+      "0x37c8",
+      "0x3c70",
+      "0x3dd8",
+      "0x4280",
+      "0x43e8",
+      "0x4890",
+      "0x49f8",
+      "0x4e88"
+    ],
+    "geometryNodes": 18,
+    "triangles": 468,
+    "textureTriangleCounts": {
+      "0": 468
+    },
+    "bounds": [
+      [
+        -131.5,
+        9.185256958007812,
+        -54.986572265625
+      ],
+      [
+        127.9375,
+        82.5498046875,
+        167.11573791503906
+      ]
+    ],
+    "omitted": []
+  },
+  "full": {
+    "file": "scout-full.glb",
+    "descriptors": 50,
+    "descriptorOffsets": [
+      "0x1978",
+      "0x1e20",
+      "0x1f88",
+      "0x2430",
+      "0x2598",
+      "0x2a40",
+      "0x2ba8",
+      "0x3050",
+      "0x31b8",
+      "0x3660",
+      "0x37c8",
+      "0x3c70",
+      "0x3dd8",
+      "0x4280",
+      "0x43e8",
+      "0x4890",
+      "0x49f8",
+      "0x4e88",
+      "0x50c4",
+      "0x5270",
+      "0x541c",
+      "0x55c8",
+      "0x5774",
+      "0x5920",
+      "0x5acc",
+      "0x5c78",
+      "0x5e7c",
+      "0x601c",
+      "0x65bc",
+      "0x67bc",
+      "0x6d9c",
+      "0x6f9c",
+      "0x7538",
+      "0x7630",
+      "0x774c",
+      "0x7fd4",
+      "0x806c",
+      "0x8220",
+      "0x8370",
+      "0x8480",
+      "0x8688",
+      "0x8798",
+      "0x8884",
+      "0x8970",
+      "0x8b8c",
+      "0x8c9c",
+      "0x8d88",
+      "0x8e74",
+      "0x9090",
+      "0x91a0"
+    ],
+    "geometryNodes": 54,
+    "triangles": 954,
+    "textureTriangleCounts": {
+      "0": 468,
+      "1": 128,
+      "2": 250,
+      "3": 108
+    },
+    "bounds": [
+      [
+        -131.5,
+        -62.816314697265625,
+        -71.66596984863281
+      ],
+      [
+        127.9375,
+        82.5498046875,
+        167.11573791503906
+      ]
+    ],
+    "omitted": [
+      {
+        "descriptor": "0x7e00",
+        "coordinateTarget": "0x1508",
+        "maxIndex": 200,
+        "reason": "unresolved effect/index pool"
+      },
+      {
+        "descriptor": "0x7d08",
+        "coordinateTarget": "0x14b8",
+        "maxIndex": 449,
+        "reason": "unresolved effect/index pool"
+      },
+      {
+        "descriptor": "0x7c70",
+        "coordinateTarget": "0x1490",
+        "maxIndex": 900,
+        "reason": "unresolved effect/index pool"
+      },
+      {
+        "descriptor": "0x7adc",
+        "coordinateTarget": "0x1508",
+        "maxIndex": 200,
+        "reason": "unresolved effect/index pool"
+      },
+      {
+        "descriptor": "0x79e4",
+        "coordinateTarget": "0x14b8",
+        "maxIndex": 449,
+        "reason": "unresolved effect/index pool"
+      },
+      {
+        "descriptor": "0x794c",
+        "coordinateTarget": "0x1490",
+        "maxIndex": 900,
+        "reason": "unresolved effect/index pool"
+      }
+    ]
+  },
+  "source": {
+    "dpc": "scout_mj.dpc",
+    "dpcSha256": "05887eae665ec9eb7da64420d549e239d23c0a81e3b27eae4f77ac655df58758",
+    "runtimeJson": "runtime-rebuild.json",
+    "scale": 0.0625,
+    "translationComposition": "worldPosition = parentMatrix * localTranslation + parentPosition"
+  }
+}
