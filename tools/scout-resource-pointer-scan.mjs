@@ -134,6 +134,27 @@ const externalPointers=[...pointerOccurrences.entries()].map(([raw,occurrences])
   sourceOffsets:occurrences.map(x=>hex(x.sourceOffset)),contexts:occurrences.filter(x=>x.context).map(x=>({sourceOffset:hex(x.sourceOffset),...x.context}))
 })).sort((a,b)=>a.targetOffset-b.targetOffset);
 
+// Cross-resource DPC pointers may address the containing FF archive rather than
+// another DPC relocation range. The DPC relocation base is 0x1c40 bytes after
+// the archive image base for this resource family.
+const archiveImageBase=base-0x1c40;
+let archiveManifest=null,archiveManifestPath=null;
+for(const root of resourceRoots){
+  const candidate=fs.statSync(root).isDirectory()?path.join(root,'_manifest.json'):root;
+  if(fs.existsSync(candidate)&&candidate.endsWith('_manifest.json')){
+    try{const parsed=JSON.parse(fs.readFileSync(candidate,'utf8'));if(Array.isArray(parsed.resources)){archiveManifest=parsed;archiveManifestPath=candidate;break;}}catch{}
+  }
+}
+const archiveResolutions=externalPointers.map(p=>{
+  const archiveOffset=p.rawValue-archiveImageBase;
+  if(!archiveManifest||archiveOffset<0)return null;
+  const resource=archiveManifest.resources.find(r=>archiveOffset>=r.offset&&archiveOffset<r.offset+r.size);
+  if(!resource)return {pointer:p.raw,archiveOffset:hex(archiveOffset),archiveImageBase:hex(archiveImageBase),resource:null};
+  return {pointer:p.raw,archiveOffset:hex(archiveOffset),archiveImageBase:hex(archiveImageBase),resource:resource.name,resourceArchiveOffset:hex(resource.offset),resourceRelativeOffset:hex(archiveOffset-resource.offset),resourceSize:resource.size};
+}).filter(Boolean);
+const archiveResolutionByPointer=new Map(archiveResolutions.map(x=>[x.pointer,x]));
+for(const p of externalPointers)p.archiveResolution=archiveResolutionByPointer.get(p.raw)||null;
+
 const targetSet=new Set(externalPointers.map(x=>x.rawValue));
 const matches=[];
 const rawHits=new Map([...targetSet].map(x=>[x,[]]));
@@ -190,18 +211,18 @@ for(const [raw,hits] of rawHits)if(hits.length)rawReferenceRows.push({pointer:he
 const unresolved=externalPointers.filter(x=>!matchedValues.has(x.raw)&&!rawHits.get(x.rawValue).length);
 const report={
   input:dpcPath,dpcBytes:dpc.length,dpcBase:hex(base),dpcVirtualEnd:hex(base+dpc.length),
-  resourceRoots,resourceFileCount:files.length,
+  resourceRoots,resourceFileCount:files.length,archiveManifestPath,archiveImageBase:hex(archiveImageBase),
   summary:{
     transformRecordCount:transformRecords.length,transformChildTargetCount:transformChildRecords.size,
     opcode0DescriptorCandidates:knownDescriptors.length,uniqueExternalPointerCount:externalPointers.length,
     matchedPointerCount:matchedValues.size,uniqueRangeMatchPointerCount:uniqueRangeMatchValues.size,
-    ambiguousRangeMatchPointerCount:ambiguousRangeMatchValues.size,rawReferencePointerCount:rawReferenceRows.length,
+    ambiguousRangeMatchPointerCount:ambiguousRangeMatchValues.size,archiveResolvedPointerCount:archiveResolutions.filter(x=>x.resource).length,rawReferencePointerCount:rawReferenceRows.length,
     unresolvedPointerCount:unresolved.length
   },
   transformRecords:transformRecords.map(o=>({offset:hex(o),classWord:u16(o+2),position:[s32(o+0x28),s32(o+0x2c),s32(o+0x30)],childCount:u8(o+0x36)})),
   transformChildTargets:[...transformChildRecords].sort((a,b)=>a-b).map(o=>({offset:hex(o),opcode:u8(o),classWord:u16(o+2)})),
   descriptorCandidates:knownDescriptors.map(x=>({offset:hex(x.offset),payload:hex(x.payload),count:x.count})),
-  externalPointers,matches,ambiguousPointers,rawReferenceRows,unresolvedPointers:unresolved
+  externalPointers,matches,ambiguousPointers,archiveResolutions,rawReferenceRows,unresolvedPointers:unresolved
 };
 fs.writeFileSync(path.join(outDir,'RESOURCE-POINTER-SCAN.json'),JSON.stringify(report,null,2)+'\n');
 const md=[
@@ -225,6 +246,11 @@ const md=[
     const status=n===1?'UNIQUE':n>1?'AMBIGUOUS':'UNRESOLVED';
     return '| '+p.raw+' | '+hex(p.targetOffset)+' | '+p.occurrenceCount+' | '+n+' | '+status+' |';
   }),
+  '',
+  '## Archive-base resolutions','',
+  '- Archive image base: '+hex(archiveImageBase),
+  '- Manifest: '+(archiveManifestPath||'not found'),
+  ...archiveResolutions.map(x=>'- '+x.pointer+' → archive '+x.archiveOffset+(x.resource?' → '+x.resource+' + '+x.resourceRelativeOffset:' (no resource range match)')),
   '',
   '## Exact resource-range candidates','',
   ...matches.map(m=>'- '+m.pointer+' → '+m.resource+' + '+m.resourceOffset+' (base '+m.resourceBase+')'),
