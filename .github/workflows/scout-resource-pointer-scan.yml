@@ -91,6 +91,15 @@ jobs:
           node tools/decode-tpc-palette-textures.mjs .scout-resource-scan-extracted/units/scout_md.tpc scout-textures/scout_md
           cp original-data/SCOUT-TPC-DECODING.md scout-textures/
 
+      - name: Export corrected Scout body and glider
+        run: |
+          python -m pip install --disable-pip-version-check numpy pillow trimesh
+          python tools/export-scout-model.py \
+            --dpc .scout-resource-scan-extracted/units/scout_mj.dpc \
+            --runtime-json scout-runtime-rebuild/runtime-rebuild.json \
+            --textures scout-textures/scout_mj \
+            --out scout-model-export
+
       - name: Resolve cross-resource pointers
         run: |
           node tools/scout-resource-pointer-scan.mjs \
@@ -107,6 +116,7 @@ jobs:
           [ ! -d scout-variant-comparison ] || cp -a scout-variant-comparison scout-analysis-bundle/
           [ ! -d scout-resource-pointer-scan ] || cp -a scout-resource-pointer-scan scout-analysis-bundle/
           [ ! -d scout-textures ] || cp -a scout-textures scout-analysis-bundle/
+          [ ! -d scout-model-export ] || cp -a scout-model-export scout-analysis-bundle/
           [ ! -d scout-transform-payload-inventory ] || cp -a scout-transform-payload-inventory scout-analysis-bundle/
           [ ! -d scout-transform-attached-descriptor-audit ] || cp -a scout-transform-attached-descriptor-audit scout-analysis-bundle/
           [ ! -f scout-transform-attached-descriptor-audit.zip ] || cp scout-transform-attached-descriptor-audit.zip scout-analysis-bundle/
@@ -127,6 +137,7 @@ jobs:
             scout-variant-comparison/**
             scout-resource-pointer-scan/**
             scout-textures/**
+            scout-model-export/**
             scout-transform-payload-inventory/**
             scout-transform-attached-descriptor-audit/**
             scout-transform-attached-descriptor-audit.zip
