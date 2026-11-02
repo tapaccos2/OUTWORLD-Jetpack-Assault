@@ -10,6 +10,8 @@ on:
       - "tools/scout-runtime-callback-rebuild.mjs"
       - "tools/audit-scout-transform-attachments.mjs"
       - "tools/scout-transform-attached-descriptor-audit.mjs"
+      - "tools/inspect-scout-transform-mesh-payloads.mjs"
+      - "tools/inspect-scout-transform-records.mjs"
       - "tools/extract-ff-resources.mjs"
       - "original-data/units.ff"
       - "original-data/structs/**"
@@ -54,6 +56,15 @@ jobs:
             scout-bridge/analysis/transform-attachment-audit.json \
             scout-transform-attached-descriptor-audit
 
+      - name: Inventory transform payloads and transform roots
+        run: |
+          mkdir -p scout-transform-payload-inventory
+          node tools/inspect-scout-transform-mesh-payloads.mjs \\
+            .scout-resource-scan-extracted/units/scout_mj.dpc \\
+            scout-transform-payload-inventory/transform-mesh-payloads.json
+          node tools/inspect-scout-transform-records.mjs \\
+            .scout-resource-scan-extracted/units/scout_mj.dpc > scout-transform-payload-inventory/transform-records.json
+
       - name: Decode Scout texture variants
         run: |
           node tools/decode-tpc-palette-textures.mjs .scout-resource-scan-extracted/units/scout_mj.tpc scout-textures/scout_mj
@@ -76,6 +87,7 @@ jobs:
           [ ! -d scout-runtime-rebuild ] || cp -a scout-runtime-rebuild scout-analysis-bundle/
           [ ! -d scout-resource-pointer-scan ] || cp -a scout-resource-pointer-scan scout-analysis-bundle/
           [ ! -d scout-textures ] || cp -a scout-textures scout-analysis-bundle/
+          [ ! -d scout-transform-payload-inventory ] || cp -a scout-transform-payload-inventory scout-analysis-bundle/
           [ ! -d scout-transform-attached-descriptor-audit ] || cp -a scout-transform-attached-descriptor-audit scout-analysis-bundle/
           [ ! -f scout-transform-attached-descriptor-audit.zip ] || cp scout-transform-attached-descriptor-audit.zip scout-analysis-bundle/
           [ ! -f scout-bridge/analysis/transform-attachment-audit.json ] || cp scout-bridge/analysis/transform-attachment-audit.json scout-analysis-bundle/
@@ -92,6 +104,7 @@ jobs:
             scout-runtime-rebuild/**
             scout-resource-pointer-scan/**
             scout-textures/**
+            scout-transform-payload-inventory/**
             scout-transform-attached-descriptor-audit/**
             scout-transform-attached-descriptor-audit.zip
             scout-bridge/analysis/transform-attachment-audit.json
