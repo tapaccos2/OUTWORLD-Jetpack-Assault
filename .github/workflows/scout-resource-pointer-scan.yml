@@ -45,6 +45,28 @@ jobs:
             .scout-resource-scan-extracted/units/scout_mj.dpc \
             scout-runtime-rebuild
 
+      - name: Compare all Scout model variants
+        run: |
+          mkdir -p scout-variant-comparison
+          for dpc in .scout-resource-scan-extracted/units/scout_*.dpc; do
+            variant=$(basename "$dpc" .dpc)
+            echo "Rebuilding $variant"
+            node tools/scout-runtime-callback-rebuild.mjs "$dpc" "scout-variant-comparison/$variant"
+          done
+          node - <<'NODE'
+          const fs=require('fs'),path=require('path');
+          const root='scout-variant-comparison';
+          const rows=[];
+          for(const variant of fs.readdirSync(root)){
+            const file=path.join(root,variant,'runtime-rebuild.json');
+            if(!fs.existsSync(file))continue;
+            const d=JSON.parse(fs.readFileSync(file,'utf8'));
+            rows.push({variant,descriptorExecutions:d.descriptorExecutions?.length??0,uniqueDescriptors:new Set((d.descriptorExecutions||[]).map(x=>x.descriptor)).size,helperRecords:d.helperSlotAssignments?.length??0,matrixFrames:d.matrixFrames?.length??0});
+          }
+          fs.writeFileSync(path.join(root,'variant-comparison.json'),JSON.stringify(rows,null,2));
+          fs.writeFileSync(path.join(root,'variant-comparison.md'),'# Scout variant comparison\n\n'+rows.map(x=>'- **'+x.variant+'**: '+x.descriptorExecutions+' executions, '+x.uniqueDescriptors+' unique descriptors, '+x.helperRecords+' primitive records, '+x.matrixFrames+' transform frames').join('\n')+'\n');
+          NODE
+
       - name: Audit transform-attached descriptors
         run: |
           mkdir -p scout-bridge/analysis
@@ -82,6 +104,7 @@ jobs:
         run: |
           mkdir -p scout-analysis-bundle
           [ ! -d scout-runtime-rebuild ] || cp -a scout-runtime-rebuild scout-analysis-bundle/
+          [ ! -d scout-variant-comparison ] || cp -a scout-variant-comparison scout-analysis-bundle/
           [ ! -d scout-resource-pointer-scan ] || cp -a scout-resource-pointer-scan scout-analysis-bundle/
           [ ! -d scout-textures ] || cp -a scout-textures scout-analysis-bundle/
           [ ! -d scout-transform-payload-inventory ] || cp -a scout-transform-payload-inventory scout-analysis-bundle/
@@ -101,6 +124,7 @@ jobs:
           path: |
             scout-runtime-resource-analysis.zip
             scout-runtime-rebuild/**
+            scout-variant-comparison/**
             scout-resource-pointer-scan/**
             scout-textures/**
             scout-transform-payload-inventory/**
