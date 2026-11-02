@@ -59,11 +59,8 @@ jobs:
       - name: Inventory transform payloads and transform roots
         run: |
           mkdir -p scout-transform-payload-inventory
-          node tools/inspect-scout-transform-mesh-payloads.mjs \\
-            .scout-resource-scan-extracted/units/scout_mj.dpc \\
-            scout-transform-payload-inventory/transform-mesh-payloads.json
-          node tools/inspect-scout-transform-records.mjs \\
-            .scout-resource-scan-extracted/units/scout_mj.dpc > scout-transform-payload-inventory/transform-records.json
+          node tools/inspect-scout-transform-mesh-payloads.mjs .scout-resource-scan-extracted/units/scout_mj.dpc scout-transform-payload-inventory/transform-mesh-payloads.json
+          node tools/inspect-scout-transform-records.mjs .scout-resource-scan-extracted/units/scout_mj.dpc > scout-transform-payload-inventory/transform-records.json
 
       - name: Decode Scout texture variants
         run: |
