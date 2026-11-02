@@ -137,3 +137,10 @@ Do not generate a Scout GLB until all of the following are demonstrated from exe
 5. A visually recognisable assembled model checked against an in-game reference.
 
 The supported next work is to decode the class-specific render consumer and its primitive payloads—not to test more guessed matrix orders or translation variants.
+
+
+## Caution on the 0x514d15 state selector
+
+The slot-related instruction at `0x514d15` reads the low 16 bits of `[esi+0x20]`, derives a 0..7 slot from its packed high bits, and tests the corresponding bit in the low 16 bits of `[esi+0x24]`. A passing test selects value `0x83`. This confirms a consumer of the packed slot metadata written by `0x4e59c8`, but it does **not** establish a mesh draw routine.
+
+The surrounding routine region (`0x514c80..0x514fc9`) also dispatches explicit NT exception/status codes, including `0xC0000005`, `0xC000001D`, `0xC0000094`, `0xC0000096`, and `0xC00000FD`. Until its entry point and caller context are established, describe `0x514d15` only as a packed-state selector inside a mixed state/exception handling path—not as the confirmed Scout renderer.
