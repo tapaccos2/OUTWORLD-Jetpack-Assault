@@ -50,21 +50,20 @@ for (let i = 0; i < 8; i++) {
 }
 function readQuads(start, sourceCount, label) {
   const sig = Buffer.from([4, 1, 12, 9]);
-  const source = [];
-  let cursor = start;
-  for (let i = 0; i < sourceCount; i++) {
-    cursor = b.indexOf(sig, cursor);
-    if (cursor < 0 || cursor + 12 > b.length) throw new Error(label + ': face records ' + i + '/' + sourceCount);
-    source.push([u16(cursor + 4), u16(cursor + 6), u16(cursor + 8), u16(cursor + 10)]);
-    cursor += 4;
+  let cursor = b.indexOf(sig, start);
+  if (cursor >= 0 && typed(cursor, 4, 0x090c)) {
+    const count = cursor + 0x13 < b.length ? b[cursor + 0x12] : null;
+    throw new Error(
+      label + ': refusing legacy quad export. Payload at 0x' + cursor.toString(16) +
+      ' is opcode-4/class-0x090c (count=' + count + '), not a verified four-index face record. ' +
+      'The prior +4/+6/+8/+10 quad interpretation is unsupported; use tools/reconstruct-scout.mjs ' +
+      'for forensic output. No GLB was written.'
+    );
   }
-  const seen = new Set(), unique = [];
-  for (const q of source) {
-    if (new Set(q).size < 3) continue;
-    const key = q.slice().sort((a, b) => a - b).join(',');
-    if (!seen.has(key)) { seen.add(key); unique.push(q); }
-  }
-  return unique;
+  throw new Error(
+    label + ': no verified face/index decoder is available. The 0x04010C09 signature scan is retired; ' +
+    'it must not be interpreted as four vertex indices. No GLB was written.'
+  );
 }
 function decodeMesh(name, owner, meshNode, transformNode, vertexOffset, faceOffset, sourceCount, anchor) {
   const quads = readQuads(faceOffset, sourceCount, name);
