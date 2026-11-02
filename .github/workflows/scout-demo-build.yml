@@ -1,0 +1,243 @@
+name: Build and publish Scout reconstruction demo
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/scout-demo-build.yml"
+      - "scout-demo.html"
+      - "tools/scout-runtime-callback-rebuild.mjs"
+      - "tools/decode-tpc-palette-textures.mjs"
+      - "tools/export-scout-model.py"
+      - "tools/extract-ff-resources.mjs"
+      - "original-data/units.ff"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: scout-demo-build-main
+  cancel-in-progress: true
+
+jobs:
+  build-demo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BUILD_VERSION: "0.${{ github.run_number }}"
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js and Python
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate and extract original unit archive
+        run: |
+          set -euo pipefail
+          node --check tools/scout-runtime-callback-rebuild.mjs
+          node --check tools/decode-tpc-palette-textures.mjs
+          node tools/extract-ff-resources.mjs original-data/units.ff --out .scout-demo-build
+          test -s .scout-demo-build/units/scout_mj.dpc
+          test -s .scout-demo-build/units/scout_mj.tpc
+          sha256sum .scout-demo-build/units/scout_mj.dpc
+
+      - name: Rebuild callback transforms and descriptor links
+        run: |
+          set -euo pipefail
+          node tools/scout-runtime-callback-rebuild.mjs \
+            .scout-demo-build/units/scout_mj.dpc \
+            .scout-demo-build/runtime
+
+      - name: Decode Scout textures and export three GLB variants
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check numpy pillow trimesh
+          node tools/decode-tpc-palette-textures.mjs \
+            .scout-demo-build/units/scout_mj.tpc \
+            .scout-demo-build/textures/scout_mj
+          python tools/export-scout-model.py \
+            --dpc .scout-demo-build/units/scout_mj.dpc \
+            --runtime-json .scout-demo-build/runtime/runtime-rebuild.json \
+            --textures .scout-demo-build/textures/scout_mj \
+            --out .scout-demo-build/export
+          test -s .scout-demo-build/export/scout-body.glb
+          test -s .scout-demo-build/export/scout-glider.glb
+          test -s .scout-demo-build/export/scout-full.glb
+
+      - name: Validate GLB contents, geometry counts and textures
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, math, os
+          import trimesh
+          root = ".scout-demo-build/export"
+          report = json.load(open(os.path.join(root, "scout-export-report.json"), encoding="utf-8"))
+          expectations = {
+              "body": ("scout-body.glb", 28, 358),
+              "glider": ("scout-glider.glb", 18, 468),
+              "full": ("scout-full.glb", 54, 954),
+          }
+          validation = {"passed": True, "models": {}}
+          for key, (filename, expected_meshes, expected_triangles) in expectations.items():
+              path = os.path.join(root, filename)
+              scene = trimesh.load(path, force="scene", process=False)
+              meshes = list(scene.geometry.values())
+              triangles = sum(len(mesh.faces) for mesh in meshes)
+              bounds = scene.bounds
+              if len(meshes) != expected_meshes:
+                  raise SystemExit(f"{key}: expected {expected_meshes} geometry nodes, got {len(meshes)}")
+              if triangles != expected_triangles:
+                  raise SystemExit(f"{key}: expected {expected_triangles} triangles, got {triangles}")
+              if bounds is None or not all(math.isfinite(float(v)) for row in bounds for v in row):
+                  raise SystemExit(f"{key}: invalid scene bounds")
+              textured = 0
+              for mesh in meshes:
+                  material = getattr(getattr(mesh, "visual", None), "material", None)
+                  if material is not None and getattr(material, "baseColorTexture", None) is not None:
+                      textured += 1
+              if textured == 0:
+                  raise SystemExit(f"{key}: no embedded base-colour textures were detected")
+              actual = report[key]
+              validation["models"][key] = {
+                  "file": filename,
+                  "geometryNodes": len(meshes),
+                  "triangles": triangles,
+                  "texturedGeometryNodes": textured,
+                  "bounds": bounds.tolist(),
+                  "reportedOmissions": actual.get("omitted", []),
+                  "fileBytes": os.path.getsize(path),
+              }
+          validation["passed"] = True
+          json.dump(validation, open(os.path.join(root, "validation.json"), "w", encoding="utf-8"), indent=2)
+          print(json.dumps(validation, indent=2))
+          PY
+
+      - name: Assemble published demo assets and manifest
+        run: |
+          set -euo pipefail
+          rm -rf scout-demo-assets
+          mkdir -p scout-demo-assets/textures
+          cp .scout-demo-build/export/scout-body.glb scout-demo-assets/
+          cp .scout-demo-build/export/scout-glider.glb scout-demo-assets/
+          cp .scout-demo-build/export/scout-full.glb scout-demo-assets/
+          cp .scout-demo-build/export/scout-export-report.json scout-demo-assets/
+          cp .scout-demo-build/export/validation.json scout-demo-assets/
+          cp .scout-demo-build/textures/scout_mj/texture-*.png scout-demo-assets/textures/
+          node - <<'NODE'
+          const fs = require('fs');
+          const report = JSON.parse(fs.readFileSync('.scout-demo-build/export/scout-export-report.json', 'utf8'));
+          const validation = JSON.parse(fs.readFileSync('.scout-demo-build/export/validation.json', 'utf8'));
+          const names = [
+            ['body', 'Scout body', 'scout-body.glb'],
+            ['glider', 'Scout glider', 'scout-glider.glb'],
+            ['full', 'Body + glider', 'scout-full.glb']
+          ];
+          const manifest = {
+            title: 'Outwars Scout reconstruction demo',
+            buildVersion: process.env.BUILD_VERSION,
+            source: report.source,
+            generatedAt: new Date().toISOString(),
+            validationPassed: validation.passed,
+            textureCount: fs.readdirSync('scout-demo-assets/textures').filter(x => x.endsWith('.png')).length,
+            models: names.map(([key, label, file]) => ({
+              key, label, file,
+              descriptors: report[key].descriptors,
+              meshes: report[key].geometryNodes,
+              triangles: report[key].triangles,
+              bounds: report[key].bounds,
+              omitted: report[key].omitted.length,
+              omissions: report[key].omitted
+            })),
+            limitations: [
+              'Experimental static reconstruction; not yet visually accepted against an in-game reference.',
+              'Six effect descriptors with unresolved index pools are omitted from the full export.',
+              'Skinning, animation and exact game-runtime behaviour are not claimed.'
+            ]
+          };
+          fs.writeFileSync('scout-demo-assets/manifest.json', JSON.stringify(manifest, null, 2) + '\n');
+          console.log(JSON.stringify(manifest, null, 2));
+          NODE
+
+      - name: Browser-test the demo and capture screenshot
+        run: |
+          set -euo pipefail
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+          python -m http.server 4173 --bind 127.0.0.1 > /tmp/scout-demo-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node - <<'NODE'
+          const { chromium } = require('playwright');
+          (async () => {
+            const browser = await chromium.launch({ headless: true, args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-webgl', '--ignore-gpu-blocklist'] });
+            try {
+              const page = await browser.newPage({ viewport: { width: 1440, height: 960 }, deviceScaleFactor: 1 });
+              const errors = [];
+              page.on('pageerror', e => errors.push(e.message));
+              page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+              const response = await page.goto('http://127.0.0.1:4173/scout-demo.html', { waitUntil: 'networkidle', timeout: 90000 });
+              if (!response || !response.ok()) throw new Error('Demo page HTTP failure: ' + (response?.status() ?? 'no response'));
+              await page.waitForFunction(() => !!window.__SCOUT_DEMO_READY__ || !!window.__SCOUT_DEMO_ERROR__, null, { timeout: 90000 });
+              const result = await page.evaluate(() => ({
+                title: document.title,
+                ready: window.__SCOUT_DEMO_READY__ || null,
+                error: window.__SCOUT_DEMO_ERROR__ || null,
+                canvas: !!document.querySelector('#view canvas'),
+                canvasSize: (() => { const c = document.querySelector('#view canvas'); return c ? [c.width, c.height] : null; })(),
+                status: document.querySelector('#state')?.innerText || ''
+              }));
+              console.log('SCOUT DEMO BROWSER CHECK:', JSON.stringify(result));
+              if (!result.ready || result.error || !result.canvas || !result.canvasSize || result.canvasSize[0] < 800 || result.canvasSize[1] < 500) {
+                throw new Error('Scout demo did not render a GLB: ' + JSON.stringify(result));
+              }
+              if (errors.some(e => /Uncaught|ReferenceError|SyntaxError|TypeError|Failed to fetch dynamically imported module|Failed to resolve module specifier/i.test(e))) {
+                throw new Error('Critical browser errors: ' + JSON.stringify(errors));
+              }
+              await page.screenshot({ path: 'scout-demo-preview.png', fullPage: true });
+            } finally {
+              await browser.close();
+            }
+          })().catch(e => { console.error(e); process.exit(1); });
+          NODE
+          cp scout-demo-preview.png scout-demo-assets/
+
+      - name: Package demo and evidence
+        run: |
+          set -euo pipefail
+          zip -qr scout-demo-bundle.zip scout-demo-assets scout-demo.html
+          find scout-demo-assets -maxdepth 2 -type f -printf '%p %s bytes\n' | sort
+
+      - name: Publish generated models and textures to GitHub Pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scout-demo-assets
+          if git diff --cached --quiet; then
+            echo "Published assets are already up to date."
+          else
+            git commit -m "Publish validated Scout reconstruction demo assets"
+            git push origin HEAD:main
+          fi
+
+      - name: Upload demo bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scout-reconstruction-demo
+          path: |
+            scout-demo-bundle.zip
+            scout-demo-preview.png
+            scout-demo-assets/manifest.json
+            scout-demo-assets/validation.json
+          if-no-files-found: warn
+          retention-days: 30
