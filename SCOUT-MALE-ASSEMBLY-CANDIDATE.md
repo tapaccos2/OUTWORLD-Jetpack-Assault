@@ -144,3 +144,10 @@ The supported next work is to decode the class-specific render consumer and its 
 The slot-related instruction at `0x514d15` reads the low 16 bits of `[esi+0x20]`, derives a 0..7 slot from its packed high bits, and tests the corresponding bit in the low 16 bits of `[esi+0x24]`. A passing test selects value `0x83`. This confirms a consumer of the packed slot metadata written by `0x4e59c8`, but it does **not** establish a mesh draw routine.
 
 The surrounding routine region (`0x514c80..0x514fc9`) also dispatches explicit NT exception/status codes, including `0xC0000005`, `0xC000001D`, `0xC0000094`, `0xC0000096`, and `0xC00000FD`. Until its entry point and caller context are established, describe `0x514d15` only as a packed-state selector inside a mixed state/exception handling path—not as the confirmed Scout renderer.
+
+
+## Matrix-output buffer is not the mesh payload
+
+The existing disassembly trace also clarifies the role of `0x4e5960`. It consumes the 32-byte traversal records at `0x12ba6d8`, processes at most 16 records per call, and appends 20-byte results to the structure rooted at `0x12d8244`. For each entry it copies record metadata and applies the selected 3×3 matrix to the three-component vector at record `+4` via `0x4c6610`. This is a bounded transform/output list. The routine does not read the Scout's coordinate pool, decode an index stream, or emit a verified triangle primitive. It therefore cannot be used as the missing face decoder.
+
+The adjacent `0x4e5a78` / `0x4e5c08` routines clear and copy 128-byte tables at `0x12d8248` and `0x12d82c8`, then synchronize state through an object rooted at `0x12d83b0` and indirect interface calls. These are state/configuration buffers, not evidence of a Scout vertex/index buffer. The current executable evidence still does not identify the final leaf draw primitive consumer.
