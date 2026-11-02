@@ -92,3 +92,48 @@ It follows opcode-5 transform children to their opcode-2 attachment descriptors,
 These pointer classifications are mechanical only. The report will establish what the entries refer to before any of them are treated as vertices, faces, or nested records.
 
 Do not use the old `faceScan.uniqueQuads` values from `scout-mj-transform-payloads-v2.json` to build geometry.
+
+
+## Critical correction — 2026-11-02 closeout
+
+**The old 390-vertex / 230-triangle GLB geometry is not verified topology.** Those values came from the legacy exporter, which scans for byte signature `04 01 0C 09` and reads the following four WORDs as vertex indices.
+
+The latest callback rebuild (`runtime-rebuild(3).json`) shows that the geometry payloads reached from the nine part-list sections begin with a typed record:
+
+- opcode: `4`
+- flags: `1`
+- class: `0x090c`
+
+For example, the root payload starts at `0x19a4`; its header is explicitly reported as opcode 4 / class `0x090c`. The paired submesh payloads use the same typed header. The callback rebuild also records these payloads being processed by helper `0x4e59c8`, which walks variable-stride records and writes packed rolling slot tags. The helper's record stepping is driven by the per-record byte at `+2`; it is not evidence that the first four WORDs are vertex indices.
+
+The executable's opcode-4 handler at `0x4e006d` treats opcode-4/class-`0x090c` structures as callback data: translation DWORDs at `+0x04/+0x08/+0x0c`, a child count byte at `+0x12`, and child DWORD entries from `+0x14`. These semantics are incompatible with the legacy assumption that `+0x04/+0x06/+0x08/+0x0a` are four indices.
+
+Therefore:
+
+- The legacy `readQuads()` exporter is retired for Scout.
+- The historical 390-vertex / 230-triangle figure is an exporter-derived count, **not validated model topology**.
+- Structural GLB accessor/index-range checks did not validate that the source values were faces.
+- Every GLB produced by that exporter remains rejected; do not use one as a base for further assembly.
+- The current verified source geometry coordinates and the actual render primitive/index payload still need to be decoded.
+
+## Latest runtime ownership result
+
+The 2026-11-02 callback rebuild validates 9/9 descriptor-to-payload links for the part-list geometry, but each geometry descriptor executes with matrix ID 0 and an empty transform path. The 16 opcode-5 transform records form a separate callback hierarchy. No direct transform-to-mesh ownership link has been established.
+
+The eight-object table is real: the initializer at `0x4e3fd0` creates eight object pointers, and update routines process those rows. The caller at `0x4358f2` places that initialization in a larger object setup sequence. However, no evidence links those eight objects to the eight Scout submeshes. The eight-to-eight count match is not a valid assignment.
+
+The type-13 dispatch target is `0x4e3453`, which performs transformed spatial-bound checks and candidate-record emission. `0x4e5153` is an instruction inside a different routine beginning at `0x4e5130`; it is not the type-13 handler.
+
+## Current acceptance gate
+
+Status: **RENDER_TOPOLOGY_AND_RUNTIME_ASSEMBLY_UNPROVEN**
+
+Do not generate a Scout GLB until all of the following are demonstrated from executable-backed evidence:
+
+1. The actual leaf render-primitive and index/face encoding.
+2. The exact coordinate base and index interpretation for each primitive.
+3. The mapping from each primitive to its owning runtime transform or object.
+4. The composed transform convention and scale/axis convention.
+5. A visually recognisable assembled model checked against an in-game reference.
+
+The supported next work is to decode the class-specific render consumer and its primitive payloads—not to test more guessed matrix orders or translation variants.
