@@ -108,6 +108,36 @@ for(const t of transforms)for(const c of t.children)
   if(c.targetHeader?.opcode===5&&parents.has(c.targetOffset))parents.get(c.targetOffset).push(t.offset);
 for(const t of transforms)t.parentOffsets=parents.get(t.offset);
 
+// Capture the eight legacy owner nodes and both opcode-2 attachments on
+// each owner. These are the geometry-side descriptors that must be compared
+// with the transform-side descriptor payloads above.
+function readGeometryRootAttachments(){
+  let rootRecord=null,rootNode=null,partList=null;
+  for(const [rootClass,partClass] of [[102,105],[152,155]]){
+    for(let o=0;o+24<=b.length;o++){
+      if(b[o]!==9||u16(o+2)!==rootClass)continue;
+      const n=ptr(o+16),l=ptr(o+20);
+      if(n!==null&&l!==null&&b[n]===1&&b[l]===9&&u16(l+2)===partClass&&u16(l+6)===9){
+        rootRecord=o;rootNode=n;partList=l;break;
+      }
+    }
+    if(rootRecord!==null)break;
+  }
+  if(rootRecord===null)return {rootRecord:null,rootNode:null,partList:null,parts:[]};
+  const parts=[];
+  for(let i=0;i<8;i++){
+    const owner=ptr(partList+16+i*4);
+    const attachments=[];
+    for(const [role,relative] of [['mesh-side',24],['paired-side',28]]){
+      const record=owner===null?null:ptr(owner+relative);
+      const parsed=record===null?null:readOpcode2(record);
+      attachments.push({role,recordOffset:record,attachment:parsed});
+    }
+    parts.push({part:i+1,ownerOffset:owner,attachments});
+  }
+  return {rootRecord,rootNode,partList,parts};
+}
+const geometryRoot=readGeometryRootAttachments();
 const attachments=transforms.flatMap(t=>t.children.filter(c=>c.attachment).map(c=>({
   transformOffset:t.offset,transformParents:t.parentOffsets,
   attachmentOffset:c.targetOffset,inlineDescriptorCount:c.attachment.inlineDescriptorCount,
@@ -126,9 +156,11 @@ const report={
     inlineDescriptorCount:descriptors.length,
     descriptorsWithCoordinateTargets:descriptors.filter(d=>d.coordinatePointer?.targetOffset!==null).length,
     descriptorsWithValidatedOpcode4Payloads:validOpcode4.length,
-    descriptorsWithUnvalidatedOpcode4Targets:descriptors.filter(d=>d.opcode4PayloadPointer?.targetOffset!==null&&!d.opcode4PayloadPointer?.validatedOpcode4Class090c).length
+    descriptorsWithUnvalidatedOpcode4Targets:descriptors.filter(d=>d.opcode4PayloadPointer?.targetOffset!==null&&!d.opcode4PayloadPointer?.validatedOpcode4Class090c).length,
+    geometryRootAttachmentCount:geometryRoot.parts.reduce((n,p)=>n+p.attachments.filter(a=>a.attachment?.valid).length,0),
+    geometryRootDescriptorCount:geometryRoot.parts.reduce((n,p)=>n+p.attachments.reduce((m,a)=>m+(a.attachment?.items?.length??0),0),0)
   },
-  attachments,transforms,
+  attachments,geometryRoot,transforms,
   interpretation:{
     descriptorPlus4:'Coordinate-pool candidate pointer; raw bytes are retained without claiming a vertex layout.',
     descriptorPlus8:'Shared target pointer; type not asserted by this report.',
