@@ -47,7 +47,7 @@ function plausibleOp5(offset) {
 }
 function descriptorForOpcode2(offset) {
   const count = u32(offset + 0x10);
-  const list = ptr(offset + 0x14);
+  const list = offset + 0x14;
   const items = [];
   if (Number.isInteger(count) && count > 0 && count <= 64 && list !== null) {
     for (let i = 0; i < count; i++) {
