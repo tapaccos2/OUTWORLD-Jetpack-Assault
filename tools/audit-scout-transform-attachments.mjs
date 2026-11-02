@@ -148,7 +148,7 @@ for (let o = 0; o + 0x3c <= b.length; o++) {
     if (h?.opcode === 2) {
       const attachment = descriptorForOpcode2(target);
       child.opcode2Attachment = attachment;
-      child.matchesGeometryParts = descriptorsByOffset.get(attachment.descriptorOffset) ?? [];
+      child.matchesGeometryParts = attachment.items.flatMap(item => descriptorsByOffset.get(item.descriptorOffset) ?? []);
     }
     children.push(child);
   }
@@ -190,6 +190,7 @@ const report = {
         transform: hex(t.offset),
         attachment: hex(c.targetOffset),
         descriptor: c.opcode2Attachment?.descriptorOffset === null ? null : hex(c.opcode2Attachment?.descriptorOffset),
+        descriptors: (c.opcode2Attachment?.items ?? []).map(item => item.descriptorOffset === null ? null : hex(item.descriptorOffset)),
         matchedGeometryParts: c.matchesGeometryParts
       }))
     )
