@@ -1,4 +1,4 @@
-name: Scout finalization candidate comparison
+name: Scout forensic reconstruction (no speculative GLB)
 
 on:
   push:
@@ -15,7 +15,7 @@ permissions:
   contents: write
 
 jobs:
-  finalize:
+  forensic-reconstruction:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -33,44 +33,37 @@ jobs:
           node --check tools/reconstruct-scout.mjs
           node --check tools/export-dpc-armour-geometry.mjs
 
-      - name: Run complete one-command finalizer and all placement candidates
+      - name: Run integrated Scout forensic reconstruction
         run: |
           node tools/scout-finalize.mjs original-data/units.ff scout-final
 
-      - name: Upload final bundle and standalone candidates
+      - name: Upload forensic evidence bundle
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: scout-final-candidates
+          name: scout-forensic-evidence
           path: |
             scout-final.zip
-            scout-final/FINAL-REPORT.md
-            scout-final/FINAL-REPORT.json
-            scout-final/scout-candidate.glb
-            scout-final/geometry/*.glb
-            scout-final/geometry/*.json
+            scout-final/reconstruction-manifest.json
+            scout-final/autodiscovery/**/*.json
+            scout-final/transform-hierarchy/**/*.json
+            scout-final/attachments/**/*.json
+            scout-final/callbacks/**/*.json
+            scout-final/part-graph/**/*.json
           if-no-files-found: warn
-          retention-days: 14
+          retention-days: 30
 
-      - name: Publish readable comparison to a dedicated branch
-        if: always()
+      - name: Publish forensic manifest to a dedicated branch
+        if: always() && hashFiles('scout-final/reconstruction-manifest.json') != ''
         shell: bash
         run: |
           set -e
-          branch="scout-final-results-${GITHUB_RUN_ID}"
+          branch="scout-forensic-results-${GITHUB_RUN_ID}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch --orphan "$branch"
-          mkdir -p diagnostics/scout-final
-          if [ -f scout-final/FINAL-REPORT.md ]; then
-            cp scout-final/FINAL-REPORT.md diagnostics/scout-final/FINAL-REPORT.md
-          fi
-          if [ -f scout-final/FINAL-REPORT.json ]; then
-            cp scout-final/FINAL-REPORT.json diagnostics/scout-final/FINAL-REPORT.json
-          fi
-          for f in scout-final/geometry/*.json; do
-            [ -f "$f" ] && cp "$f" diagnostics/scout-final/
-          done
-          git add diagnostics/scout-final
-          git commit -m "Publish Scout final candidate comparison"
+          mkdir -p diagnostics/scout
+          cp scout-final/reconstruction-manifest.json diagnostics/scout/reconstruction-manifest.json
+          git add diagnostics/scout/reconstruction-manifest.json
+          git commit -m "Publish Scout forensic reconstruction manifest"
           git push origin "HEAD:refs/heads/$branch"
