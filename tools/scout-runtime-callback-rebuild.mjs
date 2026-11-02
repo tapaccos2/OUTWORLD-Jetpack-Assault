@@ -388,21 +388,26 @@ for(const seed of seedOffsets){
     event.positionAfter=nextState;childCount=event.children.length;
   }else if(opcode===5){
     const local=transformMatrix(record);
-    const translated=[(entry.x+s32(record+0x28))|0,(entry.y+s32(record+0x2c))|0,(entry.z+s32(record+0x30))|0];
-    // Exact 0x4c6610 action on the state vector: local Q20.12 3x3 * translated vector.
-    const transformed=apply3(local,translated);
+    const localTranslation=[s32(record+0x28),s32(record+0x2c),s32(record+0x30)];
     const parent=matrices.get(entry.parentMatrix)||initialMatrixInfo.matrix;
+    // 0x4e32a2 passes the PARENT matrix and this CHILD local translation to
+    // 0x4c6610, then adds the parent translation. Therefore:
+    // worldPosition = parentMatrix * localTranslation + parentPosition.
+    const rotatedLocalTranslation=apply3(parent,localTranslation);
+    const worldPosition=[
+      (entry.x+rotatedLocalTranslation[0])|0,
+      (entry.y+rotatedLocalTranslation[1])|0,
+      (entry.z+rotatedLocalTranslation[2])|0
+    ];
     const world=mul3(parent,local);
     const matrixId=nextMatrixId++;
     matrices.set(matrixId,world);
-    matrixPositions.set(matrixId,transformed);
+    matrixPositions.set(matrixId,worldPosition);
     event.matrix={localQ20_12:local,parentMatrixId:entry.parentMatrix,worldMatrixCandidate:world,determinant:det3(world),matrixId};
-    // The executable stores the translated vector at [esp+0x68..0x70] and
-    // passes that vector to each child work entry. 4C6610 also computes a
-    // local-matrix product into a separate temporary [esp+0x78..0x80]; retain
-    // that product as evidence, but do not substitute it for the child state.
-    event.positionAfter=translated;
-    event.matrix.transformedTranslationCandidate=transformed;
+    event.positionAfter=worldPosition;
+    event.matrix.localTranslation=localTranslation;
+    event.matrix.parentRotatedLocalTranslation=rotatedLocalTranslation;
+    event.matrix.worldPosition=worldPosition;
     const n=u8(record+0x36)??0;
     event.list={count:n,base:record+0x38,layout:'relocated DWORD child pointers at +0x38'};
     for(let i=0;i<n;i++){
