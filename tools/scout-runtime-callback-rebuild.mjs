@@ -100,13 +100,18 @@ function det3(m){return m[0]*(m[4]*m[8]-m[5]*m[7])-m[1]*(m[3]*m[8]-m[5]*m[6])+m[
 function mul3(a,c){
   const out=new Array(9).fill(0);
   for(let r=0;r<3;r++)for(let col=0;col<3;col++)for(let k=0;k<3;k++)out[r*3+col]+=a[r*3+k]*c[k*3+col];
+  // The executable performs signed 32-bit IMUL accumulation and SAR 12.
+  // Keep the result on the same Q20.12 grid (arithmetic shift for negatives).
   return out.map(v=>Math.floor(v*4096)/4096);
 }
+function transpose3(m){return[m[0],m[3],m[6],m[1],m[4],m[7],m[2],m[5],m[8]];}
 function apply3(m,v){
+  // 0x4C6610 multiplies a Q20.12 matrix by an integer vector and SARs 12.
+  // Its result is an integer callback position, not a fractional Q12 value.
   return[
-    Math.floor((m[0]*v[0]+m[1]*v[1]+m[2]*v[2])*4096)/4096,
-    Math.floor((m[3]*v[0]+m[4]*v[1]+m[5]*v[2])*4096)/4096,
-    Math.floor((m[6]*v[0]+m[7]*v[1]+m[8]*v[2])*4096)/4096
+    Math.floor(m[0]*v[0]+m[1]*v[1]+m[2]*v[2]),
+    Math.floor(m[3]*v[0]+m[4]*v[1]+m[5]*v[2]),
+    Math.floor(m[6]*v[0]+m[7]*v[1]+m[8]*v[2])
   ];
 }
 function transformMatrix(o){return Array.from({length:9},(_,i)=>s32(o+4+i*4)/4096);}
@@ -390,23 +395,28 @@ for(const seed of seedOffsets){
     const local=transformMatrix(record);
     const localTranslation=[s32(record+0x28),s32(record+0x2c),s32(record+0x30)];
     const parent=matrices.get(entry.parentMatrix)||initialMatrixInfo.matrix;
-    // 0x4e32a2 passes the PARENT matrix and this CHILD local translation to
-    // 0x4c6610, then adds the parent translation. Therefore:
-    // worldPosition = parentMatrix * localTranslation + parentPosition.
-    const rotatedLocalTranslation=apply3(parent,localTranslation);
-    const worldPosition=[
-      (entry.x+rotatedLocalTranslation[0])|0,
-      (entry.y+rotatedLocalTranslation[1])|0,
-      (entry.z+rotatedLocalTranslation[2])|0
+    // Exact opcode-5 semantics from 0x4e0130:
+    // 1) 0x4c6610 multiplies the RAW local matrix by (inherited position + local translation).
+    // 2) 0x4c57dc transposes the local 3x3 matrix.
+    // 3) 0x4c5aa0 composes parentWorld * transpose(local).
+    // These are distinct from the later runtime consumer at 0x4e32a2.
+    const localPositionInput=[
+      entry.x+localTranslation[0],
+      entry.y+localTranslation[1],
+      entry.z+localTranslation[2]
     ];
-    const world=mul3(parent,local);
+    const worldPosition=apply3(local,localPositionInput);
+    const transposedLocal=transpose3(local);
+    const world=mul3(parent,transposedLocal);
     const matrixId=nextMatrixId++;
     matrices.set(matrixId,world);
     matrixPositions.set(matrixId,worldPosition);
     event.matrix={localQ20_12:local,parentMatrixId:entry.parentMatrix,worldMatrixCandidate:world,determinant:det3(world),matrixId};
     event.positionAfter=worldPosition;
     event.matrix.localTranslation=localTranslation;
-    event.matrix.parentRotatedLocalTranslation=rotatedLocalTranslation;
+    event.matrix.localPositionInput=localPositionInput;
+    event.matrix.localMatrixAppliedPosition=worldPosition;
+    event.matrix.matrixComposition='parent * transpose(local) (0x4c57dc -> 0x4c5aa0)';
     event.matrix.worldPosition=worldPosition;
     const n=u8(record+0x36)??0;
     event.list={count:n,base:record+0x38,layout:'relocated DWORD child pointers at +0x38'};
