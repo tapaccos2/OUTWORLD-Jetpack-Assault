@@ -48,31 +48,47 @@ function plausibleOp5(offset) {
 function descriptorForOpcode2(offset) {
   const count = u32(offset + 0x10);
   const list = ptr(offset + 0x14);
-  const listHeader = header(list);
-  const wrapperDescriptor = list === null ? null : ptr(list + 8);
-  const descriptor = wrapperDescriptor;
-  const dwords = [];
-  const pointerTargets = [];
-  if (descriptor !== null && descriptor + 32 <= b.length) {
-    for (let i = 0; i < 8; i++) {
-      const field = descriptor + i * 4;
-      const value = u32(field);
-      dwords.push({ relativeOffset: i * 4, hex: hex(value), s32: s32(field) });
-      const target = ptr(field);
-      if (target !== null) pointerTargets.push({ relativeOffset: i * 4, targetOffset: target, targetHeader: header(target) });
+  const items = [];
+  if (Number.isInteger(count) && count > 0 && count <= 64 && list !== null) {
+    for (let i = 0; i < count; i++) {
+      const slotField = list + i * 4;
+      const wrapper = ptr(slotField);
+      const descriptor = wrapper === null ? null : ptr(wrapper + 8);
+      const dwords = [];
+      const pointerTargets = [];
+      if (descriptor !== null && descriptor + 32 <= b.length) {
+        for (let j = 0; j < 8; j++) {
+          const field = descriptor + j * 4;
+          const value = u32(field);
+          dwords.push({ relativeOffset: j * 4, hex: hex(value), s32: s32(field) });
+          const target = ptr(field);
+          if (target !== null) pointerTargets.push({ relativeOffset: j * 4, targetOffset: target, targetHeader: header(target) });
+        }
+      }
+      items.push({
+        slotIndex: i,
+        slotFieldOffset: slotField,
+        wrapperOffset: wrapper,
+        wrapperHeader: header(wrapper),
+        descriptorOffset: descriptor,
+        descriptorHeader: header(descriptor),
+        descriptorDwords: dwords,
+        descriptorPointerTargets: pointerTargets
+      });
     }
   }
+  const first = items[0] ?? null;
   return {
     offset,
     header: header(offset),
     countAtPlus10: count,
     listPointerAtPlus14: list,
-    listHeader,
-    descriptorOffset: descriptor,
-    descriptorDwords: dwords,
-    descriptorPointerTargets: pointerTargets,
+    items,
+    descriptorOffset: first?.descriptorOffset ?? null,
+    descriptorDwords: first?.descriptorDwords ?? [],
+    descriptorPointerTargets: first?.descriptorPointerTargets ?? [],
     validShape: Number.isInteger(count) && count > 0 && count <= 64 &&
-      list !== null && listHeader?.opcode === 16 && descriptor !== null
+      list !== null && items.length === count && items.every(x => x.descriptorOffset !== null)
   };
 }
 
