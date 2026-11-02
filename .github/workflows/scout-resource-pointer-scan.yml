@@ -89,6 +89,8 @@ jobs:
           [ ! -f scout-transform-attached-descriptor-audit.zip ] || cp scout-transform-attached-descriptor-audit.zip scout-analysis-bundle/
           [ ! -f scout-bridge/analysis/transform-attachment-audit.json ] || cp scout-bridge/analysis/transform-attachment-audit.json scout-analysis-bundle/
           [ ! -f scout-resource-file-list.txt ] || cp scout-resource-file-list.txt scout-analysis-bundle/
+          cp original-data/units.ff scout-analysis-bundle/units.ff
+          cp -a .scout-resource-scan-extracted/units scout-analysis-bundle/extracted-units
           zip -qr scout-runtime-resource-analysis.zip scout-analysis-bundle
 
       - name: Upload reconstruction results
