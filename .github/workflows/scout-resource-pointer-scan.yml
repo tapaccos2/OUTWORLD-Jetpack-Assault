@@ -38,6 +38,8 @@ jobs:
           node tools/extract-ff-resources.mjs original-data/units.ff --out .scout-resource-scan-extracted
           test -f .scout-resource-scan-extracted/units/scout_mj.dpc
           find .scout-resource-scan-extracted/units -type f | sort > scout-resource-file-list.txt
+          mkdir -p scout-dpc-inputs
+          cp .scout-resource-scan-extracted/units/scout_*.dpc scout-dpc-inputs/
 
       - name: Rebuild runtime callback and transform candidates
         run: |
@@ -113,6 +115,7 @@ jobs:
         run: |
           mkdir -p scout-analysis-bundle
           [ ! -d scout-runtime-rebuild ] || cp -a scout-runtime-rebuild scout-analysis-bundle/
+          [ ! -d scout-dpc-inputs ] || cp -a scout-dpc-inputs scout-analysis-bundle/
           [ ! -d scout-variant-comparison ] || cp -a scout-variant-comparison scout-analysis-bundle/
           [ ! -d scout-resource-pointer-scan ] || cp -a scout-resource-pointer-scan scout-analysis-bundle/
           [ ! -d scout-textures ] || cp -a scout-textures scout-analysis-bundle/
@@ -134,6 +137,7 @@ jobs:
           path: |
             scout-runtime-resource-analysis.zip
             scout-runtime-rebuild/**
+            scout-dpc-inputs/**
             scout-variant-comparison/**
             scout-resource-pointer-scan/**
             scout-textures/**
