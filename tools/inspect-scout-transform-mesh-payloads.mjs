@@ -49,8 +49,8 @@ function opcode4Summary(o){
     rawSample:rawSample(o,Math.min(0x14+Math.min(available,16)*4,96))
   };
 }
-function readDescriptor(recordOffset,slotIndex){
-  const slotField=recordOffset+0x14+slotIndex*4;
+function readDescriptor(listOffset,slotIndex){
+  const slotField=listOffset+slotIndex*4;
   const wrapper=ptr(slotField),descriptor=wrapper===null?null:ptr(wrapper+8);
   const out={slotIndex,slotFieldOffset:slotField,wrapperOffset:wrapper,wrapperHeader:head(wrapper),descriptorOffset:descriptor};
   if(descriptor===null||descriptor+16>b.length)return {...out,valid:false,reason:'unreadable descriptor'};
@@ -73,11 +73,11 @@ function readDescriptor(recordOffset,slotIndex){
   };
 }
 function readOpcode2(o){
-  if(o===null||b[o]!==2||o+0x14>b.length)return null;
-  const count=u32(o+0x10);
-  if(count===null||count>64||o+0x14+count*4>b.length)
-    return {recordOffset:o,header:head(o),count,valid:false,reason:'descriptor slot array out of bounds'};
-  return {recordOffset:o,header:head(o),inlineDescriptorCount:count,items:Array.from({length:count},(_,i)=>readDescriptor(o,i))};
+  if(o===null||b[o]!==2||o+0x18>b.length)return null;
+  const count=u32(o+0x10),list=ptr(o+0x14);
+  if(count===null||count>64||list===null||list+count*4>b.length)
+    return {recordOffset:o,header:head(o),count,listOffset:list,valid:false,reason:'descriptor pointer array out of bounds'};
+  return {recordOffset:o,header:head(o),inlineDescriptorCount:count,listOffset:list,valid:true,items:Array.from({length:count},(_,i)=>readDescriptor(list,i))};
 }
 function plausibleTransform(o){
   if(b[o]!==5||o+0x3c>b.length)return false;
