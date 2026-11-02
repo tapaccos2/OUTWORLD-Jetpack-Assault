@@ -104,7 +104,6 @@ function mul3(a,c){
   // Keep the result on the same Q20.12 grid (arithmetic shift for negatives).
   return out.map(v=>Math.floor(v*4096)/4096);
 }
-function transpose3(m){return[m[0],m[3],m[6],m[1],m[4],m[7],m[2],m[5],m[8]];}
 function apply3(m,v){
   // 0x4C6610 multiplies a Q20.12 matrix by an integer vector and SARs 12.
   // Its result is an integer callback position, not a fractional Q12 value.
