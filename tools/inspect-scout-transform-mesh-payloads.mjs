@@ -74,7 +74,7 @@ function readDescriptor(listOffset,slotIndex){
 }
 function readOpcode2(o){
   if(o===null||b[o]!==2||o+0x18>b.length)return null;
-  const count=u32(o+0x10),list=ptr(o+0x14);
+  const count=u32(o+0x10),list=o+0x14;
   if(count===null||count>64||list===null||list+count*4>b.length)
     return {recordOffset:o,header:head(o),count,listOffset:list,valid:false,reason:'descriptor pointer array out of bounds'};
   return {recordOffset:o,header:head(o),inlineDescriptorCount:count,listOffset:list,valid:true,items:Array.from({length:count},(_,i)=>readDescriptor(list,i))};
