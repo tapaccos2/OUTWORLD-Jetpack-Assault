@@ -147,3 +147,8 @@ node tools/scout-transform-attached-descriptor-audit.mjs \
   scout-bridge/analysis/transform-attachment-audit.json \
   scout-transform-attached-descriptor-audit
 ```
+
+
+## Latest Scout renderer integration findings
+
+The latest uploaded Scout next-stage audit confirms that the CPU software textured-polygon renderer is called from the main scene traversal when renderer mode flag `0x1355BB4` is zero; the nonzero route selects the hardware renderer. The exact menu option to mode-flag dataflow and the conversion from Scout DPC geometry into the runtime A0/B0 polygon-object layout are still being traced. See [Scout investigation 29](original-data/SCOUT-INVESTIGATION-29.md) for exact addresses, the object data layout and the male/female DPC slot comparison.
