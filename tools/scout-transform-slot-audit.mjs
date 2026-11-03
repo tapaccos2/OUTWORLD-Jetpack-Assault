@@ -54,7 +54,8 @@ fs.rmSync(outDir, { recursive: true, force: true });
 fs.rmSync(zipPath, { force: true });
 fs.mkdirSync(outDir, { recursive: true });
 const analysisDir = path.join(outDir, 'analysis');
-const extractDir = path.join(outDir, 'extracted');
+const workDir = path.join(outDir, 'work');
+const extractDir = path.join(workDir, 'extracted');
 fs.mkdirSync(analysisDir, { recursive: true });
 
 function runChecked(label, command, args, logFile) {
@@ -80,14 +81,9 @@ for (const candidate of ['i686-w64-mingw32-objdump', 'x86_64-w64-mingw32-objdump
 }
 if (!objdump) throw new Error('No PE-capable objdump found. Install binutils-mingw-w64-i686.');
 
-const existingDisassembly = path.join(logRoot, 'renderer-backend-probe', '01-full-disassembly.txt');
-const fullDisassembly = path.join(analysisDir, '01-full-disassembly.txt');
-if (fs.existsSync(existingDisassembly)) {
-  fs.copyFileSync(existingDisassembly, fullDisassembly);
-} else {
-  const d = spawnSync(objdump, ['-d', '-Mintel', exe], { cwd: repoRoot, encoding: 'utf8', maxBuffer: 512 * 1024 * 1024 });
-  if (d.error || d.status !== 0) throw new Error('Full disassembly failed: ' + (d.error?.message || d.stderr || d.status));
-  fs.writeFileSync(fullDisassembly, d.stdout);
+const fullDisassembly = path.join(logRoot, 'renderer-backend-probe', '01-full-disassembly.txt');
+if (!fs.existsSync(fullDisassembly)) {
+  throw new Error('Missing scout-logs/renderer-backend-probe/01-full-disassembly.txt. Run the renderer backend probe first.');
 }
 
 const b = fs.readFileSync(dpc);
@@ -252,6 +248,9 @@ const md = [
   'The ZIP includes exact executable disassembly windows, call xrefs, all candidate slot IDs, positions, matrices and child references. No GLB is exported or modified.'
 ];
 fs.writeFileSync(path.join(outDir, 'SCOUT-TRANSFORM-SLOT-AUDIT.md'), md.join('\n') + '\n');
+
+// Remove extracted proprietary game resources before packaging; only derived reports remain.
+fs.rmSync(workDir, { recursive: true, force: true });
 
 const zipped = spawnSync('zip', ['-qr', zipPath, path.basename(outDir)], { cwd: logRoot, encoding: 'utf8', maxBuffer: 8 * 1024 * 1024 });
 if (zipped.error || zipped.status !== 0) throw new Error('ZIP packaging failed: ' + (zipped.error?.message || zipped.stderr || zipped.status));
