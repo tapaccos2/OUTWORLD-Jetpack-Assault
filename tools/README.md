@@ -303,3 +303,21 @@ The probe is read-only. It records the executable SHA-256, PE sections and impor
 - `scout-logs/renderer-backend-probe.zip` — upload this archive for analysis.
 
 The path is resolved from the script's own location, so it is the same regardless of the current working directory. Each run replaces only this probe's previous output; no logs are written to the home directory or `/tmp`.
+
+
+## Scout transform slot audit
+
+Run after the renderer backend probe, from the repository root:
+
+```sh
+node tools/scout-transform-slot-audit.mjs --exe /path/to/outwars.exe
+```
+
+The tool accepts only the verified executable SHA-256 `722d06042ec0d432fa76f2bc29b693eac613f82546d0278f7332fcf0fc4352e2` and Scout DPC SHA-256 `05887eae665ec9eb7da64420d549e239d23c0a81e3b27eae4f77ac655df58758`. It extracts `scout_mj.dpc` from `original-data/units.ff`, audits WORD `[opcode5_record+0x34]` slot IDs, and captures the executable's class-100 registration, table lookup and record-consumer paths.
+
+All output is fixed under:
+
+- `scout-logs/scout-transform-slot-audit/`
+- `scout-logs/scout-transform-slot-audit.zip`
+
+Upload that ZIP for analysis. The tool does not export, modify or promote a GLB.
