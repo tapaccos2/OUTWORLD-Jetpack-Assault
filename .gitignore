@@ -1,0 +1,2 @@
+# Generated diagnostic logs; keep them local and upload the requested ZIP only.
+/scout-logs/
