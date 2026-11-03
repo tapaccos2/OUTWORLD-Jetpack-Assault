@@ -285,3 +285,21 @@ node tools/scout-dispatch-audit.mjs \
 ```
 
 This reads the executable's PE32 section table, locates the opcode switch's indexed DWORD jump table in the actual file bytes, decodes each case target, and matches exact handler addresses against callback targets recorded in Scout DPC opcode-2 entries. It also writes short disassembly windows for every case and lists all references to the callback scratch-table globals. The output ZIP includes the dispatch map and exact callback joins. Address matches establish dispatch routing only; they do not alone prove rendering semantics or final placement.
+
+
+## Scout renderer backend probe
+
+Run from the repository root (or pass the executable's full path):
+
+```sh
+bash tools/scout-renderer-backend-probe.sh /path/to/outwars.exe
+```
+
+The probe is read-only. It records the executable SHA-256, PE sections and imports, graphics-related strings, references to imported graphics APIs, the full disassembly, and focused windows around the previously identified Direct3D transform/render routines.
+
+**All generated output uses one fixed repository-relative location:**
+
+- `scout-logs/renderer-backend-probe/` — individual reports.
+- `scout-logs/renderer-backend-probe.zip` — upload this archive for analysis.
+
+The path is resolved from the script's own location, so it is the same regardless of the current working directory. Each run replaces only this probe's previous output; no logs are written to the home directory or `/tmp`.
