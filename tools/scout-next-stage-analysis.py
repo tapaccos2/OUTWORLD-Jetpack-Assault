@@ -72,7 +72,7 @@ def main():
         if m: calls[int(m.group(1),16)].append({"at":hex(addr),"asm":asm})
         for g in watch:
             if g in asm.lower(): globals_[g].append({"at":hex(addr),"asm":asm})
-    targets=(0x510790,0x510a10,0x510b90,0x4fb8b4,0x4fbde4,0x4f9fc4,0x4fa0a0)
+    targets=(0x510790,0x510a10,0x510b90,0x4fb8b4,0x4fbde4,0x4f9fc4)
     callmap={hex(t):calls.get(t,[]) for t in targets}
     windows=[
         ("mode-option",0x4b94d1,0x4b9811),("device-mode-setup",0x4ee5ec,0x4ee965),
