@@ -72,12 +72,12 @@ def main():
         if m: calls[int(m.group(1),16)].append({"at":hex(addr),"asm":asm})
         for g in watch:
             if g in asm.lower(): globals_[g].append({"at":hex(addr),"asm":asm})
-    targets=(0x510790,0x510a10,0x510b90,0x4fb8b4,0x4fbf38,0x4f9fc4,0x4fa0a0)
+    targets=(0x510790,0x510a10,0x510b90,0x4fb8b4,0x4fbde4,0x4f9fc4,0x4fa0a0)
     callmap={hex(t):calls.get(t,[]) for t in targets}
     windows=[
         ("mode-option",0x4b94d1,0x4b9811),("device-mode-setup",0x4ee5ec,0x4ee965),
         ("polygon-object-entry",0x4f9fc4,0x4fa150),("edge-builder",0x4fb8b4,0x4fbde4),
-        ("span-and-fill-dispatch",0x4fbf38,0x4fc1f0),("scanline-edge-converter",0x510790,0x510a10),
+        ("span-and-fill-dispatch",0x4fbde4,0x4fc1f0),("scanline-edge-converter",0x510790,0x510a10),
         ("textured-pixel-fill",0x510a10,0x510c80),("d3d-transform",0x4dba5f,0x4dbb60),
         ("callback-tag-writer",0x4e59c8,0x4e5a80),("unproven-packed-selector",0x514c80,0x514fc9)]
     wd=out/"renderer/disassembly-windows"; wd.mkdir(parents=True,exist_ok=True)
@@ -108,7 +108,7 @@ def main():
         "polygonObjectEntry":"0x4f9fc4","objectTypeByte":"[object+7] == 0xa0",
         "primitiveRecordArray":"0x13a1fc0","primitiveRecordStride":64,"primitiveCount":"byte [object+6]",
         "edgeBuilder":"0x4fb8b4","scanlineEdgeConverter":"0x510790",
-        "visibleSpanAndFillDispatch":"0x4fbf38","pixelWriters":["0x510a10","0x510b90"],
+        "visibleSpanAndFillDispatch":"0x4fbde4","pixelWriters":["0x510a10","0x510b90"],
         "pixelEvidence":"MMX pixel writer consumes indexed texture bytes, checks 0xff transparency, looks up 16-bit palette words and writes to a software surface based at 0x1329b14.",
         "calls":callmap,"globals":dict(globals_),
         "conclusion":"A CPU software textured-polygon/scanline pipeline is present. It is not yet proven that all scenes or the user's Direct3D-disabled Scout path use it."
@@ -132,7 +132,7 @@ def main():
       "- 0x4FA0A0 iterates a primitive count at byte +6 across 64-byte records beginning at 0x13A1FC0.",
       "- 0x4FB8B4 prepares fixed-point polygon edge data.",
       "- 0x510790 converts polygon edges into scanline coverage.",
-      "- 0x4FBF38 collects visible spans and dispatches to 0x510A10 or 0x510B90.",
+      "- 0x4FBDE4 collects visible spans and dispatches to 0x510A10 or 0x510B90.",
       "- 0x510A10 uses MMX, indexed texture bytes, 16-bit palette lookup and a 0xFF transparency check before writing to the software surface.",
       "",
       "This establishes a real CPU textured-polygon raster pipeline, not merely DirectDraw initialisation. It does not yet prove the software path is selected for the user's unchecked Direct3D mode, or that Scout DPC mesh data feeds it.",
