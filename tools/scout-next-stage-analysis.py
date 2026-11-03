@@ -105,7 +105,7 @@ def main():
         },indent=2)+"\n")
     report={
       "executableSha256":EXPECTED,"softwareRenderer":{
-        "polygonObjectEntry":"0x4f9fc4","objectTypeByte":"[object+7] == 0xa0",
+        "polygonObjectEntry":"0x4f9fc4","objectTypeByte":"([object+7] & 0xfd) == 0xa0",
         "primitiveRecordArray":"0x13a1fc0","primitiveRecordStride":64,"primitiveCount":"byte [object+6]",
         "edgeBuilder":"0x4fb8b4","scanlineEdgeConverter":"0x510790",
         "visibleSpanAndFillDispatch":"0x4fbde4","pixelWriters":["0x510a10","0x510b90"],
