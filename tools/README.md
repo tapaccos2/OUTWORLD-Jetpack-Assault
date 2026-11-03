@@ -321,3 +321,30 @@ All output is fixed under:
 - `scout-logs/scout-transform-slot-audit.zip`
 
 Upload that ZIP for analysis. The tool does not export, modify or promote a GLB.
+
+
+## One-run parallel Scout audit (preferred bundle)
+
+Run once from the repository root:
+
+```sh
+bash tools/scout-parallel-audit.sh "$HOME/Outwars-extracted/outwars.exe"
+```
+
+The runner is pinned to the exact executable build SHA-256
+`722d06042ec0d432fa76f2bc29b693eac613f82546d0278f7332fcf0fc4352e2`.
+It performs the renderer/backend capture, class-100 transform-slot audit,
+cross-variant geometry/ownership analysis, Scout TPC inspection and decoding,
+and MC motion/channel analysis. The independent geometry, texture and motion
+streams run concurrently after the shared archive extraction. It also compares
+DPC slot IDs against both candidate MC channel index conventions without
+assigning bone or mesh names.
+
+**One persistent output location and one upload:**
+
+- `scout-logs/scout-parallel-audit/` — all reports, decoded texture previews and logs.
+- `scout-logs/scout-parallel-audit.zip` — the single combined evidence bundle.
+
+Intermediate extracted game resources and component output folders are removed
+after they have been analysed/copied into the combined report. Do not upload the
+individual component archives. Upload only the single parallel-audit ZIP.
