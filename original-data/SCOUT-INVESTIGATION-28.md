@@ -8,7 +8,7 @@ The exact executable build already audited (SHA-256 `722d06042ec0d432fa76f2bc29b
 
 The relevant path is:
 
-1. `0x4F9FC4` handles a polygon-like object record. It checks object byte +7 against `0xA0`.
+1. `0x4F9FC4` handles a polygon-like object record. It checks `(object byte +7 & 0xFD) == 0xA0`.
 2. `0x4FA0A0` iterates the primitive count at byte +6 through 64-byte records beginning at `0x13A1FC0`.
 3. `0x4FB8B4` builds fixed-point polygon edge / scan-conversion data from vertex coordinate inputs.
 4. `0x510790` converts the edge data into scanline coverage.
