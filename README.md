@@ -152,3 +152,6 @@ node tools/scout-transform-attached-descriptor-audit.mjs \
 ## Latest Scout renderer integration findings
 
 The latest uploaded Scout next-stage audit confirms that the CPU software textured-polygon renderer is called from the main scene traversal when renderer mode flag `0x1355BB4` is zero; the nonzero route selects the hardware renderer. The exact menu option to mode-flag dataflow and the conversion from Scout DPC geometry into the runtime A0/B0 polygon-object layout are still being traced. See [Scout investigation 29](original-data/SCOUT-INVESTIGATION-29.md) for exact addresses, the object data layout and the male/female DPC slot comparison.
+
+
+The next static pass has narrowed the software-renderer input path further: the frame routine at `0x4E427C` calls `0x4D638C` to construct A0/B0 polygon records on the software branch. The missing proof is still whether those point-list entries originate from Scout DPC mesh data. See [Scout investigation 30](original-data/SCOUT-INVESTIGATION-30.md).
