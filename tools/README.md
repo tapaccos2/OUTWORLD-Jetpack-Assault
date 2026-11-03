@@ -348,3 +348,26 @@ assigning bone or mesh names.
 Intermediate extracted game resources and component output folders are removed
 after they have been analysed/copied into the combined report. Do not upload the
 individual component archives. Upload only the single parallel-audit ZIP.
+
+
+## Scout next-stage consolidated tester
+
+Run one complete follow-up after pulling the latest repository changes:
+
+```bash
+git pull
+bash tools/scout-next-stage.sh "$HOME/Outwars-extracted/outwars.exe"
+```
+
+It runs the existing parallel geometry, renderer, texture and animation audits, then adds:
+- a focused disassembly capture of the CPU software textured-polygon / scanline pipeline;
+- callsite and global-reference inventories for the software fill path and renderer mode flag;
+- a scan of all Scout DPC variants for both male class 100 and female class 150 opcode-5 slot registrations;
+- a corrected motion catalogue summary using `entriesPerFrame`;
+- explicit unresolved-link checks for Scout geometry-to-raster records and the callback tag reader.
+
+All persistent output is written under `scout-logs/`. The single uploadable archive is:
+
+`scout-logs/scout-next-stage.zip`
+
+The tester requires the exact previously audited `outwars.exe` build (SHA-256 `722d06042ec0d432fa76f2bc29b693eac613f82546d0278f7332fcf0fc4352e2`). It does not claim a final Scout model unless the missing ownership, transform and material links are independently established.
