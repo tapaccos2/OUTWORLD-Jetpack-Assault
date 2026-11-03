@@ -12,7 +12,7 @@ The relevant path is:
 2. `0x4FA0A0` iterates the primitive count at byte +6 through 64-byte records beginning at `0x13A1FC0`.
 3. `0x4FB8B4` builds fixed-point polygon edge / scan-conversion data from vertex coordinate inputs.
 4. `0x510790` converts the edge data into scanline coverage.
-5. `0x4FBF38` collects visible spans and dispatches to `0x510A10` or `0x510B90`.
+5. `0x4FBDE4` collects visible spans and dispatches to `0x510A10` or `0x510B90`.
 6. `0x510A10` uses MMX, reads indexed texture bytes, treats `0xFF` as a transparent index, performs 16-bit palette lookup and writes pixels to a software surface whose base is held at `0x1329B14`.
 
 The new consolidated tester captures all these code windows and direct callsites. The path is a real CPU texture-mapped polygon/scanline renderer.
